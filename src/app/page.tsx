@@ -24,8 +24,9 @@ export default function Home() {
         <p className='text-[#F38181] text-right'>2025-10-01 12:00</p>
         <p className='text-[#F38181] text-right'>少女测试中，不是正确时间</p>
       </div>
-      <a href="/" className="text-2xl px-40 py-3 bg-[#F38181] text-white hover:bg-[#95E1D3] transition mt-10"
+      <a href="/" className="text-2xl px-10 py-3 bg-[#F38181] text-white hover:bg-[#95E1D3] transition mt-10"
       >点击报名</a>
+
     </div>
   );
 }
