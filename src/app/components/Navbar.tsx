@@ -24,7 +24,7 @@ export default function Navbar() {
     const isActive = (href: string) => pathname === href;
 
     return (
-        <nav className="text-white fixed w-full top-0 z-80">
+        <nav className="bg-[url(/NavbarBackground.svg)] bg-white bg-center bg-size-[1550px] bg-size-[auto_200px] text-white fixed w-full top-0 z-80">
             <div className="max-w-6xl mx-auto px-4">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo */}

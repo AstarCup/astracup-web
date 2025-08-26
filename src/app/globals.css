@@ -91,3 +91,8 @@ td {
   padding: 8px;
   border-bottom: 1px solid #ddd;
 }
+
+tr:hover {
+  background-color: rgb(237, 237, 237);
+
+}

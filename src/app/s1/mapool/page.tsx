@@ -1,4 +1,4 @@
-import qua from '@/app/s1/mapool/qua.json';
+import qua from '@/app/s1/mapool/MapPoolTest-qua.json';
 
 import MapoolTable from '@/app/components/MapoolTable';
 
