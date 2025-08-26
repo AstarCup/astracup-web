@@ -26,6 +26,7 @@ export default function Home() {
       </div>
       <a href="/" className="text-2xl px-10 py-3 bg-[#F38181] text-white hover:bg-[#95E1D3] transition mt-10"
       >点击报名</a>
+
     </div>
   );
 }
