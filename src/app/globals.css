@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "~jquery-bracket/dist/jquery.bracket.min.css";
 
 :root {
   --background: #ffffff;

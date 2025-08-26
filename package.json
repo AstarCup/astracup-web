@@ -23,6 +23,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
     "@tailwindcss/postcss": "^4",
+    "@types/jquery": "^3.5.33",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
