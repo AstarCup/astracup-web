@@ -1,0 +1,14 @@
+{
+    "schedule": [
+        {
+            "round": "小组赛",
+            "date": "2024-08-01",
+            "time": "19:00",
+            "match": "A组 第1轮",
+            "players": "选手1 vs 选手2",
+            "player1Score": "5",
+            "player2Score": "2",
+            "status": "已完成"
+        }
+    ]
+}

@@ -10,6 +10,7 @@
 div.jQBracket {
     font-size: 14px;
     position: relative;
+
 }
 
 div.jQBracket .tools {
@@ -134,11 +135,11 @@ div.jQBracket .team.win {
 }
 
 div.jQBracket .team.win div.score {
-    color: rgb(109, 125, 109);
+    color: rgb(238, 142, 16);
 }
 
 div.jQBracket .team.lose div.score {
-    color: rgb(96, 61, 61);
+    color: rgb(49, 49, 49);
 }
 
 div.jQBracket .team.lose {
@@ -161,7 +162,7 @@ div.jQBracket .team.highlightLoser {
 }
 
 div.jQBracket .team.highlight {
-    background-color: rgb(111, 121, 108);
+    background-color: #ffbdbd;
     color: #000;
 }
 
@@ -202,7 +203,7 @@ div.jQBracket .connector div.connector.highlightLoser {
 
 div.jQBracket .connector.highlight,
 div.jQBracket .connector div.connector.highlight {
-    border-color: #0c0;
+    border-color: rgb(204, 167, 0);
 }
 
 div.jQBracket .np .connector,
