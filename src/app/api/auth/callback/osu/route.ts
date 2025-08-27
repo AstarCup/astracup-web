@@ -61,6 +61,13 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         console.error('OAuth callback error details:', error);
         console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+
+        // 添加更详细的错误信息用于调试
+        if (error instanceof Error) {
+            console.error('Error name:', error.name);
+            console.error('Error message:', error.message);
+        }
+
         return NextResponse.redirect(new URL('/register?error=token_failed', request.url));
     }
 }
