@@ -60,6 +60,7 @@ async function getUserDataFromAPI(username: string): Promise<OsuUser | null> {
         });
 
         if (!response.ok) {
+            console.log(`Official API failed with status: ${response.status}`);
             return null;
         }
 
@@ -102,12 +103,17 @@ async function getUserDataFromPublic(username: string): Promise<OsuUser | null> 
         const searchResponse = await fetchWithTimeout(`https://osu.ppy.sh/users/${username}`, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
+            },
+            redirect: 'follow' // 跟随重定向
         });
 
         if (!searchResponse.ok) {
+            console.log(`Public method failed with status: ${searchResponse.status}`);
             return null;
         }
+
+        const finalUrl = searchResponse.url;
+        console.log(`Public method final URL: ${finalUrl}`);
 
         const html = await searchResponse.text();
 
@@ -140,6 +146,30 @@ async function getUserDataFromPublic(username: string): Promise<OsuUser | null> 
             }
         }
 
+        // 如果无法解析JSON，尝试从URL中提取用户ID
+        const userIdMatch = finalUrl.match(/\/users\/(\d+)/);
+        if (userIdMatch && userIdMatch[1]) {
+            console.log(`Found user ID from URL: ${userIdMatch[1]}`);
+            // 返回基本用户信息
+            return {
+                id: parseInt(userIdMatch[1]),
+                username: username,
+                avatar_url: '',
+                country_code: '',
+                statistics: {
+                    pp: 0,
+                    global_rank: null,
+                    country_rank: null,
+                    ranked_score: 0,
+                    hit_accuracy: 0,
+                    play_count: 0,
+                    play_time: 0,
+                    level: { current: 0, progress: 0 },
+                    grade_counts: { ss: 0, ssh: 0, s: 0, sh: 0, a: 0 },
+                },
+            };
+        }
+
         return null;
     } catch (error) {
         console.error('Error fetching public osu! user data:', error);
@@ -158,18 +188,25 @@ export async function GET(request: NextRequest) {
         );
     }
 
+    console.log(`Fetching osu! user data for: ${username}`);
+
     try {
         // 首先尝试使用官方API
         let userData = await getUserDataFromAPI(username);
+        console.log(`Official API result for ${username}:`, userData ? 'Success' : 'Failed');
 
         // 如果官方API失败，尝试公开方法
         if (!userData) {
+            console.log('Trying public method...');
             userData = await getUserDataFromPublic(username);
+            console.log(`Public method result for ${username}:`, userData ? 'Success' : 'Failed');
         }
 
         if (userData) {
+            console.log(`Successfully fetched data for ${username}`);
             return NextResponse.json(userData);
         } else {
+            console.log(`Failed to fetch data for ${username} using both methods`);
             return NextResponse.json(
                 { error: '无法获取玩家数据，请检查用户名是否正确' },
                 { status: 404 }
