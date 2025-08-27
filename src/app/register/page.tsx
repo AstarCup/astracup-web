@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getOsuAuthUrl } from "@/lib/osu-auth";
 
 export default function Register() {
     const router = useRouter();
@@ -45,11 +44,18 @@ export default function Register() {
         }
     }, [router]);
 
-    const handleOsuLogin = () => {
+    const handleOsuLogin = async () => {
         setIsLoading(true);
         try {
-            const authUrl = getOsuAuthUrl();
-            window.location.href = authUrl;
+            // 从服务器API获取OAuth URL
+            const response = await fetch('/api/auth/url');
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.href = data.authUrl;
+            } else {
+                throw new Error(data.error || 'Failed to get authentication URL');
+            }
         } catch (error) {
             setIsLoading(false);
             setError(error instanceof Error ? error.message : 'OAuth配置错误，请联系管理员');
