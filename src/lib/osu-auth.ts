@@ -41,25 +41,41 @@ export async function getOsuToken(code: string): Promise<{
     refresh_token: string;
     expires_in: number;
 }> {
-    const response = await fetch('https://osu.ppy.sh/oauth/token', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-            client_id: OSU_CLIENT_ID,
-            client_secret: OSU_CLIENT_SECRET,
-            code,
-            grant_type: 'authorization_code',
-            redirect_uri: OSU_REDIRECT_URI,
-        }),
-    });
+    try {
+        console.log('Attempting token exchange with code:', code.substring(0, 10) + '...');
+        console.log('Client ID:', OSU_CLIENT_ID ? 'SET' : 'NOT_SET');
+        console.log('Client Secret:', OSU_CLIENT_SECRET ? 'SET' : 'NOT_SET');
+        console.log('Redirect URI:', OSU_REDIRECT_URI);
 
-    if (!response.ok) {
-        throw new Error('Failed to get access token');
+        const response = await fetch('https://osu.ppy.sh/oauth/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                client_id: OSU_CLIENT_ID,
+                client_secret: OSU_CLIENT_SECRET,
+                code,
+                grant_type: 'authorization_code',
+                redirect_uri: OSU_REDIRECT_URI,
+            }),
+        });
+
+        console.log('Token exchange response status:', response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Token exchange failed:', response.status, errorText);
+            throw new Error(`Failed to get access token: ${response.status} - ${errorText}`);
+        }
+
+        const tokenData = await response.json();
+        console.log('Token exchange successful');
+        return tokenData;
+    } catch (error) {
+        console.error('Token exchange error:', error);
+        throw error;
     }
-
-    return response.json();
 }
 
 // 使用访问令牌获取用户信息
