@@ -47,6 +47,7 @@ export default function Navbar() {
                         ))}
                     </ul>
 
+
                     {/* Mobile Menu Button */}
                     <button
                         className="md:hidden flex flex-col items-left space-y-1 p-2"
