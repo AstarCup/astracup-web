@@ -1,30 +1,34 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getOsuAuthUrl } from "@/lib/osu-auth";
 
 export default function DebugPage() {
     const [envInfo, setEnvInfo] = useState<Record<string, string>>({});
-    const [authUrl, setAuthUrl] = useState<string>("");
+    const [serverEnvInfo, setServerEnvInfo] = useState<Record<string, string>>({});
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // 获取环境变量信息
-        const info = {
-            OSU_CLIENT_ID: process.env.OSU_CLIENT_ID || "NOT_SET",
-            OSU_CLIENT_SECRET: process.env.OSU_CLIENT_SECRET ? "SET" : "NOT_SET",
-            OSU_REDIRECT_URI: process.env.OSU_REDIRECT_URI || "NOT_SET",
-            NODE_ENV: process.env.NODE_ENV || "NOT_SET",
+        // 获取客户端环境变量信息
+        const clientInfo = {
+            OSU_CLIENT_ID: process.env.OSU_CLIENT_ID || "NOT_SET (Client)",
+            OSU_CLIENT_SECRET: process.env.OSU_CLIENT_SECRET ? "SET" : "NOT_SET (Client)",
+            OSU_REDIRECT_URI: process.env.OSU_REDIRECT_URI || "NOT_SET (Client)",
+            NODE_ENV: process.env.NODE_ENV || "NOT_SET (Client)",
         };
 
-        setEnvInfo(info);
+        setEnvInfo(clientInfo);
 
-        // 尝试生成认证URL
-        try {
-            const url = getOsuAuthUrl();
-            setAuthUrl(url);
-        } catch (error) {
-            setAuthUrl(`Error: ${error instanceof Error ? error.message : String(error)}`);
-        }
+        // 从服务器API获取环境变量信息
+        fetch('/api/debug/env')
+            .then(response => response.json())
+            .then(data => {
+                setServerEnvInfo(data.environment);
+                setLoading(false);
+            })
+            .catch(error => {
+                console.error('Failed to fetch server env:', error);
+                setLoading(false);
+            });
     }, []);
 
     return (
@@ -41,12 +45,23 @@ export default function DebugPage() {
                     </div>
                 </div>
 
-                <div className="mb-6">
-                    <h2 className="text-xl font-semibold mb-3">OAuth URL</h2>
-                    <div className="bg-blue-50 p-4 rounded-md">
-                        <code className="text-sm break-all">{authUrl}</code>
+                {loading ? (
+                    <div className="mb-6">
+                        <h2 className="text-xl font-semibold mb-3">服务器环境变量</h2>
+                        <div className="bg-blue-50 p-4 rounded-md">
+                            <p className="text-sm">加载中...</p>
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <div className="mb-6">
+                        <h2 className="text-xl font-semibold mb-3">服务器环境变量</h2>
+                        <div className="bg-blue-50 p-4 rounded-md">
+                            <pre className="text-sm">
+                                {JSON.stringify(serverEnvInfo, null, 2)}
+                            </pre>
+                        </div>
+                    </div>
+                )}
 
                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
                     <h3 className="text-lg font-medium text-yellow-800 mb-2">调试说明</h3>
