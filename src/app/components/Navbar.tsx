@@ -62,7 +62,7 @@ export default function Navbar() {
 
                 {/* Mobile Menu Panel */}
                 <div
-                    className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-120 py-4 opacity-100' : 'max-h-0 opacity-90'
+                    className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-96 py-4 opacity-100' : 'max-h-0 opacity-90'
                         }`}
                 >
                     <ul className="flex flex-col space-y-3 bg-[#F38181] p-4">

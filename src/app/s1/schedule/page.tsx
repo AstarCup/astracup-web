@@ -1,7 +1,11 @@
-import Bracket from "@/app/components/Bracket";
+import dynamic from 'next/dynamic';
 import ScheduleTable from "@/app/components/ScheduleTable";
 import bracketParams from "./bracket.json";
 import scheduleData from "./schedule-data.json";
+
+const Bracket = dynamic(() => import("@/app/components/Bracket"), {
+    loading: () => <div>加载对阵表中...</div>
+});
 
 export default function Schedule() {
     return (

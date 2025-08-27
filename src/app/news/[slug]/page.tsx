@@ -1,10 +1,17 @@
 // app/news/[slug]/page.tsx
 import Link from 'next/link';
-import { getNewsContent } from '@/lib/utils';
+import { getNewsContent, getNewsSlugs } from '@/lib/utils';
+
+export async function generateStaticParams() {
+    const slugs = getNewsSlugs();
+    return slugs.map((slug) => ({
+        slug: slug.replace(/\.md$/, ''),
+    }));
+}
 
 export default async function NewsPost({ params }: { params: { slug: string } }) {
     const paramsSlug = await params;
-    const news = await getNewsContent(paramsSlug.slug);
+    const news = await getNewsContent(`${paramsSlug.slug}.md`);
 
     return (
         <div className="max-w-3xl mx-auto p-6">
