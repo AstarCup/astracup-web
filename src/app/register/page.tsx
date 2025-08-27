@@ -47,8 +47,14 @@ export default function Register() {
 
     const handleOsuLogin = () => {
         setIsLoading(true);
-        const authUrl = getOsuAuthUrl();
-        window.location.href = authUrl;
+        try {
+            const authUrl = getOsuAuthUrl();
+            window.location.href = authUrl;
+        } catch (error) {
+            setIsLoading(false);
+            setError(error instanceof Error ? error.message : 'OAuth配置错误，请联系管理员');
+            console.error('OAuth login error:', error);
+        }
     };
 
     if (success) {

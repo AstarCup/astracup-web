@@ -16,6 +16,15 @@ const OSU_REDIRECT_URI = getOsuRedirectUri();
 
 // 生成 osu! OAuth2 授权URL
 export function getOsuAuthUrl(): string {
+    if (!OSU_CLIENT_ID) {
+        console.error('OSU_CLIENT_ID is not configured. Please set the OSU_CLIENT_ID environment variable.');
+        throw new Error('OAuth configuration error: Client ID is missing');
+    }
+
+    if (!OSU_CLIENT_SECRET) {
+        console.warn('OSU_CLIENT_SECRET is not configured. This may cause token exchange to fail.');
+    }
+
     const params = new URLSearchParams({
         client_id: OSU_CLIENT_ID,
         redirect_uri: OSU_REDIRECT_URI,
