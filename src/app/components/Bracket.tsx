@@ -39,13 +39,10 @@ export default function Bracket({
     const bracketRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        // 动态导入jquery-bracket，确保jQuery已经全局可用
         import("jquery-bracket/dist/jquery.bracket.min.js").then(() => {
             if (bracketRef.current) {
-                // 清除之前的bracket内容
                 $(bracketRef.current).empty();
 
-                // 初始化bracket
                 $(bracketRef.current).bracket({
                     init: {
                         teams: teams,
@@ -59,7 +56,6 @@ export default function Bracket({
             }
         });
 
-        // 清理函数
         return () => {
             if (bracketRef.current) {
                 $(bracketRef.current).empty();

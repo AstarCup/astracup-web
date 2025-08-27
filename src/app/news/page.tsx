@@ -10,9 +10,10 @@ export default function NewsList() {
             <ul className="space-y-4">
                 {slugs.map((slug) => {
                     const news = getNewsBySlug(slug);
+                    const slugWithoutExtension = slug.replace(/\.md$/, '');
                     return (
                         <li key={slug}>
-                            <Link href={`/news/${slug}`} className="text-xl text-[#F38181] hover:underline">
+                            <Link href={`/news/${slugWithoutExtension}`} className="text-xl text-[#F38181] hover:underline">
                                 {news.frontmatter.title}
                             </Link>
                             <p className="text-gray-400">{news.frontmatter.description}</p>

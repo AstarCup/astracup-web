@@ -30,14 +30,21 @@ const calculateTimeLeft = (targetDate: string) => {
 
 const Countdown: React.FC<CountdownProps> = ({ targetDate }) => {
     const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(targetDate));
+    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
+        setIsClient(true);
         const timer = setInterval(() => {
             setTimeLeft(calculateTimeLeft(targetDate));
         }, 1000);
 
         return () => clearInterval(timer);
     }, [targetDate]);
+
+    if (!isClient) {
+        // 服务器端渲染时显示加载状态或空内容
+        return <div className="countdown">加载中...</div>;
+    }
 
     if (timeLeft.isExpired) {
         return <div>活动已开始！</div>;
