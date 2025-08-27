@@ -1,20 +1,20 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getOsuAuthUrl } from "@/lib/osu-auth";
 
 export default function Register() {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
 
     useEffect(() => {
-        // 处理回调参数
-        const errorParam = searchParams.get('error');
-        const successParam = searchParams.get('success');
+        // 处理URL参数（客户端渲染时）
+        const urlParams = new URLSearchParams(window.location.search);
+        const errorParam = urlParams.get('error');
+        const successParam = urlParams.get('success');
 
         if (errorParam) {
             switch (errorParam) {
@@ -43,7 +43,7 @@ export default function Register() {
             }, 3000);
             return () => clearTimeout(timer);
         }
-    }, [searchParams, router]);
+    }, [router]);
 
     const handleOsuLogin = () => {
         setIsLoading(true);
