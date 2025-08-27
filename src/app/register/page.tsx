@@ -2,8 +2,34 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { getUserData, getUserDataPublic, type OsuUser } from "@/lib/osu-api";
 import Image from "next/image";
+
+export interface OsuUser {
+    id: number;
+    username: string;
+    avatar_url: string;
+    country_code: string;
+    statistics: {
+        pp: number;
+        global_rank: number | null;
+        country_rank: number | null;
+        ranked_score: number;
+        hit_accuracy: number;
+        play_count: number;
+        play_time: number;
+        level: {
+            current: number;
+            progress: number;
+        };
+        grade_counts: {
+            ss: number;
+            ssh: number;
+            s: number;
+            sh: number;
+            a: number;
+        };
+    };
+}
 
 export default function Register() {
     const router = useRouter();
@@ -23,30 +49,26 @@ export default function Register() {
         setUserData(null);
 
         try {
-            let data: OsuUser | null = null;
+            // 使用服务器端API获取用户数据
+            const response = await fetch(`/api/osu-user?username=${encodeURIComponent(username)}`);
 
-            // 首先尝试使用官方API
-            try {
-                data = await getUserData(username);
-            } catch (apiError) {
-                console.log('Official API failed, trying public method...');
-                // 如果官方API失败，尝试公开方法
-                data = await getUserDataPublic(username);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || '获取玩家数据失败');
             }
 
-            if (data) {
-                setUserData(data);
+            const data: OsuUser = await response.json();
+            setUserData(data);
 
-                // 检查是否已注册
-                const checkResponse = await fetch(`/api/register?osuId=${data.id}`);
-                if (checkResponse.ok) {
-                    const registrations = await checkResponse.json();
-                    const isRegistered = registrations.some((reg: any) => reg.osuId === data.id.toString());
+            // 检查是否已注册
+            const checkResponse = await fetch(`/api/register?osuId=${data.id}`);
+            if (checkResponse.ok) {
+                const registrations = await checkResponse.json();
+                const isRegistered = registrations.some((reg: any) => reg.osuId === data.id.toString());
 
-                    if (isRegistered) {
-                        setError("该玩家已经报名过了！");
-                        setUserData(null);
-                    }
+                if (isRegistered) {
+                    setError("该玩家已经报名过了！");
+                    setUserData(null);
                 }
             }
         } catch (error) {
