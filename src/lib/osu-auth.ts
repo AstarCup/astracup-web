@@ -1,7 +1,18 @@
 // osu! OAuth2 配置
 const OSU_CLIENT_ID = process.env.OSU_CLIENT_ID || '';
 const OSU_CLIENT_SECRET = process.env.OSU_CLIENT_SECRET || '';
-const OSU_REDIRECT_URI = process.env.OSU_REDIRECT_URI || 'http://localhost:3000/api/auth/callback/osu';
+
+// 根据环境自动设置重定向URI
+const getOsuRedirectUri = () => {
+    // 在Vercel等生产环境中使用环境变量或自动检测
+    if (process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production') {
+        return process.env.OSU_REDIRECT_URI || `https://${process.env.VERCEL_URL || process.env.NEXT_PUBLIC_APP_URL || 'rino.ink'}/api/auth/callback/osu`;
+    }
+    // 开发环境
+    return process.env.OSU_REDIRECT_URI || 'http://localhost:3000/api/auth/callback/osu';
+};
+
+const OSU_REDIRECT_URI = getOsuRedirectUri();
 
 // 生成 osu! OAuth2 授权URL
 export function getOsuAuthUrl(): string {
