@@ -1,7 +1,24 @@
-import fs from 'fs';
-import path from 'path';
+// 临时解决方案：在Vercel环境中禁用文件系统注册存储
+// 使用内存存储代替，实际部署时应使用数据库
 
-const REGISTRATIONS_FILE = path.join(process.cwd(), 'data', 'registrations.json');
+let memoryRegistrations: any[] = [];
+
+// 模拟文件系统操作的内存实现
+const memoryStorage = {
+    getRegistrations: (): any[] => {
+        return memoryRegistrations;
+    },
+
+    addRegistration: (registration: any): void => {
+        // 检查是否已存在
+        if (!memoryRegistrations.some(reg => reg.osuId === registration.osuId)) {
+            memoryRegistrations.push({
+                ...registration,
+                registeredAt: new Date().toISOString(),
+            });
+        }
+    }
+};
 
 export interface Registration {
     osuId: string;
@@ -17,23 +34,10 @@ export interface Registration {
     country_rank: number | null;
 }
 
-// 确保数据目录存在
-function ensureDataDirectory() {
-    const dataDir = path.dirname(REGISTRATIONS_FILE);
-    if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
-    }
-}
-
 // 读取所有注册信息
 export function getRegistrations(): Registration[] {
     try {
-        ensureDataDirectory();
-        if (!fs.existsSync(REGISTRATIONS_FILE)) {
-            return [];
-        }
-        const data = fs.readFileSync(REGISTRATIONS_FILE, 'utf8');
-        return JSON.parse(data);
+        return memoryStorage.getRegistrations();
     } catch (error) {
         console.error('Error reading registrations:', error);
         return [];
@@ -49,18 +53,7 @@ export function isUserRegistered(osuId: string): boolean {
 // 添加新注册
 export function addRegistration(registration: Omit<Registration, 'registeredAt'>): void {
     try {
-        ensureDataDirectory();
-        const registrations = getRegistrations();
-        const newRegistration: Registration = {
-            ...registration,
-            registeredAt: new Date().toISOString(),
-        };
-
-        // 检查是否已注册，避免重复
-        if (!isUserRegistered(registration.osuId)) {
-            registrations.push(newRegistration);
-            fs.writeFileSync(REGISTRATIONS_FILE, JSON.stringify(registrations, null, 2));
-        }
+        memoryStorage.addRegistration(registration);
     } catch (error) {
         console.error('Error adding registration:', error);
         throw new Error('Failed to save registration');
