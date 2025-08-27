@@ -1,11 +1,7 @@
 
-import dynamic from 'next/dynamic';
+import Countdown from './components/Cutdown';
 import Image from 'next/image';
 import type { Metadata } from "next";
-
-const Countdown = dynamic(() => import('./components/Cutdown'), {
-  loading: () => <div>加载中...</div>
-});
 export const metadata: Metadata = {
   title: "AstraCup 星域杯",
   description: "欢迎参加 AstraCup，这是一场专为广大 osu!lazer std 玩家 打造的线上赛事。",
