@@ -62,6 +62,7 @@ export async function getOsuToken(code: string): Promise<{
         });
 
         console.log('Token exchange response status:', response.status);
+        console.log('Token exchange response headers:', Object.fromEntries(response.headers.entries()));
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -69,9 +70,16 @@ export async function getOsuToken(code: string): Promise<{
             throw new Error(`Failed to get access token: ${response.status} - ${errorText}`);
         }
 
-        const tokenData = await response.json();
-        console.log('Token exchange successful');
-        return tokenData;
+        try {
+            const tokenData = await response.json();
+            console.log('Token exchange successful:', tokenData);
+            return tokenData;
+        } catch (jsonError) {
+            console.error('JSON parsing error:', jsonError);
+            const responseText = await response.text();
+            console.error('Response text:', responseText);
+            throw new Error(`Failed to parse token response: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}`);
+        }
     } catch (error) {
         console.error('Token exchange error:', error);
         throw error;
