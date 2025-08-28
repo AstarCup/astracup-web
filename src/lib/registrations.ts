@@ -1,7 +1,7 @@
 // 使用 Vercel Blob Store 进行持久化存储
 import { put, list } from '@vercel/blob';
 
-const BLOB_STORE_KEY = 'astra-registrations';
+const BLOB_STORE_KEY = 'users/registrations.json';
 const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
 
 // Blob Store 存储实现
@@ -14,7 +14,11 @@ const blobStorage = {
 
         try {
             // 列出所有blob并查找我们的注册数据blob
-            const { blobs } = await list({ token: BLOB_TOKEN });
+            const { blobs } = await list({
+                token: BLOB_TOKEN,
+                prefix: 'users/'
+            });
+
             const registrationBlob = blobs.find(blob => blob.pathname === BLOB_STORE_KEY);
 
             if (!registrationBlob) {
@@ -58,6 +62,7 @@ const blobStorage = {
                     access: 'public',
                     addRandomSuffix: false,
                     token: BLOB_TOKEN,
+                    contentType: 'application/json',
                 });
             }
         } catch (error) {
