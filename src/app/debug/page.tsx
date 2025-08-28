@@ -63,6 +63,29 @@ export default function DebugPage() {
                     </div>
                 )}
 
+                <div className="mb-6">
+                    <h2 className="text-xl font-semibold mb-3">Blob Store 测试</h2>
+                    <div className="bg-green-50 p-4 rounded-md">
+                        <button
+                            onClick={async () => {
+                                try {
+                                    const response = await fetch('/api/debug/blob-test');
+                                    const data = await response.json();
+                                    alert(`Blob测试结果: ${JSON.stringify(data)}`);
+                                } catch (error) {
+                                    alert('Blob测试失败: ' + error);
+                                }
+                            }}
+                            className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+                        >
+                            测试 Blob Store 连接
+                        </button>
+                        <p className="text-sm text-green-700 mt-2">
+                            点击测试 Blob Store 连接和读写功能
+                        </p>
+                    </div>
+                </div>
+
                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
                     <h3 className="text-lg font-medium text-yellow-800 mb-2">调试说明</h3>
                     <ul className="list-disc list-inside text-yellow-700 space-y-1">
