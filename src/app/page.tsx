@@ -3,7 +3,9 @@ import Countdown from './components/Cutdown';
 import Image from 'next/image';
 import type { Metadata } from "next";
 import UserProfile from './components/UserProfile';
+import RegistrationButton from './components/RegistrationButton';
 import { getUserSession } from '@/lib/session';
+import { isUserRegistered } from '@/lib/edge-registrations';
 
 export const metadata: Metadata = {
   title: "AstraCup 星域杯",
@@ -34,9 +36,11 @@ export default async function Home() {
         <p className='text-[#F38181] text-right'>少女测试中，不是正确时间</p>
       </div>
 
-      {!user && (
+      {!user ? (
         <a href="/register" className="text-2xl px-10 py-3 bg-[#F38181] text-white hover:bg-[#95E1D3] transition mt-10"
         >使用 osu! 账号报名</a>
+      ) : (
+        <RegistrationButton user={user} />
       )}
     </div>
   );
