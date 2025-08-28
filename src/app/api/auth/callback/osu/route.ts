@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
 
         if (isRegistered) {
             // 已注册用户，设置会话并重定向到首页
-            await fetch('/api/session/set', {
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || request.nextUrl.origin;
+            await fetch(`${baseUrl}/api/session/set`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -59,7 +60,8 @@ export async function GET(request: NextRequest) {
         });
 
         // 设置用户会话
-        await fetch('/api/session/set', {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || request.nextUrl.origin;
+        await fetch(`${baseUrl}/api/session/set`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
