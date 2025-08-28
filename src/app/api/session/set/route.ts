@@ -9,10 +9,11 @@ export async function POST(request: NextRequest) {
         // 设置会话cookie，有效期30天
         cookieStore.set('astra_session', JSON.stringify(session), {
             httpOnly: false, // 允许JavaScript访问
-            secure: false, // 开发环境不使用HTTPS
-            sameSite: 'lax',
+            secure: true, // 生产环境使用HTTPS
+            sameSite: 'none', // 允许跨站请求
             maxAge: 60 * 60 * 24 * 30, // 30 days
             path: '/',
+            domain: '.rino.ink' // 允许所有子域名访问
         });
 
         console.log('Session stored in cookie');

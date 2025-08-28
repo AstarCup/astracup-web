@@ -7,20 +7,24 @@ export async function GET(request: NextRequest) {
         const sessionCookie = cookieStore.get('astra_session');
 
         if (!sessionCookie?.value) {
+            console.log('No session cookie found');
             return NextResponse.json({
                 success: true,
                 session: null
             });
         }
 
+        console.log('Session cookie found:', sessionCookie.value);
+
         try {
             const session = JSON.parse(sessionCookie.value);
+            console.log('Retrieved session from cookie:', session);
             return NextResponse.json({
                 success: true,
                 session: session
             });
         } catch (parseError) {
-            console.error('Error parsing session cookie:', parseError);
+            console.error('Error parsing session cookie:', parseError, 'Cookie value:', sessionCookie.value);
             return NextResponse.json({
                 success: true,
                 session: null
