@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         // 手动设置cookie到响应头
         response.cookies.set('astra_session', JSON.stringify(session), cookieOptions);
 
-        console.log('Session stored in cookie');
+        // console.log('Session stored in cookie');
 
         return response;
     } catch (error) {

@@ -68,8 +68,8 @@ async function saveRegistration(registration: TournamentRegistration): Promise<b
         // 更新内存存储
         memoryRegistrations = registrations;
 
-        console.log('Registration saved:', registration);
-        console.log('Total registrations:', memoryRegistrations.length);
+        // console.log('Registration saved:', registration);
+        // console.log('Total registrations:', memoryRegistrations.length);
 
         return true;
     } catch (error) {
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
                 global_rank: newRegistration.global_rank,
                 country_rank: newRegistration.country_rank,
             });
-            console.log('Registration also saved to database');
+            // console.log('Registration also saved to database');
         } catch (dbError) {
             console.error('Error saving to database:', dbError);
             // 不中断主流程，仅记录错误

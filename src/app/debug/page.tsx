@@ -19,7 +19,7 @@ export default function DebugPage() {
         })
             .then(response => response.json())
             .then(data => {
-                console.log('Debug session data:', data);
+                // console.log('Debug session data:', data);
                 if (data.success && data.session) {
                     setUserSession(data.session);
                     setIsAdmin(data.session.username === 'AeCw');

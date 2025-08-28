@@ -48,7 +48,7 @@ export async function getUserData(username: string): Promise<OsuUser | null> {
         // 检查是否有API密钥
         const apiKey = process.env.OSU_API_KEY;
         if (!apiKey) {
-            console.log('No OSU_API_KEY found, using public method');
+            // console.log('No OSU_API_KEY found, using public method');
             return getUserDataPublic(username);
         }
 
@@ -64,7 +64,7 @@ export async function getUserData(username: string): Promise<OsuUser | null> {
                 throw new Error('玩家不存在');
             }
             if (response.status === 401) {
-                console.log('API密钥无效，使用公开方法');
+                // console.log('API密钥无效，使用公开方法');
                 return getUserDataPublic(username);
             }
             throw new Error(`获取玩家数据失败 (状态码: ${response.status})`);
@@ -107,7 +107,7 @@ export async function getUserData(username: string): Promise<OsuUser | null> {
             error.message.includes('NetworkError') ||
             error.message.includes('Failed to fetch')
         )) {
-            console.log('网络错误，尝试使用公开方法');
+            // console.log('网络错误，尝试使用公开方法');
             return getUserDataPublic(username);
         }
 

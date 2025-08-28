@@ -50,7 +50,7 @@ export const initDatabase = async (): Promise<void> => {
     `);
 
         connection.release();
-        console.log('Database initialized successfully');
+        // console.log('Database initialized successfully');
     } catch (error) {
         console.error('Error initializing database:', error);
         throw error;
@@ -159,7 +159,7 @@ const mysqlStorage = {
             }
 
             await connection.commit();
-            console.log('Registration saved to database successfully');
+            // console.log('Registration saved to database successfully');
 
         } catch (error) {
             await connection.rollback();

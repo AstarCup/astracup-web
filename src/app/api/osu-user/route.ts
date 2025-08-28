@@ -60,7 +60,7 @@ async function getUserDataFromAPI(username: string): Promise<OsuUser | null> {
         });
 
         if (!response.ok) {
-            console.log(`Official API failed with status: ${response.status}`);
+            // console.log(`Official API failed with status: ${response.status}`);
             return null;
         }
 
@@ -108,12 +108,12 @@ async function getUserDataFromPublic(username: string): Promise<OsuUser | null> 
         });
 
         if (!searchResponse.ok) {
-            console.log(`Public method failed with status: ${searchResponse.status}`);
+            // console.log(`Public method failed with status: ${searchResponse.status}`);
             return null;
         }
 
         const finalUrl = searchResponse.url;
-        console.log(`Public method final URL: ${finalUrl}`);
+        // console.log(`Public method final URL: ${finalUrl}`);
 
         const html = await searchResponse.text();
 
@@ -149,7 +149,7 @@ async function getUserDataFromPublic(username: string): Promise<OsuUser | null> 
         // 如果无法解析JSON，尝试从URL中提取用户ID
         const userIdMatch = finalUrl.match(/\/users\/(\d+)/);
         if (userIdMatch && userIdMatch[1]) {
-            console.log(`Found user ID from URL: ${userIdMatch[1]}`);
+            // console.log(`Found user ID from URL: ${userIdMatch[1]}`);
             // 返回基本用户信息
             return {
                 id: parseInt(userIdMatch[1]),
@@ -188,25 +188,25 @@ export async function GET(request: NextRequest) {
         );
     }
 
-    console.log(`Fetching osu! user data for: ${username}`);
+    // console.log(`Fetching osu! user data for: ${username}`);
 
     try {
         // 首先尝试使用官方API
         let userData = await getUserDataFromAPI(username);
-        console.log(`Official API result for ${username}:`, userData ? 'Success' : 'Failed');
+        // console.log(`Official API result for ${username}:`, userData ? 'Success' : 'Failed');
 
         // 如果官方API失败，尝试公开方法
         if (!userData) {
-            console.log('Trying public method...');
+            // console.log('Trying public method...');
             userData = await getUserDataFromPublic(username);
-            console.log(`Public method result for ${username}:`, userData ? 'Success' : 'Failed');
+            // console.log(`Public method result for ${username}:`, userData ? 'Success' : 'Failed');
         }
 
         if (userData) {
-            console.log(`Successfully fetched data for ${username}`);
+            // console.log(`Successfully fetched data for ${username}`);
             return NextResponse.json(userData);
         } else {
-            console.log(`Failed to fetch data for ${username} using both methods`);
+            // console.log(`Failed to fetch data for ${username} using both methods`);
             return NextResponse.json(
                 { error: '无法获取玩家数据，请检查用户名是否正确' },
                 { status: 404 }
