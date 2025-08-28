@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { addRegistration } from '@/lib/registrations';
 
 export interface TournamentRegistration {
     osuId: string;
@@ -96,6 +97,26 @@ export async function POST(request: NextRequest) {
                 { error: 'Failed to save registration to Edge Config' },
                 { status: 500 }
             );
+        }
+
+        // 同时保存到 Blob Store
+        try {
+            await addRegistration({
+                osuId: newRegistration.osuId,
+                username: newRegistration.username,
+                inGameName: newRegistration.username,
+                discord: "",
+                timezone: "UTC+8",
+                availability: "",
+                avatar_url: newRegistration.avatar_url,
+                pp: newRegistration.pp,
+                global_rank: newRegistration.global_rank,
+                country_rank: newRegistration.country_rank,
+            });
+            console.log('Registration also saved to Blob Store');
+        } catch (blobError) {
+            console.error('Error saving to Blob Store:', blobError);
+            // 不中断主流程，仅记录错误
         }
 
         return NextResponse.json({
