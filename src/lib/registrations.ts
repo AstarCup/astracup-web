@@ -1,21 +1,91 @@
-// 临时解决方案：在Vercel环境中禁用文件系统注册存储
-// 使用内存存储代替，实际部署时应使用数据库
+// 使用 Vercel Blob Store 进行持久化存储
+import { put, list } from '@vercel/blob';
 
-let memoryRegistrations: any[] = [];
+const BLOB_STORE_KEY = 'users/registrations.json';
+const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
 
-// 模拟文件系统操作的内存实现
-const memoryStorage = {
-    getRegistrations: (): any[] => {
-        return memoryRegistrations;
+// Blob Store 存储实现
+const blobStorage = {
+    getRegistrations: async (): Promise<any[]> => {
+        if (!BLOB_TOKEN) {
+            console.warn('BLOB_READ_WRITE_TOKEN not configured, using empty array');
+            return [];
+        }
+
+        try {
+            // 列出所有blob并查找我们的注册数据blob
+            console.log('Listing blobs with prefix: users/');
+            const { blobs } = await list({
+                token: BLOB_TOKEN,
+                prefix: 'users/'
+            });
+
+            console.log('Found blobs:', blobs.map(b => b.pathname));
+
+            const registrationBlob = blobs.find(blob => blob.pathname === BLOB_STORE_KEY);
+
+            if (!registrationBlob) {
+                // Blob 不存在，返回空数组
+                console.log('No registration blob found, returning empty array');
+                return [];
+            }
+
+            // 获取blob内容
+            console.log('Fetching registration blob from:', registrationBlob.url);
+            const response = await fetch(registrationBlob.url);
+            if (!response.ok) {
+                throw new Error(`Blob fetch failed: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('Retrieved registrations:', data.length, 'records');
+            return data;
+        } catch (error) {
+            console.error('Error reading from blob store:', error);
+            return [];
+        }
     },
 
-    addRegistration: (registration: any): void => {
-        // 检查是否已存在
-        if (!memoryRegistrations.some(reg => reg.osuId === registration.osuId)) {
-            memoryRegistrations.push({
-                ...registration,
-                registeredAt: new Date().toISOString(),
+    addRegistration: async (registration: any): Promise<void> => {
+        if (!BLOB_TOKEN) {
+            throw new Error('BLOB_READ_WRITE_TOKEN not configured');
+        }
+
+        try {
+            const registrations = await blobStorage.getRegistrations();
+
+            // 检查是否已存在
+            const existingIndex = registrations.findIndex(reg => reg.osuId === registration.osuId);
+
+            if (existingIndex === -1) {
+                // 新用户注册
+                const newRegistration = {
+                    ...registration,
+                    registeredAt: new Date().toISOString(),
+                };
+                registrations.push(newRegistration);
+            } else {
+                // 更新现有用户信息
+                registrations[existingIndex] = {
+                    ...registrations[existingIndex],
+                    ...registration,
+                    registeredAt: registrations[existingIndex].registeredAt, // 保持原有注册时间
+                };
+            }
+
+            // 更新 Blob Store - 使用正确的SDK方法
+            console.log('Saving registrations to blob store:', registrations.length, 'records');
+            const result = await put(BLOB_STORE_KEY, JSON.stringify(registrations), {
+                access: 'public',
+                addRandomSuffix: false,
+                token: BLOB_TOKEN,
+                contentType: 'application/json',
+                allowOverwrite: true, // 允许覆盖现有文件
             });
+            console.log('Blob saved successfully:', result.url);
+        } catch (error) {
+            console.error('Error writing to blob store:', error);
+            throw error;
         }
     }
 };
@@ -35,9 +105,9 @@ export interface Registration {
 }
 
 // 读取所有注册信息
-export function getRegistrations(): Registration[] {
+export async function getRegistrations(): Promise<Registration[]> {
     try {
-        return memoryStorage.getRegistrations();
+        return await blobStorage.getRegistrations();
     } catch (error) {
         console.error('Error reading registrations:', error);
         return [];
@@ -45,15 +115,15 @@ export function getRegistrations(): Registration[] {
 }
 
 // 检查用户是否已注册
-export function isUserRegistered(osuId: string): boolean {
-    const registrations = getRegistrations();
+export async function isUserRegistered(osuId: string): Promise<boolean> {
+    const registrations = await getRegistrations();
     return registrations.some(reg => reg.osuId === osuId);
 }
 
 // 添加新注册
-export function addRegistration(registration: Omit<Registration, 'registeredAt'>): void {
+export async function addRegistration(registration: Omit<Registration, 'registeredAt'>): Promise<void> {
     try {
-        memoryStorage.addRegistration(registration);
+        await blobStorage.addRegistration(registration);
     } catch (error) {
         console.error('Error adding registration:', error);
         throw new Error('Failed to save registration');
@@ -61,12 +131,13 @@ export function addRegistration(registration: Omit<Registration, 'registeredAt'>
 }
 
 // 获取用户注册信息
-export function getUserRegistration(osuId: string): Registration | null {
-    const registrations = getRegistrations();
+export async function getUserRegistration(osuId: string): Promise<Registration | null> {
+    const registrations = await getRegistrations();
     return registrations.find(reg => reg.osuId === osuId) || null;
 }
 
 // 获取所有注册用户数量
-export function getRegistrationCount(): number {
-    return getRegistrations().length;
+export async function getRegistrationCount(): Promise<number> {
+    const registrations = await getRegistrations();
+    return registrations.length;
 }

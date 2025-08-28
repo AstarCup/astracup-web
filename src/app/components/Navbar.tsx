@@ -16,6 +16,7 @@ export default function Navbar() {
         { name: '赛事手册', href: `/${siteConfig.nowSeason}/guide` },
         { name: '赛程安排', href: `/${siteConfig.nowSeason}/schedule` },
         { name: '图池', href: `/${siteConfig.nowSeason}/mapool` },
+        { name: '报名玩家', href: '/registrations' },
         { name: '联系我们', href: '/contact' },
         { name: '荣誉', href: `/${siteConfig.nowSeason}/photos` }
     ];

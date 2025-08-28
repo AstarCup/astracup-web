@@ -25,14 +25,14 @@ export async function GET(request: NextRequest) {
         const userInfo = await getOsuUserInfo(access_token);
 
         // 检查是否已注册
-        const isRegistered = isUserRegistered(userInfo.id.toString());
+        const isRegistered = await isUserRegistered(userInfo.id.toString());
 
         if (isRegistered) {
             return NextResponse.redirect(new URL('/register?error=already_registered', request.url));
         }
 
-        // 存储注册信息（这里简化处理，实际应该使用数据库会话）
-        addRegistration({
+        // 存储注册信息到 Blob Store
+        await addRegistration({
             osuId: userInfo.id.toString(),
             username: userInfo.username,
             inGameName: userInfo.username,
