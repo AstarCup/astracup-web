@@ -63,6 +63,7 @@ const blobStorage = {
                     addRandomSuffix: false,
                     token: BLOB_TOKEN,
                     contentType: 'application/json',
+                    allowOverwrite: true, // 允许覆盖现有文件
                 });
             }
         } catch (error) {
