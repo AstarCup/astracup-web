@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOsuToken, getOsuUserInfo } from '@/lib/osu-auth';
 import { addRegistration, isUserRegistered } from '@/lib/registrations';
-import { setUserSession } from '@/lib/session';
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
@@ -29,13 +28,19 @@ export async function GET(request: NextRequest) {
 
         if (isRegistered) {
             // 已注册用户，设置会话并重定向到首页
-            await setUserSession({
-                osuId: userInfo.id.toString(),
-                username: userInfo.username,
-                avatar_url: userInfo.avatar_url,
-                pp: userInfo.statistics?.pp || 0,
-                global_rank: userInfo.statistics?.global_rank || null,
-                country_rank: userInfo.statistics?.country_rank || null,
+            await fetch('/api/session/set', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    osuId: userInfo.id.toString(),
+                    username: userInfo.username,
+                    avatar_url: userInfo.avatar_url,
+                    pp: userInfo.statistics?.pp || 0,
+                    global_rank: userInfo.statistics?.global_rank || null,
+                    country_rank: userInfo.statistics?.country_rank || null,
+                })
             });
             return NextResponse.redirect(new URL('/', request.url));
         }
@@ -54,13 +59,19 @@ export async function GET(request: NextRequest) {
         });
 
         // 设置用户会话
-        await setUserSession({
-            osuId: userInfo.id.toString(),
-            username: userInfo.username,
-            avatar_url: userInfo.avatar_url,
-            pp: userInfo.statistics?.pp || 0,
-            global_rank: userInfo.statistics?.global_rank || null,
-            country_rank: userInfo.statistics?.country_rank || null,
+        await fetch('/api/session/set', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                osuId: userInfo.id.toString(),
+                username: userInfo.username,
+                avatar_url: userInfo.avatar_url,
+                pp: userInfo.statistics?.pp || 0,
+                global_rank: userInfo.statistics?.global_rank || null,
+                country_rank: userInfo.statistics?.country_rank || null,
+            })
         });
 
         // 重定向到首页（已登录状态）

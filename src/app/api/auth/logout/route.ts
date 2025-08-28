@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
-import { clearUserSession } from '@/lib/session';
 
 export async function POST() {
     try {
-        await clearUserSession();
+        // 清除会话通过API调用
+        await fetch('/api/session/clear', {
+            method: 'POST'
+        });
 
         return NextResponse.json({
             success: true,

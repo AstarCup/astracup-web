@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { isAdminUser } from "@/lib/session";
+import { isAdminUser, UserSession } from "@/lib/session";
 
 export default function DebugPage() {
     const router = useRouter();

@@ -1,6 +1,4 @@
-// 简单的会话管理（使用cookie）
-import { cookies } from 'next/headers';
-
+// 会话管理接口定义
 export interface UserSession {
     osuId: string;
     username: string;
@@ -15,34 +13,5 @@ export function isAdminUser(session: UserSession | null): boolean {
     return session?.username === 'AeCw';
 }
 
-const SESSION_COOKIE_NAME = 'astra_session';
-
-export async function setUserSession(session: UserSession) {
-    const cookieStore = await cookies();
-    cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify(session), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 30 * 24 * 60 * 60, // 30 days
-        path: '/',
-    });
-}
-
-export async function getUserSession(): Promise<UserSession | null> {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
-
-    if (!sessionCookie?.value) {
-        return null;
-    }
-
-    try {
-        return JSON.parse(sessionCookie.value);
-    } catch {
-        return null;
-    }
-}
-
-export async function clearUserSession() {
-    const cookieStore = await cookies();
-    cookieStore.delete(SESSION_COOKIE_NAME);
-}
+// 这些函数现在通过API端点实现，避免在lib目录中使用next/headers
+// 实际的会话管理在 /app/api/session/ 下的API端点中处理

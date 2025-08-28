@@ -4,8 +4,6 @@ import Image from 'next/image';
 import type { Metadata } from "next";
 import UserProfile from './components/UserProfile';
 import RegistrationButton from './components/RegistrationButton';
-import { getUserSession } from '@/lib/session';
-import { isUserRegistered } from '@/lib/edge-registrations';
 
 export const metadata: Metadata = {
   title: "AstraCup 星域杯",
@@ -13,7 +11,18 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const user = await getUserSession();
+  // 通过API获取用户会话
+  let user = null;
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/session/get`, {
+      cache: 'no-store'
+    });
+    const data = await response.json();
+    user = data.session;
+  } catch (error) {
+    console.error('Failed to fetch user session:', error);
+  }
+
   return (
     <div className="flex flex-col m-10 items-center justify-center min-h-screen">
       <Image
