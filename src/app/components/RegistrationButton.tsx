@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { UserSession } from "@/lib/session";
 import RegistrationModal from "./RegistrationModal";
-import { addRegistration, isUserRegistered } from "@/lib/edge-registrations";
+import { addRegistration } from "@/lib/edge-registrations";
+import { isUserRegistered } from "@/lib/registrations";
 
 interface RegistrationButtonProps {
     user: UserSession;
