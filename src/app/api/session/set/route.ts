@@ -21,14 +21,18 @@ export async function POST(request: NextRequest) {
             cookieOptions.domain = '.rino.ink'; // 允许所有子域名访问
         }
 
-        cookieStore.set('astra_session', JSON.stringify(session), cookieOptions);
-
-        console.log('Session stored in cookie');
-
-        return NextResponse.json({
+        // 在响应头中设置cookie
+        const response = NextResponse.json({
             success: true,
             message: 'Session stored successfully'
         });
+
+        // 手动设置cookie到响应头
+        response.cookies.set('astra_session', JSON.stringify(session), cookieOptions);
+
+        console.log('Session stored in cookie');
+
+        return response;
     } catch (error) {
         console.error('Error storing session:', error);
 
