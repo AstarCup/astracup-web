@@ -19,8 +19,10 @@ export async function GET() {
             message: 'Blob Store 连接测试'
         };
 
-        // 测试写入
-        const blob = await put('debug/test-data.json', JSON.stringify(testData), {
+        // 测试写入 - 使用时间戳确保文件名唯一
+        const timestamp = Date.now();
+        const testFileName = `debug/test-data-${timestamp}.json`;
+        const blob = await put(testFileName, JSON.stringify(testData), {
             access: 'public',
             addRandomSuffix: false,
             token: BLOB_TOKEN,
@@ -29,7 +31,7 @@ export async function GET() {
 
         // 测试读取
         const { blobs } = await list({ token: BLOB_TOKEN });
-        const testBlob = blobs.find(b => b.pathname === 'debug/test-data.json');
+        const testBlob = blobs.find(b => b.pathname === testFileName);
 
         // 测试读取注册数据
         const { blobs: userBlobs } = await list({
