@@ -8,8 +8,8 @@ export async function POST(request: NextRequest) {
 
         // 设置会话cookie，有效期30天
         cookieStore.set('astra_session', JSON.stringify(session), {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            httpOnly: false, // 允许JavaScript访问
+            secure: false, // 开发环境不使用HTTPS
             sameSite: 'lax',
             maxAge: 60 * 60 * 24 * 30, // 30 days
             path: '/',
