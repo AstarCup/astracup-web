@@ -27,30 +27,31 @@ export async function GET(request: NextRequest) {
         const isRegistered = await isUserRegistered(userInfo.id.toString());
 
         if (isRegistered) {
-            // 已注册用户，设置会话并重定向到首页
-            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || request.nextUrl.origin;
-            const sessionResponse = await fetch(`${baseUrl}/api/session/set`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    osuId: userInfo.id.toString(),
-                    username: userInfo.username,
-                    avatar_url: userInfo.avatar_url,
-                    pp: userInfo.statistics?.pp || 0,
-                    global_rank: userInfo.statistics?.global_rank || null,
-                    country_rank: userInfo.statistics?.country_rank || null,
-                })
-            });
-
-            // 获取会话设置的cookie并设置到重定向响应中
-            const sessionCookie = sessionResponse.headers.get('set-cookie');
+            // 已注册用户，直接设置会话cookie并重定向到首页
             const redirectResponse = NextResponse.redirect(new URL('/', request.url));
 
-            if (sessionCookie) {
-                redirectResponse.headers.set('Set-Cookie', sessionCookie);
+            // 设置会话cookie
+            const isProduction = process.env.NODE_ENV === 'production';
+            const cookieOptions: any = {
+                httpOnly: false,
+                secure: isProduction,
+                sameSite: isProduction ? 'none' : 'lax',
+                maxAge: 60 * 60 * 24 * 30, // 30 days
+                path: '/',
+            };
+
+            if (isProduction) {
+                cookieOptions.domain = '.rino.ink';
             }
+
+            redirectResponse.cookies.set('astra_session', JSON.stringify({
+                osuId: userInfo.id.toString(),
+                username: userInfo.username,
+                avatar_url: userInfo.avatar_url,
+                pp: userInfo.statistics?.pp || 0,
+                global_rank: userInfo.statistics?.global_rank || null,
+                country_rank: userInfo.statistics?.country_rank || null,
+            }), cookieOptions);
 
             return redirectResponse;
         }
@@ -68,30 +69,31 @@ export async function GET(request: NextRequest) {
             country_rank: userInfo.statistics?.country_rank || null,
         });
 
-        // 设置用户会话
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || request.nextUrl.origin;
-        const sessionResponse = await fetch(`${baseUrl}/api/session/set`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                osuId: userInfo.id.toString(),
-                username: userInfo.username,
-                avatar_url: userInfo.avatar_url,
-                pp: userInfo.statistics?.pp || 0,
-                global_rank: userInfo.statistics?.global_rank || null,
-                country_rank: userInfo.statistics?.country_rank || null,
-            })
-        });
-
-        // 获取会话设置的cookie并设置到重定向响应中
-        const sessionCookie = sessionResponse.headers.get('set-cookie');
+        // 设置用户会话cookie并重定向到首页
         const redirectResponse = NextResponse.redirect(new URL('/', request.url));
 
-        if (sessionCookie) {
-            redirectResponse.headers.set('Set-Cookie', sessionCookie);
+        // 设置会话cookie
+        const isProduction = process.env.NODE_ENV === 'production';
+        const cookieOptions: any = {
+            httpOnly: false,
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
+            maxAge: 60 * 60 * 24 * 30, // 30 days
+            path: '/',
+        };
+
+        if (isProduction) {
+            cookieOptions.domain = '.rino.ink';
         }
+
+        redirectResponse.cookies.set('astra_session', JSON.stringify({
+            osuId: userInfo.id.toString(),
+            username: userInfo.username,
+            avatar_url: userInfo.avatar_url,
+            pp: userInfo.statistics?.pp || 0,
+            global_rank: userInfo.statistics?.global_rank || null,
+            country_rank: userInfo.statistics?.country_rank || null,
+        }), cookieOptions);
 
         return redirectResponse;
 
