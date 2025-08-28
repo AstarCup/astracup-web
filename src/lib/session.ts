@@ -10,6 +10,11 @@ export interface UserSession {
     country_rank: number | null;
 }
 
+// 检查用户是否为管理员（AeCw）
+export function isAdminUser(session: UserSession | null): boolean {
+    return session?.username === 'AeCw';
+}
+
 const SESSION_COOKIE_NAME = 'astra_session';
 
 export async function setUserSession(session: UserSession) {
