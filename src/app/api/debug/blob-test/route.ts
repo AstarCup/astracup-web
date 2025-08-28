@@ -31,6 +31,13 @@ export async function GET() {
         const { blobs } = await list({ token: BLOB_TOKEN });
         const testBlob = blobs.find(b => b.pathname === 'debug/test-data.json');
 
+        // 测试读取注册数据
+        const { blobs: userBlobs } = await list({
+            token: BLOB_TOKEN,
+            prefix: 'users/'
+        });
+        const registrationBlob = userBlobs.find(b => b.pathname === 'users/registrations.json');
+
         return NextResponse.json({
             success: true,
             tokenConfigured: true,
@@ -46,6 +53,15 @@ export async function GET() {
                     pathname: testBlob.pathname,
                     size: testBlob.size,
                     uploadedAt: testBlob.uploadedAt
+                } : null
+            },
+            registrationData: {
+                found: !!registrationBlob,
+                userBlobCount: userBlobs.length,
+                registrationBlob: registrationBlob ? {
+                    pathname: registrationBlob.pathname,
+                    size: registrationBlob.size,
+                    uploadedAt: registrationBlob.uploadedAt
                 } : null
             },
             testData: testData
