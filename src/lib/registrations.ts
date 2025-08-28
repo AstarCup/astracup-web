@@ -1,28 +1,23 @@
 // 使用 Vercel Blob Store 进行持久化存储
+import { put, list, del } from '@vercel/blob';
+
 const BLOB_STORE_KEY = 'astra-registrations';
-const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
 
 // Blob Store 存储实现
 const blobStorage = {
     getRegistrations: async (): Promise<any[]> => {
-        if (!BLOB_TOKEN) {
-            console.warn('BLOB_READ_WRITE_TOKEN not configured, using empty array');
-            return [];
-        }
-
         try {
-            // 从 Blob Store 获取数据
-            const response = await fetch(`https://vercel-blob.vercel.app/${BLOB_STORE_KEY}`, {
-                headers: {
-                    'Authorization': `Bearer ${BLOB_TOKEN}`,
-                },
-            });
+            // 列出所有blob并查找我们的注册数据blob
+            const { blobs } = await list();
+            const registrationBlob = blobs.find(blob => blob.pathname === BLOB_STORE_KEY);
 
-            if (response.status === 404) {
+            if (!registrationBlob) {
                 // Blob 不存在，返回空数组
                 return [];
             }
 
+            // 获取blob内容
+            const response = await fetch(registrationBlob.url);
             if (!response.ok) {
                 throw new Error(`Blob fetch failed: ${response.status} ${response.statusText}`);
             }
@@ -36,10 +31,6 @@ const blobStorage = {
     },
 
     addRegistration: async (registration: any): Promise<void> => {
-        if (!BLOB_TOKEN) {
-            throw new Error('BLOB_READ_WRITE_TOKEN not configured');
-        }
-
         try {
             const registrations = await blobStorage.getRegistrations();
 
@@ -52,19 +43,11 @@ const blobStorage = {
 
                 registrations.push(newRegistration);
 
-                // 更新 Blob Store
-                const response = await fetch(`https://vercel-blob.vercel.app/${BLOB_STORE_KEY}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${BLOB_TOKEN}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(registrations),
+                // 更新 Blob Store - 使用正确的SDK方法
+                await put(BLOB_STORE_KEY, JSON.stringify(registrations), {
+                    access: 'public',
+                    addRandomSuffix: false,
                 });
-
-                if (!response.ok) {
-                    throw new Error(`Blob update failed: ${response.status} ${response.statusText}`);
-                }
             }
         } catch (error) {
             console.error('Error writing to blob store:', error);
