@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UserSession } from "@/lib/session";
 import { TournamentRegistration } from "@/lib/edge-registrations";
-import rankConfig from '@/config/rank.json';
 
 interface RegistrationModalProps {
     user: UserSession;
@@ -17,6 +16,32 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
     const [error, setError] = useState("");
     const [agreedToTerms, setAgreedToTerms] = useState(false);
     const [showGuide, setShowGuide] = useState(false);
+    const [rankConfig, setRankConfig] = useState({
+        maxPpForRegistration: 7000,
+        minPpForRegistration: 0,
+        rankRestrictionEnabled: true
+    });
+    const [configLoading, setConfigLoading] = useState(true);
+
+    useEffect(() => {
+        // 从API获取rank配置
+        const fetchRankConfig = async () => {
+            try {
+                const response = await fetch('/api/rank-config');
+                const config = await response.json();
+                setRankConfig(config);
+            } catch (error) {
+                console.error('Failed to fetch rank config:', error);
+                // 出错时使用默认配置
+            } finally {
+                setConfigLoading(false);
+            }
+        };
+
+        if (isOpen) {
+            fetchRankConfig();
+        }
+    }, [isOpen]);
 
     const handleRegister = async () => {
         // 检查PP限制
