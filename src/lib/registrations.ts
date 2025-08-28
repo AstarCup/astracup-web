@@ -1,9 +1,8 @@
-// 临时解决方案：在Vercel环境中禁用文件系统注册存储
-// 使用内存存储代替，实际部署时应使用数据库
+// 临时内存存储解决方案
+// 实际部署时可集成 Vercel Blob Store 或数据库
 
 let memoryRegistrations: any[] = [];
 
-// 模拟文件系统操作的内存实现
 const memoryStorage = {
     getRegistrations: (): any[] => {
         return memoryRegistrations;
