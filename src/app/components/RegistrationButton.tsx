@@ -18,7 +18,9 @@ export default function RegistrationButton({ user }: RegistrationButtonProps) {
     const checkRegistrationStatus = async () => {
         try {
             // 通过 API 检查报名状态，避免客户端环境变量问题
-            const response = await fetch(`/api/check-registration?osuId=${user.osuId}`);
+            const response = await fetch(`/api/check-registration?osuId=${user.osuId}`, {
+                credentials: 'include' // 确保发送cookie
+            });
 
             if (!response.ok) {
                 throw new Error('Failed to check registration status');

@@ -14,9 +14,12 @@ export default function DebugPage() {
 
     useEffect(() => {
         // 检查用户会话和权限
-        fetch('/api/session/get')
+        fetch('/api/session/get', {
+            credentials: 'include' // 确保发送cookie
+        })
             .then(response => response.json())
             .then(data => {
+                console.log('Debug session data:', data);
                 if (data.success && data.session) {
                     setUserSession(data.session);
                     setIsAdmin(data.session.username === 'AeCw');

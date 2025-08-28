@@ -13,9 +13,12 @@ export default function Home() {
 
   useEffect(() => {
     // 客户端获取用户会话
-    fetch('/api/session/get')
+    fetch('/api/session/get', {
+      credentials: 'include' // 确保发送cookie
+    })
       .then(response => response.json())
       .then(data => {
+        console.log('Session data:', data);
         setUser(data.session);
         setLoading(false);
       })
