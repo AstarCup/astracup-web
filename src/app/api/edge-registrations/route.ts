@@ -13,28 +13,47 @@ export interface TournamentRegistration {
     registeredAt: string;
 }
 
-// 临时内存存储（实际部署时应使用Edge Config）
+// 临时内存存储（开发环境使用，生产环境应使用Edge Config）
 let memoryRegistrations: TournamentRegistration[] = [];
 
 // 获取所有报名数据
-function getRegistrations(): TournamentRegistration[] {
+async function getRegistrations(): Promise<TournamentRegistration[]> {
+    // 开发环境使用内存存储
     return memoryRegistrations;
 }
 
 // 保存报名数据
-function saveRegistration(registration: TournamentRegistration): void {
-    const existingIndex = memoryRegistrations.findIndex(reg => reg.osuId === registration.osuId);
+async function saveRegistration(registration: TournamentRegistration): Promise<boolean> {
+    try {
+        const registrations = await getRegistrations();
 
-    if (existingIndex >= 0) {
-        memoryRegistrations[existingIndex] = registration;
-    } else {
-        memoryRegistrations.push(registration);
+        // 检查是否已存在
+        const existingIndex = registrations.findIndex(reg => reg.osuId === registration.osuId);
+
+        if (existingIndex >= 0) {
+            // 更新现有报名
+            registrations[existingIndex] = registration;
+        } else {
+            // 添加新报名
+            registrations.push(registration);
+        }
+
+        // 更新内存存储
+        memoryRegistrations = registrations;
+
+        console.log('Registration saved:', registration);
+        console.log('Total registrations:', memoryRegistrations.length);
+
+        return true;
+    } catch (error) {
+        console.error('Error saving registration:', error);
+        return false;
     }
 }
 
 export async function GET() {
     try {
-        const registrations = getRegistrations();
+        const registrations = await getRegistrations();
         return NextResponse.json({ registrations });
     } catch (error) {
         console.error('Error in GET /api/edge-registrations:', error);
@@ -70,7 +89,14 @@ export async function POST(request: NextRequest) {
             registeredAt: new Date().toISOString()
         };
 
-        saveRegistration(newRegistration);
+        const success = await saveRegistration(newRegistration);
+
+        if (!success) {
+            return NextResponse.json(
+                { error: 'Failed to save registration to Edge Config' },
+                { status: 500 }
+            );
+        }
 
         return NextResponse.json({
             success: true,
