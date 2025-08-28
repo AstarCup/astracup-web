@@ -14,10 +14,13 @@ const blobStorage = {
 
         try {
             // 列出所有blob并查找我们的注册数据blob
+            console.log('Listing blobs with prefix: users/');
             const { blobs } = await list({
                 token: BLOB_TOKEN,
                 prefix: 'users/'
             });
+
+            console.log('Found blobs:', blobs.map(b => b.pathname));
 
             const registrationBlob = blobs.find(blob => blob.pathname === BLOB_STORE_KEY);
 
