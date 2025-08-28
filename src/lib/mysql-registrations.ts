@@ -18,9 +18,6 @@ const getPool = (): mysql.Pool => {
         pool = mysql.createPool({
             ...dbConfig,
             connectionLimit: 10,
-            acquireTimeout: 60000,
-            timeout: 60000,
-            reconnect: true,
         });
     }
     return pool;
