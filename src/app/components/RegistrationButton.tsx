@@ -69,13 +69,8 @@ export default function RegistrationButton({ user }: RegistrationButtonProps) {
                 <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-3 rounded-md mb-4">
                     <p className="text-lg font-semibold">✅ 您已成功报名！</p>
                     <p className="text-sm">感谢您报名参加 AstraCup 比赛</p>
+                    <p>此处有张女装照</p>
                 </div>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="text-lg px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-                >
-                    刷新页面
-                </button>
             </div>
         );
     }
