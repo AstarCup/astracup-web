@@ -1,27 +1,29 @@
 
+"use client";
+
+import { useEffect, useState } from "react";
 import Countdown from './components/Cutdown';
 import Image from 'next/image';
-import type { Metadata } from "next";
 import UserProfile from './components/UserProfile';
 import RegistrationButton from './components/RegistrationButton';
 
-export const metadata: Metadata = {
-  title: "AstraCup 星域杯",
-  description: "欢迎参加 AstraCup，这是一场专为广大 osu!lazer std 玩家 打造的线上赛事。",
-};
+export default function Home() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-export default async function Home() {
-  // 通过API获取用户会话
-  let user = null;
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/session/get`, {
-      cache: 'no-store'
-    });
-    const data = await response.json();
-    user = data.session;
-  } catch (error) {
-    console.error('Failed to fetch user session:', error);
-  }
+  useEffect(() => {
+    // 客户端获取用户会话
+    fetch('/api/session/get')
+      .then(response => response.json())
+      .then(data => {
+        setUser(data.session);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Failed to fetch user session:', error);
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <div className="flex flex-col m-10 items-center justify-center min-h-screen">
