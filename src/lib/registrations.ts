@@ -23,16 +23,19 @@ const blobStorage = {
 
             if (!registrationBlob) {
                 // Blob 不存在，返回空数组
+                console.log('No registration blob found, returning empty array');
                 return [];
             }
 
             // 获取blob内容
+            console.log('Fetching registration blob from:', registrationBlob.url);
             const response = await fetch(registrationBlob.url);
             if (!response.ok) {
                 throw new Error(`Blob fetch failed: ${response.status} ${response.statusText}`);
             }
 
             const data = await response.json();
+            console.log('Retrieved registrations:', data.length, 'records');
             return data;
         } catch (error) {
             console.error('Error reading from blob store:', error);
@@ -49,23 +52,34 @@ const blobStorage = {
             const registrations = await blobStorage.getRegistrations();
 
             // 检查是否已存在
-            if (!registrations.some(reg => reg.osuId === registration.osuId)) {
+            const existingIndex = registrations.findIndex(reg => reg.osuId === registration.osuId);
+
+            if (existingIndex === -1) {
+                // 新用户注册
                 const newRegistration = {
                     ...registration,
                     registeredAt: new Date().toISOString(),
                 };
-
                 registrations.push(newRegistration);
-
-                // 更新 Blob Store - 使用正确的SDK方法
-                await put(BLOB_STORE_KEY, JSON.stringify(registrations), {
-                    access: 'public',
-                    addRandomSuffix: false,
-                    token: BLOB_TOKEN,
-                    contentType: 'application/json',
-                    allowOverwrite: true, // 允许覆盖现有文件
-                });
+            } else {
+                // 更新现有用户信息
+                registrations[existingIndex] = {
+                    ...registrations[existingIndex],
+                    ...registration,
+                    registeredAt: registrations[existingIndex].registeredAt, // 保持原有注册时间
+                };
             }
+
+            // 更新 Blob Store - 使用正确的SDK方法
+            console.log('Saving registrations to blob store:', registrations.length, 'records');
+            const result = await put(BLOB_STORE_KEY, JSON.stringify(registrations), {
+                access: 'public',
+                addRandomSuffix: false,
+                token: BLOB_TOKEN,
+                contentType: 'application/json',
+                allowOverwrite: true, // 允许覆盖现有文件
+            });
+            console.log('Blob saved successfully:', result.url);
         } catch (error) {
             console.error('Error writing to blob store:', error);
             throw error;
