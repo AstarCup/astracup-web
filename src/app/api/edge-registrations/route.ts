@@ -19,8 +19,34 @@ let memoryRegistrations: TournamentRegistration[] = [];
 
 // 获取所有报名数据
 async function getRegistrations(): Promise<TournamentRegistration[]> {
-    // 开发环境使用内存存储
-    return memoryRegistrations;
+    try {
+        // 优先从 Blob Store 获取数据
+        const { getRegistrations: getBlobRegistrations } = await import('@/lib/registrations');
+        const blobRegistrations = await getBlobRegistrations();
+
+        if (blobRegistrations.length > 0) {
+            // 转换 Blob Store 数据格式
+            return blobRegistrations.map(reg => ({
+                osuId: reg.osuId,
+                username: reg.username,
+                avatar_url: reg.avatar_url,
+                pp: reg.pp,
+                global_rank: reg.global_rank,
+                country_rank: reg.country_rank,
+                teamName: reg.inGameName || reg.username,
+                seedPosition: null,
+                agreedToTerms: true,
+                registeredAt: reg.registeredAt
+            }));
+        }
+
+        // 如果没有 Blob 数据，使用内存存储
+        return memoryRegistrations;
+    } catch (error) {
+        console.error('Error getting registrations from Blob Store:', error);
+        // 出错时使用内存存储
+        return memoryRegistrations;
+    }
 }
 
 // 保存报名数据
