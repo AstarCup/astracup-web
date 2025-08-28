@@ -17,9 +17,9 @@ export default function DebugPage() {
         fetch('/api/session/get')
             .then(response => response.json())
             .then(data => {
-                if (data.session) {
+                if (data.success && data.session) {
                     setUserSession(data.session);
-                    setIsAdmin(isAdminUser(data.session));
+                    setIsAdmin(data.session.username === 'AeCw');
                 } else {
                     // 未登录，重定向到首页
                     router.push('/');
