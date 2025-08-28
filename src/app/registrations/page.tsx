@@ -125,7 +125,7 @@ export default function RegistrationsPage() {
                                         </div>
                                         {player.country_rank && (
                                             <div className="col-span-2">
-                                                <span className="text-gray-600">国家排名: </span>
+                                                <span className="text-gray-600">地区排名: </span>
                                                 <span className="font-semibold">{formatRank(player.country_rank)}</span>
                                             </div>
                                         )}

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { UserSession } from "@/lib/session";
 import RegistrationModal from "./RegistrationModal";
 import { addRegistration } from "@/lib/edge-registrations";
-import { isUserRegistered } from "@/lib/registrations";
 
 interface RegistrationButtonProps {
     user: UserSession;
@@ -18,9 +17,16 @@ export default function RegistrationButton({ user }: RegistrationButtonProps) {
     // 检查用户是否已报名
     const checkRegistrationStatus = async () => {
         try {
-            const registered = await isUserRegistered(user.osuId);
-            console.log('Registration status for user', user.osuId, ':', registered);
-            setIsRegistered(registered);
+            // 通过 API 检查报名状态，避免客户端环境变量问题
+            const response = await fetch(`/api/check-registration?osuId=${user.osuId}`);
+
+            if (!response.ok) {
+                throw new Error('Failed to check registration status');
+            }
+
+            const data = await response.json();
+            console.log('Registration status for user', user.osuId, ':', data.registered);
+            setIsRegistered(data.registered);
         } catch (error) {
             console.error('Error checking registration status:', error);
         } finally {
