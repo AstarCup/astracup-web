@@ -98,7 +98,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                                 </div>
                                 {user.country_rank && (
                                     <div>
-                                        <span className="text-gray-600">国家排名: </span>
+                                        <span className="text-gray-600">地区排名: </span>
                                         <span className="font-medium">#{user.country_rank.toLocaleString()}</span>
                                     </div>
                                 )}
@@ -145,7 +145,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                                 </div>
                             ) : (
                                 <p className="text-sm text-gray-600">
-                                    请仔细阅读比赛规则和报名要求，确保您了解所有相关规定。
+                                    请仔细阅读比赛规则和报名要求，并添加QQ群:1072271422。
                                 </p>
                             )}
                         </div>
@@ -160,7 +160,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                                 className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                             />
                             <label htmlFor="agree-terms" className="text-sm text-gray-700">
-                                我已阅读并同意上述报名手册中的所有条款和条件，并承诺遵守比赛规则。
+                                我已阅读了解比赛手册内容，并承诺遵守比赛规则。
                             </label>
                         </div>
                     </div>
