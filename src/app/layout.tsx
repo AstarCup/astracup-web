@@ -2,6 +2,15 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import localFont from "next/font/local";
+import { Metadata } from "next";
+
+const metadata: Metadata = {
+  title: "AstraCup 星域杯",
+  description: "AstraCup 是一场专为广大 osu!lazer std 玩家 打造的线上赛事。",
+  icons: {
+    icon: "/favicon.ico",
+  },
+}
 
 import "./globals.css";
 import Navbar from '@/app/components/Navbar';

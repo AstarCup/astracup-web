@@ -1,0 +1,5 @@
+{
+    "maxPpForRegistration": 7000,
+    "minPpForRegistration": 0,
+    "rankRestrictionEnabled": true
+}

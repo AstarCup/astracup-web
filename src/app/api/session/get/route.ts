@@ -1,30 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
 export async function GET(request: NextRequest) {
     try {
-        const { searchParams } = new URL(request.url);
-        const sessionId = searchParams.get('sessionId');
+        const cookieStore = await cookies();
+        const sessionCookie = cookieStore.get('astra_session');
 
-        if (!sessionId) {
+        if (!sessionCookie?.value) {
+            console.log('No session cookie found');
             return NextResponse.json({
-                success: false,
-                error: 'Session ID is required'
-            }, { status: 400 });
+                success: true,
+                session: null
+            });
         }
 
-        // 这里应该调用 Vercel Edge Config API 来获取会话
-        // 实际部署时需要配置 Edge Config Store
+        console.log('Session cookie found:', sessionCookie.value);
 
-        console.log('Retrieving session from Edge Config:', sessionId);
-
-        // 模拟返回数据 - 实际应该从 Edge Config 获取
-        return NextResponse.json({
-            success: true,
-            session: null // 实际应该返回存储的会话数据
-        });
+        try {
+            const session = JSON.parse(sessionCookie.value);
+            console.log('Retrieved session from cookie:', session);
+            return NextResponse.json({
+                success: true,
+                session: session
+            });
+        } catch (parseError) {
+            console.error('Error parsing session cookie:', parseError, 'Cookie value:', sessionCookie.value);
+            return NextResponse.json({
+                success: true,
+                session: null
+            });
+        }
     } catch (error) {
         console.error('Error retrieving session:', error);
-
         return NextResponse.json({
             success: false,
             error: 'Failed to retrieve session'

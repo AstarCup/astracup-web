@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { UserSession } from "@/lib/session";
 import { TournamentRegistration } from "@/lib/edge-registrations";
+import rankConfig from '@/config/rank.json';
 
 interface RegistrationModalProps {
     user: UserSession;
@@ -18,6 +19,12 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
     const [showGuide, setShowGuide] = useState(false);
 
     const handleRegister = async () => {
+        // 检查PP限制
+        if (rankConfig.rankRestrictionEnabled && user.pp > rankConfig.maxPpForRegistration) {
+            setError(`您的PP值超过了${rankConfig.maxPpForRegistration}点的报名限制，无法报名`);
+            return;
+        }
+
         if (!agreedToTerms) {
             setError("请先阅读并同意报名手册");
             return;
@@ -57,6 +64,9 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
 
     if (!isOpen) return null;
 
+    // 检查PP限制
+    const isPpTooHigh = rankConfig.rankRestrictionEnabled && user.pp > rankConfig.maxPpForRegistration;
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -70,6 +80,25 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                             ×
                         </button>
                     </div>
+
+                    {isPpTooHigh && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
+                            <div className="flex">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div className="ml-3">
+                                    <h3 className="text-sm font-medium text-yellow-800">报名限制</h3>
+                                    <div className="mt-2 text-sm text-yellow-700">
+                                        <p>很抱歉，您的PP值 ({Math.round(user.pp)}) 超过了{rankConfig.maxPpForRegistration}点的报名限制。</p>
+                                        <p className="mt-1">本次比赛面向PP值在{rankConfig.maxPpForRegistration}点以下的玩家，感谢您的理解。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {error && (
                         <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
@@ -98,7 +127,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                                 </div>
                                 {user.country_rank && (
                                     <div>
-                                        <span className="text-gray-600">国家排名: </span>
+                                        <span className="text-gray-600">地区排名: </span>
                                         <span className="font-medium">#{user.country_rank.toLocaleString()}</span>
                                     </div>
                                 )}
@@ -145,7 +174,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                                 </div>
                             ) : (
                                 <p className="text-sm text-gray-600">
-                                    请仔细阅读比赛规则和报名要求，确保您了解所有相关规定。
+                                    请仔细阅读比赛规则和报名要求，并添加QQ群:1072271422。
                                 </p>
                             )}
                         </div>
@@ -160,7 +189,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                                 className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                             />
                             <label htmlFor="agree-terms" className="text-sm text-gray-700">
-                                我已阅读并同意上述报名手册中的所有条款和条件，并承诺遵守比赛规则。
+                                我已阅读了解比赛手册内容，并承诺遵守比赛规则。
                             </label>
                         </div>
                     </div>
@@ -175,7 +204,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                         </button>
                         <button
                             onClick={handleRegister}
-                            disabled={isLoading || !agreedToTerms}
+                            disabled={isLoading || !agreedToTerms || isPpTooHigh}
                             className="px-6 py-2 bg-[#F38181] text-white rounded-md hover:bg-[#95E1D3] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? "报名中..." : "确认报名"}

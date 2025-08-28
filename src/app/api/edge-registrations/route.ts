@@ -20,13 +20,13 @@ let memoryRegistrations: TournamentRegistration[] = [];
 // 获取所有报名数据
 async function getRegistrations(): Promise<TournamentRegistration[]> {
     try {
-        // 优先从 Blob Store 获取数据
-        const { getRegistrations: getBlobRegistrations } = await import('@/lib/registrations');
-        const blobRegistrations = await getBlobRegistrations();
+        // 优先从数据库获取数据
+        const { getRegistrations: getDBRegistrations } = await import('@/lib/registrations');
+        const dbRegistrations = await getDBRegistrations();
 
-        if (blobRegistrations.length > 0) {
-            // 转换 Blob Store 数据格式
-            return blobRegistrations.map(reg => ({
+        if (dbRegistrations.length > 0) {
+            // 转换数据库数据格式
+            return dbRegistrations.map(reg => ({
                 osuId: reg.osuId,
                 username: reg.username,
                 avatar_url: reg.avatar_url,
@@ -40,10 +40,10 @@ async function getRegistrations(): Promise<TournamentRegistration[]> {
             }));
         }
 
-        // 如果没有 Blob 数据，使用内存存储
+        // 如果没有数据库数据，使用内存存储
         return memoryRegistrations;
     } catch (error) {
-        console.error('Error getting registrations from Blob Store:', error);
+        console.error('Error getting registrations from database:', error);
         // 出错时使用内存存储
         return memoryRegistrations;
     }
@@ -125,13 +125,12 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 同时保存到 Blob Store
+        // 同时保存到数据库
         try {
             await addRegistration({
                 osuId: newRegistration.osuId,
                 username: newRegistration.username,
                 inGameName: newRegistration.username,
-                discord: "",
                 timezone: "UTC+8",
                 availability: "",
                 avatar_url: newRegistration.avatar_url,
@@ -139,9 +138,9 @@ export async function POST(request: NextRequest) {
                 global_rank: newRegistration.global_rank,
                 country_rank: newRegistration.country_rank,
             });
-            console.log('Registration also saved to Blob Store');
-        } catch (blobError) {
-            console.error('Error saving to Blob Store:', blobError);
+            console.log('Registration also saved to database');
+        } catch (dbError) {
+            console.error('Error saving to database:', dbError);
             // 不中断主流程，仅记录错误
         }
 

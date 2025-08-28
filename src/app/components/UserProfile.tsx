@@ -44,7 +44,7 @@ export default function UserProfile({ user }: UserProfileProps) {
                         </div>
                         {user.country_rank && (
                             <div className="col-span-2">
-                                <span className="text-gray-600">国家排名: </span>
+                                <span className="text-gray-600">地区排名: </span>
                                 <span className="font-semibold">{formatRank(user.country_rank)}</span>
                             </div>
                         )}
