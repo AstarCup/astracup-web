@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
         const cookieOptions: any = {
             httpOnly: false, // 允许JavaScript访问
             secure: isProduction, // 生产环境使用HTTPS
-            sameSite: 'lax',
+            sameSite: isProduction ? 'none' : 'lax', // 生产环境允许跨站
             maxAge: 60 * 60 * 24 * 30, // 30 days
             path: '/',
         };
