@@ -96,12 +96,15 @@ export default function RegistrationsPage() {
                             <div key={player.osuId} className="bg-white rounded-lg shadow-md overflow-hidden">
                                 <div className="p-6">
                                     <div className="flex items-center space-x-4 mb-4">
-                                        <Image
+                                        <img
                                             src={player.avatar_url}
                                             alt={player.username}
                                             width={64}
                                             height={64}
                                             className="rounded-full"
+                                            onError={(e) => {
+                                                e.currentTarget.src = '/default-avatar.png';
+                                            }}
                                         />
                                         <div className="flex-1 min-w-0">
                                             <h3 className="text-lg font-semibold text-gray-900 truncate">
