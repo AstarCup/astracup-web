@@ -18,6 +18,7 @@ export default function RegistrationsPage() {
             setIsLoading(true);
             // 从 Blob Store 获取注册数据
             const blobRegistrations = await getRegistrations();
+            console.log('Fetched registrations from Blob Store:', blobRegistrations);
 
             // 转换为 TournamentRegistration 格式
             const formattedRegistrations: TournamentRegistration[] = blobRegistrations.map(reg => ({
@@ -33,6 +34,7 @@ export default function RegistrationsPage() {
                 registeredAt: reg.registeredAt
             }));
 
+            console.log('Formatted registrations:', formattedRegistrations);
             setRegistrations(formattedRegistrations);
         } catch (error) {
             console.error('Error fetching registrations:', error);
