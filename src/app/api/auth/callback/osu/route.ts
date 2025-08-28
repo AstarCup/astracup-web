@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
         if (isRegistered) {
             // 已注册用户，设置会话并重定向到首页
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || request.nextUrl.origin;
-            await fetch(`${baseUrl}/api/session/set`, {
+            const sessionResponse = await fetch(`${baseUrl}/api/session/set`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -43,7 +43,16 @@ export async function GET(request: NextRequest) {
                     country_rank: userInfo.statistics?.country_rank || null,
                 })
             });
-            return NextResponse.redirect(new URL('/', request.url));
+
+            // 获取会话设置的cookie并设置到重定向响应中
+            const sessionCookie = sessionResponse.headers.get('set-cookie');
+            const redirectResponse = NextResponse.redirect(new URL('/', request.url));
+
+            if (sessionCookie) {
+                redirectResponse.headers.set('Set-Cookie', sessionCookie);
+            }
+
+            return redirectResponse;
         }
 
         // 存储注册信息到数据库
@@ -61,7 +70,7 @@ export async function GET(request: NextRequest) {
 
         // 设置用户会话
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || request.nextUrl.origin;
-        await fetch(`${baseUrl}/api/session/set`, {
+        const sessionResponse = await fetch(`${baseUrl}/api/session/set`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -76,8 +85,15 @@ export async function GET(request: NextRequest) {
             })
         });
 
-        // 重定向到首页（已登录状态）
-        return NextResponse.redirect(new URL('/', request.url));
+        // 获取会话设置的cookie并设置到重定向响应中
+        const sessionCookie = sessionResponse.headers.get('set-cookie');
+        const redirectResponse = NextResponse.redirect(new URL('/', request.url));
+
+        if (sessionCookie) {
+            redirectResponse.headers.set('Set-Cookie', sessionCookie);
+        }
+
+        return redirectResponse;
 
     } catch (error) {
         console.error('OAuth callback error details:', error);
