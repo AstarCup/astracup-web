@@ -31,12 +31,11 @@ export async function GET(request: NextRequest) {
             return NextResponse.redirect(new URL('/register?error=already_registered', request.url));
         }
 
-        // 存储注册信息到 Blob Store
+        // 存储注册信息到数据库
         await addRegistration({
             osuId: userInfo.id.toString(),
             username: userInfo.username,
             inGameName: userInfo.username,
-            discord: "",
             timezone: "UTC+8",
             availability: "",
             avatar_url: userInfo.avatar_url,
