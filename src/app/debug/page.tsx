@@ -129,7 +129,7 @@ export default function DebugPage() {
                         <button
                             onClick={async () => {
                                 try {
-                                    const response = await fetch('/api/registrations');
+                                    const response = await fetch('/api/edge-registrations');
                                     const data = await response.json();
                                     alert(`注册数据: ${JSON.stringify(data.registrations, null, 2)}`);
                                 } catch (error) {
