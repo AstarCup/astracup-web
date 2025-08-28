@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { TournamentRegistration } from "@/lib/edge-registrations";
-import { getRegistrations } from "@/lib/registrations";
 
 export default function RegistrationsPage() {
     const [registrations, setRegistrations] = useState<TournamentRegistration[]>([]);
@@ -16,26 +15,15 @@ export default function RegistrationsPage() {
     const fetchRegistrations = async () => {
         try {
             setIsLoading(true);
-            // 从 Blob Store 获取注册数据
-            const blobRegistrations = await getRegistrations();
-            console.log('Fetched registrations from Blob Store:', blobRegistrations);
+            // 通过 API 获取注册数据，避免客户端环境变量问题
+            const response = await fetch('/api/edge-registrations');
 
-            // 转换为 TournamentRegistration 格式
-            const formattedRegistrations: TournamentRegistration[] = blobRegistrations.map(reg => ({
-                osuId: reg.osuId,
-                username: reg.username,
-                avatar_url: reg.avatar_url,
-                pp: reg.pp,
-                global_rank: reg.global_rank,
-                country_rank: reg.country_rank,
-                teamName: reg.inGameName || reg.username,
-                seedPosition: null,
-                agreedToTerms: true,
-                registeredAt: reg.registeredAt
-            }));
+            if (!response.ok) {
+                throw new Error('Failed to fetch registrations');
+            }
 
-            console.log('Formatted registrations:', formattedRegistrations);
-            setRegistrations(formattedRegistrations);
+            const data = await response.json();
+            setRegistrations(data.registrations || []);
         } catch (error) {
             console.error('Error fetching registrations:', error);
             setError('获取报名数据失败');
