@@ -250,9 +250,28 @@ export default function DebugPage() {
                                     }
                                 }
                             }}
-                            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 mr-3"
                         >
                             清空注册数据
+                        </button>
+
+                        <button
+                            onClick={async () => {
+                                if (confirm('确定要升级数据库吗？这将在现有表结构上添加审核状态字段。')) {
+                                    try {
+                                        const response = await fetch('/api/debug/upgrade-database', {
+                                            method: 'POST'
+                                        });
+                                        const data = await response.json();
+                                        alert(`升级结果: ${JSON.stringify(data)}`);
+                                    } catch (error) {
+                                        alert('数据库升级失败: ' + error);
+                                    }
+                                }
+                            }}
+                            className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600"
+                        >
+                            升级数据库
                         </button>
 
                         <p className="text-sm text-green-700 mt-2">

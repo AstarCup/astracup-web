@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { approveRegistration } from '@/lib/mysql-registrations';
+import { requireAdminAuth } from '@/lib/admin-auth';
 
 export async function POST(request: NextRequest) {
     try {
+        // 验证管理员权限
+        const authResult = await requireAdminAuth(request);
+        if (!authResult.success) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: authResult.error
+                },
+                { status: 403 }
+            );
+        }
+
         const { osuId } = await request.json();
 
         if (!osuId) {
