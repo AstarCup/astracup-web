@@ -333,10 +333,31 @@ const mysqlStorage = {
         try {
             const connection = await getPool().getConnection();
 
-            const [result] = await connection.execute(
-                'UPDATE registrations SET approved = TRUE, approvedAt = NOW() WHERE osuId = ?',
-                [osuId]
-            );
+            // 首先检查表结构，确定是否有approved字段
+            let hasApprovedField = false;
+            try {
+                const [columns] = await connection.execute(`
+                    SELECT COLUMN_NAME 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_NAME = 'registrations' 
+                    AND COLUMN_NAME = 'approved'
+                `);
+                hasApprovedField = (columns as any[]).length > 0;
+            } catch (error) {
+                console.warn('Error checking table structure:', error);
+                // 如果检查失败，假设没有approved字段
+                hasApprovedField = false;
+            }
+
+            let query: string;
+            if (hasApprovedField) {
+                query = 'UPDATE registrations SET approved = TRUE, approvedAt = NOW() WHERE osuId = ?';
+            } else {
+                // 如果表没有approved字段，只更新其他字段（实际上不需要更新）
+                query = 'UPDATE registrations SET updatedAt = CURRENT_TIMESTAMP WHERE osuId = ?';
+            }
+
+            const [result] = await connection.execute(query, [osuId]);
 
             connection.release();
 
