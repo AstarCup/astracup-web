@@ -11,6 +11,8 @@ export interface TournamentRegistration {
     teamName: string;
     seedPosition: number | null;
     agreedToTerms: boolean;
+    approved: boolean;
+    approvedAt: string | null;
     registeredAt: string;
 }
 
@@ -36,6 +38,8 @@ async function getRegistrations(): Promise<TournamentRegistration[]> {
                 teamName: reg.inGameName || reg.username,
                 seedPosition: null,
                 agreedToTerms: true,
+                approved: reg.approved || false,
+                approvedAt: reg.approvedAt || null,
                 registeredAt: reg.registeredAt
             }));
         }
@@ -113,6 +117,8 @@ export async function POST(request: NextRequest) {
             teamName: body.teamName || '',
             seedPosition: body.seedPosition || null,
             agreedToTerms: body.agreedToTerms || false,
+            approved: false,
+            approvedAt: null,
             registeredAt: new Date().toISOString()
         };
 
