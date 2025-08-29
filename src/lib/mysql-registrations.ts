@@ -349,15 +349,16 @@ const mysqlStorage = {
                 hasApprovedField = false;
             }
 
-            let query: string;
-            if (hasApprovedField) {
-                query = 'UPDATE registrations SET approved = TRUE, approvedAt = NOW() WHERE osuId = ?';
-            } else {
-                // 如果表没有approved字段，只更新其他字段（实际上不需要更新）
-                query = 'UPDATE registrations SET updatedAt = CURRENT_TIMESTAMP WHERE osuId = ?';
+            if (!hasApprovedField) {
+                connection.release();
+                console.error('Cannot approve registration: approved field does not exist in database');
+                return false;
             }
 
-            const [result] = await connection.execute(query, [osuId]);
+            const [result] = await connection.execute(
+                'UPDATE registrations SET approved = TRUE, approvedAt = NOW() WHERE osuId = ?',
+                [osuId]
+            );
 
             connection.release();
 

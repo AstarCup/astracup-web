@@ -23,6 +23,7 @@ export default function RegistrationsPage() {
             }
 
             const data = await response.json();
+            console.log('Received registrations data:', data.registrations);
             setRegistrations(data.registrations || []);
         } catch (error) {
             console.error('Error fetching registrations:', error);
