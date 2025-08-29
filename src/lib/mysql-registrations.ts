@@ -28,7 +28,7 @@ export const initDatabase = async (): Promise<void> => {
     try {
         const connection = await getPool().getConnection();
 
-        // 创建注册表
+        // 创建注册表（如果不存在）
         await connection.execute(`
       CREATE TABLE IF NOT EXISTS registrations (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -52,8 +52,34 @@ export const initDatabase = async (): Promise<void> => {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+        // 检查并添加缺失的字段（表结构升级）
+        const requiredColumns = [
+            { name: 'approved', type: 'BOOLEAN DEFAULT FALSE COMMENT \'审核状态：0-待审核，1-审核通过\'' },
+            { name: 'approvedAt', type: 'DATETIME NULL COMMENT \'审核通过时间\'' }
+        ];
+
+        for (const column of requiredColumns) {
+            try {
+                // 检查字段是否存在
+                const [existingColumns] = await connection.execute(
+                    `SHOW COLUMNS FROM registrations LIKE '${column.name}'`
+                );
+
+                if ((existingColumns as any[]).length === 0) {
+                    console.log(`Adding missing column: ${column.name}`);
+                    await connection.execute(
+                        `ALTER TABLE registrations ADD COLUMN ${column.name} ${column.type}`
+                    );
+                    console.log(`✅ Column ${column.name} added successfully`);
+                }
+            } catch (columnError) {
+                console.error(`Error checking/adding column ${column.name}:`, columnError);
+                // 继续处理其他字段，不中断整个初始化过程
+            }
+        }
+
         connection.release();
-        // console.log('Database initialized successfully');
+        console.log('Database initialized and upgraded successfully');
     } catch (error) {
         console.error('Error initializing database:', error);
         throw error;
