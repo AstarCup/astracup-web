@@ -82,14 +82,43 @@ const mysqlStorage = {
         try {
             const connection = await getPool().getConnection();
 
-            const [rows] = await connection.execute(`
-        SELECT 
-          osuId, username, inGameName, timezone, availability,
-          registeredAt, avatar_url, pp, global_rank, country_rank,
-          approved, approvedAt
-        FROM registrations 
-        ORDER BY registeredAt DESC
-      `);
+            // 首先检查表结构，确定是否有approved字段
+            let hasApprovedField = false;
+            try {
+                const [columns] = await connection.execute(`
+                    SELECT COLUMN_NAME 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_NAME = 'registrations' 
+                    AND COLUMN_NAME = 'approved'
+                `);
+                hasApprovedField = (columns as any[]).length > 0;
+            } catch (error) {
+                console.warn('Error checking table structure:', error);
+                // 如果检查失败，假设没有approved字段
+                hasApprovedField = false;
+            }
+
+            let query: string;
+            if (hasApprovedField) {
+                query = `
+                    SELECT 
+                      osuId, username, inGameName, timezone, availability,
+                      registeredAt, avatar_url, pp, global_rank, country_rank,
+                      approved, approvedAt
+                    FROM registrations 
+                    ORDER BY registeredAt DESC
+                `;
+            } else {
+                query = `
+                    SELECT 
+                      osuId, username, inGameName, timezone, availability,
+                      registeredAt, avatar_url, pp, global_rank, country_rank
+                    FROM registrations 
+                    ORDER BY registeredAt DESC
+                `;
+            }
+
+            const [rows] = await connection.execute(query);
 
             connection.release();
 
@@ -104,8 +133,8 @@ const mysqlStorage = {
                 pp: row.pp,
                 global_rank: row.global_rank,
                 country_rank: row.country_rank,
-                approved: row.approved || false,
-                approvedAt: row.approvedAt ? new Date(row.approvedAt).toISOString() : null,
+                approved: hasApprovedField ? (row.approved || false) : false,
+                approvedAt: hasApprovedField ? (row.approvedAt ? new Date(row.approvedAt).toISOString() : null) : null,
             }));
         } catch (error) {
             console.error('Error reading from database:', error);
@@ -201,14 +230,41 @@ const mysqlStorage = {
         try {
             const connection = await getPool().getConnection();
 
-            const [rows] = await connection.execute(
-                `SELECT 
-          osuId, username, inGameName, timezone, availability,
-          registeredAt, avatar_url, pp, global_rank, country_rank,
-          approved, approvedAt
-         FROM registrations WHERE osuId = ?`,
-                [osuId]
-            );
+            // 首先检查表结构，确定是否有approved字段
+            let hasApprovedField = false;
+            try {
+                const [columns] = await connection.execute(`
+                    SELECT COLUMN_NAME 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_NAME = 'registrations' 
+                    AND COLUMN_NAME = 'approved'
+                `);
+                hasApprovedField = (columns as any[]).length > 0;
+            } catch (error) {
+                console.warn('Error checking table structure:', error);
+                // 如果检查失败，假设没有approved字段
+                hasApprovedField = false;
+            }
+
+            let query: string;
+            if (hasApprovedField) {
+                query = `
+                    SELECT 
+                      osuId, username, inGameName, timezone, availability,
+                      registeredAt, avatar_url, pp, global_rank, country_rank,
+                      approved, approvedAt
+                    FROM registrations WHERE osuId = ?
+                `;
+            } else {
+                query = `
+                    SELECT 
+                      osuId, username, inGameName, timezone, availability,
+                      registeredAt, avatar_url, pp, global_rank, country_rank
+                    FROM registrations WHERE osuId = ?
+                `;
+            }
+
+            const [rows] = await connection.execute(query, [osuId]);
 
             connection.release();
 
@@ -226,8 +282,8 @@ const mysqlStorage = {
                 pp: row.pp,
                 global_rank: row.global_rank,
                 country_rank: row.country_rank,
-                approved: row.approved || false,
-                approvedAt: row.approvedAt ? new Date(row.approvedAt).toISOString() : null,
+                approved: hasApprovedField ? (row.approved || false) : false,
+                approvedAt: hasApprovedField ? (row.approvedAt ? new Date(row.approvedAt).toISOString() : null) : null,
             };
         } catch (error) {
             console.error('Error getting user registration:', error);
