@@ -42,10 +42,13 @@ export const initDatabase = async (): Promise<void> => {
         pp FLOAT,
         global_rank INT,
         country_rank INT,
+        approved BOOLEAN DEFAULT FALSE COMMENT '审核状态：0-待审核，1-审核通过',
+        approvedAt DATETIME NULL COMMENT '审核通过时间',
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_osuId (osuId),
-        INDEX idx_username (username)
+        INDEX idx_username (username),
+        INDEX idx_approved (approved)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
@@ -68,6 +71,8 @@ export interface Registration {
     pp: number;
     global_rank: number | null;
     country_rank: number | null;
+    approved: boolean;
+    approvedAt: string | null;
 }
 
 // MySQL 存储实现
@@ -80,7 +85,8 @@ const mysqlStorage = {
             const [rows] = await connection.execute(`
         SELECT 
           osuId, username, inGameName, timezone, availability,
-          registeredAt, avatar_url, pp, global_rank, country_rank
+          registeredAt, avatar_url, pp, global_rank, country_rank,
+          approved, approvedAt
         FROM registrations 
         ORDER BY registeredAt DESC
       `);
@@ -98,6 +104,8 @@ const mysqlStorage = {
                 pp: row.pp,
                 global_rank: row.global_rank,
                 country_rank: row.country_rank,
+                approved: row.approved || false,
+                approvedAt: row.approvedAt ? new Date(row.approvedAt).toISOString() : null,
             }));
         } catch (error) {
             console.error('Error reading from database:', error);
@@ -196,7 +204,8 @@ const mysqlStorage = {
             const [rows] = await connection.execute(
                 `SELECT 
           osuId, username, inGameName, timezone, availability,
-          registeredAt, avatar_url, pp, global_rank, country_rank
+          registeredAt, avatar_url, pp, global_rank, country_rank,
+          approved, approvedAt
          FROM registrations WHERE osuId = ?`,
                 [osuId]
             );
@@ -217,6 +226,8 @@ const mysqlStorage = {
                 pp: row.pp,
                 global_rank: row.global_rank,
                 country_rank: row.country_rank,
+                approved: row.approved || false,
+                approvedAt: row.approvedAt ? new Date(row.approvedAt).toISOString() : null,
             };
         } catch (error) {
             console.error('Error getting user registration:', error);
@@ -259,6 +270,26 @@ const mysqlStorage = {
             console.error('Error deleting registration:', error);
             return false;
         }
+    },
+
+    // 审核通过用户注册
+    approveRegistration: async (osuId: string): Promise<boolean> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(
+                'UPDATE registrations SET approved = TRUE, approvedAt = NOW() WHERE osuId = ?',
+                [osuId]
+            );
+
+            connection.release();
+
+            const affectedRows = (result as any).affectedRows;
+            return affectedRows > 0;
+        } catch (error) {
+            console.error('Error approving registration:', error);
+            return false;
+        }
     }
 };
 
@@ -269,6 +300,7 @@ export const addRegistration = mysqlStorage.addRegistration;
 export const getUserRegistration = mysqlStorage.getUserRegistration;
 export const getRegistrationCount = mysqlStorage.getRegistrationCount;
 export const deleteRegistration = mysqlStorage.deleteRegistration;
+export const approveRegistration = mysqlStorage.approveRegistration;
 
 // 默认导出初始化函数
 export default initDatabase;

@@ -137,6 +137,8 @@ export async function POST(request: NextRequest) {
                 pp: newRegistration.pp,
                 global_rank: newRegistration.global_rank,
                 country_rank: newRegistration.country_rank,
+                approved: false,
+                approvedAt: null,
             });
             // console.log('Registration also saved to database');
         } catch (dbError) {

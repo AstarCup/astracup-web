@@ -67,6 +67,8 @@ export async function GET(request: NextRequest) {
             pp: userInfo.statistics?.pp || 0,
             global_rank: userInfo.statistics?.global_rank || null,
             country_rank: userInfo.statistics?.country_rank || null,
+            approved: false,
+            approvedAt: null,
         });
 
         // 设置用户会话cookie并重定向到首页

@@ -113,6 +113,39 @@ export default function DebugPage() {
         }
     };
 
+    // 审核通过用户注册
+    const handleApproveRegistration = async (osuId: string, username: string) => {
+        if (!confirm(`确定要审核通过用户 ${username} (ID: ${osuId}) 的注册信息吗？`)) {
+            return;
+        }
+
+        try {
+            setDeletingUser(osuId);
+            const response = await fetch('/api/debug/approve-registration', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ osuId }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(data.message);
+                // 刷新注册列表
+                fetchRegistrations();
+            } else {
+                alert(`审核失败: ${data.error}`);
+            }
+        } catch (error) {
+            console.error('Error approving registration:', error);
+            alert('审核用户注册信息时发生错误');
+        } finally {
+            setDeletingUser(null);
+        }
+    };
+
     // 如果用户未登录或不是管理员，显示提示信息
     if (!userSession || (userSession && !isAdmin)) {
         return (
@@ -274,15 +307,29 @@ export default function DebugPage() {
                                                             PP: {Math.round(player.pp).toLocaleString()} |
                                                             排名: {player.global_rank ? `#${player.global_rank.toLocaleString()}` : '未排名'}
                                                         </p>
+                                                        <p className={`text-xs ${player.approved ? 'text-green-600' : 'text-yellow-600'}`}>
+                                                            {player.approved ? '✓ 已审核通过' : '⏳ 待审核'}
+                                                        </p>
                                                     </div>
                                                 </div>
-                                                <button
-                                                    onClick={() => handleDeleteRegistration(player.osuId, player.username)}
-                                                    disabled={deletingUser === player.osuId}
-                                                    className="bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                >
-                                                    {deletingUser === player.osuId ? '删除中...' : '删除'}
-                                                </button>
+                                                <div className="flex space-x-2">
+                                                    {!player.approved && (
+                                                        <button
+                                                            onClick={() => handleApproveRegistration(player.osuId, player.username)}
+                                                            disabled={deletingUser === player.osuId}
+                                                            className="bg-green-500 text-white px-3 py-1 rounded-md text-sm hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        >
+                                                            {deletingUser === player.osuId ? '审核中...' : '审核通过'}
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleDeleteRegistration(player.osuId, player.username)}
+                                                        disabled={deletingUser === player.osuId}
+                                                        className="bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        {deletingUser === player.osuId ? '删除中...' : '删除'}
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div className="mt-2 text-xs text-gray-500">
                                                 报名时间: {new Date(player.registeredAt).toLocaleString('zh-CN')}
