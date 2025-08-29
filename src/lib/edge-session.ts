@@ -21,7 +21,7 @@ export async function setUserSession(session: UserSession): Promise<string> {
 
     // 在实际项目中，这里应该调用Edge Config API来存储会话
     // 由于Edge Config需要特定的Vercel配置，这里使用模拟实现
-    console.log('Setting session in Edge Config:', { sessionId, session });
+    // console.log('Setting session in Edge Config:', { sessionId, session });
 
     // 在实际部署中，应该使用：
     // await fetch('/api/session/set', {
@@ -38,7 +38,7 @@ export async function getUserSession(sessionId: string): Promise<UserSession | n
 
     // 在实际项目中，这里应该调用Edge Config API来获取会话
     // 由于Edge Config需要特定的Vercel配置，这里使用模拟实现
-    console.log('Getting session from Edge Config:', sessionId);
+    // console.log('Getting session from Edge Config:', sessionId);
 
     // 在实际部署中，应该使用：
     // const response = await fetch(`/api/session/get?sessionId=${sessionId}`);
@@ -53,7 +53,7 @@ export async function clearUserSession(sessionId: string): Promise<void> {
     if (!sessionId) return;
 
     // 在实际项目中，这里应该调用Edge Config API来清除会话
-    console.log('Clearing session from Edge Config:', sessionId);
+    // console.log('Clearing session from Edge Config:', sessionId);
 
     // 在实际部署中，应该使用：
     // await fetch('/api/session/clear', {

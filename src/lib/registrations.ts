@@ -4,7 +4,8 @@ import {
     isUserRegistered as mysqlIsUserRegistered,
     addRegistration as mysqlAddRegistration,
     getUserRegistration as mysqlGetUserRegistration,
-    getRegistrationCount as mysqlGetRegistrationCount
+    getRegistrationCount as mysqlGetRegistrationCount,
+    deleteRegistration as mysqlDeleteRegistration
 } from './mysql-registrations';
 
 export interface Registration {
@@ -18,6 +19,8 @@ export interface Registration {
     pp: number;
     global_rank: number | null;
     country_rank: number | null;
+    approved: boolean;
+    approvedAt: string | null;
 }
 
 // 读取所有注册信息
@@ -34,3 +37,6 @@ export const getUserRegistration = mysqlGetUserRegistration;
 
 // 获取所有注册用户数量
 export const getRegistrationCount = mysqlGetRegistrationCount;
+
+// 删除用户注册信息
+export const deleteRegistration = mysqlDeleteRegistration;

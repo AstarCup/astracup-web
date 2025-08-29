@@ -11,6 +11,8 @@ export interface TournamentRegistration {
     teamName: string;
     seedPosition: number | null;
     agreedToTerms: boolean;
+    approved: boolean;
+    approvedAt: string | null;
     registeredAt: string;
 }
 
@@ -36,6 +38,8 @@ async function getRegistrations(): Promise<TournamentRegistration[]> {
                 teamName: reg.inGameName || reg.username,
                 seedPosition: null,
                 agreedToTerms: true,
+                approved: reg.approved || false,
+                approvedAt: reg.approvedAt || null,
                 registeredAt: reg.registeredAt
             }));
         }
@@ -68,8 +72,8 @@ async function saveRegistration(registration: TournamentRegistration): Promise<b
         // 更新内存存储
         memoryRegistrations = registrations;
 
-        console.log('Registration saved:', registration);
-        console.log('Total registrations:', memoryRegistrations.length);
+        // console.log('Registration saved:', registration);
+        // console.log('Total registrations:', memoryRegistrations.length);
 
         return true;
     } catch (error) {
@@ -113,6 +117,8 @@ export async function POST(request: NextRequest) {
             teamName: body.teamName || '',
             seedPosition: body.seedPosition || null,
             agreedToTerms: body.agreedToTerms || false,
+            approved: false,
+            approvedAt: null,
             registeredAt: new Date().toISOString()
         };
 
@@ -137,8 +143,10 @@ export async function POST(request: NextRequest) {
                 pp: newRegistration.pp,
                 global_rank: newRegistration.global_rank,
                 country_rank: newRegistration.country_rank,
+                approved: false,
+                approvedAt: null,
             });
-            console.log('Registration also saved to database');
+            // console.log('Registration also saved to database');
         } catch (dbError) {
             console.error('Error saving to database:', dbError);
             // 不中断主流程，仅记录错误

@@ -22,24 +22,42 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
         rankRestrictionEnabled: true
     });
     const [configLoading, setConfigLoading] = useState(true);
+    const [edgeConfig, setEdgeConfig] = useState<any>(null);
+    const [edgeConfigLoading, setEdgeConfigLoading] = useState(true);
 
     useEffect(() => {
-        // 从API获取rank配置
-        const fetchRankConfig = async () => {
+        // 从API获取rank配置和edge config
+        const fetchConfigs = async () => {
             try {
-                const response = await fetch('/api/rank-config');
-                const config = await response.json();
-                setRankConfig(config);
+                setConfigLoading(true);
+                setEdgeConfigLoading(true);
+
+                // 并行获取rank配置和edge config
+                const [rankResponse, edgeResponse] = await Promise.all([
+                    fetch('/api/rank-config'),
+                    fetch('/api/edge-registrations')
+                ]);
+
+                if (rankResponse.ok) {
+                    const config = await rankResponse.json();
+                    setRankConfig(config);
+                }
+
+                if (edgeResponse.ok) {
+                    const edgeData = await edgeResponse.json();
+                    setEdgeConfig(edgeData);
+                }
             } catch (error) {
-                console.error('Failed to fetch rank config:', error);
+                console.error('Failed to fetch configs:', error);
                 // 出错时使用默认配置
             } finally {
                 setConfigLoading(false);
+                setEdgeConfigLoading(false);
             }
         };
 
         if (isOpen) {
-            fetchRankConfig();
+            fetchConfigs();
         }
     }, [isOpen]);
 
@@ -68,7 +86,9 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                 country_rank: user.country_rank,
                 teamName: "",
                 seedPosition: null,
-                agreedToTerms: true
+                agreedToTerms: true,
+                approved: false,
+                approvedAt: null
             };
 
             const success = await onRegister(registrationData);
@@ -91,6 +111,19 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
 
     // 检查PP限制
     const isPpTooHigh = rankConfig.rankRestrictionEnabled && user.pp > rankConfig.maxPpForRegistration;
+
+    // 如果还在加载配置，显示加载状态
+    if (configLoading || edgeConfigLoading) {
+        return (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-lg max-w-2xl w-full p-6 text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2">正在加载配置信息</h2>
+                    <p className="text-gray-600">请稍候...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

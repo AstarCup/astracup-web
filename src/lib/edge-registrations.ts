@@ -11,6 +11,8 @@ export interface TournamentRegistration {
     teamName: string; // 队伍名，初始为空
     seedPosition: number | null; // seed位，初始为null
     agreedToTerms: boolean; // 是否同意条款
+    approved: boolean; // 审核状态
+    approvedAt: string | null; // 审核通过时间
     registeredAt: string;
 }
 

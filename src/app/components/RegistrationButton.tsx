@@ -27,7 +27,7 @@ export default function RegistrationButton({ user }: RegistrationButtonProps) {
             }
 
             const data = await response.json();
-            console.log('Registration status for user', user.osuId, ':', data.registered);
+            // console.log('Registration status for user', user.osuId, ':', data.registered);
             setIsRegistered(data.registered);
         } catch (error) {
             console.error('Error checking registration status:', error);

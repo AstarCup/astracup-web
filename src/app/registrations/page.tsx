@@ -23,6 +23,7 @@ export default function RegistrationsPage() {
             }
 
             const data = await response.json();
+            console.log('Received registrations data:', data.registrations);
             setRegistrations(data.registrations || []);
         } catch (error) {
             console.error('Error fetching registrations:', error);
@@ -141,8 +142,8 @@ export default function RegistrationsPage() {
                                         <p className="text-xs text-gray-500">
                                             报名时间: {new Date(player.registeredAt).toLocaleString('zh-CN')}
                                         </p>
-                                        {player.agreedToTerms && (
-                                            <p className="text-xs text-green-600 mt-1">✓ 已同意比赛条款</p>
+                                        {player.approved && (
+                                            <p className="text-xs text-green-600 mt-1">✓ 审核通过，可以参赛</p>
                                         )}
                                     </div>
                                 </div>

@@ -42,10 +42,10 @@ export async function getOsuToken(code: string): Promise<{
     expires_in: number;
 }> {
     try {
-        console.log('Attempting token exchange with code:', code.substring(0, 10) + '...');
-        console.log('Client ID:', OSU_CLIENT_ID ? 'SET' : 'NOT_SET');
-        console.log('Client Secret:', OSU_CLIENT_SECRET ? 'SET' : 'NOT_SET');
-        console.log('Redirect URI:', OSU_REDIRECT_URI);
+        // console.log('Attempting token exchange with code:', code.substring(0, 10) + '...');
+        // console.log('Client ID:', OSU_CLIENT_ID ? 'SET' : 'NOT_SET');
+        // console.log('Client Secret:', OSU_CLIENT_SECRET ? 'SET' : 'NOT_SET');
+        // console.log('Redirect URI:', OSU_REDIRECT_URI);
 
         const response = await fetch('https://osu.ppy.sh/oauth/token', {
             method: 'POST',
@@ -61,8 +61,8 @@ export async function getOsuToken(code: string): Promise<{
             }),
         });
 
-        console.log('Token exchange response status:', response.status);
-        console.log('Token exchange response headers:', Object.fromEntries(response.headers.entries()));
+        // console.log('Token exchange response status:', response.status);
+        // console.log('Token exchange response headers:', Object.fromEntries(response.headers.entries()));
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -72,7 +72,7 @@ export async function getOsuToken(code: string): Promise<{
 
         try {
             const tokenData = await response.json();
-            console.log('Token exchange successful:', tokenData);
+            // console.log('Token exchange successful:', tokenData);
             return tokenData;
         } catch (jsonError) {
             console.error('JSON parsing error:', jsonError);

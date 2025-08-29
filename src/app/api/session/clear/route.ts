@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
         // 这里应该调用 Vercel Edge Config API 来清除会话
         // 实际部署时需要配置 Edge Config Store
 
-        console.log('Clearing session from Edge Config:', sessionId);
+        // console.log('Clearing session from Edge Config:', sessionId);
 
         return NextResponse.json({
             success: true,

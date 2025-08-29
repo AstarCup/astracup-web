@@ -28,7 +28,7 @@ export const initDatabase = async (): Promise<void> => {
     try {
         const connection = await getPool().getConnection();
 
-        // 创建注册表
+        // 创建注册表（如果不存在）
         await connection.execute(`
       CREATE TABLE IF NOT EXISTS registrations (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -42,15 +42,44 @@ export const initDatabase = async (): Promise<void> => {
         pp FLOAT,
         global_rank INT,
         country_rank INT,
+        approved BOOLEAN DEFAULT FALSE COMMENT '审核状态：0-待审核，1-审核通过',
+        approvedAt DATETIME NULL COMMENT '审核通过时间',
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_osuId (osuId),
-        INDEX idx_username (username)
+        INDEX idx_username (username),
+        INDEX idx_approved (approved)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+        // 检查并添加缺失的字段（表结构升级）
+        const requiredColumns = [
+            { name: 'approved', type: 'BOOLEAN DEFAULT FALSE COMMENT \'审核状态：0-待审核，1-审核通过\'' },
+            { name: 'approvedAt', type: 'DATETIME NULL COMMENT \'审核通过时间\'' }
+        ];
+
+        for (const column of requiredColumns) {
+            try {
+                // 检查字段是否存在
+                const [existingColumns] = await connection.execute(
+                    `SHOW COLUMNS FROM registrations LIKE '${column.name}'`
+                );
+
+                if ((existingColumns as any[]).length === 0) {
+                    console.log(`Adding missing column: ${column.name}`);
+                    await connection.execute(
+                        `ALTER TABLE registrations ADD COLUMN ${column.name} ${column.type}`
+                    );
+                    console.log(`✅ Column ${column.name} added successfully`);
+                }
+            } catch (columnError) {
+                console.error(`Error checking/adding column ${column.name}:`, columnError);
+                // 继续处理其他字段，不中断整个初始化过程
+            }
+        }
+
         connection.release();
-        console.log('Database initialized successfully');
+        console.log('Database initialized and upgraded successfully');
     } catch (error) {
         console.error('Error initializing database:', error);
         throw error;
@@ -68,6 +97,8 @@ export interface Registration {
     pp: number;
     global_rank: number | null;
     country_rank: number | null;
+    approved: boolean;
+    approvedAt: string | null;
 }
 
 // MySQL 存储实现
@@ -78,12 +109,13 @@ const mysqlStorage = {
             const connection = await getPool().getConnection();
 
             const [rows] = await connection.execute(`
-        SELECT 
-          osuId, username, inGameName, timezone, availability,
-          registeredAt, avatar_url, pp, global_rank, country_rank
-        FROM registrations 
-        ORDER BY registeredAt DESC
-      `);
+                SELECT 
+                  osuId, username, inGameName, timezone, availability,
+                  registeredAt, avatar_url, pp, global_rank, country_rank,
+                  approved, approvedAt
+                FROM registrations 
+                ORDER BY registeredAt DESC
+            `);
 
             connection.release();
 
@@ -98,6 +130,8 @@ const mysqlStorage = {
                 pp: row.pp,
                 global_rank: row.global_rank,
                 country_rank: row.country_rank,
+                approved: row.approved || false,
+                approvedAt: row.approvedAt ? new Date(row.approvedAt).toISOString() : null,
             }));
         } catch (error) {
             console.error('Error reading from database:', error);
@@ -159,7 +193,7 @@ const mysqlStorage = {
             }
 
             await connection.commit();
-            console.log('Registration saved to database successfully');
+            // console.log('Registration saved to database successfully');
 
         } catch (error) {
             await connection.rollback();
@@ -193,13 +227,13 @@ const mysqlStorage = {
         try {
             const connection = await getPool().getConnection();
 
-            const [rows] = await connection.execute(
-                `SELECT 
-          osuId, username, inGameName, timezone, availability,
-          registeredAt, avatar_url, pp, global_rank, country_rank
-         FROM registrations WHERE osuId = ?`,
-                [osuId]
-            );
+            const [rows] = await connection.execute(`
+                SELECT 
+                  osuId, username, inGameName, timezone, availability,
+                  registeredAt, avatar_url, pp, global_rank, country_rank,
+                  approved, approvedAt
+                FROM registrations WHERE osuId = ?
+            `, [osuId]);
 
             connection.release();
 
@@ -217,6 +251,8 @@ const mysqlStorage = {
                 pp: row.pp,
                 global_rank: row.global_rank,
                 country_rank: row.country_rank,
+                approved: row.approved || false,
+                approvedAt: row.approvedAt ? new Date(row.approvedAt).toISOString() : null,
             };
         } catch (error) {
             console.error('Error getting user registration:', error);
@@ -239,6 +275,46 @@ const mysqlStorage = {
             console.error('Error getting registration count:', error);
             return 0;
         }
+    },
+
+    // 删除用户注册信息
+    deleteRegistration: async (osuId: string): Promise<boolean> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(
+                'DELETE FROM registrations WHERE osuId = ?',
+                [osuId]
+            );
+
+            connection.release();
+
+            const affectedRows = (result as any).affectedRows;
+            return affectedRows > 0;
+        } catch (error) {
+            console.error('Error deleting registration:', error);
+            return false;
+        }
+    },
+
+    // 审核通过用户注册
+    approveRegistration: async (osuId: string): Promise<boolean> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(
+                'UPDATE registrations SET approved = TRUE, approvedAt = NOW() WHERE osuId = ?',
+                [osuId]
+            );
+
+            connection.release();
+
+            const affectedRows = (result as any).affectedRows;
+            return affectedRows > 0;
+        } catch (error) {
+            console.error('Error approving registration:', error);
+            return false;
+        }
     }
 };
 
@@ -248,6 +324,8 @@ export const isUserRegistered = mysqlStorage.isUserRegistered;
 export const addRegistration = mysqlStorage.addRegistration;
 export const getUserRegistration = mysqlStorage.getUserRegistration;
 export const getRegistrationCount = mysqlStorage.getRegistrationCount;
+export const deleteRegistration = mysqlStorage.deleteRegistration;
+export const approveRegistration = mysqlStorage.approveRegistration;
 
 // 默认导出初始化函数
 export default initDatabase;

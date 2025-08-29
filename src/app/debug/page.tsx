@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { isAdminUser, UserSession } from "@/lib/session";
+import { TournamentRegistration } from "@/lib/edge-registrations";
 
 export default function DebugPage() {
     const router = useRouter();
@@ -11,6 +12,9 @@ export default function DebugPage() {
     const [userSession, setUserSession] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [registrations, setRegistrations] = useState<TournamentRegistration[]>([]);
+    const [registrationsLoading, setRegistrationsLoading] = useState(false);
+    const [deletingUser, setDeletingUser] = useState<string | null>(null);
 
     useEffect(() => {
         // 检查用户会话和权限
@@ -19,7 +23,7 @@ export default function DebugPage() {
         })
             .then(response => response.json())
             .then(data => {
-                console.log('Debug session data:', data);
+                // console.log('Debug session data:', data);
                 if (data.success && data.session) {
                     setUserSession(data.session);
                     setIsAdmin(data.session.username === 'AeCw');
@@ -56,14 +60,105 @@ export default function DebugPage() {
             });
     }, [router]);
 
-    // 如果不是管理员，显示无权限信息
-    if (userSession && !isAdmin) {
+    // 获取注册用户列表
+    const fetchRegistrations = async () => {
+        try {
+            setRegistrationsLoading(true);
+            const response = await fetch('/api/edge-registrations');
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch registrations');
+            }
+
+            const data = await response.json();
+            setRegistrations(data.registrations || []);
+        } catch (error) {
+            console.error('Error fetching registrations:', error);
+            alert('获取注册数据失败');
+        } finally {
+            setRegistrationsLoading(false);
+        }
+    };
+
+    // 删除用户注册信息
+    const handleDeleteRegistration = async (osuId: string, username: string) => {
+        if (!confirm(`确定要删除用户 ${username} (ID: ${osuId}) 的注册信息吗？此操作不可恢复！`)) {
+            return;
+        }
+
+        try {
+            setDeletingUser(osuId);
+            const response = await fetch('/api/debug/delete-registration', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ osuId }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(data.message);
+                // 刷新注册列表
+                fetchRegistrations();
+            } else {
+                alert(`删除失败: ${data.error}`);
+            }
+        } catch (error) {
+            console.error('Error deleting registration:', error);
+            alert('删除用户注册信息时发生错误');
+        } finally {
+            setDeletingUser(null);
+        }
+    };
+
+    // 审核通过用户注册
+    const handleApproveRegistration = async (osuId: string, username: string) => {
+        if (!confirm(`确定要审核通过用户 ${username} (ID: ${osuId}) 的注册信息吗？`)) {
+            return;
+        }
+
+        try {
+            setDeletingUser(osuId);
+            const response = await fetch('/api/debug/approve-registration', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ osuId }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(data.message);
+                // 刷新注册列表
+                fetchRegistrations();
+            } else {
+                alert(`审核失败: ${data.error}`);
+            }
+        } catch (error) {
+            console.error('Error approving registration:', error);
+            alert('审核用户注册信息时发生错误');
+        } finally {
+            setDeletingUser(null);
+        }
+    };
+
+    // 如果用户未登录或不是管理员，显示提示信息
+    if (!userSession || (userSession && !isAdmin)) {
         return (
             <div className="min-h-screen bg-gray-50 py-12">
                 <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8 text-center">
-                    <h1 className="text-3xl font-bold text-red-600 mb-6">权限不足</h1>
+                    <h1 className="text-3xl font-bold text-red-600 mb-6">
+                        {!userSession ? '请先登录' : '权限不足'}
+                    </h1>
                     <p className="text-lg text-gray-700 mb-4">
-                        您没有权限访问调试页面
+                        {!userSession
+                            ? '您需要登录后才能访问此页面'
+                            : '您没有权限访问调试页面'
+                        }
                     </p>
                     <button
                         onClick={() => router.push('/')}
@@ -155,14 +250,120 @@ export default function DebugPage() {
                                     }
                                 }
                             }}
-                            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 mr-3"
                         >
                             清空注册数据
+                        </button>
+
+                        <button
+                            onClick={async () => {
+                                if (confirm('确定要升级数据库吗？这将在现有表结构上添加审核状态字段。')) {
+                                    try {
+                                        const response = await fetch('/api/debug/upgrade-database', {
+                                            method: 'POST'
+                                        });
+                                        const data = await response.json();
+                                        alert(`升级结果: ${JSON.stringify(data)}`);
+                                    } catch (error) {
+                                        alert('数据库升级失败: ' + error);
+                                    }
+                                }
+                            }}
+                            className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600"
+                        >
+                            升级数据库
                         </button>
 
                         <p className="text-sm text-green-700 mt-2">
                             数据库管理操作（仅管理员可用）
                         </p>
+                    </div>
+                </div>
+
+                {/* 报名用户管理 */}
+                <div className="mb-6">
+                    <h2 className="text-xl font-semibold mb-3">报名用户管理</h2>
+                    <div className="bg-purple-50 p-4 rounded-md space-y-3">
+                        <button
+                            onClick={fetchRegistrations}
+                            disabled={registrationsLoading}
+                            className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {registrationsLoading ? '加载中...' : '获取报名用户列表'}
+                        </button>
+
+                        {registrationsLoading && (
+                            <div className="text-center py-4">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                                <p className="mt-2 text-sm text-purple-700">正在加载报名数据...</p>
+                            </div>
+                        )}
+
+                        {registrations.length > 0 && (
+                            <div className="mt-4">
+                                <h3 className="text-lg font-medium text-purple-800 mb-3">
+                                    已报名用户 ({registrations.length} 人)
+                                </h3>
+                                <div className="space-y-3 max-h-96 overflow-y-auto">
+                                    {registrations.map((player) => (
+                                        <div key={player.osuId} className="bg-white rounded-lg p-4 border border-purple-200">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center space-x-3">
+                                                    <img
+                                                        src={player.avatar_url}
+                                                        alt={player.username}
+                                                        width={40}
+                                                        height={40}
+                                                        className="rounded-full"
+                                                        onError={(e) => {
+                                                            e.currentTarget.src = '/default-avatar.png';
+                                                        }}
+                                                    />
+                                                    <div>
+                                                        <h4 className="font-medium text-gray-900">{player.username}</h4>
+                                                        <p className="text-sm text-gray-500">ID: {player.osuId}</p>
+                                                        <p className="text-sm text-gray-500">
+                                                            PP: {Math.round(player.pp).toLocaleString()} |
+                                                            排名: {player.global_rank ? `#${player.global_rank.toLocaleString()}` : '未排名'}
+                                                        </p>
+                                                        <p className={`text-xs ${player.approved ? 'text-green-600' : 'text-yellow-600'}`}>
+                                                            {player.approved ? '✓ 已审核通过' : '⏳ 待审核'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex space-x-2">
+                                                    {!player.approved && (
+                                                        <button
+                                                            onClick={() => handleApproveRegistration(player.osuId, player.username)}
+                                                            disabled={deletingUser === player.osuId}
+                                                            className="bg-green-500 text-white px-3 py-1 rounded-md text-sm hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        >
+                                                            {deletingUser === player.osuId ? '审核中...' : '审核通过'}
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleDeleteRegistration(player.osuId, player.username)}
+                                                        disabled={deletingUser === player.osuId}
+                                                        className="bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        {deletingUser === player.osuId ? '删除中...' : '删除'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="mt-2 text-xs text-gray-500">
+                                                报名时间: {new Date(player.registeredAt).toLocaleString('zh-CN')}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {registrations.length === 0 && !registrationsLoading && (
+                            <div className="text-center py-4 text-purple-700">
+                                <p>暂无报名用户数据，点击上方按钮获取</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
