@@ -239,6 +239,26 @@ const mysqlStorage = {
             console.error('Error getting registration count:', error);
             return 0;
         }
+    },
+
+    // 删除用户注册信息
+    deleteRegistration: async (osuId: string): Promise<boolean> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(
+                'DELETE FROM registrations WHERE osuId = ?',
+                [osuId]
+            );
+
+            connection.release();
+
+            const affectedRows = (result as any).affectedRows;
+            return affectedRows > 0;
+        } catch (error) {
+            console.error('Error deleting registration:', error);
+            return false;
+        }
     }
 };
 
@@ -248,6 +268,7 @@ export const isUserRegistered = mysqlStorage.isUserRegistered;
 export const addRegistration = mysqlStorage.addRegistration;
 export const getUserRegistration = mysqlStorage.getUserRegistration;
 export const getRegistrationCount = mysqlStorage.getRegistrationCount;
+export const deleteRegistration = mysqlStorage.deleteRegistration;
 
 // 默认导出初始化函数
 export default initDatabase;
