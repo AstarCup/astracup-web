@@ -54,7 +54,7 @@ function RollingDigit({ value }: { value: number }) {
     }, [animating]);
 
     return (
-        <div className="relative w-[160px] h-[80px] overflow-hidden inline-block mx-1">
+        <div className="relative w-[120px] h-[80px] overflow-hidden inline-block mx-1">
             <div
                 className={`absolute left-0 w-full ${animating ? "transition-transform duration-300 ease-in-out" : ""}`}
                 style={{

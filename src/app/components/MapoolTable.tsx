@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import { useState } from "react";
 interface MapoolTableProps {
     data: any[];
     title: string;
@@ -7,6 +8,7 @@ interface MapoolTableProps {
 }
 
 export default function MapoolTable({ data, title, downloadUrl }: MapoolTableProps) {
+    const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
     return (
         <div className="mb-20">
             <h1 className="text-3xl font-bold mb-6">{title}</h1>
@@ -60,11 +62,31 @@ export default function MapoolTable({ data, title, downloadUrl }: MapoolTablePro
                                 <tr key={idx} className={bgClass}>
                                     <td className="text-center"><a className={slotClass}>{row.Slot}</a></td>
                                     <td
-                                        className="cursor-pointer text-[#F38181] hover:underline hover:"
+                                        className="cursor-pointer text-[#E93B66] hover:underline relative group"
                                         title="点击复制BID"
-                                        onClick={() => navigator.clipboard.writeText(row.BID)}
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(row.BID);
+                                            setCopiedIdx(idx);
+                                            setTimeout(() => setCopiedIdx(null), 1000);
+                                        }}
+                                        style={{ position: 'relative' }}
                                     >
                                         {row.BID}
+                                        <span
+                                            className="pointer-events-none select-none absolute opacity-0 group-hover:opacity-100 text-xs font-bold text-[#E93B66]"
+                                            style={{
+                                                zIndex: 1,
+                                                right: 0,
+                                                bottom: 0,
+                                                padding: '2px 8px',
+                                                background: 'rgba(255,255,255,1)',
+                                                borderTopLeftRadius: '0px',
+                                                transition: 'opacity 0.2s',
+                                                opacity: copiedIdx === idx ? 1 : undefined,
+                                            }}
+                                        >
+                                            {copiedIdx === idx ? '已复制' : '点击复制BID'}
+                                        </span>
                                     </td>
                                     <td className="overflow-hidden">
                                         <Image

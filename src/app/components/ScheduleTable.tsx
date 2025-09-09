@@ -29,7 +29,7 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
 
     return (
         <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-200">
+            <table className="min-w-[1200px] bg-white border border-gray-200">
                 <thead>
                     <tr className="bg-gray-50 text-left p-6">
                         <th className="">
