@@ -1,8 +1,8 @@
 export default function Guide() {
     return (
-        <div className="max-w-3xl mx-auto p-6">
+        <div className="max-w-5xl mx-auto p-6 text-white">
             <h1 className="text-3xl font-bold mb-6">赛事手册</h1>
-            <div className="max-w-4xl text-left space-y-4">
+            <div className="max-w-2xl text-left space-y-4">
                 <h2 className="text-2xl font-bold mb-6">1. 比赛名称：AstraCup 星域杯 S1</h2>
                 <h2 className="text-2xl font-bold mb-6">2. 比赛时间：（乱写的）</h2>
                 <ul className="list-inside">

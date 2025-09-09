@@ -11,7 +11,7 @@ export default function NewsList() {
         fetch("/api/news")
             .then(res => res.json())
             .then(data => {
-                setNewsList(data);
+                setNewsList(data.news);
                 setLoading(false);
             });
     }, []);

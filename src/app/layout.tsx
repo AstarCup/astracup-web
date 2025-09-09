@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Metadata } from "next";
 import Navbar from '@/app/components/Navbar';
+import Footer from '@/app/components/footer';
 
 const metadata: Metadata = {
   title: "AstraCup 星域杯",
@@ -38,9 +39,10 @@ export default function RootLayout({
         <Navbar />
         <Analytics />
         <SpeedInsights />
-        <main className={`pt-30`}>
+        <main className={`pt-50`}>
           {children}
         </main>
+        <Footer />
       </body>
     </html>
   );
