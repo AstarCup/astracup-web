@@ -15,7 +15,11 @@ export default function UserProfile({ user }: UserProfileProps) {
     }, []);
 
     if (!isClient || !user) {
-        return null;
+        return (
+            <div className="">
+                <p className="text-gray-600">未登录</p>
+            </div>
+        );
     }
 
     const formatRank = (rank: number | null) => {

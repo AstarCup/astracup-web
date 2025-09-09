@@ -1,8 +1,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
-import localFont from "next/font/local";
 import { Metadata } from "next";
+import Navbar from '@/app/components/Navbar';
 
 const metadata: Metadata = {
   title: "AstraCup 星域杯",
@@ -13,12 +13,7 @@ const metadata: Metadata = {
 }
 
 import "./globals.css";
-import Navbar from '@/app/components/Navbar';
 
-const alimama = localFont({
-  src: '/font/AlimamaFangYuan.woff2',
-  display: "swap",
-});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,12 +33,12 @@ export default function RootLayout({
 }>) {
 
   return (
-    <html lang="en">
-      <body className={`${alimama.className} ${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="zh">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Navbar />
         <Analytics />
         <SpeedInsights />
-        <main className={`pt-16`}>
+        <main className={`pt-30`}>
           {children}
         </main>
       </body>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { TournamentRegistration } from "@/lib/edge-registrations";
+import { url } from "inspector";
 
 export default function RegistrationsPage() {
     const [registrations, setRegistrations] = useState<TournamentRegistration[]>([]);
@@ -109,7 +110,8 @@ export default function RegistrationsPage() {
                                         />
                                         <div className="flex-1 min-w-0">
                                             <h3 className="text-lg font-semibold text-gray-900 truncate">
-                                                {player.username}
+                                                <a href={`https://osu.ppy.sh/users/${player.osuId}`}>{player.username}</a>
+
                                             </h3>
                                             <p className="text-sm text-gray-500">ID: {player.osuId}</p>
                                         </div>
