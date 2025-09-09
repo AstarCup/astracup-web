@@ -19,14 +19,14 @@ export default function NewsList() {
     if (loading) return <div className="p-6">加载中...</div>;
 
     return (
-        <div className="max-w-3xl mx-auto p-6">
-            <h1 className="text-3xl font-bold mb-6">新闻</h1>
+        <div className="max-w-5xl w-full p-6">
+            <h1 className="text-3xl font-bold mb-6 text-white">新闻</h1>
             <ul className="space-y-4">
                 {newsList.map((news) => (
                     <li key={news.slug}>
                         <Link
                             href={`/news/${news.slug}`}
-                            className="text-xl text-[#F38181] hover:underline"
+                            className="text-xl text-[#E93B66] font-bold hover:underline"
                         >
                             {news.frontmatter.title}
                         </Link>

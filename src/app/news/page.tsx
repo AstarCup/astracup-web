@@ -12,14 +12,14 @@ export default async function NewsList() {
     );
 
     return (
-        <div className="max-w-3xl mx-auto p-6">
-            <h1 className="text-3xl font-bold mb-6">新闻</h1>
+        <div className="max-w-5xl mx-auto p-6">
+            <h1 className="text-3xl font-bold mb-6 text-white">新闻</h1>
             <ul className="space-y-4">
                 {newsList.map((news) => (
                     <li key={news.slug}>
                         <Link
                             href={`/news/${news.slug}`}
-                            className="text-xl text-[#F38181] hover:underline"
+                            className="text-xl text-[#E93B66] hover:underline"
                         >
                             {news.frontmatter.title}
                         </Link>
