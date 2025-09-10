@@ -124,7 +124,7 @@ export default function Register() {
                     <div className="bg-yellow-50 border border-yellow-200 p-4">
                         <h3 className="text-sm font-medium text-yellow-800">隐私说明</h3>
                         <p className="mt-2 text-sm text-yellow-600">
-                            我们只会获取您的基本账号信息（ID、用户名、头像、国家、PP、排名），
+                            我们只会获取您的基本账号信息（ID、用户名、头像、地区、PP、排名），
                             不会获取您的密码或其他敏感信息。所有数据仅用于比赛安排目的。
                         </p>
                     </div>

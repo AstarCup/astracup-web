@@ -99,7 +99,7 @@ export default function RegistrationsPage() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {registrations.map((player) => (
-                            <div key={player.osuId} className="bg-white rounded-lg shadow-md overflow-hidden">
+                            <div key={player.osuId} className="bg-white shadow-md overflow-hidden">
                                 <div className="p-6">
                                     <div className="flex items-center space-x-4 mb-4">
                                         <img
@@ -107,13 +107,13 @@ export default function RegistrationsPage() {
                                             alt={player.username}
                                             width={64}
                                             height={64}
-                                            className="rounded-full"
+                                            className="outline outline-2 outline-[#E93B66]"
                                             onError={(e) => {
                                                 e.currentTarget.src = '/default-avatar.png';
                                             }}
                                         />
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="text-lg font-semibold text-gray-900 truncate">
+                                            <h3 className="text-2xl font-semibold text-gray-900 truncate">
                                                 <a href={`https://osu.ppy.sh/users/${player.osuId}`}>{player.username}</a>
 
                                             </h3>
@@ -124,20 +124,20 @@ export default function RegistrationsPage() {
                                     <div className="grid grid-cols-2 gap-3 text-sm">
                                         <div className="flex flex-col items-start">
                                             <span className="text-gray-600 mb-1">PP</span>
-                                            <span className={audiowide.className}>{formatPP(player.pp)}</span>
+                                            <span className={`${audiowide.className} text-3xl`}>{formatPP(player.pp)}</span>
                                         </div>
                                         <div className="flex flex-col items-start">
                                             <span className="text-gray-600 mb-1">全球排名</span>
-                                            <span className={audiowide.className}>{formatRank(player.global_rank)}</span>
+                                            <span className={`${audiowide.className} text-3xl`}>{formatRank(player.global_rank)}</span>
                                         </div>
                                         {player.country_rank && (
                                             <div className="col-span-2 flex flex-col items-start mt-2">
                                                 <span className="text-gray-600 mb-1">地区排名</span>
-                                                <span className={audiowide.className}>{formatRank(player.country_rank)}</span>
+                                                <span className={`${audiowide.className} text-3xl`}>{formatRank(player.country_rank)}</span>
                                             </div>
                                         )}
                                         <div className="col-span-2 flex flex-col items-start mt-2">
-                                            <span className="text-gray-600 mb-1">国家</span>
+                                            <span className="text-gray-600 mb-1">地区</span>
                                             <span className={audiowide.className}>{player.country}</span>
                                         </div>
                                     </div>
@@ -159,7 +159,7 @@ export default function RegistrationsPage() {
                 <div className="mt-8 text-center">
                     <button
                         onClick={fetchRegistrations}
-                        className="px-6 py-2 bg-[#F38181] text-white rounded-md hover:bg-[#95E1D3] transition-colors"
+                        className="px-6 py-2 bg-[#E93B66] text-white rounded-md hover:bg-[#95E1D3] transition-colors"
                     >
                         刷新数据
                     </button>
