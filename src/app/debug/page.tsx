@@ -323,7 +323,7 @@ export default function DebugPage() {
                                                         <p className="text-sm text-gray-500">
                                                             PP: {Math.round(player.pp).toLocaleString()} |
                                                             排名: {player.global_rank ? `#${player.global_rank.toLocaleString()}` : '未排名'} |
-                                                            地区: {player.country} (#{player.country})
+                                                            地区: {player.country} (#{player.country_rank ? player.country_rank.toLocaleString() : '未排名'})
                                                         </p>
                                                         <p className={`text-xs ${player.approved ? 'text-green-600' : 'text-yellow-600'}`}>
                                                             {player.approved ? '✓ 已审核通过' : '⏳ 待审核'}

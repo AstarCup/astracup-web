@@ -52,10 +52,6 @@ export default function UserProfile({ user }: UserProfileProps) {
                                 <span className="font-semibold">{formatRank(user.country_rank)}</span>
                             </div>
                         )}
-                        <div>
-                            <span className="text-gray-600">所在地区: </span>
-                            <span className="font-semibold">{user.country || "未知"}</span>
-                        </div>
                     </div>
                 </div>
             </div>

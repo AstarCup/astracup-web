@@ -96,7 +96,6 @@ export async function getOsuUserInfo(accessToken: string): Promise<{
         pp: number;
         global_rank: number | null;
         country_rank: number | null;
-        country: string;
     };
 }> {
     const response = await fetch('https://osu.ppy.sh/api/v2/me', {
@@ -120,7 +119,6 @@ export async function getOsuUserInfo(accessToken: string): Promise<{
             pp: userData.statistics.pp,
             global_rank: userData.statistics.global_rank,
             country_rank: userData.statistics.country_rank,
-            country: userData.country_code || '',
         } : undefined,
     };
 }
