@@ -6,6 +6,7 @@ export interface UserSession {
     pp: number;
     global_rank: number | null;
     country_rank: number | null;
+    country: string;
 }
 
 // 检查用户是否为管理员（AeCw）

@@ -2,7 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { TournamentRegistration } from "@/lib/edge-registrations";
-import { url } from "inspector";
+import localFont from "next/font/local";
+
+const audiowide = localFont({
+    src: "../font/Audiowide-Regular.ttf",
+    display: "auto",
+});
 
 export default function RegistrationsPage() {
     const [registrations, setRegistrations] = useState<TournamentRegistration[]>([]);
@@ -45,11 +50,11 @@ export default function RegistrationsPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 py-12">
+            <div className="min-h-screen py-12">
                 <div className="max-w-6xl mx-auto px-4">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F38181] mx-auto"></div>
-                        <p className="mt-4 text-gray-600">正在加载报名数据...</p>
+                        <p className="mt-4 text-white">正在加载报名数据...</p>
                     </div>
                 </div>
             </div>
@@ -58,7 +63,7 @@ export default function RegistrationsPage() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gray-50 py-12">
+            <div className="min-h-screen py-12">
                 <div className="max-w-6xl mx-auto px-4">
                     <div className="bg-red-50 border border-red-200 rounded-md p-4 text-center">
                         <p className="text-red-600">{error}</p>
@@ -75,18 +80,18 @@ export default function RegistrationsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12">
+        <div className="min-h-screen py-12">
             <div className="max-w-6xl mx-auto px-4">
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-gray-900">已报名玩家</h1>
-                    <p className="mt-2 text-lg text-gray-600">
-                        当前共有 {registrations.length} 名玩家报名参赛
+                    <h1 className="text-4xl font-bold text-white">已报名玩家</h1>
+                    <p className="mt-2 text-lg text-gray-400">
+                        当前共有 {registrations.length} 名玩家报名参赛，已通过审核 {registrations.filter(r => r.approved).length} 名
                     </p>
                 </div>
 
                 {registrations.length === 0 ? (
                     <div className="text-center py-12">
-                        <div className="bg-white rounded-lg shadow-md p-8">
+                        <div className="bg-white  shadow-md p-8">
                             <div className="text-gray-400 text-6xl mb-4">🎮</div>
                             <h3 className="text-xl font-semibold text-gray-900 mb-2">暂无报名玩家</h3>
                             <p className="text-gray-600">还没有玩家报名参加比赛</p>
@@ -118,26 +123,24 @@ export default function RegistrationsPage() {
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3 text-sm">
-                                        <div>
-                                            <span className="text-gray-600">PP: </span>
-                                            <span className="font-semibold">{formatPP(player.pp)}</span>
+                                        <div className="flex flex-col items-start">
+                                            <span className="text-gray-600 mb-1">PP</span>
+                                            <span className={audiowide.className}>{formatPP(player.pp)}</span>
                                         </div>
-                                        <div>
-                                            <span className="text-gray-600">全球排名: </span>
-                                            <span className="font-semibold">{formatRank(player.global_rank)}</span>
+                                        <div className="flex flex-col items-start">
+                                            <span className="text-gray-600 mb-1">全球排名</span>
+                                            <span className={audiowide.className}>{formatRank(player.global_rank)}</span>
                                         </div>
                                         {player.country_rank && (
-                                            <div className="col-span-2">
-                                                <span className="text-gray-600">地区排名: </span>
-                                                <span className="font-semibold">{formatRank(player.country_rank)}</span>
+                                            <div className="col-span-2 flex flex-col items-start mt-2">
+                                                <span className="text-gray-600 mb-1">地区排名</span>
+                                                <span className={audiowide.className}>{formatRank(player.country_rank)}</span>
                                             </div>
                                         )}
-                                        {player.teamName && (
-                                            <div className="col-span-2">
-                                                <span className="text-gray-600">队伍: </span>
-                                                <span className="font-semibold">{player.teamName}</span>
-                                            </div>
-                                        )}
+                                        <div className="col-span-2 flex flex-col items-start mt-2">
+                                            <span className="text-gray-600 mb-1">国家</span>
+                                            <span className={audiowide.className}>{player.country}</span>
+                                        </div>
                                     </div>
 
                                     <div className="mt-4 pt-4 border-t border-gray-200">
