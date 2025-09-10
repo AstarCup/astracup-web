@@ -9,6 +9,7 @@ export interface OsuUser {
         pp: number;
         global_rank: number | null;
         country_rank: number | null;
+        country: string;
         ranked_score: number;
         hit_accuracy: number;
         play_count: number;
@@ -75,6 +76,7 @@ async function getUserDataFromAPI(username: string): Promise<OsuUser | null> {
                 pp: data.statistics?.pp || 0,
                 global_rank: data.statistics?.global_rank || null,
                 country_rank: data.statistics?.country_rank || null,
+                country: data.country_code || '',
                 ranked_score: data.statistics?.ranked_score || 0,
                 hit_accuracy: data.statistics?.hit_accuracy || 0,
                 play_count: data.statistics?.play_count || 0,
@@ -160,6 +162,7 @@ async function getUserDataFromPublic(username: string): Promise<OsuUser | null> 
                     pp: 0,
                     global_rank: null,
                     country_rank: null,
+                    country: '',
                     ranked_score: 0,
                     hit_accuracy: 0,
                     play_count: 0,

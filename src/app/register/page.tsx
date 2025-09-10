@@ -92,7 +92,7 @@ export default function Register() {
 
     return (
         <div className="min-h-screen py-12">
-            <div className="max-w-2xl mx-auto shadow-md p-8">
+            <div className="max-w-2xl mx-auto p-8">
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 text-white">比赛报名</h1>
                     <p className="mt-2 text-sm text-gray-100">
@@ -102,7 +102,7 @@ export default function Register() {
 
                 <div className="space-y-6">
                     {error && (
-                        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                        <div className="bg-red-50 border border-red-200 p-4">
                             <p className="text-sm text-red-600">{error}</p>
                         </div>
                     )}
@@ -130,7 +130,7 @@ export default function Register() {
                     </div>
 
                     {/* 同意报名须知勾选框 */}
-                    <div className="flex items-center space-x-3 bg-gray-50 p-4 rounded-md">
+                    <div className="flex items-center space-x-3 bg-gray-50 p-4">
                         <input
                             type="checkbox"
                             id="agreeTerms"
