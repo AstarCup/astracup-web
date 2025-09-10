@@ -2,16 +2,22 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
     try {
-        const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        await fetch(`${origin}/api/session/clear`, {
-            method: 'POST',
-            headers: { cookie: request.headers.get('cookie') || '' }
-        });
-
-        return NextResponse.json({
+        // 创建响应并删除session cookie
+        const response = NextResponse.json({
             success: true,
             message: 'Logged out successfully'
         });
+
+        // 删除session cookie
+        response.cookies.set('astra_session', '', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            expires: new Date(0)
+        });
+
+        return response;
     } catch (error) {
         console.error('Logout error:', error);
 
