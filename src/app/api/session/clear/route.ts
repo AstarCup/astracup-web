@@ -2,7 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
     try {
-        const { sessionId } = await request.json();
+        // 允许无 body 情况
+        let sessionId = null;
+        try {
+            const body = await request.json();
+            sessionId = body.sessionId;
+        } catch {
+            // 没有 body 也不报错
+        }
 
         if (!sessionId) {
             return NextResponse.json({
@@ -11,8 +18,6 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // 这里应该调用 Vercel Edge Config API 来清除会话
-        // 实际部署时需要配置 Edge Config Store
 
         // console.log('Clearing session from Edge Config:', sessionId);
 
