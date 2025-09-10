@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOsuToken, getOsuUserInfo } from '@/lib/osu-auth';
 import { addRegistration, isUserRegistered } from '@/lib/registrations';
+import { count } from 'console';
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest) {
                 pp: userInfo.statistics?.pp || 0,
                 global_rank: userInfo.statistics?.global_rank || null,
                 country_rank: userInfo.statistics?.country_rank || null,
+                country: userInfo.country_code || '',
             }), cookieOptions);
 
             return redirectResponse;
@@ -67,6 +69,7 @@ export async function GET(request: NextRequest) {
             pp: userInfo.statistics?.pp || 0,
             global_rank: userInfo.statistics?.global_rank || null,
             country_rank: userInfo.statistics?.country_rank || null,
+            country: userInfo.country_code || '',
             approved: false,
             approvedAt: null,
         });
@@ -95,6 +98,7 @@ export async function GET(request: NextRequest) {
             pp: userInfo.statistics?.pp || 0,
             global_rank: userInfo.statistics?.global_rank || null,
             country_rank: userInfo.statistics?.country_rank || null,
+            country: userInfo.country_code || '',
         }), cookieOptions);
 
         return redirectResponse;

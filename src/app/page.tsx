@@ -63,7 +63,7 @@ export default function Home() {
             <RegistrationButton user={user} />
           )}
         </div>
-        <div className="md:col-span-2 relative p-3 m-1 flex flex-col md:flex-row items-center justify-center z-2">
+        <div className="md:col-span-2 p-3 m-1 flex flex-col md:flex-row items-center justify-center z-0">
           <a
             href="https://qm.qq.com/q/sFydxoQtaw"
             className="flex-1 p-3 flex items-center justify-center hover:bg-[#E93B66] hover:text-white transition"

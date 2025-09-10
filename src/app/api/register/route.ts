@@ -16,6 +16,7 @@ export interface Registration {
     pp: number;
     global_rank: number | null;
     country_rank: number | null;
+    country: string;
 }
 
 // 确保数据目录存在

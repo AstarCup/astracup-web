@@ -19,6 +19,7 @@ export interface Registration {
     pp: number;
     global_rank: number | null;
     country_rank: number | null;
+    country: string;
     approved: boolean;
     approvedAt: string | null;
 }

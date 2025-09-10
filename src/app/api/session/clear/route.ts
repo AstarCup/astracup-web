@@ -2,27 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
     try {
-        const { sessionId } = await request.json();
-
-        if (!sessionId) {
-            return NextResponse.json({
-                success: false,
-                error: 'Session ID is required'
-            }, { status: 400 });
-        }
-
-        // 这里应该调用 Vercel Edge Config API 来清除会话
-        // 实际部署时需要配置 Edge Config Store
-
-        // console.log('Clearing session from Edge Config:', sessionId);
-
-        return NextResponse.json({
+        // 创建响应并删除session cookie
+        const response = NextResponse.json({
             success: true,
             message: 'Session cleared successfully'
         });
+
+        // 删除session cookie
+        response.cookies.set('astra_session', '', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            expires: new Date(0)
+        });
+
+        return response;
     } catch (error) {
         console.error('Error clearing session:', error);
-
         return NextResponse.json({
             success: false,
             error: 'Failed to clear session'

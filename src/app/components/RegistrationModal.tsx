@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { UserSession } from "@/lib/session";
 import { TournamentRegistration } from "@/lib/edge-registrations";
+import { count } from "console";
 
 interface RegistrationModalProps {
     user: UserSession;
@@ -14,6 +15,7 @@ interface RegistrationModalProps {
 export default function RegistrationModal({ user, isOpen, onClose, onRegister }: RegistrationModalProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState(false);
     const [agreedToTerms, setAgreedToTerms] = useState(false);
     const [showGuide, setShowGuide] = useState(false);
     const [rankConfig, setRankConfig] = useState({
@@ -25,41 +27,52 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
     const [edgeConfig, setEdgeConfig] = useState<any>(null);
     const [edgeConfigLoading, setEdgeConfigLoading] = useState(true);
 
+    // 重置状态函数
+    const resetModalState = () => {
+        setError("");
+        setSuccess(false);
+        setIsLoading(false);
+        setAgreedToTerms(false);
+        setShowGuide(false);
+    };
+
     useEffect(() => {
-        // 从API获取rank配置和edge config
-        const fetchConfigs = async () => {
-            try {
-                setConfigLoading(true);
-                setEdgeConfigLoading(true);
-
-                // 并行获取rank配置和edge config
-                const [rankResponse, edgeResponse] = await Promise.all([
-                    fetch('/api/rank-config'),
-                    fetch('/api/edge-registrations')
-                ]);
-
-                if (rankResponse.ok) {
-                    const config = await rankResponse.json();
-                    setRankConfig(config);
-                }
-
-                if (edgeResponse.ok) {
-                    const edgeData = await edgeResponse.json();
-                    setEdgeConfig(edgeData);
-                }
-            } catch (error) {
-                console.error('Failed to fetch configs:', error);
-                // 出错时使用默认配置
-            } finally {
-                setConfigLoading(false);
-                setEdgeConfigLoading(false);
-            }
-        };
-
+        // 当模态框打开时重置状态
         if (isOpen) {
+            resetModalState();
             fetchConfigs();
         }
     }, [isOpen]);
+
+    // 从API获取rank配置和edge config
+    const fetchConfigs = async () => {
+        try {
+            setConfigLoading(true);
+            setEdgeConfigLoading(true);
+
+            // 并行获取rank配置和edge config
+            const [rankResponse, edgeResponse] = await Promise.all([
+                fetch('/api/rank-config'),
+                fetch('/api/edge-registrations')
+            ]);
+
+            if (rankResponse.ok) {
+                const config = await rankResponse.json();
+                setRankConfig(config);
+            }
+
+            if (edgeResponse.ok) {
+                const edgeData = await edgeResponse.json();
+                setEdgeConfig(edgeData);
+            }
+        } catch (error) {
+            console.error('Failed to fetch configs:', error);
+            // 出错时使用默认配置
+        } finally {
+            setConfigLoading(false);
+            setEdgeConfigLoading(false);
+        }
+    };
 
     const handleRegister = async () => {
         // 检查PP限制
@@ -84,6 +97,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                 pp: user.pp,
                 global_rank: user.global_rank,
                 country_rank: user.country_rank,
+                country: user.country,
                 teamName: "",
                 seedPosition: null,
                 agreedToTerms: true,
@@ -91,12 +105,14 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                 approvedAt: null
             };
 
-            const success = await onRegister(registrationData);
+            const result = await onRegister(registrationData);
 
-            if (success) {
-                onClose();
-                // 可以在这里添加成功提示或重定向
-                window.location.reload();
+            if (result) {
+                setSuccess(true);
+                // 2秒后自动关闭模态框
+                setTimeout(() => {
+                    onClose();
+                }, 2000);
             } else {
                 setError("报名失败，请重试");
             }
@@ -108,6 +124,34 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
     };
 
     if (!isOpen) return null;
+
+    // 如果注册成功，显示成功界面
+    if (success) {
+        return (
+            <div className="fixed inset-0 bg-black bg-opacity-100 flex items-center justify-center z-[9999] p-4">
+                <div className="bg-white rounded-lg max-w-md w-full p-8 text-center">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">报名成功！</h2>
+                    <p className="text-gray-600 mb-4">
+                        恭喜您成功报名 AstraCup 比赛！
+                    </p>
+                    <p className="text-sm text-gray-500">
+                        页面将在2秒后自动关闭...
+                    </p>
+                    <button
+                        onClick={onClose}
+                        className="mt-4 px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    >
+                        立即关闭
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     // 检查PP限制
     const isPpTooHigh = rankConfig.rankRestrictionEnabled && user.pp > rankConfig.maxPpForRegistration;
@@ -189,6 +233,10 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                                         <span className="font-medium">#{user.country_rank.toLocaleString()}</span>
                                     </div>
                                 )}
+                                <div>
+                                    <span className="text-gray-600">所在地区: </span>
+                                    <span className="font-medium">{user.country || "未知"}</span>
+                                </div>
                             </div>
                         </div>
 
@@ -209,9 +257,9 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                                     <p><strong>比赛规则:</strong></p>
                                     <ul className="list-disc list-inside space-y-1 ml-4">
                                         <li>比赛采用 osu! standard 模式</li>
-                                        <li>所有参赛者必须使用真实 osu! 账号</li>
+                                        <li>所有参赛者必须使用bancho账号进行注册</li>
                                         <li>禁止使用任何形式的作弊工具</li>
-                                        <li>比赛期间请保持良好体育精神</li>
+                                        <li>比赛期间请保持良好竞技精神</li>
                                     </ul>
 
                                     <p><strong>报名要求:</strong></p>

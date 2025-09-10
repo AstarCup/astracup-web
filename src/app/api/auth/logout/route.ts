@@ -1,16 +1,23 @@
 import { NextResponse } from 'next/server';
 
-export async function POST() {
+export async function POST(request: Request) {
     try {
-        // 清除会话通过API调用
-        await fetch('/api/session/clear', {
-            method: 'POST'
-        });
-
-        return NextResponse.json({
+        // 创建响应并删除session cookie
+        const response = NextResponse.json({
             success: true,
             message: 'Logged out successfully'
         });
+
+        // 删除session cookie
+        response.cookies.set('astra_session', '', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            expires: new Date(0)
+        });
+
+        return response;
     } catch (error) {
         console.error('Logout error:', error);
 

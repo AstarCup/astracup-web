@@ -8,6 +8,7 @@ export interface TournamentRegistration {
     pp: number;
     global_rank: number | null;
     country_rank: number | null;
+    country: string;
     teamName: string;
     seedPosition: number | null;
     agreedToTerms: boolean;
@@ -35,6 +36,7 @@ async function getRegistrations(): Promise<TournamentRegistration[]> {
                 pp: reg.pp,
                 global_rank: reg.global_rank,
                 country_rank: reg.country_rank,
+                country: reg.country || '',
                 teamName: reg.inGameName || reg.username,
                 seedPosition: null,
                 agreedToTerms: true,
@@ -114,6 +116,7 @@ export async function POST(request: NextRequest) {
             pp: body.pp,
             global_rank: body.global_rank || null,
             country_rank: body.country_rank || null,
+            country: body.country || '',
             teamName: body.teamName || '',
             seedPosition: body.seedPosition || null,
             agreedToTerms: body.agreedToTerms || false,
@@ -143,6 +146,7 @@ export async function POST(request: NextRequest) {
                 pp: newRegistration.pp,
                 global_rank: newRegistration.global_rank,
                 country_rank: newRegistration.country_rank,
+                country: newRegistration.country,
                 approved: false,
                 approvedAt: null,
             });

@@ -30,32 +30,34 @@ export const initDatabase = async (): Promise<void> => {
 
         // 创建注册表（如果不存在）
         await connection.execute(`
-      CREATE TABLE IF NOT EXISTS registrations (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        osuId VARCHAR(255) NOT NULL UNIQUE,
-        username VARCHAR(255) NOT NULL,
-        inGameName VARCHAR(255),
-        timezone VARCHAR(50),
-        availability TEXT,
-        registeredAt DATETIME NOT NULL,
-        avatar_url TEXT,
-        pp FLOAT,
-        global_rank INT,
-        country_rank INT,
-        approved BOOLEAN DEFAULT FALSE COMMENT '审核状态：0-待审核，1-审核通过',
-        approvedAt DATETIME NULL COMMENT '审核通过时间',
-        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_osuId (osuId),
-        INDEX idx_username (username),
-        INDEX idx_approved (approved)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
+            CREATE TABLE IF NOT EXISTS registrations (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                osuId VARCHAR(255) NOT NULL UNIQUE,
+                username VARCHAR(255) NOT NULL,
+                inGameName VARCHAR(255),
+                timezone VARCHAR(50),
+                availability TEXT,
+                registeredAt DATETIME NOT NULL,
+                avatar_url TEXT,
+                pp FLOAT,
+                global_rank INT,
+                country_rank INT,
+                country VARCHAR(32),
+                approved BOOLEAN DEFAULT FALSE COMMENT '审核状态：0-待审核，1-审核通过',
+                approvedAt DATETIME NULL COMMENT '审核通过时间',
+                createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_osuId (osuId),
+                INDEX idx_username (username),
+                INDEX idx_approved (approved)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
 
         // 检查并添加缺失的字段（表结构升级）
         const requiredColumns = [
             { name: 'approved', type: 'BOOLEAN DEFAULT FALSE COMMENT \'审核状态：0-待审核，1-审核通过\'' },
-            { name: 'approvedAt', type: 'DATETIME NULL COMMENT \'审核通过时间\'' }
+            { name: 'approvedAt', type: 'DATETIME NULL COMMENT \'审核通过时间\'' },
+            { name: 'country', type: 'VARCHAR(32)' }
         ];
 
         for (const column of requiredColumns) {
@@ -97,6 +99,7 @@ export interface Registration {
     pp: number;
     global_rank: number | null;
     country_rank: number | null;
+    country: string;
     approved: boolean;
     approvedAt: string | null;
 }
@@ -109,13 +112,13 @@ const mysqlStorage = {
             const connection = await getPool().getConnection();
 
             const [rows] = await connection.execute(`
-                SELECT 
-                  osuId, username, inGameName, timezone, availability,
-                  registeredAt, avatar_url, pp, global_rank, country_rank,
-                  approved, approvedAt
-                FROM registrations 
-                ORDER BY registeredAt DESC
-            `);
+                                SELECT 
+                                    osuId, username, inGameName, timezone, availability,
+                                    registeredAt, avatar_url, pp, global_rank, country_rank, country,
+                                    approved, approvedAt
+                                FROM registrations 
+                                ORDER BY registeredAt DESC
+                        `);
 
             connection.release();
 
@@ -130,6 +133,7 @@ const mysqlStorage = {
                 pp: row.pp,
                 global_rank: row.global_rank,
                 country_rank: row.country_rank,
+                country: row.country || '',
                 approved: row.approved || false,
                 approvedAt: row.approvedAt ? new Date(row.approvedAt).toISOString() : null,
             }));
@@ -157,11 +161,11 @@ const mysqlStorage = {
             if (existing) {
                 // 更新现有用户信息
                 await connection.execute(`
-          UPDATE registrations SET
-            username = ?, inGameName = ?, timezone = ?, availability = ?,
-            avatar_url = ?, pp = ?, global_rank = ?, country_rank = ?, updatedAt = CURRENT_TIMESTAMP
-          WHERE osuId = ?
-        `, [
+                    UPDATE registrations SET
+                        username = ?, inGameName = ?, timezone = ?, availability = ?,
+                        avatar_url = ?, pp = ?, global_rank = ?, country_rank = ?, country = ?, updatedAt = CURRENT_TIMESTAMP
+                    WHERE osuId = ?
+                `, [
                     registration.username,
                     registration.inGameName || registration.username,
                     registration.timezone || '',
@@ -170,15 +174,16 @@ const mysqlStorage = {
                     registration.pp,
                     registration.global_rank,
                     registration.country_rank,
+                    registration.country || '',
                     registration.osuId
                 ]);
             } else {
                 // 插入新用户
                 await connection.execute(`
-          INSERT INTO registrations 
-          (osuId, username, inGameName, timezone, availability, registeredAt, avatar_url, pp, global_rank, country_rank)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
+                    INSERT INTO registrations 
+                    (osuId, username, inGameName, timezone, availability, registeredAt, avatar_url, pp, global_rank, country_rank, country)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `, [
                     registration.osuId,
                     registration.username,
                     registration.inGameName || registration.username,
@@ -188,7 +193,8 @@ const mysqlStorage = {
                     registration.avatar_url,
                     registration.pp,
                     registration.global_rank,
-                    registration.country_rank
+                    registration.country_rank,
+                    registration.country || ''
                 ]);
             }
 
@@ -228,12 +234,12 @@ const mysqlStorage = {
             const connection = await getPool().getConnection();
 
             const [rows] = await connection.execute(`
-                SELECT 
-                  osuId, username, inGameName, timezone, availability,
-                  registeredAt, avatar_url, pp, global_rank, country_rank,
-                  approved, approvedAt
-                FROM registrations WHERE osuId = ?
-            `, [osuId]);
+                                SELECT 
+                                    osuId, username, inGameName, timezone, availability,
+                                    registeredAt, avatar_url, pp, global_rank, country_rank, country,
+                                    approved, approvedAt
+                                FROM registrations WHERE osuId = ?
+                        `, [osuId]);
 
             connection.release();
 
@@ -251,6 +257,7 @@ const mysqlStorage = {
                 pp: row.pp,
                 global_rank: row.global_rank,
                 country_rank: row.country_rank,
+                country: row.country || '',
                 approved: row.approved || false,
                 approvedAt: row.approvedAt ? new Date(row.approvedAt).toISOString() : null,
             };

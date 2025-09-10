@@ -11,7 +11,6 @@ export default function Schedule() {
             <div className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4 text-white">比赛时间表</h2>
                 <div className="overflow-x-auto">
-
                     <ScheduleTable schedule={scheduleData.schedule} />
                 </div>
             </div>

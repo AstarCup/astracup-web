@@ -8,6 +8,7 @@ export interface TournamentRegistration {
     pp: number;
     global_rank: number | null;
     country_rank: number | null;
+    country: string;
     teamName: string; // 队伍名，初始为空
     seedPosition: number | null; // seed位，初始为null
     agreedToTerms: boolean; // 是否同意条款
