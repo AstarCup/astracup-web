@@ -13,6 +13,3 @@ export interface UserSession {
 export function isAdminUser(session: UserSession | null): boolean {
     return session?.username === 'AeCw';
 }
-
-// 这些函数现在通过API端点实现，避免在lib目录中使用next/headers
-// 实际的会话管理在 /app/api/session/ 下的API端点中处理
