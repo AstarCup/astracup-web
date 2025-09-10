@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { UserSession } from "@/lib/session";
+import { TournamentRegistration } from "@/lib/edge-registrations";
+import { count } from "console";
 
 interface RegistrationModalProps {
     user: UserSession;
     isOpen: boolean;
     onClose: () => void;
-    onRegister: (registration: any) => Promise<boolean>;
+    onRegister: (registration: Omit<TournamentRegistration, 'registeredAt'>) => Promise<boolean>;
 }
 
 export default function RegistrationModal({ user, isOpen, onClose, onRegister }: RegistrationModalProps) {
@@ -103,20 +105,11 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                 approvedAt: null
             };
 
-            const response = await fetch('/api/edge-registrations', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(registrationData),
-                credentials: 'include',
-            });
-            if (!response.ok) {
-                throw new Error('报名失败');
-            }
-            const data = await response.json();
-            if (data.success) {
+            const result = await onRegister(registrationData);
+
+            if (result) {
                 setSuccess(true);
+                // 2秒后自动关闭模态框
                 setTimeout(() => {
                     onClose();
                 }, 2000);

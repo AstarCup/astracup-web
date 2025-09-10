@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { UserSession } from "@/lib/session";
 import RegistrationModal from "./RegistrationModal";
+import { addRegistration } from "@/lib/edge-registrations";
 
 interface RegistrationButtonProps {
     user: UserSession;
@@ -42,25 +43,15 @@ export default function RegistrationButton({ user }: RegistrationButtonProps) {
 
     const handleRegister = async (registrationData: any): Promise<boolean> => {
         try {
-            const response = await fetch('/api/edge-registrations', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(registrationData),
-                credentials: 'include',
-            });
-            if (!response.ok) {
-                throw new Error('报名失败');
-            }
-            const data = await response.json();
-            if (data.success) {
+            const result = await addRegistration(registrationData);
+
+            // 注册成功后立即更新本地状态，而不是重新检查
+            if (result) {
                 setIsRegistered(true);
                 setIsModalOpen(false);
-                return true;
-            } else {
-                return false;
             }
+
+            return result;
         } catch (error) {
             console.error('Registration error:', error);
             return false;
