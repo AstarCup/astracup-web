@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { TournamentRegistration } from "@/lib/edge-registrations";
 import localFont from "next/font/local";
 
 const audiowide = localFont({
@@ -9,7 +10,7 @@ const audiowide = localFont({
 });
 
 export default function RegistrationsPage() {
-    const [registrations, setRegistrations] = useState<any[]>([]);
+    const [registrations, setRegistrations] = useState<TournamentRegistration[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
 
