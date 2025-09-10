@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { UserSession } from "@/lib/session";
 import { TournamentRegistration } from "@/lib/edge-registrations";
+import { count } from "console";
 
 interface RegistrationModalProps {
     user: UserSession;
@@ -96,6 +97,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                 pp: user.pp,
                 global_rank: user.global_rank,
                 country_rank: user.country_rank,
+                country: user.country,
                 teamName: "",
                 seedPosition: null,
                 agreedToTerms: true,
