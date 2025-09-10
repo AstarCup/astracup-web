@@ -234,7 +234,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                                     </div>
                                 )}
                                 <div>
-                                    <span className="text-gray-600">所在国家: </span>
+                                    <span className="text-gray-600">所在地区: </span>
                                     <span className="font-medium">{user.country || "未知"}</span>
                                 </div>
                             </div>
