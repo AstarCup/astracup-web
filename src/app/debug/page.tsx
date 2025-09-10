@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { isAdminUser, UserSession } from "@/lib/session";
-import { TournamentRegistration } from "@/lib/edge-registrations";
 
 export default function DebugPage() {
     const router = useRouter();
@@ -12,7 +10,7 @@ export default function DebugPage() {
     const [userSession, setUserSession] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [registrations, setRegistrations] = useState<TournamentRegistration[]>([]);
+    const [registrations, setRegistrations] = useState<any[]>([]);
     const [registrationsLoading, setRegistrationsLoading] = useState(false);
     const [deletingUser, setDeletingUser] = useState<string | null>(null);
 
