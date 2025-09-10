@@ -135,6 +135,7 @@ async function getUserDataFromPublic(username: string): Promise<OsuUser | null> 
                         pp: 0,
                         global_rank: null,
                         country_rank: null,
+                        country: userData.country_code || '',
                         ranked_score: 0,
                         hit_accuracy: 0,
                         play_count: 0,

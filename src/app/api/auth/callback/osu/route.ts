@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOsuToken, getOsuUserInfo } from '@/lib/osu-auth';
 import { addRegistration, isUserRegistered } from '@/lib/registrations';
-import { count } from 'console';
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);

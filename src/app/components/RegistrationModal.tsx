@@ -233,6 +233,10 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                                         <span className="font-medium">#{user.country_rank.toLocaleString()}</span>
                                     </div>
                                 )}
+                                <div>
+                                    <span className="text-gray-600">所在地区: </span>
+                                    <span className="font-medium">{user.country || "未知"}</span>
+                                </div>
                             </div>
                         </div>
 
