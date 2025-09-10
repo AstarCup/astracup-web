@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
             pp: userInfo.statistics?.pp || 0,
             global_rank: userInfo.statistics?.global_rank || null,
             country_rank: userInfo.statistics?.country_rank || null,
+            country: userInfo.country_code || '',
             approved: false,
             approvedAt: null,
         });

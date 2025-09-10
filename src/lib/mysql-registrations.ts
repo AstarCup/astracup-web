@@ -29,7 +29,7 @@ export const initDatabase = async (): Promise<void> => {
         const connection = await getPool().getConnection();
 
         // 创建注册表（如果不存在）
-                await connection.execute(`
+        await connection.execute(`
             CREATE TABLE IF NOT EXISTS registrations (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 osuId VARCHAR(255) NOT NULL UNIQUE,
@@ -57,7 +57,7 @@ export const initDatabase = async (): Promise<void> => {
         const requiredColumns = [
             { name: 'approved', type: 'BOOLEAN DEFAULT FALSE COMMENT \'审核状态：0-待审核，1-审核通过\'' },
             { name: 'approvedAt', type: 'DATETIME NULL COMMENT \'审核通过时间\'' },
-            { name: 'country', type: 'VARCHAR(32)'}
+            { name: 'country', type: 'VARCHAR(32)' }
         ];
 
         for (const column of requiredColumns) {
@@ -111,7 +111,7 @@ const mysqlStorage = {
         try {
             const connection = await getPool().getConnection();
 
-                        const [rows] = await connection.execute(`
+            const [rows] = await connection.execute(`
                                 SELECT 
                                     osuId, username, inGameName, timezone, availability,
                                     registeredAt, avatar_url, pp, global_rank, country_rank, country,
@@ -158,45 +158,45 @@ const mysqlStorage = {
 
             const existing = (existingRows as any[]).length > 0;
 
-                        if (existing) {
-                                // 更新现有用户信息
-                                await connection.execute(`
+            if (existing) {
+                // 更新现有用户信息
+                await connection.execute(`
                     UPDATE registrations SET
                         username = ?, inGameName = ?, timezone = ?, availability = ?,
                         avatar_url = ?, pp = ?, global_rank = ?, country_rank = ?, country = ?, updatedAt = CURRENT_TIMESTAMP
                     WHERE osuId = ?
                 `, [
-                                        registration.username,
-                                        registration.inGameName || registration.username,
-                                        registration.timezone || '',
-                                        registration.availability || '',
-                                        registration.avatar_url,
-                                        registration.pp,
-                                        registration.global_rank,
-                                        registration.country_rank,
-                                        registration.country || '',
-                                        registration.osuId
-                                ]);
-                        } else {
-                                // 插入新用户
-                                await connection.execute(`
+                    registration.username,
+                    registration.inGameName || registration.username,
+                    registration.timezone || '',
+                    registration.availability || '',
+                    registration.avatar_url,
+                    registration.pp,
+                    registration.global_rank,
+                    registration.country_rank,
+                    registration.country || '',
+                    registration.osuId
+                ]);
+            } else {
+                // 插入新用户
+                await connection.execute(`
                     INSERT INTO registrations 
                     (osuId, username, inGameName, timezone, availability, registeredAt, avatar_url, pp, global_rank, country_rank, country)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `, [
-                                        registration.osuId,
-                                        registration.username,
-                                        registration.inGameName || registration.username,
-                                        registration.timezone || '',
-                                        registration.availability || '',
-                                        new Date(),
-                                        registration.avatar_url,
-                                        registration.pp,
-                                        registration.global_rank,
-                                        registration.country_rank,
-                                        registration.country || ''
-                                ]);
-                        }
+                    registration.osuId,
+                    registration.username,
+                    registration.inGameName || registration.username,
+                    registration.timezone || '',
+                    registration.availability || '',
+                    new Date(),
+                    registration.avatar_url,
+                    registration.pp,
+                    registration.global_rank,
+                    registration.country_rank,
+                    registration.country || ''
+                ]);
+            }
 
             await connection.commit();
             // console.log('Registration saved to database successfully');
@@ -233,7 +233,7 @@ const mysqlStorage = {
         try {
             const connection = await getPool().getConnection();
 
-                        const [rows] = await connection.execute(`
+            const [rows] = await connection.execute(`
                                 SELECT 
                                     osuId, username, inGameName, timezone, availability,
                                     registeredAt, avatar_url, pp, global_rank, country_rank, country,
