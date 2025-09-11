@@ -1,14 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(req: NextRequest, { params }: { params: { matchId: string } }) {
-    const { matchId } = params;
+export async function GET(
+    req: NextRequest,
+    context: { params: { matchId: string } } | { params: Promise<{ matchId: string }> }
+) {
+    let matchId: string | undefined;
+    const params: any = context.params;
+    if (typeof params.then === 'function') {
+        // params 是 Promise
+        matchId = (await params).matchId;
+    } else {
+        matchId = params.matchId;
+    }
     if (!matchId) {
         return NextResponse.json({ error: 'Missing matchId' }, { status: 400 });
     }
 
     // 从cookie读取access_token，假设cookie名为'cookiez'
     const cookieHeader = req.headers.get('cookie') || '';
-    const match = cookieHeader.match(/cookiez=([^;]+)/);
+    const match = cookieHeader.match(/cookie=([^;]+)/);
     const accessToken = match ? decodeURIComponent(match[1]) : '';
     if (!accessToken) {
         return NextResponse.json({ error: 'No osu! access token in cookiez' }, { status: 401 });
