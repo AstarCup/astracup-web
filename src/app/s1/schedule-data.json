@@ -1,0 +1,40 @@
+{
+    "schedule": [
+        {
+            "round": "第1轮",
+            "date": "2024-08-01",
+            "time": "19:00",
+            "match": "A组 第1轮",
+            "players": "选手1 vs 选手2",
+            "player1Score": "5",
+            "player2Score": "2",
+            "status": "已完成",
+            "liveUrl": "https://live.bilibili.com/123456",
+            "roomUrl": "https://osu.ppy.sh/mp/114514"
+        },
+        {
+            "round": "第2轮",
+            "date": "2024-08-02",
+            "time": "19:00",
+            "match": "A组 第2轮",
+            "players": "选手3 vs 选手4",
+            "player1Score": "3",
+            "player2Score": "5",
+            "status": "进行中",
+            "liveUrl": "https://live.bilibili.com/654321",
+            "roomUrl": "https://osu.ppy.sh/mp/123456"
+        },
+        {
+            "round": "第3轮",
+            "date": "2024-08-03",
+            "time": "19:00",
+            "match": "B组 第1轮",
+            "players": "选手5 vs 选手6",
+            "player1Score": "-",
+            "player2Score": "-",
+            "status": "未开始",
+            "liveUrl": "https://live.bilibili.com/654321",
+            "roomUrl": "https://osu.ppy.sh/mp/123456"
+        }
+    ]
+}

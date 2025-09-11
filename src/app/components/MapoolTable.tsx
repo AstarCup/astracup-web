@@ -11,13 +11,18 @@ export default function MapoolTable({ data, title, downloadUrl }: MapoolTablePro
     const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
     return (
         <div className="mb-20">
-            <h1 className="text-3xl font-bold mb-6">{title}</h1>
-            {downloadUrl && (
-                <a href={downloadUrl} className="absolute right-6 px-5 py-3 bg-[#F38181] text-white hover:bg-[#95E1D3] transition font-bold">
-                    图包下载 MAPPAK DOWNLOAD
-                </a>
-            )}
-            <div className="overflow-x-auto mt-13">
+            <div className="flex justify-between items-start mb-0">
+                <h1 className="text-[120px] font-bold">{title}</h1>
+                {downloadUrl && (
+                    <a 
+                        href={downloadUrl} 
+                        className="px-5 py-3 bg-[#E93B66] text-white hover:bg-[#95E1D3] transition font-bold"
+                    >
+                        图包下载 MAPPAK DOWNLOAD
+                    </a>
+                )}
+            </div>
+            <div className="overflow-x-auto relative">
                 <table className="table-fixed min-w-[1800px]">
                     <thead>
                         <tr className="sticky top-0 bg-white z-10">
