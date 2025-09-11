@@ -35,12 +35,12 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
     };
 
     return (
-        <div className="p-2 mb-2">
+        <div className="p-2 mb-2 w-full">
             <div className="flex flex-col items-left space-y-4">
                 <img
                     src={user.avatar_url}
                     alt={user.username}
-                    className="w-16 h-16 rounded-full"
+                    className="w-16 h-16"
                 />
                 <div className="w-full text-left">
                     <h2 className="text-xl font-bold text-gray-900 mb-3">{user.username}</h2>
@@ -50,17 +50,17 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
                             <span className={`${audiowide.className} text-3xl`}>{Math.round(user.pp)}</span>
                         </div>
                         <div>
-                            <span className="text-gray-600">全球排名</span>
+                            <span className="text-gray-600">全球排名 </span>
                             <span className={`${audiowide.className} font-semibold`}>{formatRank(user.global_rank)}</span>
                         </div>
                         {user.country_rank && (
                             <div>
-                                <span className="text-gray-600">地区排名</span>
+                                <span className="text-gray-600">地区排名 </span>
                                 <span className={`${audiowide.className} font-semibold`}>{formatRank(user.country_rank)}</span>
                             </div>
                         )}
                         <div>
-                            <span className="text-gray-600">所在地区</span>
+                            <span className="text-gray-600">所在地区 </span>
                             <span className={`${audiowide.className} font-semibold`}>{user.country || "未知"}</span>
                         </div>
                     </div>
