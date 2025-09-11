@@ -23,7 +23,7 @@ export default function Schedule() {
                     matchMargin={80}
                     roundMargin={50}
                 /> */}
-                <iframe src="https://challonge.com/zh_CN/MWC4K2025/module" width="100%" height="800" frameBorder="0" scrolling="auto" allowransparency="true"></iframe>
+                <iframe src="https://challonge.com/zh_CN/MWC4K2025/module" width="100%" height="800"></iframe>
             </div>
         </div>
     );
