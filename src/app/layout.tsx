@@ -9,7 +9,7 @@ const metadata: Metadata = {
   title: "AstraCup 星域杯",
   description: "AstraCup 是一场专为广大 osu!lazer std 玩家 打造的线上赛事。",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/favicon.svg",
   },
 }
 

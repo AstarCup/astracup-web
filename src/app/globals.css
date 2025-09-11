@@ -10,18 +10,217 @@ body {
   /* background-image: url("data:image/svg+xml,%3Csvg width='48' height='64' viewBox='0 0 48 64' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M48 28v-4L36 12 24 24 12 12 0 24v4l4 4-4 4v4l12 12 12-12 12 12 12-12v-4l-4-4 4-4zM8 32l-6-6 10-10 10 10-6 6 6 6-10 10L2 38l6-6zm12 0l4-4 4 4-4 4-4-4zm12 0l-6-6 10-10 10 10-6 6 6 6-10 10-10-10 6-6zM0 16L10 6 4 0h4l4 4 4-4h4l-6 6 10 10L34 6l-6-6h4l4 4 4-4h4l-6 6 10 10v4L36 8 24 20 12 8 0 20v-4zm0 32l10 10-6 6h4l4-4 4 4h4l-6-6 10-10 10 10-6 6h4l4-4 4 4h4l-6-6 10-10v-4L36 56 24 44 12 56 0 44v4z' fill='%23000000' fill-opacity='0.3' fill-rule='evenodd'/%3E%3C/svg%3E"); */
 }
 
+/* Guide Markdown content styles */
+.markdown-content h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  color: white;
+}
 
+.markdown-content h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  margin-top: 2rem;
+  color: white;
+}
 
+.markdown-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  margin-top: 1.5rem;
+  color: white;
+}
+
+.markdown-content p {
+  color: white;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.markdown-content ul {
+  list-style-type: disc;
+  list-style-position: inside;
+  margin-bottom: 1rem;
+  padding-left: 1rem;
+}
+
+.markdown-content li {
+  color: white;
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.markdown-content strong {
+  font-weight: 600;
+  color: white;
+}
+
+.markdown-content a {
+  color: #60a5fa;
+  text-decoration: underline;
+}
+
+.markdown-content a:hover {
+  color: #93c5fd;
+}
+
+.markdown-content code {
+  background-color: #374151;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  font-family: monospace;
+}
+
+/* Typography plugin prose styles customization */
 .prose {
   color: rgb(255, 255, 255);
+  max-width: none;
+}
+
+.prose h1 {
+  color: white;
+  font-size: 2.25rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  margin-top: 2rem;
+}
+
+.prose h2 {
+  color: white;
+  font-size: 1.875rem;
+  font-weight: bold;
+  margin-bottom: 1.25rem;
+  margin-top: 2rem;
+}
+
+.prose h3 {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  margin-top: 1.5rem;
+}
+
+.prose h4 {
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.prose p {
+  color: white;
+  line-height: 1.75;
+  margin-bottom: 1.25rem;
+}
+
+.prose ul {
+  color: white;
+  list-style-type: disc;
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.prose ol {
+  color: white;
+  list-style-type: decimal;
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.prose li {
+  color: white;
+  margin-bottom: 0.5rem;
+  line-height: 1.75;
+}
+
+.prose blockquote {
+  border-left: 4px solid #60a5fa;
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: #d1d5db;
+}
+
+.prose strong {
+  font-weight: 600;
+  color: white;
+}
+
+.prose em {
+  font-style: italic;
+  color: white;
 }
 
 .prose a {
-  @apply text-blue-400 underline;
+  color: #60a5fa;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.prose a:hover {
+  color: #93c5fd;
 }
 
 .prose code {
-  @apply bg-gray-800 px-1 rounded;
+  background-color: #374151;
+  color: #f9fafb;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.875em;
+}
+
+.prose pre {
+  background-color: #1f2937;
+  color: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+.prose pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.875rem;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+
+.prose th {
+  background-color: #374151;
+  color: white;
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid #4b5563;
+}
+
+.prose td {
+  color: white;
+  padding: 0.75rem;
+  border: 1px solid #4b5563;
+}
+
+.prose img {
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid #4b5563;
+  margin: 2rem 0;
 }
 
 .countdown {

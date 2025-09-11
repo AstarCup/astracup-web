@@ -48,8 +48,8 @@ export default function Home() {
           height={400}
           className="z-10 relative"
         />
-        <p className="text-4xl font-bold mb-4 z-2 relative text-white">星域杯</p>
-        <p className="mb-6 z-10 relative text-white">欢迎参加 AstraCup，这是一场专为广大 osu!lazer std 玩家 打造的线上赛事。</p>
+        <p className="text-4xl font-bold mb-4 z-2 relative text-white drop-shadow-lg">星域杯</p>
+        <p className="mb-6 z-10 relative text-white drop-shadow-md">这里是OSU!Lazer星域杯，面向中国大陆 7600pp 分段的 1v1 比赛。</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-30 w-full max-w-5xl z-10 relative">
         <div className='md:col-span-2 m-1 items-center justify-center bg-white p-3 outline z-2'>
@@ -70,21 +70,79 @@ export default function Home() {
         <div className="md:col-span-2 p-3 m-1 flex flex-col md:flex-row items-center justify-center z-0">
           <a
             href="https://qm.qq.com/q/sFydxoQtaw"
-            className="flex-1 p-3 flex items-center justify-center hover:bg-[#E93B66] hover:text-white transition"
+            className="flex-1 p-3 flex items-center justify-center hover:bg-[#3D3D3D] hover:text-white transition"
           >
             <Image src="/icons/QQ.svg" alt="QQ群" width={240} height={124} />
           </a>
           <a
             href="https://space.bilibili.com/11872433"
-            className="flex-1 p-3 flex items-center justify-center hover:bg-[#E93B66] hover:text-white transition"
+            className="flex-1 p-3 flex items-center justify-center hover:bg-[#3D3D3D] hover:text-white transition"
           >
             <Image src="/icons/bilibili.svg" alt="主办B站" width={240} height={124} />
           </a>
           <a
             href="https://live.bilibili.com/725565"
-            className="flex-1 p-3 flex items-center justify-center hover:bg-[#E93B66] hover:text-white transition"
+            className="flex-1 p-3 flex items-center justify-center hover:bg-[#3D3D3D] hover:text-white transition"
           >
             <Image src="/icons/live.svg" alt="直播间" width={240} height={124} />
+          </a>
+        </div>
+      </div>
+      
+      {/* 导航按钮区域 */}
+      <div className="mt-16 w-full max-w-5xl z-10 relative">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <a
+            href="/guide"
+            className="p-6 flex flex-col items-center justify-center hover:bg-[#3D3D3D] transition-colors group"
+          >
+            <Image 
+              src="/icons/guide.svg" 
+              alt="比赛手册" 
+              width={200} 
+              height={200} 
+              className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]"
+            />
+            <span className="text-lg font-medium text-white">比赛手册</span>
+          </a>
+          <a
+            href="/schedule"
+            className="p-6 flex flex-col items-center justify-center hover:bg-[#3D3D3D] transition-colors group"
+          >
+            <Image 
+              src="/icons/schedule.svg" 
+              alt="赛程安排" 
+              width={200} 
+              height={200} 
+              className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]"
+            />
+            <span className="text-lg font-medium text-white">赛程安排</span>
+          </a>
+          <a
+            href="/mapool"
+            className="p-6 flex flex-col items-center justify-center hover:bg-[#3D3D3D] transition-colors group"
+          >
+            <Image 
+              src="/icons/mapool.svg" 
+              alt="图池" 
+              width={200} 
+              height={200} 
+              className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]"
+            />
+            <span className="text-lg font-medium text-white">图池</span>
+          </a>
+          <a
+            href="/contact"
+            className="p-6 flex flex-col items-center justify-center hover:bg-[#3D3D3D] transition-colors group"
+          >
+            <Image 
+              src="/icons/contact.svg" 
+              alt="联系我们" 
+              width={200} 
+              height={200} 
+              className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]"
+            />
+            <span className="text-lg font-medium text-white">联系我们</span>
           </a>
         </div>
       </div>

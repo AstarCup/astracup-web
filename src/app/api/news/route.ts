@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getNewsBySlug, getNewsSlugs } from '@/lib/utils';
+import { getNewsBySlug, getNewsSlugs, createSafeSlug } from '@/lib/utils';
 
 export async function GET(req: NextRequest) {
     // 获取分页参数
@@ -11,13 +11,26 @@ export async function GET(req: NextRequest) {
     const slugs = await getNewsSlugs();
     // 倒序排列，最新的在前
     slugs.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+    
+    // 先为所有文件生成安全 slug
+    const allNewsWithSafeSlug = slugs.map((slug, index) => ({
+        slug,
+        safeSlug: createSafeSlug(slug, index)
+    }));
+    
+    // 然后进行分页
     const start = (page - 1) * pageSize;
     const end = start + pageSize;
-    const pageSlugs = slugs.slice(start, end);
+    const pageItems = allNewsWithSafeSlug.slice(start, end);
+    
     const newsList = await Promise.all(
-        pageSlugs.map(async (slug) => {
-            const news = await getNewsBySlug(slug);
-            return { ...news, slug };
+        pageItems.map(async (item) => {
+            const news = await getNewsBySlug(item.slug);
+            return { 
+                ...news, 
+                slug: item.slug,
+                safeSlug: item.safeSlug
+            };
         })
     );
     return NextResponse.json({
