@@ -35,36 +35,41 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
     };
 
     return (
-        <div className="p-2 mb-2 w-full">
-            <div className="flex flex-col items-left space-y-4">
+        <div className="p-6 w-full">
+            <div className="flex items-center space-x-4 mb-4">
                 <img
                     src={user.avatar_url}
                     alt={user.username}
-                    className="w-16 h-16"
+                    width={64}
+                    height={64}
+                    className="outline outline-2 outline-[#E93B66]"
+                    onError={(e) => {
+                        e.currentTarget.src = '/default-avatar.png';
+                    }}
                 />
-                <div className="w-full text-left">
-                    <h2 className="text-xl font-bold text-gray-900 mb-3">{user.username}</h2>
-                    <div className="flex flex-col space-y-2 text-sm">
-                        <div>
-                            <span className="text-gray-600">PP</span>
-                            <span className={`${audiowide.className} text-3xl`}>{Math.round(user.pp)}</span>
-                        </div>
-                        <div>
-                            <span className="text-gray-600">全球排名 </span>
-                            <span className={`${audiowide.className} font-semibold`}>{formatRank(user.global_rank)}</span>
-                        </div>
-                        {user.country_rank && (
-                            <div>
-                                <span className="text-gray-600">地区排名 </span>
-                                <span className={`${audiowide.className} font-semibold`}>{formatRank(user.country_rank)}</span>
-                            </div>
-                        )}
-                        <div>
-                            <span className="text-gray-600">所在地区 </span>
-                            <span className={`${audiowide.className} font-semibold`}>{user.country || "未知"}</span>
-                        </div>
-                    </div>
+                <div className="flex-1 min-w-0">
+                    <h3 className="text-2xl font-semibold text-gray-900 truncate">
+                        <a href={`https://osu.ppy.sh/users/${user.osuId}`}>{user.username}</a>
+                    </h3>
+                    <p className="text-sm text-gray-500">ID: {user.osuId}</p>
                 </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex flex-col items-start">
+                    <span className="text-gray-600 mb-1">PP</span>
+                    <span className={`${audiowide.className} text-3xl`}>{Math.round(user.pp)}</span>
+                </div>
+                <div className="flex flex-col items-start">
+                    <span className="text-gray-600 mb-1">全球排名</span>
+                    <span className={`${audiowide.className} text-3xl`}>{formatRank(user.global_rank)}</span>
+                </div>
+                {user.country_rank && (
+                    <div className="col-span-2 flex flex-col items-start mt-2">
+                        <span className="text-gray-600 mb-1">地区排名</span>
+                        <span className={`${audiowide.className} text-3xl`}>{formatRank(user.country_rank)} <a className="text-xl">{user.country}</a></span>
+                    </div>
+                )}
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-200">
