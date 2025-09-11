@@ -321,3 +321,8 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
         </div>
     );
 }
+
+// 确保jsPDF正确暴露到全局
+if (typeof module !== 'undefined' && module.exports) {
+    window.jsPDF = module.exports;
+}
