@@ -1,6 +1,4 @@
-import Bracket from "@/app/components/Bracket";
 import ScheduleTable from "@/app/components/ScheduleTable";
-import bracketParams from "./bracket.json";
 import scheduleData from "./schedule-data.json";
 
 export default function Schedule() {
@@ -17,14 +15,15 @@ export default function Schedule() {
 
             <div>
                 <h2 className="text-2xl font-semibold mb-4 text-white">比赛对阵表</h2>
-                <Bracket
+                {/* <Bracket
                     teams={bracketParams.teams as Array<string[]>}
                     results={bracketParams.results}
                     teamWidth={100}
                     scoreWidth={20}
                     matchMargin={80}
                     roundMargin={50}
-                />
+                /> */}
+                <iframe src="https://challonge.com/zh_CN/MWC4K2025/module" width="100%" height="800" frameBorder="0" scrolling="auto" allowransparency="true"></iframe>
             </div>
         </div>
     );

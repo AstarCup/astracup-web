@@ -133,13 +133,10 @@ export default function RegistrationsPage() {
                                         {player.country_rank && (
                                             <div className="col-span-2 flex flex-col items-start mt-2">
                                                 <span className="text-gray-600 mb-1">地区排名</span>
-                                                <span className={`${audiowide.className} text-3xl`}>{formatRank(player.country_rank)}</span>
+                                                <span className={`${audiowide.className} text-3xl`}>{formatRank(player.country_rank)} <a className="text-xl">{player.country}</a> </span>
                                             </div>
                                         )}
-                                        <div className="col-span-2 flex flex-col items-start mt-2">
-                                            <span className="text-gray-600 mb-1">地区</span>
-                                            <span className={audiowide.className}>{player.country}</span>
-                                        </div>
+
                                     </div>
 
                                     <div className="mt-4 pt-4 border-t border-gray-200">
