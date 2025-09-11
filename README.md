@@ -16,6 +16,20 @@ OSU_CLIENT_SECRET=
 OSU_REDIRECT_URI=
 ```
 
+config your edge config
+
+```json
+{
+  "rankConfig": {
+    "maxPpForRegistration": 7600,
+    "minPpForRegistration": 1000,
+    "rankRestrictionEnabled": true
+  },
+  "targetDate": "2025-09-15T00:00:00",
+  "nowSeason": "s1"
+}
+```
+
 First, run the development server:
 
 ```bash

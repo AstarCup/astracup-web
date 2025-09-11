@@ -5,9 +5,10 @@ import { useState, useEffect } from "react";
 
 interface UserProfileProps {
     user: UserSession | null;
+    onLogout?: () => void;
 }
 
-export default function UserProfile({ user }: UserProfileProps) {
+export default function UserProfile({ user, onLogout }: UserProfileProps) {
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
@@ -65,7 +66,21 @@ export default function UserProfile({ user }: UserProfileProps) {
                     onClick={() => {
                         // 这里可以添加登出逻辑
                         fetch('/api/auth/logout', { method: 'POST' })
-                            .then(() => window.location.reload());
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // 调用父组件的回调函数来更新状态
+                                    if (onLogout) {
+                                        onLogout();
+                                    } else {
+                                        // 如果没有回调函数，则刷新页面
+                                        window.location.reload();
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Logout error:', error);
+                            });
                     }}
                     className="text-sm text-red-600 hover:text-red-800"
                 >

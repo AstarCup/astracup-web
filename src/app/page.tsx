@@ -11,6 +11,10 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const handleLogout = () => {
+    setUser(null);
+  };
+
   useEffect(() => {
     // 客户端获取用户会话
     fetch('/api/session/get', {
@@ -55,7 +59,7 @@ export default function Home() {
         </div>
 
         <div className="md:col-span-1 md:row-span-2 m-1 items-center justify-center bg-white p-3 outline z-2 flex flex-col text-center">
-          <UserProfile user={user} />
+          <UserProfile user={user} onLogout={handleLogout} />
           {!user ? (
             <a href="/register" className="text-2xl px-10 py-3 bg-[#E93B66] text-white hover:bg-[#95E1D3] transition mt-10"
             >使用 osu! 账号登录</a>
