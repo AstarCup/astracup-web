@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
     // 获取分页参数
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get('page') || '1', 10);
-    const pageSize = 5;
+    const pageSize = 3;
 
     const slugs = await getNewsSlugs();
     // 倒序排列，最新的在前

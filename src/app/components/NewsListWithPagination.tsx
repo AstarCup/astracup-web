@@ -22,60 +22,51 @@ export default function NewsList() {
         <div className="max-w-5xl w-full p-6">
             <header className="mb-8">
                 <h2 className="text-3xl font-bold mb-4 text-white">最新动态</h2>
-               
+
             </header>
-            
+
             <div className="space-y-6">
-                {newsList.map((news) => (
-                    <article 
-                        key={news.safeSlug || news.slug}
-                        className="bg-[#3D3D3D] p-6 border border-gray-700/50 hover:border-[#E93B66] transition-colors"
-                    >
-                        <header className="mb-3">
-                            <h3 className="text-xl font-semibold mb-2">
-                                <Link
-                                    href={`/news/${news.safeSlug || news.slug.replace('.md', '')}`}
-                                    className="text-white hover:text-[#E93B66] transition-colors"
-                                >
-                                    {news.frontmatter.title}
-                                </Link>
-                            </h3>
-                            <div className="flex items-center space-x-4 text-sm text-gray-400">
-                                {news.frontmatter.date && (
-                                    <time>
-                                        {new Date(news.frontmatter.date).toLocaleDateString('zh-CN')}
-                                    </time>
+                {newsList.map((news) => {
+                    const link = `/news/${news.safeSlug || news.slug.replace('.md', '')}`;
+                    return (
+                        <Link
+                            key={news.safeSlug || news.slug}
+                            href={link}
+                            className="block bg-[#3D3D3D] p-6 border border-[#E93B66] hover:border-[#3BE9D8] transition-colors group"
+                            style={{ textDecoration: 'none' }}
+                        >
+                            <article>
+                                <header className="mb-3">
+                                    <h3 className="text-xl font-semibold mb-2 text-white group-hover:text-[#3BE9D8] transition-colors">
+                                        {news.frontmatter.title}
+                                    </h3>
+                                    <div className="flex items-center space-x-4 text-sm text-gray-400">
+                                        {news.frontmatter.date && (
+                                            <time>
+                                                {new Date(news.frontmatter.date).toLocaleDateString('zh-CN')}
+                                            </time>
+                                        )}
+                                    </div>
+                                </header>
+                                {news.frontmatter.description && (
+                                    <p className="text-gray-300 mb-3 leading-relaxed">
+                                        {news.frontmatter.description}
+                                    </p>
                                 )}
 
-                            </div>
-                        </header>
-                        
-                        {news.frontmatter.description && (
-                            <p className="text-gray-300 mb-3 leading-relaxed">
-                                {news.frontmatter.description}
-                            </p>
-                        )}
-                        
-                        <Link
-                            href={`/news/${news.safeSlug || news.slug.replace('.md', '')}`}
-                            className="inline-flex items-center text-[#E93B66] hover:text-[#F38181] transition-colors text-sm font-medium"
-                        >
-                            阅读全文
-                            <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
+                            </article>
                         </Link>
-                    </article>
-                ))}
-                
+                    );
+                })}
+
                 {newsList.length === 0 && (
                     <div className="text-center py-12">
                         <p className="text-gray-400 text-lg">暂无新闻</p>
                     </div>
                 )}
             </div>
-            
-            <div className="mt-8 text-center">
+
+            <div className="mt-8 text-left">
                 <Link
                     href="/news"
                     className="inline-flex items-center px-6 py-3 bg-[#E93B66] text-white hover:bg-[#3BE9D8] transition-colors font-medium"

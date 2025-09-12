@@ -14,8 +14,8 @@ export default function MapoolTable({ data, title, downloadUrl }: MapoolTablePro
             <div className="flex justify-between items-start mb-0">
                 <h1 className="text-[120px] font-bold">{title}</h1>
                 {downloadUrl && (
-                    <a 
-                        href={downloadUrl} 
+                    <a
+                        href={downloadUrl}
                         className="px-5 py-3 bg-[#E93B66] text-white hover:bg-[#95E1D3] transition font-bold"
                     >
                         图包下载 MAPPAK DOWNLOAD
@@ -95,11 +95,11 @@ export default function MapoolTable({ data, title, downloadUrl }: MapoolTablePro
                                     </td>
                                     <td className="overflow-hidden">
                                         <Image
-                                            src={row.cover_base64 ? `data:image/jpeg;base64,${row.cover_base64}` : `https://assets.ppy.sh/beatmaps/${row.SID}/covers/cover.jpg`}
+                                            src={`https://assets.ppy.sh/beatmaps/${row.SID}/covers/cover.jpg`}
                                             alt="Cover"
                                             width={75}
                                             height={48}
-                                            className="w-19 h-12 object-cover rounded"
+                                            className="w-19 h-12 object-cover"
                                             unoptimized
                                         />
                                     </td>
