@@ -36,7 +36,7 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
 
     return (
         <div className="p-2 w-full">
-            <div className="flex items-left mb-2">
+            <div className="flex items-left">
                 <img
                     src={user.avatar_url}
                     alt={user.username}
@@ -48,10 +48,10 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
                     }}
                 />
                 <div className="flex-1 min-w-0">
-                    <h3 className="text-2xl font-semibold text-gray-900 truncate">
+                    <h3 className="text-2xl font-semibold text-[#E93B66] truncate">
                         <a href={`https://osu.ppy.sh/users/${user.osuId}`}>{user.username}</a>
                     </h3>
-                    <p className="text-sm text-gray-500">ID: {user.osuId}</p>
+                    <p className="text-sm text-gray-200">ID: {user.osuId}</p>
                 </div>
             </div>
 
