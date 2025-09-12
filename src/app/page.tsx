@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import Countdown from './components/Cutdown';
 import Image from 'next/image';
+import GuideIcon from './components/icons/GuideIcon';
+import ScheduleIcon from './components/icons/ScheduleIcon';
+import MapoolIcon from './components/icons/MapoolIcon';
+import ContactIcon from './components/icons/ContactIcon';
 import UserProfile from './components/UserProfile';
 import RegistrationButton from './components/RegistrationButton';
 import NewsListWithPagination from "./components/NewsListWithPagination";
@@ -59,13 +63,9 @@ export default function Home() {
             href="/guide"
             className="p-6 flex flex-col items-center justify-center hover:transition-colors group relative"
           >
-            <Image
-              src="/icons/guide.svg"
-              alt="比赛手册"
-              width={200}
-              height={200}
-              className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]"
-            />
+            <span className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]">
+              <GuideIcon className="guide-icon-main" color="#E93B66" />
+            </span>
             <span
               className="text-3xl font-medium text-white absolute right-2 bottom-2 drop-shadow-lg pointer-events-none"
               style={{ zIndex: 2 }}
@@ -75,13 +75,9 @@ export default function Home() {
             href="/schedule"
             className="p-6 flex flex-col items-center justify-center hover:transition-colors group relative"
           >
-            <Image
-              src="/icons/schedule.svg"
-              alt="赛程安排"
-              width={200}
-              height={200}
-              className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]"
-            />
+            <span className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]">
+              <ScheduleIcon className="schedule-icon-main" color="#E93B66" />
+            </span>
             <span className="text-3xl font-medium text-white absolute right-2 bottom-2 drop-shadow-lg pointer-events-none"
               style={{ zIndex: 2 }}>赛程安排</span>
           </a>
@@ -89,13 +85,9 @@ export default function Home() {
             href="/mapool"
             className="p-6 flex flex-col items-center justify-center hover:transition-colors group relative"
           >
-            <Image
-              src="/icons/mapool.svg"
-              alt="图池"
-              width={200}
-              height={200}
-              className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]"
-            />
+            <span className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]">
+              <MapoolIcon className="mapool-icon-main" color="#E93B66" />
+            </span>
             <span className="text-3xl font-medium text-white absolute right-2 bottom-2 drop-shadow-lg pointer-events-none"
               style={{ zIndex: 2 }}>图池</span>
           </a>
@@ -103,16 +95,26 @@ export default function Home() {
             href="/contact"
             className="p-6 flex flex-col items-center justify-center hover:transition-colors group relative"
           >
-            <Image
-              src="/icons/contact.svg"
-              alt="联系我们"
-              width={200}
-              height={200}
-              className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]"
-            />
+            <span className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]">
+              <ContactIcon className="contact-icon-main" color="#E93B66" />
+            </span>
             <span className="text-3xl font-medium text-white absolute right-2 bottom-2 drop-shadow-lg pointer-events-none"
               style={{ zIndex: 2 }}>联系我们</span>
           </a>
+        <style jsx global>{`
+          .guide-icon-main .main-fill,
+          .schedule-icon-main .main-fill,
+          .mapool-icon-main .main-fill,
+          .contact-icon-main .main-fill {
+            transition: fill 0.3s;
+          }
+          .group:hover .guide-icon-main .main-fill,
+          .group:hover .schedule-icon-main .main-fill,
+          .group:hover .mapool-icon-main .main-fill,
+          .group:hover .contact-icon-main .main-fill {
+            fill: #3BE9D8 !important;
+          }
+        `}</style>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-5xl p-6 z-10 relative">
