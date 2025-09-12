@@ -24,7 +24,7 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
     if (!isClient || !user) {
         return (
             <div className="">
-                <p className="text-gray-600">未登录</p>
+                {/* <p className="text-gray-600">未登录</p> */}
             </div>
         );
     }
@@ -36,7 +36,7 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
 
     return (
         <div className="p-6 w-full">
-            <div className="flex items-center space-x-4 mb-4">
+            <div className="flex items-left space-x-4 mb-4">
                 <img
                     src={user.avatar_url}
                     alt={user.username}
@@ -75,7 +75,6 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
             <div className="mt-4 pt-4 border-t border-gray-200">
                 <button
                     onClick={() => {
-                        // 这里可以添加登出逻辑
                         fetch('/api/auth/logout', { method: 'POST' })
                             .then(response => response.json())
                             .then(data => {
@@ -93,7 +92,7 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
                                 console.error('Logout error:', error);
                             });
                     }}
-                    className="text-sm text-red-600 hover:text-red-800"
+                    className="text-sm text-red-600 text-right hover:text-red-800"
                 >
                     退出登录
                 </button>

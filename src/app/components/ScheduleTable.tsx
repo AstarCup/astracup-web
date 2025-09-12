@@ -59,7 +59,7 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
                             状态
                         </th>
                         <th className="px-6 py-4 text-center text-2xs font-medium text-gray-500 uppercase tracking-wider">
-                            直播链接
+                            直播回放链接
                         </th>
                         <th className="px-6 py-4 text-center text-2xs font-medium text-gray-500 uppercase tracking-wider">
                             比赛链接
@@ -97,13 +97,13 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                                 {item.liveUrl ? (
-                                    <a 
-                                        href={item.liveUrl} 
-                                        target="_blank" 
+                                    <a
+                                        href={item.liveUrl}
+                                        target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-red-500 hover:bg-red-600 transition-colors"
+                                        className="inline-flex items-center px-3 py-1 text-xs font-medium text-white transition-colors"
                                     >
-                                        LiveLink
+                                        <img src="/icons/bilibili-live-sm.svg" alt="BilibiliLive" width={48} height={48} />
                                     </a>
                                 ) : (
                                     <span className="text-gray-400 text-xs">暂无</span>
@@ -111,13 +111,13 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                                 {item.roomUrl ? (
-                                    <a 
-                                        href={item.roomUrl} 
-                                        target="_blank" 
+                                    <a
+                                        href={item.roomUrl}
+                                        target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 transition-colors"
+                                        className="inline-flex items-center px-3 py-1 text-xs font-medium text-white transition-colors"
                                     >
-                                        MatchLink
+                                        <img src="/icons/osu-match-sm.svg" alt="osu" width={48} height={48} />
                                     </a>
                                 ) : (
                                     <span className="text-gray-400 text-xs">暂无</span>

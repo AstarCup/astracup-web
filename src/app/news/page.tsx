@@ -7,8 +7,8 @@ export default async function NewsList() {
     const newsList = await Promise.all(
         slugs.map(async (slug, index) => {
             const news = await getNewsBySlug(slug);
-            return { 
-                ...news, 
+            return {
+                ...news,
                 slug,
                 safeSlug: createSafeSlug(slug, index)
             };
@@ -28,52 +28,42 @@ export default async function NewsList() {
                 <h1 className="text-4xl font-bold mb-4 text-white">新闻中心</h1>
                 <p className="text-gray-400">了解 AstraCup 星域杯的最新动态</p>
             </header>
-            
+
             <div className="space-y-6">
-                {newsList.map((news) => (
-                    <article 
-                        key={news.slug}
-                        className="bg-[#3D3D3D] p-6 border border-gray-700 hover:border-[#E93B66] transition-colors"
-                    >
-                        <header className="mb-3">
-                            <h2 className="text-xl font-semibold mb-2">
-                                <Link
-                                    href={`/news/${news.safeSlug}`}
-                                    className="text-white hover:text-[#E93B66] transition-colors"
-                                >
-                                    {news.frontmatter.title}
-                                </Link>
-                            </h2>
-                            <div className="flex items-center space-x-4 text-sm text-gray-400">
-                                {news.frontmatter.date && (
-                                    <time>
-                                        {new Date(news.frontmatter.date).toLocaleDateString('zh-CN')}
-                                    </time>
-                                )}
-                                {news.frontmatter.author && (
-                                    <span>作者: {news.frontmatter.author}</span>
-                                )}
-                            </div>
-                        </header>
-                        
-                        {news.frontmatter.description && (
-                            <p className="text-gray-300 mb-3 leading-relaxed">
-                                {news.frontmatter.description}
-                            </p>
-                        )}
-                        
+                {newsList.map((news) => {
+                    const link = `/news/${news.safeSlug}`;
+                    return (
                         <Link
-                            href={`/news/${news.safeSlug}`}
-                            className="inline-flex items-center text-[#E93B66] hover:text-[#F38181] transition-colors text-sm font-medium"
+                            key={news.slug}
+                            href={link}
+                            className="block bg-[#3D3D3D] p-6 border border-gray-700 hover:border-[#E93B66] transition-colors group"
+                            style={{ textDecoration: 'none' }}
                         >
-                            阅读全文
-                            <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
+                            <article>
+                                <header className="mb-3">
+                                    <h2 className="text-xl font-semibold mb-2 text-white group-hover:text-[#E93B66] transition-colors">
+                                        {news.frontmatter.title}
+                                    </h2>
+                                    <div className="flex items-center space-x-4 text-sm text-gray-400">
+                                        {news.frontmatter.date && (
+                                            <time>
+                                                {new Date(news.frontmatter.date).toLocaleDateString('zh-CN')}
+                                            </time>
+                                        )}
+
+                                    </div>
+                                </header>
+                                {news.frontmatter.description && (
+                                    <p className="text-gray-300 mb-3 leading-relaxed">
+                                        {news.frontmatter.description}
+                                    </p>
+                                )}
+
+                            </article>
                         </Link>
-                    </article>
-                ))}
-                
+                    );
+                })}
+
                 {newsList.length === 0 && (
                     <div className="text-center py-12">
                         <p className="text-gray-400 text-lg">暂无新闻</p>

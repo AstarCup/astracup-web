@@ -5,11 +5,11 @@ import { Metadata } from "next";
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/footer';
 
-const metadata: Metadata = {
+export const metadata: Metadata = {
   title: "AstraCup 星域杯",
   description: "AstraCup 是一场专为广大 osu!lazer std 玩家 打造的线上赛事。",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/favicon.ico",
   },
 }
 
