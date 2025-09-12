@@ -49,7 +49,7 @@ export default function Home() {
           className="z-10 relative"
         />
         <p className="text-4xl font-bold mb-4 z-2 relative text-white drop-shadow-lg">星域杯</p>
-        <p className="mb-6 z-10 relative text-white drop-shadow-md">这里是OSU!Lazer星域杯，面向中国大陆 7600pp 分段的 1v1 比赛。</p>
+        <p className="mb-6 z-10 relative text-white drop-shadow-md">这里是OSU!Lazer星域杯，面向中国大陆 8100pp 分段的 1v1 比赛。</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-30 w-full max-w-5xl z-10 relative">
         <div className='md:col-span-2 m-1 items-center justify-center bg-white p-3 outline z-2'>
