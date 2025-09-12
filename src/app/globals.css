@@ -74,6 +74,98 @@ body {
   font-family: monospace;
 }
 
+/* 代码块样式 */
+.markdown-content pre {
+  background-color: #1f2937;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+  color: #e5e7eb;
+}
+
+/* 表格样式 (GitHub Flavored Markdown) */
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  /* border-radius: 0.5rem; */
+  overflow: hidden;
+}
+
+.markdown-content th {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.markdown-content td {
+  color: white;
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.markdown-content tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 删除线样式 (GitHub Flavored Markdown) */
+.markdown-content del {
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+/* 任务列表样式 (GitHub Flavored Markdown) */
+.markdown-content input[type="checkbox"] {
+  margin-right: 0.5rem;
+  accent-color: #60a5fa;
+}
+
+.markdown-content li.task-list-item {
+  list-style: none;
+  margin-left: -1rem;
+}
+
+/* 引用块样式 */
+.markdown-content blockquote {
+  border-left: 4px solid #60a5fa;
+  background-color: rgba(96, 165, 250, 0.1);
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.markdown-content blockquote p {
+  margin: 0;
+  font-style: italic;
+}
+
+/* 水平分割线 */
+.markdown-content hr {
+  border: none;
+  height: 2px;
+  background: linear-gradient(to right, transparent, #60a5fa, transparent);
+  margin: 2rem 0;
+}
+
+/* Emoji 样式 */
+.markdown-content img.emoji {
+  height: 1.2em;
+  width: 1.2em;
+  margin: 0 0.05em 0 0.1em;
+  vertical-align: -0.1em;
+  display: inline;
+}
+
 /* Typography plugin prose styles customization */
 .prose {
   color: rgb(255, 255, 255);
