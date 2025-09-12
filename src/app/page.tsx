@@ -125,44 +125,55 @@ export default function Home() {
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-5xl p-6 z-10 relative">
-        <div className='md:col-span-2 m-1 items-center justify-center bg-white p-3 outline z-2 h-32'>
-          <div className="md:col-span-2 p-3 m-1 flex flex-col md:flex-row items-center justify-center z-0 h-full">
+        <div className='md:col-span-2 m-1 bg-[#3D3D3D] p-3 z-2 flex flex-col'>
+          {/* 社交媒体链接区域 */}
+          <div className="flex flex-col md:flex-row items-center justify-center h-32 border-b border-gray-200 mb-4">
             <a
               href="https://qm.qq.com/q/sFydxoQtaw"
-              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3D3D3D] hover:text-white transition h-full"
+              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3BE9D8] hover:text-white transition h-full"
             >
               <Image src="/icons/QQ.svg" alt="QQ群" width={240} height={124} />
             </a>
             <a
               href="https://space.bilibili.com/11872433"
-              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3D3D3D] hover:text-white transition h-full"
+              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3BE9D8] hover:text-white transition h-full"
             >
               <Image src="/icons/bilibili.svg" alt="主办B站" width={240} height={124} />
             </a>
             <a
               href="https://live.bilibili.com/725565"
-              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3D3D3D] hover:text-white transition h-full"
+              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3BE9D8] hover:text-white transition h-full"
             >
               <Image src="/icons/live.svg" alt="直播间" width={240} height={124} />
             </a>
           </div>
+          
+          {/* 新闻列表区域 */}
+          <div className="flex-1 overflow-y-auto">
+            <NewsListWithPagination />
+          </div>
         </div>
-
-        <div className="md:col-span-1 md:row-span-1 m-1 items-center justify-center bg-white p-3 outline z-2 flex flex-col text-center min-h-64">
-          <UserProfile user={user} onLogout={handleLogout} />
-          {!user ? (
-            <a href="/register" className="text-2xl px-3 py-3 bg-[#E93B66] text-white hover:bg-[#3D3D3D] transition"
-            ><Image src='icons/useOsuLogin.svg' width={700} height={300} alt="使用 osu! 账号登录" /></a>
-          ) : (
-            <RegistrationButton user={user} />
-          )}
+<div>
+  
+        <div className="md:col-span-1 md:row-span-1 m-1 items-center justify-center bg-[#3D3D3D] p-3 z-2 flex flex-col text-center min-h-32">
+          <div className="flex-1 flex flex-col justify-center">
+            <UserProfile user={user} onLogout={handleLogout} />
+            {!user ? (
+              <a href="/register" className="text-2xl px-3 py-3 bg-[#E93B66] text-white hover:bg-[#3BE9D8] transition mt-4"
+              ><Image src='icons/useOsuLogin.svg' width={700} height={300} alt="使用 osu! 账号登录" /></a>
+            ) : (
+              <RegistrationButton user={user} />
+            )}
+          </div>
         </div>
-      </div>
-      <div className="w-full max-w-5xl flex justify-end pr-6">
+          <div className="w-full max-w-5xl flex justify-end pr-6">
         <Image src="/Line.svg" alt="line" width={338} height={20} />
       </div>
+</div>
+      </div>
+      
+      
 
-      <NewsListWithPagination />
 
     </div>
   );

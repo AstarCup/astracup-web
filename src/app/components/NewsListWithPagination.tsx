@@ -32,12 +32,12 @@ export default function NewsList() {
                         <Link
                             key={news.safeSlug || news.slug}
                             href={link}
-                            className="block bg-[#3D3D3D] p-6 border border-gray-700/50 hover:border-[#E93B66] transition-colors group"
+                            className="block bg-[#3D3D3D] p-6 border border-[#E93B66] hover:border-[#3BE9D8] transition-colors group"
                             style={{ textDecoration: 'none' }}
                         >
                             <article>
                                 <header className="mb-3">
-                                    <h3 className="text-xl font-semibold mb-2 text-white group-hover:text-[#E93B66] transition-colors">
+                                    <h3 className="text-xl font-semibold mb-2 text-white group-hover:text-[#3BE9D8] transition-colors">
                                         {news.frontmatter.title}
                                     </h3>
                                     <div className="flex items-center space-x-4 text-sm text-gray-400">

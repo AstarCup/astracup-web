@@ -74,7 +74,7 @@ export default function Navbar() {
                                     )}
                                     <Link
                                         href={link.href}
-                                        className={`hover:text-[#E93B66] transition duration-200 ${isActive(link.href) ? 'text-[#3BE9D8] font-semibold background-white' : ''}`}
+                                        className={`hover:text-[#3BE9D8] transition duration-200 ${isActive(link.href) ? 'text-[#3BE9D8] font-semibold background-white' : ''}`}
                                         onClick={() => setActiveLink(link.href)}
                                     >
                                         {link.name}
