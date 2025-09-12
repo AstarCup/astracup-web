@@ -4,6 +4,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Metadata } from "next";
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/footer';
+import NoiseBackground from './components/NoiseBackground';
 
 export const metadata: Metadata = {
   title: "AstraCup 星域杯",
@@ -36,6 +37,7 @@ export default function RootLayout({
   return (
     <html lang="zh">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <NoiseBackground />ß
         <Navbar />
         <Analytics />
         <SpeedInsights />

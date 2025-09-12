@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Countdown from './components/Cutdown';
 import Image from 'next/image';
 import BackgroundSVG from './components/BackgroundSVG';
 import GuideIcon from './components/icons/GuideIcon';
@@ -12,6 +11,7 @@ import UserProfile from './components/UserProfile';
 import RegistrationButton from './components/RegistrationButton';
 import NewsListWithPagination from "./components/NewsListWithPagination";
 import AnimatedLogo from './components/AnimatedLogo';
+
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -39,6 +39,8 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center">
+
+      
       <div className="relative w-full max-w-5xl flex flex-col items-left justify-center">
         <BackgroundSVG
           className="absolute top-0 -translate-x-80 -translate-y-25 object-cover object-center w-full h-full z-1 select-none pointer-events-auto"
