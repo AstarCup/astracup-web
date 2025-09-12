@@ -35,8 +35,8 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
     };
 
     return (
-        <div className="p-6 w-full">
-            <div className="flex items-left space-x-4 mb-4">
+        <div className="p-2 w-full">
+            <div className="flex items-left mb-2">
                 <img
                     src={user.avatar_url}
                     alt={user.username}
@@ -57,17 +57,17 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
 
             <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="flex flex-col items-start">
-                    <span className="text-gray-600 mb-1">PP</span>
-                    <span className={`${audiowide.className} text-3xl`}>{Math.round(user.pp)}</span>
+                    <span className="text-gray-100 mb-1">PP</span>
+                    <span className={`${audiowide.className} text-3xl text-white`}>{Math.round(user.pp)}</span>
                 </div>
                 <div className="flex flex-col items-start">
-                    <span className="text-gray-600 mb-1">全球排名</span>
-                    <span className={`${audiowide.className} text-3xl`}>{formatRank(user.global_rank)}</span>
+                    <span className="text-gray-100 mb-1">全球排名</span>
+                    <span className={`${audiowide.className} text-3xl text-white`}>{formatRank(user.global_rank)}</span>
                 </div>
                 {user.country_rank && (
                     <div className="col-span-2 flex flex-col items-start mt-2">
-                        <span className="text-gray-600 mb-1">地区排名</span>
-                        <span className={`${audiowide.className} text-3xl`}>{formatRank(user.country_rank)} <a className="text-xl">{user.country}</a></span>
+                        <span className="text-gray-100 mb-1">地区排名</span>
+                        <span className={`${audiowide.className} text-3xl text-white`}>{formatRank(user.country_rank)} <a className="text-xl">{user.country}</a></span>
                     </div>
                 )}
             </div>
