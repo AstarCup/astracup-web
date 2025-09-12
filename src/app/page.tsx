@@ -11,6 +11,7 @@ import ContactIcon from './components/icons/ContactIcon';
 import UserProfile from './components/UserProfile';
 import RegistrationButton from './components/RegistrationButton';
 import NewsListWithPagination from "./components/NewsListWithPagination";
+import AnimatedLogo from './components/AnimatedLogo';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -37,10 +38,10 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col m-10 items-center justify-center">
+    <div className="flex flex-col items-center justify-center">
       <div className="relative w-full max-w-5xl flex flex-col items-left justify-center">
         <BackgroundSVG
-          className="absolute top-0 -translate-x-80 object-cover object-center w-full h-full z-1 select-none pointer-events-auto"
+          className="absolute top-0 -translate-x-80 -translate-y-25 object-cover object-center w-full h-full z-1 select-none pointer-events-auto"
           style={{ minWidth: '180%', minHeight: '160%' }}
         />
         <style jsx global>{`
@@ -52,19 +53,14 @@ export default function Home() {
             fill: #3BE9D8 !important;
           }
         `}</style>
-        <Image
-          src="/AstaraCup.svg"
-          alt="AstraCup Logo"
-          width={600}
-          height={400}
-          className="z-10 relative"
-          style={{ height: 'auto' }}
-        />
-        <p className="text-4xl font-bold mb-4 z-2 relative text-white drop-shadow-lg">星域杯</p>
-        <p className="mb-6 z-10 relative text-white drop-shadow-md">这里是OSU!Lazer星域杯，面向中国大陆 8100pp 分段的 1v1 比赛。</p>
+        <div className="relative">
+          <AnimatedLogo />
+        </div>
+        <p className="text-4xl font-bold mb-4 z-2 relative text-white drop-shadow-lg -translate-y-25">星域杯</p>
+        <p className="mb-6 z-10 relative text-white drop-shadow-md -translate-y-25">这里是OSU!Lazer星域杯，面向中国大陆 8100pp 分段的 1v1 比赛。</p>
       </div>
       {/* 导航按钮区域 */}
-      <div className="mt-16 w-full max-w-5xl z-10 relative p-6">
+      <div className="mt-0 w-full max-w-5xl z-10 relative p-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <a
             href="/guide"
