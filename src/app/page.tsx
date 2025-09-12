@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Countdown from './components/Cutdown';
 import Image from 'next/image';
+import BackgroundSVG from './components/BackgroundSVG';
 import GuideIcon from './components/icons/GuideIcon';
 import ScheduleIcon from './components/icons/ScheduleIcon';
 import MapoolIcon from './components/icons/MapoolIcon';
@@ -38,13 +39,19 @@ export default function Home() {
   return (
     <div className="flex flex-col m-10 items-center justify-center">
       <div className="relative w-full max-w-5xl flex flex-col items-left justify-center">
-        <Image
-          src="/Background.svg"
-          alt="Background"
-          fill
-          className="absolute top-0 -translate-x-80 object-cover object-center w-full h-full z-1 select-none pointer-events-none"
+        <BackgroundSVG
+          className="absolute top-0 -translate-x-80 object-cover object-center w-full h-full z-1 select-none pointer-events-auto"
           style={{ minWidth: '180%', minHeight: '160%' }}
         />
+        <style jsx global>{`
+          .bg-block {
+            transition: fill 0.3s;
+            cursor: pointer;
+          }
+          .bg-block:hover {
+            fill: #3BE9D8 !important;
+          }
+        `}</style>
         <Image
           src="/AstaraCup.svg"
           alt="AstraCup Logo"
@@ -101,7 +108,7 @@ export default function Home() {
             <span className="text-3xl font-medium text-white absolute right-2 bottom-2 drop-shadow-lg pointer-events-none"
               style={{ zIndex: 2 }}>联系我们</span>
           </a>
-        <style jsx global>{`
+          <style jsx global>{`
           .guide-icon-main .main-fill,
           .schedule-icon-main .main-fill,
           .mapool-icon-main .main-fill,
