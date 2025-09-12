@@ -125,30 +125,30 @@ export default function Home() {
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-5xl p-6 z-10 relative">
-        <div className='md:col-span-2 m-1 items-center justify-center bg-white p-3 outline z-2'>
-          <div className="md:col-span-2 p-3 m-1 flex flex-col md:flex-row items-center justify-center z-0">
+        <div className='md:col-span-2 m-1 items-center justify-center bg-white p-3 outline z-2 h-64'>
+          <div className="md:col-span-2 p-3 m-1 flex flex-col md:flex-row items-center justify-center z-0 h-full">
             <a
               href="https://qm.qq.com/q/sFydxoQtaw"
-              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3D3D3D] hover:text-white transition"
+              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3D3D3D] hover:text-white transition h-full"
             >
               <Image src="/icons/QQ.svg" alt="QQ群" width={240} height={124} />
             </a>
             <a
               href="https://space.bilibili.com/11872433"
-              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3D3D3D] hover:text-white transition"
+              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3D3D3D] hover:text-white transition h-full"
             >
               <Image src="/icons/bilibili.svg" alt="主办B站" width={240} height={124} />
             </a>
             <a
               href="https://live.bilibili.com/725565"
-              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3D3D3D] hover:text-white transition"
+              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3D3D3D] hover:text-white transition h-full"
             >
               <Image src="/icons/live.svg" alt="直播间" width={240} height={124} />
             </a>
           </div>
         </div>
 
-        <div className="md:col-span-1 md:row-span-1 m-1 items-center justify-center bg-white p-3 outline z-2 flex flex-col text-center">
+        <div className="md:col-span-1 md:row-span-1 m-1 items-center justify-center bg-white p-3 outline z-2 flex flex-col text-center h-64">
           <UserProfile user={user} onLogout={handleLogout} />
           {!user ? (
             <a href="/register" className="text-2xl px-3 py-3 bg-[#E93B66] text-white hover:bg-[#3D3D3D] transition"
