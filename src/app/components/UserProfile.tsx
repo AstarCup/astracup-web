@@ -47,7 +47,7 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
                         e.currentTarget.src = '/default-avatar.png';
                     }}
                 />
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 items-left">
                     <h3 className="text-2xl font-semibold text-[#E93B66] truncate">
                         <a href={`https://osu.ppy.sh/users/${user.osuId}`}>{user.username}</a>
                     </h3>
