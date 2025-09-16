@@ -55,7 +55,7 @@ export default function ScoreCard({ category, maps, matchGames, users }: ScoreCa
                     {categoryGames.length} 场比赛
                 </div>
             </div>
-            
+
             {categoryGames.length === 0 ? (
                 <div className="text-gray-400 text-center py-12 bg-[#1A1A1A] rounded-lg">
                     <div className="text-4xl mb-4">📊</div>
@@ -66,9 +66,7 @@ export default function ScoreCard({ category, maps, matchGames, users }: ScoreCa
                 <div className="space-y-6">
                     {categoryGames.map((game, index) => {
                         const map = maps.find(m => m.beatmapId === game.beatmap?.id);
-                        const sortedScores = game.scores.sort((a, b) => b.score - a.score);
-                        
-                        return (
+                        const sortedScores = (game.scores || []).sort((a, b) => b.score - a.score); return (
                             <div key={game.id} className="bg-[#1A1A1A] rounded-lg border border-gray-700 overflow-hidden">
                                 {/* 谱面信息头部 */}
                                 <div className="bg-gradient-to-r from-gray-800 to-gray-700 p-4">
@@ -82,15 +80,15 @@ export default function ScoreCard({ category, maps, matchGames, users }: ScoreCa
                                             </div>
                                             <div className="flex flex-wrap gap-4 text-xs text-gray-400">
                                                 <span className="flex items-center">
-                                                    ⭐ {game.beatmap?.star_rating?.toFixed(2)}
+                                                    ⭐ {game.beatmap?.star_rating?.toFixed(2) || 'N/A'}
                                                 </span>
                                                 <span className="flex items-center">
-                                                    🎵 {game.beatmap?.bpm} BPM
+                                                    🎵 {game.beatmap?.bpm || 'N/A'} BPM
                                                 </span>
                                                 <span className="flex items-center">
                                                     ⏱️ {Math.floor((game.beatmap?.total_length || 0) / 60)}:{((game.beatmap?.total_length || 0) % 60).toString().padStart(2, '0')}
                                                 </span>
-                                                {game.mods.length > 0 && (
+                                                {game.mods && game.mods.length > 0 && (
                                                     <span className="flex items-center">
                                                         🔧 {game.mods.join(', ')}
                                                     </span>
@@ -107,7 +105,7 @@ export default function ScoreCard({ category, maps, matchGames, users }: ScoreCa
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 {/* 分数表格 */}
                                 <div className="overflow-x-auto">
                                     <table className="w-full">
@@ -126,29 +124,27 @@ export default function ScoreCard({ category, maps, matchGames, users }: ScoreCa
                                             {sortedScores.map((score, scoreIndex) => {
                                                 const user = users.find(u => u.id === score.user_id);
                                                 const isWinner = scoreIndex === 0;
-                                                
+
                                                 return (
-                                                    <tr 
-                                                        key={score.user_id} 
-                                                        className={`border-b border-gray-700 hover:bg-gray-800/50 transition-colors ${
-                                                            isWinner ? 'bg-gradient-to-r from-yellow-900/30 to-yellow-800/20' : ''
-                                                        }`}
+                                                    <tr
+                                                        key={score.user_id}
+                                                        className={`border-b border-gray-700 hover:bg-gray-800/50 transition-colors ${isWinner ? 'bg-gradient-to-r from-yellow-900/30 to-yellow-800/20' : ''
+                                                            }`}
                                                     >
                                                         <td className="py-3 px-4">
-                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                                                                isWinner ? 'bg-yellow-500 text-black' :
-                                                                scoreIndex === 1 ? 'bg-gray-400 text-black' :
-                                                                scoreIndex === 2 ? 'bg-amber-600 text-white' :
-                                                                'bg-gray-600 text-white'
-                                                            }`}>
+                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${isWinner ? 'bg-yellow-500 text-black' :
+                                                                    scoreIndex === 1 ? 'bg-gray-400 text-black' :
+                                                                        scoreIndex === 2 ? 'bg-amber-600 text-white' :
+                                                                            'bg-gray-600 text-white'
+                                                                }`}>
                                                                 {scoreIndex + 1}
                                                             </div>
                                                         </td>
                                                         <td className="py-3 px-4">
                                                             <div className="flex items-center">
                                                                 {user?.avatar_url && (
-                                                                    <img 
-                                                                        src={user.avatar_url} 
+                                                                    <img
+                                                                        src={user.avatar_url}
                                                                         alt={user.username}
                                                                         className="w-8 h-8 rounded-full mr-3 border-2 border-gray-600"
                                                                     />
@@ -171,11 +167,10 @@ export default function ScoreCard({ category, maps, matchGames, users }: ScoreCa
                                                             </div>
                                                         </td>
                                                         <td className="text-right py-3 px-4">
-                                                            <div className={`font-semibold ${
-                                                                score.accuracy >= 0.95 ? 'text-green-400' :
-                                                                score.accuracy >= 0.90 ? 'text-yellow-400' :
-                                                                'text-white'
-                                                            }`}>
+                                                            <div className={`font-semibold ${score.accuracy >= 0.95 ? 'text-green-400' :
+                                                                    score.accuracy >= 0.90 ? 'text-yellow-400' :
+                                                                        'text-white'
+                                                                }`}>
                                                                 {(score.accuracy * 100).toFixed(2)}%
                                                             </div>
                                                         </td>
@@ -188,23 +183,22 @@ export default function ScoreCard({ category, maps, matchGames, users }: ScoreCa
                                                             </div>
                                                         </td>
                                                         <td className="text-center py-3 px-4">
-                                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                                                score.pass 
-                                                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${score.pass
+                                                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                                                                     : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                                                            }`}>
+                                                                }`}>
                                                                 {score.pass ? '✅ 完成' : '❌ 失败'}
                                                             </span>
                                                         </td>
                                                         <td className="text-center py-3 px-4">
                                                             <div className="text-xs text-gray-400 space-y-1">
                                                                 <div>
-                                                                    <span className="text-blue-400">{score.statistics.count_300}</span>/
-                                                                    <span className="text-green-400">{score.statistics.count_100}</span>/
-                                                                    <span className="text-yellow-400">{score.statistics.count_50}</span>/
-                                                                    <span className="text-red-400">{score.statistics.count_miss}</span>
+                                                                    <span className="text-blue-400">{score.statistics?.count_300 || 0}</span>/
+                                                                    <span className="text-green-400">{score.statistics?.count_100 || 0}</span>/
+                                                                    <span className="text-yellow-400">{score.statistics?.count_50 || 0}</span>/
+                                                                    <span className="text-red-400">{score.statistics?.count_miss || 0}</span>
                                                                 </div>
-                                                                {score.mods.length > 0 && (
+                                                                {score.mods && score.mods.length > 0 && (
                                                                     <div className="text-purple-400">
                                                                         +{score.mods.join('')}
                                                                     </div>

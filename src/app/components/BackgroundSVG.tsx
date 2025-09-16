@@ -45,8 +45,8 @@ export default function BackgroundSVG({ className = "", style = {} }) {
     { x: "1724", y: "247.0376434326172", width: "181", height: "65", fill: "#3D3D3D" },
   ];
   const [colors, setColors] = useState(rects.map(r => r.fill));
-  const activeIdxRef = useRef<number|null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval>|null>(null);
+  const activeIdxRef = useRef<number | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   function highlightColor() {
     return "#FFFFFF";
@@ -60,7 +60,7 @@ export default function BackgroundSVG({ className = "", style = {} }) {
         const next = rects.map(r => r.fill);
         // 随机选一个
         const idx = Math.floor(Math.random() * rects.length);
-  next[idx] = highlightColor();
+        next[idx] = highlightColor();
         activeIdxRef.current = idx;
         return next;
       });
@@ -91,26 +91,26 @@ export default function BackgroundSVG({ className = "", style = {} }) {
     >
       <g>
         <g transform="matrix(-1,0,0,1,4487.24072265625,0)">
-          {rects.slice(0,19).map((r, i) => (
-            <g key={i}><rect className="bg-block" x={r.x} y={r.y} width={r.width} height={r.height} rx="0" fill={colors[i]} fillOpacity="1" style={{cursor:'pointer'}}/></g>
+          {rects.slice(0, 19).map((r, i) => (
+            <g key={i}><rect className="bg-block" x={r.x} y={r.y} width={r.width} height={r.height} rx="0" fill={colors[i]} fillOpacity="1" style={{ cursor: 'pointer' }} /></g>
           ))}
           {/* 下面是原SVG的其它内容 */}
-          <g transform="matrix(0.7071067690849304,0.7071067690849304,0.7071067690849304,-0.7071067690849304,606.3978134661756,-1463.9737005173683)"><rect x="2884.8841552734375" y="337.6750793457031" width="57.99999237060547" height="475.78436279296875" rx="0" fillOpacity="0" strokeOpacity="1" stroke="#FFFFFF" fill="none" strokeWidth="1"/></g>
-          <g transform="matrix(0.7071067690849304,-0.7071067094802856,-0.7071067094802856,-0.7071067690849304,1004.0619743857787,2424.019759435698)"><rect x="3014.1599731445312" y="171.45208740234375" width="59.0001335144043" height="183.46966552734375" rx="0" fill="#FFFFFF" fillOpacity="1"/></g>
-          <g transform="matrix(0.7071067690849304,-0.7071067094802856,-0.7071067094802856,-0.7071067690849304,939.5469885537459,2268.2668838202226)"><rect x="2460.232421875" y="309.658447265625" width="8.497149467468262" height="306.3355712890625" rx="0" fill="#FFFFFF" fillOpacity="1"/></g>
-          <g transform="matrix(0.7071067690849304,-0.7071067094802856,-0.7071067094802856,-0.7071067690849304,1019.0781590706974,2460.2720681781284)"><rect x="2843.5213623046875" y="263.3690185546875" width="59.00013732910156" height="306.3356018066406" rx="0" fill="#FFFFFF" fillOpacity="1"/></g>
-          <g transform="matrix(0.7071067690849304,-0.7071067094802856,-0.7071067094802856,-0.7071067690849304,947.219113958352,2286.7890136850256)"><rect x="2586.0333251953125" y="268.4000244140625" width="59.00013732910156" height="306.3356018066406" rx="0" fill="#FFFFFF" fillOpacity="1"/></g>
+          <g transform="matrix(0.7071067690849304,0.7071067690849304,0.7071067690849304,-0.7071067690849304,606.3978134661756,-1463.9737005173683)"><rect x="2884.8841552734375" y="337.6750793457031" width="57.99999237060547" height="475.78436279296875" rx="0" fillOpacity="0" strokeOpacity="1" stroke="#FFFFFF" fill="none" strokeWidth="1" /></g>
+          <g transform="matrix(0.7071067690849304,-0.7071067094802856,-0.7071067094802856,-0.7071067690849304,1004.0619743857787,2424.019759435698)"><rect x="3014.1599731445312" y="171.45208740234375" width="59.0001335144043" height="183.46966552734375" rx="0" fill="#FFFFFF" fillOpacity="1" /></g>
+          <g transform="matrix(0.7071067690849304,-0.7071067094802856,-0.7071067094802856,-0.7071067690849304,939.5469885537459,2268.2668838202226)"><rect x="2460.232421875" y="309.658447265625" width="8.497149467468262" height="306.3355712890625" rx="0" fill="#FFFFFF" fillOpacity="1" /></g>
+          <g transform="matrix(0.7071067690849304,-0.7071067094802856,-0.7071067094802856,-0.7071067690849304,1019.0781590706974,2460.2720681781284)"><rect x="2843.5213623046875" y="263.3690185546875" width="59.00013732910156" height="306.3356018066406" rx="0" fill="#FFFFFF" fillOpacity="1" /></g>
+          <g transform="matrix(0.7071067690849304,-0.7071067094802856,-0.7071067094802856,-0.7071067690849304,947.219113958352,2286.7890136850256)"><rect x="2586.0333251953125" y="268.4000244140625" width="59.00013732910156" height="306.3356018066406" rx="0" fill="#FFFFFF" fillOpacity="1" /></g>
         </g>
         <g>
           {rects.slice(19).map((r, i) => (
-            <g key={i+19}><rect className="bg-block" x={r.x} y={r.y} width={r.width} height={r.height} rx="0" fill={colors[i+19]} fillOpacity="1" style={{cursor:'pointer'}}/></g>
+            <g key={i + 19}><rect className="bg-block" x={r.x} y={r.y} width={r.width} height={r.height} rx="0" fill={colors[i + 19]} fillOpacity="1" style={{ cursor: 'pointer' }} /></g>
           ))}
         </g>
         <g>
-          <g><path d="M638,312.0381164550781L643.6119404,318.1631164550781L638,324.0381164550781L648.38806,324.0381164550781L654,318.1631164550781L648.38806,312.0381164550781L638,312.0381164550781Z" fill="#FFFFFF" fillOpacity="1"/></g>
-          <g><path d="M655,312.0381164550781L660.6119404,318.1631164550781L655,324.0381164550781L665.38806,324.0381164550781L671,318.1631164550781L665.38806,312.0381164550781L655,312.0381164550781Z" fill="#FFFFFF" fillOpacity="1"/></g>
-          <g><path d="M673,312.0381164550781L678.6119404,318.1631164550781L673,324.0381164550781L683.38806,324.0381164550781L689,318.1631164550781L683.38806,312.0381164550781L673,312.0381164550781Z" fill="#FFFFFF" fillOpacity="1"/></g>
-          <g><path d="M690,312.0381164550781L695.6119404,318.1631164550781L690,324.0381164550781L700.38806,324.0381164550781L706,318.1631164550781L700.38806,312.0381164550781L690,312.0381164550781Z" fill="#FFFFFF" fillOpacity="1"/></g>
+          <g><path d="M638,312.0381164550781L643.6119404,318.1631164550781L638,324.0381164550781L648.38806,324.0381164550781L654,318.1631164550781L648.38806,312.0381164550781L638,312.0381164550781Z" fill="#FFFFFF" fillOpacity="1" /></g>
+          <g><path d="M655,312.0381164550781L660.6119404,318.1631164550781L655,324.0381164550781L665.38806,324.0381164550781L671,318.1631164550781L665.38806,312.0381164550781L655,312.0381164550781Z" fill="#FFFFFF" fillOpacity="1" /></g>
+          <g><path d="M673,312.0381164550781L678.6119404,318.1631164550781L673,324.0381164550781L683.38806,324.0381164550781L689,318.1631164550781L683.38806,312.0381164550781L673,312.0381164550781Z" fill="#FFFFFF" fillOpacity="1" /></g>
+          <g><path d="M690,312.0381164550781L695.6119404,318.1631164550781L690,324.0381164550781L700.38806,324.0381164550781L706,318.1631164550781L700.38806,312.0381164550781L690,312.0381164550781Z" fill="#FFFFFF" fillOpacity="1" /></g>
         </g>
       </g>
     </svg>
