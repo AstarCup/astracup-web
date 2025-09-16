@@ -549,10 +549,10 @@ export default function ScorePage() {
                                                             <div className="flex items-start justify-between mb-3">
                                                                 <div className="flex items-center">
                                                                     <div className="bg-[#FF66AA] text-white text-sm font-bold px-2 py-1 rounded">
-                                                                        #{index + 1}
+                                                                        Game #{index + 1}
                                                                     </div>
                                                                     <div className="ml-2 text-gray-400 text-sm">
-                                                                        {game.scores ? `${game.scores.length} 玩家` : '无分数'}
+                                                                        {game.scores ? `${game.scores.length} 分数` : '无分数'}
                                                                     </div>
                                                                 </div>
                                                                 <svg
@@ -566,24 +566,63 @@ export default function ScorePage() {
                                                                 </svg>
                                                             </div>
 
-                                                            <div className="space-y-2">
+                                                            {/* 歌曲信息 */}
+                                                            <div className="space-y-2 mb-3">
                                                                 <div className="text-white font-semibold text-sm">
                                                                     {game.beatmap?.artist} - {game.beatmap?.title}
                                                                 </div>
                                                                 <div className="text-gray-400 text-xs">
                                                                     [{game.beatmap?.difficulty_name}]
                                                                 </div>
-                                                                <div className="text-gray-500 text-xs">
-                                                                    {game.beatmap?.version} • {game.mods?.join('') || 'NM'}
+                                                                <div className="flex items-center justify-between text-xs">
+                                                                    <span className="text-gray-500">
+                                                                        {game.beatmap?.version} • {game.mods?.join('') || 'NM'}
+                                                                    </span>
+                                                                    <span className="text-blue-400">
+                                                                        ⭐ {(game.beatmap as any)?.difficulty_rating?.toFixed(2) || 'N/A'}
+                                                                    </span>
                                                                 </div>
                                                             </div>
 
-                                                            {/* 简要分数预览 */}
+                                                            {/* 时间信息 */}
+                                                            <div className="border-t border-gray-600 pt-2 mb-3">
+                                                                <div className="flex justify-between text-xs text-gray-400">
+                                                                    <span>开始: {new Date(game.start_time).toLocaleTimeString('zh-CN')}</span>
+                                                                    <span>结束: {new Date(game.end_time).toLocaleTimeString('zh-CN')}</span>
+                                                                </div>
+                                                                <div className="text-xs text-gray-500 mt-1">
+                                                                    时长: {Math.round((new Date(game.end_time).getTime() - new Date(game.start_time).getTime()) / 1000 / 60)} 分钟
+                                                                </div>
+                                                            </div>
+
+                                                            {/* 分数统计预览 */}
                                                             {game.scores && game.scores.length > 0 && (
-                                                                <div className="mt-3 pt-3 border-t border-gray-600">
-                                                                    <div className="text-xs text-gray-400 mb-1">最高分</div>
-                                                                    <div className="text-sm text-white font-mono">
-                                                                        {Math.max(...game.scores.map(s => s.score)).toLocaleString()}
+                                                                <div className="border-t border-gray-600 pt-3">
+                                                                    <div className="grid grid-cols-2 gap-2 text-xs">
+                                                                        <div>
+                                                                            <div className="text-gray-400">最高分</div>
+                                                                            <div className="text-white font-mono text-sm">
+                                                                                {Math.max(...game.scores.map(s => s.score)).toLocaleString()}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-gray-400">平均分</div>
+                                                                            <div className="text-white font-mono text-sm">
+                                                                                {Math.round(game.scores.reduce((sum, s) => sum + s.score, 0) / game.scores.length).toLocaleString()}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-gray-400">最高准确率</div>
+                                                                            <div className="text-green-400 font-mono text-sm">
+                                                                                {(Math.max(...game.scores.map(s => s.accuracy)) * 100).toFixed(2)}%
+                                                                            </div>
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-gray-400">完成人数</div>
+                                                                            <div className="text-blue-400 font-mono text-sm">
+                                                                                {game.scores.filter(s => (s as any).passed || (s as any).pass).length}/{game.scores.length}
+                                                                            </div>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             )}
@@ -595,8 +634,36 @@ export default function ScorePage() {
                                                 {selectedGameIndex !== null && matchData.games && matchData.games[selectedGameIndex] && (
                                                     <div className="mt-6 bg-[#0A0A0A] rounded-lg p-6 border border-gray-600">
                                                         <h4 className="text-lg font-bold mb-4 flex items-center">
-                                                            📊 第 {selectedGameIndex + 1} 场比赛详细分数
+                                                            📊 Game {selectedGameIndex + 1}: {matchData.games[selectedGameIndex].beatmap?.artist} - {matchData.games[selectedGameIndex].beatmap?.title}
                                                         </h4>
+
+                                                        {/* 游戏信息概览 */}
+                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-[#2A2A2A] rounded-lg">
+                                                            <div>
+                                                                <div className="text-gray-400 text-xs">难度星级</div>
+                                                                <div className="text-white font-semibold">
+                                                                    ⭐ {((matchData.games[selectedGameIndex].beatmap as any)?.difficulty_rating)?.toFixed(2) || 'N/A'}
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <div className="text-gray-400 text-xs">游戏模式</div>
+                                                                <div className="text-white font-semibold">
+                                                                    {matchData.games[selectedGameIndex].scoring_type || 'N/A'}
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <div className="text-gray-400 text-xs">参与人数</div>
+                                                                <div className="text-white font-semibold">
+                                                                    {matchData.games[selectedGameIndex].scores?.length || 0} 人
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <div className="text-gray-400 text-xs">游戏时长</div>
+                                                                <div className="text-white font-semibold">
+                                                                    {Math.round((new Date(matchData.games[selectedGameIndex].end_time).getTime() - new Date(matchData.games[selectedGameIndex].start_time).getTime()) / 1000 / 60)} 分钟
+                                                                </div>
+                                                            </div>
+                                                        </div>
 
                                                         {/* 详细分数表格 */}
                                                         <div className="overflow-x-auto">
@@ -607,8 +674,10 @@ export default function ScorePage() {
                                                                         <th className="text-left py-2 text-gray-400">玩家</th>
                                                                         <th className="text-right py-2 text-gray-400">分数</th>
                                                                         <th className="text-right py-2 text-gray-400">准确率</th>
+                                                                        <th className="text-right py-2 text-gray-400">最大连击</th>
                                                                         <th className="text-center py-2 text-gray-400">统计</th>
                                                                         <th className="text-center py-2 text-gray-400">MOD</th>
+                                                                        <th className="text-center py-2 text-gray-400">状态</th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
@@ -649,6 +718,11 @@ export default function ScorePage() {
                                                                                         {(score.accuracy * 100).toFixed(2)}%
                                                                                     </span>
                                                                                 </td>
+                                                                                <td className="py-3 text-right">
+                                                                                    <span className="text-yellow-400 font-mono">
+                                                                                        {score.max_combo || 0}x
+                                                                                    </span>
+                                                                                </td>
                                                                                 <td className="py-3 text-center">
                                                                                     <div className="text-xs space-x-1">
                                                                                         <span className="text-blue-400">{score.statistics?.count_300 || 0}</span>/
@@ -665,6 +739,26 @@ export default function ScorePage() {
                                                                                     ) : (
                                                                                         <span className="text-gray-500 text-xs">NM</span>
                                                                                     )}
+                                                                                </td>
+                                                                                <td className="py-3 text-center">
+                                                                                    <div className="flex items-center justify-center">
+                                                                                        {(score as any).passed || (score as any).pass ? (
+                                                                                            <span className="text-green-400 text-xs">✅ 完成</span>
+                                                                                        ) : (
+                                                                                            <span className="text-red-400 text-xs">❌ 失败</span>
+                                                                                        )}
+                                                                                        <div className="ml-2 text-xs">
+                                                                                            <span className={`px-1 py-0.5 rounded text-xs font-bold ${(score as any).rank === 'SS' || (score as any).rank === 'SSH' ? 'bg-yellow-500 text-black' :
+                                                                                                    (score as any).rank === 'S' || (score as any).rank === 'SH' ? 'bg-yellow-600 text-white' :
+                                                                                                        (score as any).rank === 'A' ? 'bg-green-500 text-white' :
+                                                                                                            (score as any).rank === 'B' ? 'bg-blue-500 text-white' :
+                                                                                                                (score as any).rank === 'C' ? 'bg-purple-500 text-white' :
+                                                                                                                    'bg-gray-500 text-white'
+                                                                                                }`}>
+                                                                                                {(score as any).rank || 'N/A'}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                    </div>
                                                                                 </td>
                                                                             </tr>
                                                                         );
