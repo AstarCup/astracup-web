@@ -17,8 +17,23 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const handleLogout = () => {
-    setUser(null);
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/session/clear', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        setUser(null);
+        // 显示退出成功提示
+        console.log('成功退出登录');
+      } else {
+        console.error('退出登录失败');
+      }
+    } catch (error) {
+      console.error('退出登录请求失败:', error);
+    }
   };
 
   useEffect(() => {
