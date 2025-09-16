@@ -75,22 +75,9 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
             <div className="mt-4 pt-4 border-t border-gray-200">
                 <button
                     onClick={() => {
-                        fetch('/api/auth/logout', { method: 'POST' })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    // 调用父组件的回调函数来更新状态
-                                    if (onLogout) {
-                                        onLogout();
-                                    } else {
-                                        // 如果没有回调函数，则刷新页面
-                                        window.location.reload();
-                                    }
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Logout error:', error);
-                            });
+                        if (onLogout) {
+                            onLogout();
+                        }
                     }}
                     className="text-sm text-red-600 text-right hover:text-red-800"
                 >
