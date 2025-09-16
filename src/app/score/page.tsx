@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import siteConfig from '@/config/site-config.json';
-import ScoreCard from '../components/ScoreCard';
 import { MapPool, MatchData, getMapPoolData } from '@/lib/osu-api';
 
 export default function ScorePage() {
@@ -15,6 +14,8 @@ export default function ScorePage() {
     const [error, setError] = useState<string | null>(null);
     const [matchId, setMatchId] = useState<string>('');
     const [mapPoolLoading, setMapPoolLoading] = useState(true);
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [selectedGameIndex, setSelectedGameIndex] = useState<number | null>(null);
 
     // 检查登录状态
     useEffect(() => {
@@ -114,6 +115,8 @@ export default function ScorePage() {
         setMatchData(null);
         setError(null);
         setMatchId('');
+        setIsExpanded(false);
+        setSelectedGameIndex(null);
     };
 
     const handleLogin = () => {
@@ -407,7 +410,7 @@ export default function ScorePage() {
                                     <div>
                                         <h3 className="text-[#FF66AA] font-bold">需要登录 osu! 账号</h3>
                                         <p className="text-gray-300 text-sm">
-                                            请先登录您的 osu! 账号以获取比赛数据和图池信息的访问权限
+                                            请先登录您的 osu! 账号以获取比赛数据的访问权限
                                         </p>
                                     </div>
                                 </div>
@@ -422,9 +425,9 @@ export default function ScorePage() {
                                     <h3 className="text-white font-semibold mb-2">功能说明</h3>
                                     <div className="text-gray-300 text-sm space-y-1">
                                         <p>• <strong>在线获取：</strong>输入比赛房间ID直接从 osu! API 获取最新数据</p>
-                                        <p>• <strong>导出JSON：</strong>将当前比赛数据保存为JSON文件，便于分享和备份</p>
-                                        <p>• <strong>导入JSON：</strong>上传之前导出的JSON文件，离线查看比赛数据</p>
-                                        <p>• <strong>图池集成：</strong>自动按图池分类展示，支持 NM、HD、HR、DT、FM、TB 等分类</p>
+                                        <p>• <strong>窗帘展示：</strong>点击比赛信息可展开详细的每局游戏数据</p>
+                                        <p>• <strong>交互式浏览：</strong>点击游戏卡片查看该局的详细分数排行</p>
+                                        <p>• <strong>导出导入：</strong>支持JSON格式的数据导出和导入功能</p>
                                     </div>
                                 </div>
                             </div>
@@ -444,88 +447,216 @@ export default function ScorePage() {
                         )}
                     </div>
 
-                    {/* 比赛信息 */}
+                    {/* 比赛信息 - 窗帘式设计 */}
                     {matchData && (
                         <div className="mb-8">
-                            <div className="bg-gradient-to-r from-[#2A2A2A] to-[#1A1A1A] rounded-lg p-6 border border-gray-600 shadow-xl">
-                                <h2 className="text-2xl font-bold mb-4 flex items-center">
-                                    🏆 比赛信息
-                                </h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    <div className="space-y-2">
-                                        <div className="text-gray-400 text-sm">比赛名称</div>
-                                        <div className="text-white font-semibold text-lg break-words">
-                                            {matchData.match.name}
+                            {/* 比赛信息概览 - 可点击展开 */}
+                            <div
+                                className="bg-gradient-to-r from-[#2A2A2A] to-[#1A1A1A] rounded-lg p-6 border border-gray-600 shadow-xl cursor-pointer hover:border-[#FF66AA] transition-all duration-300"
+                                onClick={() => setIsExpanded(!isExpanded)}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                        <h2 className="text-2xl font-bold flex items-center">
+                                            🏆 {matchData.match.name}
+                                        </h2>
+                                        <div className="ml-4 text-gray-400">
+                                            {(matchData.games || []).length} 场比赛 • {(matchData.users || []).length} 位玩家
                                         </div>
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="flex items-center">
+                                        <span className="text-gray-400 mr-2">
+                                            {isExpanded ? '点击收起' : '点击展开详情'}
+                                        </span>
+                                        <svg
+                                            className={`w-6 h-6 text-[#FF66AA] transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                {/* 基本信息预览 */}
+                                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-1">
                                         <div className="text-gray-400 text-sm">比赛ID</div>
-                                        <div className="text-white font-mono text-lg">
-                                            {matchData.match.id}
-                                        </div>
+                                        <div className="text-white font-mono">{matchData.match.id}</div>
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="space-y-1">
                                         <div className="text-gray-400 text-sm">开始时间</div>
-                                        <div className="text-white">
+                                        <div className="text-white text-sm">
                                             {new Date(matchData.match.start_time).toLocaleString('zh-CN')}
                                         </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <div className="text-gray-400 text-sm">比赛统计</div>
-                                        <div className="text-white">
-                                            <div>{(matchData.games || []).length} 场比赛</div>
-                                            <div>{(matchData.users || []).length} 位玩家</div>
+                                    <div className="space-y-1">
+                                        <div className="text-gray-400 text-sm">状态</div>
+                                        <div className="text-green-400 text-sm">✅ 数据已加载</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 展开的详细内容 */}
+                            <div className={`transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+                                <div className="mt-4 bg-[#1A1A1A] rounded-lg border border-gray-700">
+                                    {/* 游戏列表 */}
+                                    <div className="p-6">
+                                        <h3 className="text-xl font-bold mb-4 flex items-center">
+                                            🎮 比赛详情
+                                        </h3>
+
+                                        {/* 游戏卡片网格 */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {(matchData.games || []).map((game, index) => (
+                                                <div
+                                                    key={game.id}
+                                                    className={`bg-[#2A2A2A] rounded-lg p-4 border cursor-pointer transition-all duration-200 hover:border-[#FF66AA] ${selectedGameIndex === index ? 'border-[#FF66AA] bg-[#FF66AA]/10' : 'border-gray-600'
+                                                        }`}
+                                                    onClick={() => setSelectedGameIndex(selectedGameIndex === index ? null : index)}
+                                                >
+                                                    <div className="flex items-start justify-between mb-3">
+                                                        <div className="flex items-center">
+                                                            <div className="bg-[#FF66AA] text-white text-sm font-bold px-2 py-1 rounded">
+                                                                #{index + 1}
+                                                            </div>
+                                                            <div className="ml-2 text-gray-400 text-sm">
+                                                                {game.scores ? `${game.scores.length} 玩家` : '无分数'}
+                                                            </div>
+                                                        </div>
+                                                        <svg
+                                                            className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${selectedGameIndex === index ? 'rotate-180' : ''
+                                                                }`}
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            viewBox="0 0 24 24"
+                                                        >
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <div className="text-white font-semibold text-sm">
+                                                            {game.beatmap?.artist} - {game.beatmap?.title}
+                                                        </div>
+                                                        <div className="text-gray-400 text-xs">
+                                                            [{game.beatmap?.difficulty_name}]
+                                                        </div>
+                                                        <div className="text-gray-500 text-xs">
+                                                            {game.beatmap?.version} • {game.mods?.join('') || 'NM'}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* 简要分数预览 */}
+                                                    {game.scores && game.scores.length > 0 && (
+                                                        <div className="mt-3 pt-3 border-t border-gray-600">
+                                                            <div className="text-xs text-gray-400 mb-1">最高分</div>
+                                                            <div className="text-sm text-white font-mono">
+                                                                {Math.max(...game.scores.map(s => s.score)).toLocaleString()}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
                                         </div>
+
+                                        {/* 选中游戏的详细分数 */}
+                                        {selectedGameIndex !== null && matchData.games && matchData.games[selectedGameIndex] && (
+                                            <div className="mt-6 bg-[#0A0A0A] rounded-lg p-6 border border-gray-600">
+                                                <h4 className="text-lg font-bold mb-4 flex items-center">
+                                                    📊 第 {selectedGameIndex + 1} 场比赛详细分数
+                                                </h4>
+
+                                                {/* 详细分数表格 */}
+                                                <div className="overflow-x-auto">
+                                                    <table className="w-full text-sm">
+                                                        <thead>
+                                                            <tr className="border-b border-gray-600">
+                                                                <th className="text-left py-2 text-gray-400">排名</th>
+                                                                <th className="text-left py-2 text-gray-400">玩家</th>
+                                                                <th className="text-right py-2 text-gray-400">分数</th>
+                                                                <th className="text-right py-2 text-gray-400">准确率</th>
+                                                                <th className="text-center py-2 text-gray-400">统计</th>
+                                                                <th className="text-center py-2 text-gray-400">MOD</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {((matchData.games[selectedGameIndex].scores || []).sort((a, b) => b.score - a.score)).map((score, scoreIndex) => {
+                                                                const user = (matchData.users || []).find(u => u.id === score.user_id);
+                                                                return (
+                                                                    <tr key={score.user_id} className="border-b border-gray-700 hover:bg-[#2A2A2A]/50">
+                                                                        <td className="py-3">
+                                                                            <div className="flex items-center">
+                                                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${scoreIndex === 0 ? 'bg-yellow-500 text-black' :
+                                                                                        scoreIndex === 1 ? 'bg-gray-400 text-black' :
+                                                                                            scoreIndex === 2 ? 'bg-orange-600 text-white' :
+                                                                                                'bg-gray-600 text-white'
+                                                                                    }`}>
+                                                                                    {scoreIndex + 1}
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                        <td className="py-3">
+                                                                            <div className="flex items-center">
+                                                                                <img
+                                                                                    src={user?.avatar_url || '/default-avatar.png'}
+                                                                                    alt={user?.username || 'Unknown'}
+                                                                                    className="w-8 h-8 rounded-full mr-3"
+                                                                                />
+                                                                                <span className="text-white font-medium">
+                                                                                    {user?.username || 'Unknown'}
+                                                                                </span>
+                                                                            </div>
+                                                                        </td>
+                                                                        <td className="py-3 text-right">
+                                                                            <span className="text-white font-mono">
+                                                                                {score.score.toLocaleString()}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td className="py-3 text-right">
+                                                                            <span className="text-white">
+                                                                                {(score.accuracy * 100).toFixed(2)}%
+                                                                            </span>
+                                                                        </td>
+                                                                        <td className="py-3 text-center">
+                                                                            <div className="text-xs space-x-1">
+                                                                                <span className="text-blue-400">{score.statistics?.count_300 || 0}</span>/
+                                                                                <span className="text-green-400">{score.statistics?.count_100 || 0}</span>/
+                                                                                <span className="text-yellow-400">{score.statistics?.count_50 || 0}</span>/
+                                                                                <span className="text-red-400">{score.statistics?.count_miss || 0}</span>
+                                                                            </div>
+                                                                        </td>
+                                                                        <td className="py-3 text-center">
+                                                                            {score.mods && score.mods.length > 0 ? (
+                                                                                <span className="bg-[#FF66AA] text-white text-xs px-2 py-1 rounded">
+                                                                                    +{score.mods.join('')}
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="text-gray-500 text-xs">NM</span>
+                                                                            )}
+                                                                        </td>
+                                                                    </tr>
+                                                                );
+                                                            })}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* 分数展示区域 */}
-                    {matchData ? (
-                        Object.keys(mapPool).length > 0 ? (
-                            <div>
-                                <h2 className="text-3xl font-bold mb-6 flex items-center">
-                                    📊 按图池分类的分数
-                                </h2>
-                                {Object.entries(mapPool).map(([category, maps]) => (
-                                    <ScoreCard
-                                        key={category}
-                                        category={category}
-                                        maps={maps}
-                                        matchGames={matchData.games || []}
-                                        users={matchData.users || []}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-12">
-                                <div className="bg-[#2A2A2A] rounded-lg p-8 border border-gray-600">
-                                    <div className="text-4xl mb-4">⚠️</div>
-                                    <h3 className="text-xl font-bold text-white mb-2">图池数据未加载</h3>
-                                    <p className="text-gray-400 mb-4">
-                                        无法按分类展示分数，但您仍可以查看原始比赛数据
-                                    </p>
-                                    <div className="text-left bg-[#1A1A1A] rounded p-4">
-                                        <h4 className="text-white font-semibold mb-2">比赛原始数据：</h4>
-                                        <div className="text-sm text-gray-300 space-y-1">
-                                            {(matchData.games || []).map((game, index) => (
-                                                <div key={game.id}>
-                                                    Game {index + 1}: {game.beatmap?.artist} - {game.beatmap?.title} [{game.beatmap?.difficulty_name}]
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )
-                    ) : (
+                    {/* 未加载数据时的提示 */}
+                    {!matchData && (
                         <div className="text-center py-16">
                             <div className="text-6xl mb-6">🎮</div>
                             <h3 className="text-2xl font-bold text-white mb-2">准备查看比赛分数</h3>
                             <p className="text-gray-400 max-w-md mx-auto">
-                                输入 osu! 比赛房间ID，获取详细的分数数据和按图池分类的展示
+                                输入 osu! 比赛房间ID，获取详细的分数数据展示
                             </p>
                         </div>
                     )}
