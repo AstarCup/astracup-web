@@ -1,0 +1,110 @@
+{
+    "NM": [
+        {
+            "mod": "NM",
+            "index": 1,
+            "beatmapId": 1234567,
+            "title": "Sample Song 1",
+            "artist": "Artist 1",
+            "difficulty": "Insane",
+            "mapper": "Mapper1",
+            "sr": 5.2,
+            "bpm": 180,
+            "length": "3:45"
+        },
+        {
+            "mod": "NM",
+            "index": 2,
+            "beatmapId": 1234568,
+            "title": "Sample Song 2",
+            "artist": "Artist 2",
+            "difficulty": "Extra",
+            "mapper": "Mapper2",
+            "sr": 5.8,
+            "bpm": 195,
+            "length": "4:12"
+        }
+    ],
+    "HD": [
+        {
+            "mod": "HD",
+            "index": 1,
+            "beatmapId": 1234569,
+            "title": "Hidden Song 1",
+            "artist": "Artist 3",
+            "difficulty": "Insane",
+            "mapper": "Mapper3",
+            "sr": 5.0,
+            "bpm": 170,
+            "length": "3:20"
+        },
+        {
+            "mod": "HD",
+            "index": 2,
+            "beatmapId": 1234570,
+            "title": "Hidden Song 2",
+            "artist": "Artist 4",
+            "difficulty": "Extra",
+            "mapper": "Mapper4",
+            "sr": 5.5,
+            "bpm": 185,
+            "length": "3:58"
+        }
+    ],
+    "HR": [
+        {
+            "mod": "HR",
+            "index": 1,
+            "beatmapId": 1234571,
+            "title": "Hard Rock Song 1",
+            "artist": "Artist 5",
+            "difficulty": "Hard",
+            "mapper": "Mapper5",
+            "sr": 6.2,
+            "bpm": 200,
+            "length": "4:05"
+        }
+    ],
+    "DT": [
+        {
+            "mod": "DT",
+            "index": 1,
+            "beatmapId": 1234572,
+            "title": "Double Time Song 1",
+            "artist": "Artist 6",
+            "difficulty": "Hard",
+            "mapper": "Mapper6",
+            "sr": 5.9,
+            "bpm": 220,
+            "length": "2:45"
+        }
+    ],
+    "FM": [
+        {
+            "mod": "FM",
+            "index": 1,
+            "beatmapId": 1234573,
+            "title": "Free Mod Song 1",
+            "artist": "Artist 7",
+            "difficulty": "Insane",
+            "mapper": "Mapper7",
+            "sr": 5.1,
+            "bpm": 175,
+            "length": "3:30"
+        }
+    ],
+    "TB": [
+        {
+            "mod": "TB",
+            "index": 1,
+            "beatmapId": 1234574,
+            "title": "Tiebreaker Song",
+            "artist": "Artist 8",
+            "difficulty": "Expert",
+            "mapper": "Mapper8",
+            "sr": 6.5,
+            "bpm": 190,
+            "length": "5:15"
+        }
+    ]
+}
