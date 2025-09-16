@@ -16,12 +16,24 @@ export async function GET(
         return NextResponse.json({ error: 'Missing matchId' }, { status: 400 });
     }
 
-    // 从cookie读取access_token，假设cookie名为'cookiez'
+    // 从cookie中读取session数据
     const cookieHeader = req.headers.get('cookie') || '';
-    const match = cookieHeader.match(/cookie=([^;]+)/);
-    const accessToken = match ? decodeURIComponent(match[1]) : '';
+    const sessionMatch = cookieHeader.match(/astra_session=([^;]+)/);
+    
+    if (!sessionMatch) {
+        return NextResponse.json({ error: 'No osu! session found. Please login first.' }, { status: 401 });
+    }
+    
+    let session;
+    try {
+        session = JSON.parse(decodeURIComponent(sessionMatch[1]));
+    } catch (e) {
+        return NextResponse.json({ error: 'Invalid session data' }, { status: 401 });
+    }
+    
+    const accessToken = session.access_token;
     if (!accessToken) {
-        return NextResponse.json({ error: 'No osu! access token in cookiez' }, { status: 401 });
+        return NextResponse.json({ error: 'No access token in session' }, { status: 401 });
     }
 
     // osu! v2 API: https://osu.ppy.sh/docs/index.html#match-id

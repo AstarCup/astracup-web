@@ -399,7 +399,7 @@ export interface MapPool {
 // 获取图池数据的函数
 export async function getMapPoolData(season: string = 's1'): Promise<MapPool> {
     try {
-        const response = await fetch(`/mappools/${season}/mappool.json`);
+        const response = await fetch(`/api/mappool?season=${season}`);
         if (!response.ok) {
             throw new Error(`获取图池数据失败: ${response.status}`);
         }
