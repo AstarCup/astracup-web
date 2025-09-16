@@ -461,7 +461,7 @@ export default function ScorePage() {
 
                     {/* 比赛信息 - 窗帘式设计 */}
                     {matchData && (
-                        <div className="mb-8">
+                        <div className="mb-20">
                             {/* 比赛信息概览 - 可点击展开 */}
                             <div
                                 className="bg-gradient-to-r from-[#2A2A2A] to-[#1A1A1A] rounded-lg p-6 border border-gray-600 shadow-xl cursor-pointer hover:border-[#FF66AA] transition-all duration-300"
@@ -665,106 +665,265 @@ export default function ScorePage() {
                                                             </div>
                                                         </div>
 
-                                                        {/* 详细分数表格 */}
-                                                        <div className="overflow-x-auto">
-                                                            <table className="w-full text-sm">
-                                                                <thead>
-                                                                    <tr className="border-b border-gray-600">
-                                                                        <th className="text-left py-2 text-gray-400">排名</th>
-                                                                        <th className="text-left py-2 text-gray-400">玩家</th>
-                                                                        <th className="text-right py-2 text-gray-400">分数</th>
-                                                                        <th className="text-right py-2 text-gray-400">准确率</th>
-                                                                        <th className="text-right py-2 text-gray-400">最大连击</th>
-                                                                        <th className="text-center py-2 text-gray-400">统计</th>
-                                                                        <th className="text-center py-2 text-gray-400">MOD</th>
-                                                                        <th className="text-center py-2 text-gray-400">状态</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    {((matchData.games[selectedGameIndex].scores || []).sort((a, b) => b.score - a.score)).map((score, scoreIndex) => {
-                                                                        const user = (matchData.users || []).find(u => u.id === score.user_id);
+                                                        {/* 详细分数表格 - 替换为比赛结果展示 */}
+                                                        <div className="mt-6">
+                                                            {/* 比赛结果卡片 */}
+                                                            <div className="relative overflow-hidden rounded-xl shadow-2xl">
+                                                                {/* 背景图片层 */}
+                                                                <div
+                                                                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                                                                    style={{
+                                                                        backgroundImage: `url('https://assets.ppy.sh/beatmaps/${matchData.games[selectedGameIndex].beatmap?.beatmapset_id}/covers/cover@2x.jpg')`,
+                                                                        filter: 'blur(3px) brightness(0.3)'
+                                                                    }}
+                                                                />
+
+                                                                {/* 内容层 */}
+                                                                <div className="relative z-10 p-8">
+                                                                    {/* 歌曲信息头部 */}
+                                                                    <div className="text-center mb-8">
+                                                                        <div className="bg-black/60 backdrop-blur-sm rounded-lg p-6 mx-auto max-w-2xl">
+                                                                            <h2 className="text-3xl font-bold text-white mb-2">
+                                                                                {matchData.games[selectedGameIndex].beatmap?.title}
+                                                                            </h2>
+                                                                            <p className="text-xl text-gray-200 mb-1">
+                                                                                by {matchData.games[selectedGameIndex].beatmap?.artist}
+                                                                            </p>
+                                                                            <p className="text-lg text-gray-300">
+                                                                                [{matchData.games[selectedGameIndex].beatmap?.difficulty_name}]
+                                                                                ⭐ {((matchData.games[selectedGameIndex].beatmap as any)?.difficulty_rating)?.toFixed(2) || 'N/A'}
+                                                                            </p>
+                                                                            <div className="mt-4 text-sm text-gray-400">
+                                                                                Game {selectedGameIndex + 1} • {matchData.games[selectedGameIndex].scoring_type || 'Score V2'}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* 队伍胜负结果 */}
+                                                                    {(() => {
+                                                                        const scores = matchData.games[selectedGameIndex].scores || [];
+                                                                        const redTeamScores = scores.filter(s => {
+                                                                            const user = matchData.users?.find(u => u.id === s.user_id);
+                                                                            return user?.country_code === 'CN'; // 中国为红队
+                                                                        });
+                                                                        const blueTeamScores = scores.filter(s => {
+                                                                            const user = matchData.users?.find(u => u.id === s.user_id);
+                                                                            return user?.country_code !== 'CN'; // 其他国家为蓝队
+                                                                        });
+
+                                                                        const redTeamTotal = redTeamScores.reduce((sum, s) => sum + s.score, 0);
+                                                                        const blueTeamTotal = blueTeamScores.reduce((sum, s) => sum + s.score, 0);
+                                                                        const redWins = redTeamTotal > blueTeamTotal;
+
                                                                         return (
-                                                                            <tr key={score.user_id} className="border-b border-gray-700 hover:bg-[#2A2A2A]/50">
-                                                                                <td className="py-3">
-                                                                                    <div className="flex items-center">
-                                                                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${scoreIndex === 0 ? 'bg-yellow-500 text-black' :
-                                                                                            scoreIndex === 1 ? 'bg-gray-400 text-black' :
-                                                                                                scoreIndex === 2 ? 'bg-orange-600 text-white' :
-                                                                                                    'bg-gray-600 text-white'
-                                                                                            }`}>
-                                                                                            {scoreIndex + 1}
+                                                                            <div className="flex justify-center mb-8">
+                                                                                <div className="bg-black/60 backdrop-blur-sm rounded-xl p-6 flex items-center gap-8">
+                                                                                    {/* 红队 */}
+                                                                                    <div className={`text-center p-6 rounded-lg ${redWins ? 'bg-red-600/80' : 'bg-red-900/40'} transition-all`}>
+                                                                                        <div className="text-2xl font-bold text-white mb-2">🇨🇳 中国队</div>
+                                                                                        <div className="text-3xl font-mono text-white font-bold">
+                                                                                            {redTeamTotal.toLocaleString()}
                                                                                         </div>
+                                                                                        {redWins && <div className="text-yellow-400 text-xl mt-2">👑 WINNER</div>}
                                                                                     </div>
-                                                                                </td>
-                                                                                <td className="py-3">
-                                                                                    <div className="flex items-center">
-                                                                                        <img
-                                                                                            src={user?.avatar_url || '/default-avatar.png'}
-                                                                                            alt={user?.username || 'Unknown'}
-                                                                                            className="w-8 h-8 rounded-full mr-3"
-                                                                                        />
-                                                                                        <span className="text-white font-medium">
-                                                                                            {user?.username || 'Unknown'}
-                                                                                        </span>
-                                                                                    </div>
-                                                                                </td>
-                                                                                <td className="py-3 text-right">
-                                                                                    <span className="text-white font-mono">
-                                                                                        {score.score.toLocaleString()}
-                                                                                    </span>
-                                                                                </td>
-                                                                                <td className="py-3 text-right">
-                                                                                    <span className="text-white">
-                                                                                        {(score.accuracy * 100).toFixed(2)}%
-                                                                                    </span>
-                                                                                </td>
-                                                                                <td className="py-3 text-right">
-                                                                                    <span className="text-yellow-400 font-mono">
-                                                                                        {score.max_combo || 0}x
-                                                                                    </span>
-                                                                                </td>
-                                                                                <td className="py-3 text-center">
-                                                                                    <div className="text-xs space-x-1">
-                                                                                        <span className="text-blue-400">{score.statistics?.count_300 || 0}</span>/
-                                                                                        <span className="text-green-400">{score.statistics?.count_100 || 0}</span>/
-                                                                                        <span className="text-yellow-400">{score.statistics?.count_50 || 0}</span>/
-                                                                                        <span className="text-red-400">{score.statistics?.count_miss || 0}</span>
-                                                                                    </div>
-                                                                                </td>
-                                                                                <td className="py-3 text-center">
-                                                                                    {score.mods && score.mods.length > 0 ? (
-                                                                                        <span className="bg-[#FF66AA] text-white text-xs px-2 py-1 rounded">
-                                                                                            +{score.mods.join('')}
-                                                                                        </span>
-                                                                                    ) : (
-                                                                                        <span className="text-gray-500 text-xs">NM</span>
-                                                                                    )}
-                                                                                </td>
-                                                                                <td className="py-3 text-center">
-                                                                                    <div className="flex items-center justify-center">
-                                                                                        {(score as any).passed || (score as any).pass ? (
-                                                                                            <span className="text-green-400 text-xs">✅ 完成</span>
-                                                                                        ) : (
-                                                                                            <span className="text-red-400 text-xs">❌ 失败</span>
-                                                                                        )}
-                                                                                        <div className="ml-2 text-xs">
-                                                                                            <span className={`px-1 py-0.5 rounded text-xs font-bold ${(score as any).rank === 'SS' || (score as any).rank === 'SSH' ? 'bg-yellow-500 text-black' :
-                                                                                                    (score as any).rank === 'S' || (score as any).rank === 'SH' ? 'bg-yellow-600 text-white' :
-                                                                                                        (score as any).rank === 'A' ? 'bg-green-500 text-white' :
-                                                                                                            (score as any).rank === 'B' ? 'bg-blue-500 text-white' :
-                                                                                                                (score as any).rank === 'C' ? 'bg-purple-500 text-white' :
-                                                                                                                    'bg-gray-500 text-white'
-                                                                                                }`}>
-                                                                                                {(score as any).rank || 'N/A'}
-                                                                                            </span>
+
+                                                                                    <div className="text-4xl text-white font-bold">VS</div>
+
+                                                                                    {/* 蓝队 */}
+                                                                                    <div className={`text-center p-6 rounded-lg ${!redWins ? 'bg-blue-600/80' : 'bg-blue-900/40'} transition-all`}>
+                                                                                        <div className="text-2xl font-bold text-white mb-2">🇬🇧 英国队</div>
+                                                                                        <div className="text-3xl font-mono text-white font-bold">
+                                                                                            {blueTeamTotal.toLocaleString()}
                                                                                         </div>
+                                                                                        {!redWins && <div className="text-yellow-400 text-xl mt-2">👑 WINNER</div>}
                                                                                     </div>
-                                                                                </td>
-                                                                            </tr>
+                                                                                </div>
+                                                                            </div>
                                                                         );
-                                                                    })}
-                                                                </tbody>
-                                                            </table>
+                                                                    })()}
+
+                                                                    {/* 选手成绩 - 竖直排版 */}
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                                        {/* 红队选手 */}
+                                                                        <div className="bg-red-900/20 backdrop-blur-sm rounded-xl p-6 border border-red-500/30">
+                                                                            <h3 className="text-xl font-bold text-red-400 mb-4 text-center">🇨🇳 中国队选手</h3>
+                                                                            <div className="space-y-4">
+                                                                                {((matchData.games[selectedGameIndex].scores || [])
+                                                                                    .filter(s => {
+                                                                                        const user = matchData.users?.find(u => u.id === s.user_id);
+                                                                                        return user?.country_code === 'CN';
+                                                                                    })
+                                                                                    .sort((a, b) => b.score - a.score)
+                                                                                ).map((score, index) => {
+                                                                                    const user = matchData.users?.find(u => u.id === score.user_id);
+                                                                                    return (
+                                                                                        <div key={score.user_id} className="bg-black/40 rounded-lg p-4">
+                                                                                            <div className="flex items-center mb-3">
+                                                                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3 ${index === 0 ? 'bg-yellow-500 text-black' :
+                                                                                                        index === 1 ? 'bg-gray-400 text-black' :
+                                                                                                            'bg-red-600 text-white'
+                                                                                                    }`}>
+                                                                                                    {index + 1}
+                                                                                                </div>
+                                                                                                <img
+                                                                                                    src={user?.avatar_url || '/default-avatar.png'}
+                                                                                                    alt={user?.username || 'Unknown'}
+                                                                                                    className="w-10 h-10 rounded-full mr-3"
+                                                                                                />
+                                                                                                <div className="flex-1">
+                                                                                                    <div className="text-white font-semibold text-lg">
+                                                                                                        {user?.username || 'Unknown'}
+                                                                                                    </div>
+                                                                                                    <div className="text-red-300 text-sm">
+                                                                                                        {user?.country_code || 'N/A'}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                                                                                <div>
+                                                                                                    <div className="text-gray-400">分数</div>
+                                                                                                    <div className="text-white font-mono text-lg">
+                                                                                                        {score.score.toLocaleString()}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                    <div className="text-gray-400">准确率</div>
+                                                                                                    <div className="text-green-400 font-mono text-lg">
+                                                                                                        {(score.accuracy * 100).toFixed(2)}%
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                    <div className="text-gray-400">最大连击</div>
+                                                                                                    <div className="text-yellow-400 font-mono">
+                                                                                                        {score.max_combo || 0}x
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                    <div className="text-gray-400">等级</div>
+                                                                                                    <div className="flex items-center">
+                                                                                                        <span className={`px-2 py-1 rounded text-xs font-bold ${(score as any).rank === 'SS' || (score as any).rank === 'SSH' ? 'bg-yellow-500 text-black' :
+                                                                                                                (score as any).rank === 'S' || (score as any).rank === 'SH' ? 'bg-yellow-600 text-white' :
+                                                                                                                    (score as any).rank === 'A' ? 'bg-green-500 text-white' :
+                                                                                                                        'bg-gray-500 text-white'
+                                                                                                            }`}>
+                                                                                                            {(score as any).rank || 'N/A'}
+                                                                                                        </span>
+                                                                                                        {score.mods && score.mods.length > 0 && (
+                                                                                                            <span className="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                                                                                                                +{score.mods.join('')}
+                                                                                                            </span>
+                                                                                                        )}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            <div className="mt-3 pt-3 border-t border-red-500/30">
+                                                                                                <div className="text-xs text-gray-400 mb-1">统计</div>
+                                                                                                <div className="text-xs space-x-2">
+                                                                                                    <span className="text-blue-400">300: {score.statistics?.count_300 || 0}</span>
+                                                                                                    <span className="text-green-400">100: {score.statistics?.count_100 || 0}</span>
+                                                                                                    <span className="text-yellow-400">50: {score.statistics?.count_50 || 0}</span>
+                                                                                                    <span className="text-red-400">Miss: {score.statistics?.count_miss || 0}</span>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* 蓝队选手 */}
+                                                                        <div className="bg-blue-900/20 backdrop-blur-sm rounded-xl p-6 border border-blue-500/30">
+                                                                            <h3 className="text-xl font-bold text-blue-400 mb-4 text-center">🇬🇧 英国队选手</h3>
+                                                                            <div className="space-y-4">
+                                                                                {((matchData.games[selectedGameIndex].scores || [])
+                                                                                    .filter(s => {
+                                                                                        const user = matchData.users?.find(u => u.id === s.user_id);
+                                                                                        return user?.country_code !== 'CN';
+                                                                                    })
+                                                                                    .sort((a, b) => b.score - a.score)
+                                                                                ).map((score, index) => {
+                                                                                    const user = matchData.users?.find(u => u.id === score.user_id);
+                                                                                    return (
+                                                                                        <div key={score.user_id} className="bg-black/40 rounded-lg p-4">
+                                                                                            <div className="flex items-center mb-3">
+                                                                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3 ${index === 0 ? 'bg-yellow-500 text-black' :
+                                                                                                        index === 1 ? 'bg-gray-400 text-black' :
+                                                                                                            'bg-blue-600 text-white'
+                                                                                                    }`}>
+                                                                                                    {index + 1}
+                                                                                                </div>
+                                                                                                <img
+                                                                                                    src={user?.avatar_url || '/default-avatar.png'}
+                                                                                                    alt={user?.username || 'Unknown'}
+                                                                                                    className="w-10 h-10 rounded-full mr-3"
+                                                                                                />
+                                                                                                <div className="flex-1">
+                                                                                                    <div className="text-white font-semibold text-lg">
+                                                                                                        {user?.username || 'Unknown'}
+                                                                                                    </div>
+                                                                                                    <div className="text-blue-300 text-sm">
+                                                                                                        {user?.country_code || 'N/A'}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                                                                                <div>
+                                                                                                    <div className="text-gray-400">分数</div>
+                                                                                                    <div className="text-white font-mono text-lg">
+                                                                                                        {score.score.toLocaleString()}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                    <div className="text-gray-400">准确率</div>
+                                                                                                    <div className="text-green-400 font-mono text-lg">
+                                                                                                        {(score.accuracy * 100).toFixed(2)}%
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                    <div className="text-gray-400">最大连击</div>
+                                                                                                    <div className="text-yellow-400 font-mono">
+                                                                                                        {score.max_combo || 0}x
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                    <div className="text-gray-400">等级</div>
+                                                                                                    <div className="flex items-center">
+                                                                                                        <span className={`px-2 py-1 rounded text-xs font-bold ${(score as any).rank === 'SS' || (score as any).rank === 'SSH' ? 'bg-yellow-500 text-black' :
+                                                                                                                (score as any).rank === 'S' || (score as any).rank === 'SH' ? 'bg-yellow-600 text-white' :
+                                                                                                                    (score as any).rank === 'A' ? 'bg-green-500 text-white' :
+                                                                                                                        'bg-gray-500 text-white'
+                                                                                                            }`}>
+                                                                                                            {(score as any).rank || 'N/A'}
+                                                                                                        </span>
+                                                                                                        {score.mods && score.mods.length > 0 && (
+                                                                                                            <span className="ml-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                                                                                                                +{score.mods.join('')}
+                                                                                                            </span>
+                                                                                                        )}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            <div className="mt-3 pt-3 border-t border-blue-500/30">
+                                                                                                <div className="text-xs text-gray-400 mb-1">统计</div>
+                                                                                                <div className="text-xs space-x-2">
+                                                                                                    <span className="text-blue-400">300: {score.statistics?.count_300 || 0}</span>
+                                                                                                    <span className="text-green-400">100: {score.statistics?.count_100 || 0}</span>
+                                                                                                    <span className="text-yellow-400">50: {score.statistics?.count_50 || 0}</span>
+                                                                                                    <span className="text-red-400">Miss: {score.statistics?.count_miss || 0}</span>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 )}
