@@ -569,7 +569,7 @@ export default function ScorePage() {
                                                             {/* 歌曲信息 */}
                                                             <div className="space-y-2 mb-3">
                                                                 <div className="text-white font-semibold text-sm">
-                                                                    {game.beatmap?.artist} - {game.beatmap?.title}
+                                                                    {(game.beatmap as any)?.artist_unicode || game.beatmap?.artist} - {(game.beatmap as any)?.title_unicode || game.beatmap?.title}
                                                                 </div>
                                                                 <div className="text-gray-400 text-xs">
                                                                     [{game.beatmap?.difficulty_name}]
@@ -634,7 +634,7 @@ export default function ScorePage() {
                                                 {selectedGameIndex !== null && matchData.games && matchData.games[selectedGameIndex] && (
                                                     <div className="mt-6 bg-[#0A0A0A] rounded-lg p-6 border border-gray-600">
                                                         <h4 className="text-lg font-bold mb-4 flex items-center">
-                                                            📊 Game {selectedGameIndex + 1}: {matchData.games[selectedGameIndex].beatmap?.artist} - {matchData.games[selectedGameIndex].beatmap?.title}
+                                                            📊 Game {selectedGameIndex + 1}: {(matchData.games[selectedGameIndex].beatmap as any)?.artist_unicode || matchData.games[selectedGameIndex].beatmap?.artist} - {(matchData.games[selectedGameIndex].beatmap as any)?.title_unicode || matchData.games[selectedGameIndex].beatmap?.title}
                                                         </h4>
 
                                                         {/* 游戏信息概览 */}
@@ -683,17 +683,73 @@ export default function ScorePage() {
                                                                             <div className="absolute inset-0 bg-black/50"></div>
                                                                             <div className="relative z-10">
                                                                                 <h2 className="text-3xl font-bold text-white mb-2">
-                                                                                    {matchData.games[selectedGameIndex].beatmap?.title}
+                                                                                    {(matchData.games[selectedGameIndex].beatmap as any)?.title_unicode || matchData.games[selectedGameIndex].beatmap?.title}
                                                                                 </h2>
-                                                                                <p className="text-xl text-gray-200 mb-1">
-                                                                                    by {matchData.games[selectedGameIndex].beatmap?.artist}
+                                                                                <p className="text-xl text-gray-200 mb-4">
+                                                                                    by {(matchData.games[selectedGameIndex].beatmap as any)?.artist_unicode || matchData.games[selectedGameIndex].beatmap?.artist}
                                                                                 </p>
-                                                                                <p className="text-lg text-gray-300">
-                                                                                    [{matchData.games[selectedGameIndex].beatmap?.difficulty_name}]
-                                                                                    ⭐ {((matchData.games[selectedGameIndex].beatmap as any)?.difficulty_rating)?.toFixed(2) || 'N/A'}
-                                                                                </p>
-                                                                                <div className="mt-4 text-sm text-gray-400">
-                                                                                    Game {selectedGameIndex + 1} • {matchData.games[selectedGameIndex].scoring_type || 'Score V2'}
+
+                                                                                {/* 详细信息网格 */}
+                                                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-black/30 rounded-lg p-4">
+                                                                                    <div className="text-center">
+                                                                                        <div className="text-gray-300 text-sm">难度</div>
+                                                                                        <div className="text-white font-semibold">
+                                                                                            {(matchData.games[selectedGameIndex].beatmap as any)?.version || matchData.games[selectedGameIndex].beatmap?.difficulty_name}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="text-center">
+                                                                                        <div className="text-gray-300 text-sm">星级</div>
+                                                                                        <div className="text-yellow-400 font-semibold">
+                                                                                            ⭐ {((matchData.games[selectedGameIndex].beatmap as any)?.difficulty_rating)?.toFixed(2) || 'N/A'}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="text-center">
+                                                                                        <div className="text-gray-300 text-sm">BPM</div>
+                                                                                        <div className="text-green-400 font-semibold">
+                                                                                            {(matchData.games[selectedGameIndex].beatmap as any)?.bpm || 'N/A'}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="text-center">
+                                                                                        <div className="text-gray-300 text-sm">时长</div>
+                                                                                        <div className="text-blue-400 font-semibold">
+                                                                                            {Math.floor(((matchData.games[selectedGameIndex].beatmap as any)?.total_length || 0) / 60)}:{String(((matchData.games[selectedGameIndex].beatmap as any)?.total_length || 0) % 60).padStart(2, '0')}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="text-center">
+                                                                                        <div className="text-gray-300 text-sm">CS</div>
+                                                                                        <div className="text-purple-400 font-semibold">
+                                                                                            {((matchData.games[selectedGameIndex].beatmap as any)?.cs)?.toFixed(1) || 'N/A'}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="text-center">
+                                                                                        <div className="text-gray-300 text-sm">AR</div>
+                                                                                        <div className="text-red-400 font-semibold">
+                                                                                            {((matchData.games[selectedGameIndex].beatmap as any)?.ar)?.toFixed(1) || 'N/A'}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="text-center">
+                                                                                        <div className="text-gray-300 text-sm">OD</div>
+                                                                                        <div className="text-orange-400 font-semibold">
+                                                                                            {((matchData.games[selectedGameIndex].beatmap as any)?.accuracy)?.toFixed(1) || 'N/A'}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="text-center">
+                                                                                        <div className="text-gray-300 text-sm">HP</div>
+                                                                                        <div className="text-pink-400 font-semibold">
+                                                                                            {((matchData.games[selectedGameIndex].beatmap as any)?.drain)?.toFixed(1) || 'N/A'}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                <div className="mt-4 text-center">
+                                                                                    <span className="text-gray-400 text-sm">
+                                                                                        Game {selectedGameIndex + 1} • {matchData.games[selectedGameIndex].scoring_type || 'Score V2'}
+                                                                                    </span>
+                                                                                    {matchData.games[selectedGameIndex].mods && matchData.games[selectedGameIndex].mods.length > 0 && (
+                                                                                        <span className="ml-3 bg-[#FF66AA] text-white text-sm px-3 py-1 rounded">
+                                                                                            +{matchData.games[selectedGameIndex].mods.join('')}
+                                                                                        </span>
+                                                                                    )}
                                                                                 </div>
                                                                             </div>
                                                                         </div>
