@@ -29,7 +29,7 @@ export function getOsuAuthUrl(): string {
         client_id: OSU_CLIENT_ID,
         redirect_uri: OSU_REDIRECT_URI,
         response_type: 'code',
-        scope: 'identify',
+        scope: 'identify public',
     });
 
     return `https://osu.ppy.sh/oauth/authorize?${params.toString()}`;
