@@ -213,8 +213,8 @@ export default function ScorePage() {
             try {
                 const jsonData = JSON.parse(e.target?.result as string);
 
-                // 验证JSON格式
-                if (!jsonData.games || !jsonData.users || !jsonData.matchInfo) {
+                // 验证JSON格式 - 现在只要求基本字段
+                if (!jsonData.users || !jsonData.matchInfo) {
                     throw new Error('JSON 文件格式不正确，缺少必要的数据字段');
                 }
 
@@ -231,7 +231,7 @@ export default function ScorePage() {
                     first_event_id: jsonData.first_event_id || 0,
                     latest_event_id: jsonData.latest_event_id || 0,
                     current_game_id: jsonData.current_game_id || null,
-                    games: jsonData.games
+                    games: jsonData.games || [] // 如果没有games数据，使用空数组
                 };
 
                 setMatchData(importedMatchData);
@@ -244,10 +244,14 @@ export default function ScorePage() {
                 setError(null);
                 setMatchId(jsonData.matchInfo.id.toString());
 
-                // 显示成功提示
+                // 显示成功提示，但告知用户可能需要重新获取比赛数据
                 const successMsg = document.createElement('div');
-                successMsg.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-                successMsg.innerHTML = '✅ JSON 文件导入成功！';
+                successMsg.className = 'fixed top-4 right-4 bg-yellow-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                if (!jsonData.games || jsonData.games.length === 0) {
+                    successMsg.innerHTML = '⚠️ JSON导入成功，但缺少比赛数据。请重新获取比赛数据！';
+                } else {
+                    successMsg.innerHTML = '✅ JSON 文件导入成功！';
+                }
                 document.body.appendChild(successMsg);
                 setTimeout(() => {
                     document.body.removeChild(successMsg);
@@ -507,142 +511,162 @@ export default function ScorePage() {
                                             🎮 比赛详情
                                         </h3>
 
-                                        {/* 游戏卡片网格 */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {(matchData.games || []).map((game, index) => (
-                                                <div
-                                                    key={game.id}
-                                                    className={`bg-[#2A2A2A] rounded-lg p-4 border cursor-pointer transition-all duration-200 hover:border-[#FF66AA] ${selectedGameIndex === index ? 'border-[#FF66AA] bg-[#FF66AA]/10' : 'border-gray-600'
-                                                        }`}
-                                                    onClick={() => setSelectedGameIndex(selectedGameIndex === index ? null : index)}
-                                                >
-                                                    <div className="flex items-start justify-between mb-3">
-                                                        <div className="flex items-center">
-                                                            <div className="bg-[#FF66AA] text-white text-sm font-bold px-2 py-1 rounded">
-                                                                #{index + 1}
-                                                            </div>
-                                                            <div className="ml-2 text-gray-400 text-sm">
-                                                                {game.scores ? `${game.scores.length} 玩家` : '无分数'}
-                                                            </div>
-                                                        </div>
-                                                        <svg
-                                                            className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${selectedGameIndex === index ? 'rotate-180' : ''
-                                                                }`}
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            viewBox="0 0 24 24"
-                                                        >
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                        </svg>
+                                        {/* 检查是否有游戏数据 */}
+                                        {(!matchData.games || matchData.games.length === 0) ? (
+                                            <div className="text-center py-12">
+                                                <div className="bg-yellow-900/50 border border-yellow-500 rounded-lg p-6">
+                                                    <div className="text-4xl mb-4">⚠️</div>
+                                                    <h4 className="text-yellow-400 font-bold text-lg mb-2">缺少比赛游戏数据</h4>
+                                                    <p className="text-gray-300 mb-4">
+                                                        当前数据中没有比赛游戏信息。请使用比赛ID重新获取完整数据。
+                                                    </p>
+                                                    <div className="text-sm text-gray-400">
+                                                        <p>• 比赛ID: {matchData.match.id}</p>
+                                                        <p>• 玩家数量: {(matchData.users || []).length} 位</p>
+                                                        <p>• 事件数量: {(matchData.events || []).length} 个</p>
                                                     </div>
-
-                                                    <div className="space-y-2">
-                                                        <div className="text-white font-semibold text-sm">
-                                                            {game.beatmap?.artist} - {game.beatmap?.title}
-                                                        </div>
-                                                        <div className="text-gray-400 text-xs">
-                                                            [{game.beatmap?.difficulty_name}]
-                                                        </div>
-                                                        <div className="text-gray-500 text-xs">
-                                                            {game.beatmap?.version} • {game.mods?.join('') || 'NM'}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* 简要分数预览 */}
-                                                    {game.scores && game.scores.length > 0 && (
-                                                        <div className="mt-3 pt-3 border-t border-gray-600">
-                                                            <div className="text-xs text-gray-400 mb-1">最高分</div>
-                                                            <div className="text-sm text-white font-mono">
-                                                                {Math.max(...game.scores.map(s => s.score)).toLocaleString()}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        {/* 选中游戏的详细分数 */}
-                                        {selectedGameIndex !== null && matchData.games && matchData.games[selectedGameIndex] && (
-                                            <div className="mt-6 bg-[#0A0A0A] rounded-lg p-6 border border-gray-600">
-                                                <h4 className="text-lg font-bold mb-4 flex items-center">
-                                                    📊 第 {selectedGameIndex + 1} 场比赛详细分数
-                                                </h4>
-
-                                                {/* 详细分数表格 */}
-                                                <div className="overflow-x-auto">
-                                                    <table className="w-full text-sm">
-                                                        <thead>
-                                                            <tr className="border-b border-gray-600">
-                                                                <th className="text-left py-2 text-gray-400">排名</th>
-                                                                <th className="text-left py-2 text-gray-400">玩家</th>
-                                                                <th className="text-right py-2 text-gray-400">分数</th>
-                                                                <th className="text-right py-2 text-gray-400">准确率</th>
-                                                                <th className="text-center py-2 text-gray-400">统计</th>
-                                                                <th className="text-center py-2 text-gray-400">MOD</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {((matchData.games[selectedGameIndex].scores || []).sort((a, b) => b.score - a.score)).map((score, scoreIndex) => {
-                                                                const user = (matchData.users || []).find(u => u.id === score.user_id);
-                                                                return (
-                                                                    <tr key={score.user_id} className="border-b border-gray-700 hover:bg-[#2A2A2A]/50">
-                                                                        <td className="py-3">
-                                                                            <div className="flex items-center">
-                                                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${scoreIndex === 0 ? 'bg-yellow-500 text-black' :
-                                                                                        scoreIndex === 1 ? 'bg-gray-400 text-black' :
-                                                                                            scoreIndex === 2 ? 'bg-orange-600 text-white' :
-                                                                                                'bg-gray-600 text-white'
-                                                                                    }`}>
-                                                                                    {scoreIndex + 1}
-                                                                                </div>
-                                                                            </div>
-                                                                        </td>
-                                                                        <td className="py-3">
-                                                                            <div className="flex items-center">
-                                                                                <img
-                                                                                    src={user?.avatar_url || '/default-avatar.png'}
-                                                                                    alt={user?.username || 'Unknown'}
-                                                                                    className="w-8 h-8 rounded-full mr-3"
-                                                                                />
-                                                                                <span className="text-white font-medium">
-                                                                                    {user?.username || 'Unknown'}
-                                                                                </span>
-                                                                            </div>
-                                                                        </td>
-                                                                        <td className="py-3 text-right">
-                                                                            <span className="text-white font-mono">
-                                                                                {score.score.toLocaleString()}
-                                                                            </span>
-                                                                        </td>
-                                                                        <td className="py-3 text-right">
-                                                                            <span className="text-white">
-                                                                                {(score.accuracy * 100).toFixed(2)}%
-                                                                            </span>
-                                                                        </td>
-                                                                        <td className="py-3 text-center">
-                                                                            <div className="text-xs space-x-1">
-                                                                                <span className="text-blue-400">{score.statistics?.count_300 || 0}</span>/
-                                                                                <span className="text-green-400">{score.statistics?.count_100 || 0}</span>/
-                                                                                <span className="text-yellow-400">{score.statistics?.count_50 || 0}</span>/
-                                                                                <span className="text-red-400">{score.statistics?.count_miss || 0}</span>
-                                                                            </div>
-                                                                        </td>
-                                                                        <td className="py-3 text-center">
-                                                                            {score.mods && score.mods.length > 0 ? (
-                                                                                <span className="bg-[#FF66AA] text-white text-xs px-2 py-1 rounded">
-                                                                                    +{score.mods.join('')}
-                                                                                </span>
-                                                                            ) : (
-                                                                                <span className="text-gray-500 text-xs">NM</span>
-                                                                            )}
-                                                                        </td>
-                                                                    </tr>
-                                                                );
-                                                            })}
-                                                        </tbody>
-                                                    </table>
                                                 </div>
                                             </div>
+                                        ) : (
+                                            <>
+                                                {/* 游戏卡片网格 */}
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                    {(matchData.games || []).map((game, index) => (
+                                                        <div
+                                                            key={game.id}
+                                                            className={`bg-[#2A2A2A] rounded-lg p-4 border cursor-pointer transition-all duration-200 hover:border-[#FF66AA] ${selectedGameIndex === index ? 'border-[#FF66AA] bg-[#FF66AA]/10' : 'border-gray-600'
+                                                                }`}
+                                                            onClick={() => setSelectedGameIndex(selectedGameIndex === index ? null : index)}
+                                                        >
+                                                            <div className="flex items-start justify-between mb-3">
+                                                                <div className="flex items-center">
+                                                                    <div className="bg-[#FF66AA] text-white text-sm font-bold px-2 py-1 rounded">
+                                                                        #{index + 1}
+                                                                    </div>
+                                                                    <div className="ml-2 text-gray-400 text-sm">
+                                                                        {game.scores ? `${game.scores.length} 玩家` : '无分数'}
+                                                                    </div>
+                                                                </div>
+                                                                <svg
+                                                                    className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${selectedGameIndex === index ? 'rotate-180' : ''
+                                                                        }`}
+                                                                    fill="none"
+                                                                    stroke="currentColor"
+                                                                    viewBox="0 0 24 24"
+                                                                >
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                                </svg>
+                                                            </div>
+
+                                                            <div className="space-y-2">
+                                                                <div className="text-white font-semibold text-sm">
+                                                                    {game.beatmap?.artist} - {game.beatmap?.title}
+                                                                </div>
+                                                                <div className="text-gray-400 text-xs">
+                                                                    [{game.beatmap?.difficulty_name}]
+                                                                </div>
+                                                                <div className="text-gray-500 text-xs">
+                                                                    {game.beatmap?.version} • {game.mods?.join('') || 'NM'}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* 简要分数预览 */}
+                                                            {game.scores && game.scores.length > 0 && (
+                                                                <div className="mt-3 pt-3 border-t border-gray-600">
+                                                                    <div className="text-xs text-gray-400 mb-1">最高分</div>
+                                                                    <div className="text-sm text-white font-mono">
+                                                                        {Math.max(...game.scores.map(s => s.score)).toLocaleString()}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {/* 选中游戏的详细分数 */}
+                                                {selectedGameIndex !== null && matchData.games && matchData.games[selectedGameIndex] && (
+                                                    <div className="mt-6 bg-[#0A0A0A] rounded-lg p-6 border border-gray-600">
+                                                        <h4 className="text-lg font-bold mb-4 flex items-center">
+                                                            📊 第 {selectedGameIndex + 1} 场比赛详细分数
+                                                        </h4>
+
+                                                        {/* 详细分数表格 */}
+                                                        <div className="overflow-x-auto">
+                                                            <table className="w-full text-sm">
+                                                                <thead>
+                                                                    <tr className="border-b border-gray-600">
+                                                                        <th className="text-left py-2 text-gray-400">排名</th>
+                                                                        <th className="text-left py-2 text-gray-400">玩家</th>
+                                                                        <th className="text-right py-2 text-gray-400">分数</th>
+                                                                        <th className="text-right py-2 text-gray-400">准确率</th>
+                                                                        <th className="text-center py-2 text-gray-400">统计</th>
+                                                                        <th className="text-center py-2 text-gray-400">MOD</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {((matchData.games[selectedGameIndex].scores || []).sort((a, b) => b.score - a.score)).map((score, scoreIndex) => {
+                                                                        const user = (matchData.users || []).find(u => u.id === score.user_id);
+                                                                        return (
+                                                                            <tr key={score.user_id} className="border-b border-gray-700 hover:bg-[#2A2A2A]/50">
+                                                                                <td className="py-3">
+                                                                                    <div className="flex items-center">
+                                                                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${scoreIndex === 0 ? 'bg-yellow-500 text-black' :
+                                                                                            scoreIndex === 1 ? 'bg-gray-400 text-black' :
+                                                                                                scoreIndex === 2 ? 'bg-orange-600 text-white' :
+                                                                                                    'bg-gray-600 text-white'
+                                                                                            }`}>
+                                                                                            {scoreIndex + 1}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </td>
+                                                                                <td className="py-3">
+                                                                                    <div className="flex items-center">
+                                                                                        <img
+                                                                                            src={user?.avatar_url || '/default-avatar.png'}
+                                                                                            alt={user?.username || 'Unknown'}
+                                                                                            className="w-8 h-8 rounded-full mr-3"
+                                                                                        />
+                                                                                        <span className="text-white font-medium">
+                                                                                            {user?.username || 'Unknown'}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </td>
+                                                                                <td className="py-3 text-right">
+                                                                                    <span className="text-white font-mono">
+                                                                                        {score.score.toLocaleString()}
+                                                                                    </span>
+                                                                                </td>
+                                                                                <td className="py-3 text-right">
+                                                                                    <span className="text-white">
+                                                                                        {(score.accuracy * 100).toFixed(2)}%
+                                                                                    </span>
+                                                                                </td>
+                                                                                <td className="py-3 text-center">
+                                                                                    <div className="text-xs space-x-1">
+                                                                                        <span className="text-blue-400">{score.statistics?.count_300 || 0}</span>/
+                                                                                        <span className="text-green-400">{score.statistics?.count_100 || 0}</span>/
+                                                                                        <span className="text-yellow-400">{score.statistics?.count_50 || 0}</span>/
+                                                                                        <span className="text-red-400">{score.statistics?.count_miss || 0}</span>
+                                                                                    </div>
+                                                                                </td>
+                                                                                <td className="py-3 text-center">
+                                                                                    {score.mods && score.mods.length > 0 ? (
+                                                                                        <span className="bg-[#FF66AA] text-white text-xs px-2 py-1 rounded">
+                                                                                            +{score.mods.join('')}
+                                                                                        </span>
+                                                                                    ) : (
+                                                                                        <span className="text-gray-500 text-xs">NM</span>
+                                                                                    )}
+                                                                                </td>
+                                                                            </tr>
+                                                                        );
+                                                                    })}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </>
                                         )}
                                     </div>
                                 </div>
