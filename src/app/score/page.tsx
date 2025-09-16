@@ -218,6 +218,13 @@ export default function ScorePage() {
                     throw new Error('JSON 文件格式不正确，缺少必要的数据字段');
                 }
 
+                // 从events中提取games数据
+                const extractedGames = jsonData.events
+                    ? jsonData.events
+                        .filter((event: any) => event.game) // 只保留有game数据的events
+                        .map((event: any) => event.game) // 提取game对象
+                    : [];
+
                 // 重构数据格式以匹配 MatchData 类型
                 const importedMatchData: MatchData = {
                     match: {
@@ -231,7 +238,7 @@ export default function ScorePage() {
                     first_event_id: jsonData.first_event_id || 0,
                     latest_event_id: jsonData.latest_event_id || 0,
                     current_game_id: jsonData.current_game_id || null,
-                    games: jsonData.games || [] // 如果没有games数据，使用空数组
+                    games: extractedGames // 使用从events提取的games数据
                 };
 
                 setMatchData(importedMatchData);
@@ -244,13 +251,14 @@ export default function ScorePage() {
                 setError(null);
                 setMatchId(jsonData.matchInfo.id.toString());
 
-                // 显示成功提示，但告知用户可能需要重新获取比赛数据
+                // 显示成功提示
                 const successMsg = document.createElement('div');
-                successMsg.className = 'fixed top-4 right-4 bg-yellow-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-                if (!jsonData.games || jsonData.games.length === 0) {
-                    successMsg.innerHTML = '⚠️ JSON导入成功，但缺少比赛数据。请重新获取比赛数据！';
+                if (extractedGames.length === 0) {
+                    successMsg.className = 'fixed top-4 right-4 bg-yellow-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                    successMsg.innerHTML = '⚠️ JSON导入成功，但未找到比赛游戏数据。请检查文件或重新获取数据！';
                 } else {
-                    successMsg.innerHTML = '✅ JSON 文件导入成功！';
+                    successMsg.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                    successMsg.innerHTML = `✅ JSON导入成功！找到 ${extractedGames.length} 场游戏数据`;
                 }
                 document.body.appendChild(successMsg);
                 setTimeout(() => {
