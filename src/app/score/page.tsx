@@ -276,7 +276,7 @@ export default function ScorePage() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto p-6 text-white bg-[#3D3D3D] min-h-screen">
+        <div className="max-w-7xl mx-auto p-6 text-white bg-[#3D3D3D] pb-20">
             {/* 登录状态加载中 */}
             {sessionLoading ? (
                 <div className="flex items-center justify-center min-h-[400px]">
@@ -668,38 +668,36 @@ export default function ScorePage() {
                                                         {/* 详细分数表格 - 替换为比赛结果展示 */}
                                                         <div className="mt-6">
                                                             {/* 比赛结果卡片 */}
-                                                            <div className="relative overflow-hidden rounded-xl shadow-2xl">
-                                                                {/* 背景图片层 */}
-                                                                <div
-                                                                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                                                                    style={{
-                                                                        backgroundImage: `url('https://assets.ppy.sh/beatmaps/${matchData.games[selectedGameIndex].beatmap?.beatmapset_id}/covers/cover@2x.jpg')`,
-                                                                        filter: 'blur(3px) brightness(0.3)'
-                                                                    }}
-                                                                />
-
+                                                            <div className="rounded-xl shadow-2xl bg-[#1A1A1A]">
                                                                 {/* 内容层 */}
-                                                                <div className="relative z-10 p-8">
+                                                                <div className="p-8">
                                                                     {/* 歌曲信息头部 */}
                                                                     <div className="text-center mb-8">
-                                                                        <div className="bg-black/60 backdrop-blur-sm rounded-lg p-6 mx-auto max-w-2xl">
-                                                                            <h2 className="text-3xl font-bold text-white mb-2">
-                                                                                {matchData.games[selectedGameIndex].beatmap?.title}
-                                                                            </h2>
-                                                                            <p className="text-xl text-gray-200 mb-1">
-                                                                                by {matchData.games[selectedGameIndex].beatmap?.artist}
-                                                                            </p>
-                                                                            <p className="text-lg text-gray-300">
-                                                                                [{matchData.games[selectedGameIndex].beatmap?.difficulty_name}]
-                                                                                ⭐ {((matchData.games[selectedGameIndex].beatmap as any)?.difficulty_rating)?.toFixed(2) || 'N/A'}
-                                                                            </p>
-                                                                            <div className="mt-4 text-sm text-gray-400">
-                                                                                Game {selectedGameIndex + 1} • {matchData.games[selectedGameIndex].scoring_type || 'Score V2'}
+                                                                        <div
+                                                                            className="relative overflow-hidden rounded-lg p-6 mx-auto max-w-2xl bg-cover bg-center bg-no-repeat"
+                                                                            style={{
+                                                                                backgroundImage: `url('https://assets.ppy.sh/beatmaps/${matchData.games[selectedGameIndex].beatmap?.beatmapset_id}/covers/cover@2x.jpg')`
+                                                                            }}
+                                                                        >
+                                                                            {/* 半透明遮罩确保文字清晰 */}
+                                                                            <div className="absolute inset-0 bg-black/50"></div>
+                                                                            <div className="relative z-10">
+                                                                                <h2 className="text-3xl font-bold text-white mb-2">
+                                                                                    {matchData.games[selectedGameIndex].beatmap?.title}
+                                                                                </h2>
+                                                                                <p className="text-xl text-gray-200 mb-1">
+                                                                                    by {matchData.games[selectedGameIndex].beatmap?.artist}
+                                                                                </p>
+                                                                                <p className="text-lg text-gray-300">
+                                                                                    [{matchData.games[selectedGameIndex].beatmap?.difficulty_name}]
+                                                                                    ⭐ {((matchData.games[selectedGameIndex].beatmap as any)?.difficulty_rating)?.toFixed(2) || 'N/A'}
+                                                                                </p>
+                                                                                <div className="mt-4 text-sm text-gray-400">
+                                                                                    Game {selectedGameIndex + 1} • {matchData.games[selectedGameIndex].scoring_type || 'Score V2'}
+                                                                                </div>
                                                                             </div>
                                                                         </div>
-                                                                    </div>
-
-                                                                    {/* 队伍胜负结果 */}
+                                                                    </div>                                                                    {/* 队伍胜负结果 */}
                                                                     {(() => {
                                                                         const scores = matchData.games[selectedGameIndex].scores || [];
                                                                         const redTeamScores = scores.filter(s => {
@@ -717,7 +715,7 @@ export default function ScorePage() {
 
                                                                         return (
                                                                             <div className="flex justify-center mb-8">
-                                                                                <div className="bg-black/60 backdrop-blur-sm rounded-xl p-6 flex items-center gap-8">
+                                                                                <div className="bg-[#2A2A2A] rounded-xl p-6 flex items-center gap-8">
                                                                                     {/* 红队 */}
                                                                                     <div className={`text-center p-6 rounded-lg ${redWins ? 'bg-red-600/80' : 'bg-red-900/40'} transition-all`}>
                                                                                         <div className="text-2xl font-bold text-white mb-2">🇨🇳 中国队</div>
@@ -745,7 +743,7 @@ export default function ScorePage() {
                                                                     {/* 选手成绩 - 竖直排版 */}
                                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                                                         {/* 红队选手 */}
-                                                                        <div className="bg-red-900/20 backdrop-blur-sm rounded-xl p-6 border border-red-500/30">
+                                                                        <div className="bg-red-900/30 rounded-xl p-6 border border-red-500/30">
                                                                             <h3 className="text-xl font-bold text-red-400 mb-4 text-center">🇨🇳 中国队选手</h3>
                                                                             <div className="space-y-4">
                                                                                 {((matchData.games[selectedGameIndex].scores || [])
@@ -760,8 +758,8 @@ export default function ScorePage() {
                                                                                         <div key={score.user_id} className="bg-black/40 rounded-lg p-4">
                                                                                             <div className="flex items-center mb-3">
                                                                                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3 ${index === 0 ? 'bg-yellow-500 text-black' :
-                                                                                                        index === 1 ? 'bg-gray-400 text-black' :
-                                                                                                            'bg-red-600 text-white'
+                                                                                                    index === 1 ? 'bg-gray-400 text-black' :
+                                                                                                        'bg-red-600 text-white'
                                                                                                     }`}>
                                                                                                     {index + 1}
                                                                                                 </div>
@@ -803,9 +801,9 @@ export default function ScorePage() {
                                                                                                     <div className="text-gray-400">等级</div>
                                                                                                     <div className="flex items-center">
                                                                                                         <span className={`px-2 py-1 rounded text-xs font-bold ${(score as any).rank === 'SS' || (score as any).rank === 'SSH' ? 'bg-yellow-500 text-black' :
-                                                                                                                (score as any).rank === 'S' || (score as any).rank === 'SH' ? 'bg-yellow-600 text-white' :
-                                                                                                                    (score as any).rank === 'A' ? 'bg-green-500 text-white' :
-                                                                                                                        'bg-gray-500 text-white'
+                                                                                                            (score as any).rank === 'S' || (score as any).rank === 'SH' ? 'bg-yellow-600 text-white' :
+                                                                                                                (score as any).rank === 'A' ? 'bg-green-500 text-white' :
+                                                                                                                    'bg-gray-500 text-white'
                                                                                                             }`}>
                                                                                                             {(score as any).rank || 'N/A'}
                                                                                                         </span>
@@ -834,7 +832,7 @@ export default function ScorePage() {
                                                                         </div>
 
                                                                         {/* 蓝队选手 */}
-                                                                        <div className="bg-blue-900/20 backdrop-blur-sm rounded-xl p-6 border border-blue-500/30">
+                                                                        <div className="bg-blue-900/30 rounded-xl p-6 border border-blue-500/30">
                                                                             <h3 className="text-xl font-bold text-blue-400 mb-4 text-center">🇬🇧 英国队选手</h3>
                                                                             <div className="space-y-4">
                                                                                 {((matchData.games[selectedGameIndex].scores || [])
@@ -849,8 +847,8 @@ export default function ScorePage() {
                                                                                         <div key={score.user_id} className="bg-black/40 rounded-lg p-4">
                                                                                             <div className="flex items-center mb-3">
                                                                                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3 ${index === 0 ? 'bg-yellow-500 text-black' :
-                                                                                                        index === 1 ? 'bg-gray-400 text-black' :
-                                                                                                            'bg-blue-600 text-white'
+                                                                                                    index === 1 ? 'bg-gray-400 text-black' :
+                                                                                                        'bg-blue-600 text-white'
                                                                                                     }`}>
                                                                                                     {index + 1}
                                                                                                 </div>
@@ -892,9 +890,9 @@ export default function ScorePage() {
                                                                                                     <div className="text-gray-400">等级</div>
                                                                                                     <div className="flex items-center">
                                                                                                         <span className={`px-2 py-1 rounded text-xs font-bold ${(score as any).rank === 'SS' || (score as any).rank === 'SSH' ? 'bg-yellow-500 text-black' :
-                                                                                                                (score as any).rank === 'S' || (score as any).rank === 'SH' ? 'bg-yellow-600 text-white' :
-                                                                                                                    (score as any).rank === 'A' ? 'bg-green-500 text-white' :
-                                                                                                                        'bg-gray-500 text-white'
+                                                                                                            (score as any).rank === 'S' || (score as any).rank === 'SH' ? 'bg-yellow-600 text-white' :
+                                                                                                                (score as any).rank === 'A' ? 'bg-green-500 text-white' :
+                                                                                                                    'bg-gray-500 text-white'
                                                                                                             }`}>
                                                                                                             {(score as any).rank || 'N/A'}
                                                                                                         </span>
