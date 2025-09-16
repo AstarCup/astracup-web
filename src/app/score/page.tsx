@@ -74,6 +74,104 @@ export default function ScorePage() {
         setMatchId('');
     };
 
+    // 下载JSON功能
+    const downloadJSON = () => {
+        if (!matchData) return;
+        
+        const dataToDownload = {
+            exportDate: new Date().toISOString(),
+            matchInfo: {
+                id: matchData.match.id,
+                name: matchData.match.name,
+                startTime: matchData.match.start_time,
+                endTime: matchData.match.end_time
+            },
+            events: matchData.events,
+            users: matchData.users,
+            first_event_id: matchData.first_event_id,
+            latest_event_id: matchData.latest_event_id,
+            current_game_id: matchData.current_game_id,
+            games: matchData.games,
+            mapPool: mapPool
+        };
+        
+        const dataStr = JSON.stringify(dataToDownload, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `osu-match-${matchData.match.id}-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
+    // 导入JSON功能
+    const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        
+        if (!file.name.endsWith('.json')) {
+            setError('请选择有效的 JSON 文件');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const jsonData = JSON.parse(e.target?.result as string);
+                
+                // 验证JSON格式
+                if (!jsonData.games || !jsonData.users || !jsonData.matchInfo) {
+                    throw new Error('JSON 文件格式不正确，缺少必要的数据字段');
+                }
+                
+                // 重构数据格式以匹配 MatchData 类型
+                const importedMatchData: MatchData = {
+                    match: {
+                        id: jsonData.matchInfo.id,
+                        name: jsonData.matchInfo.name,
+                        start_time: jsonData.matchInfo.startTime,
+                        end_time: jsonData.matchInfo.endTime || null
+                    },
+                    events: jsonData.events || [],
+                    users: jsonData.users,
+                    first_event_id: jsonData.first_event_id || 0,
+                    latest_event_id: jsonData.latest_event_id || 0,
+                    current_game_id: jsonData.current_game_id || null,
+                    games: jsonData.games
+                };
+                
+                setMatchData(importedMatchData);
+                
+                // 如果有图池数据也一并导入
+                if (jsonData.mapPool && Object.keys(jsonData.mapPool).length > 0) {
+                    setMapPool(jsonData.mapPool);
+                }
+                
+                setError(null);
+                setMatchId(jsonData.matchInfo.id.toString());
+                
+                // 显示成功提示
+                const successMsg = document.createElement('div');
+                successMsg.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                successMsg.innerHTML = '✅ JSON 文件导入成功！';
+                document.body.appendChild(successMsg);
+                setTimeout(() => {
+                    document.body.removeChild(successMsg);
+                }, 3000);
+                
+            } catch (err) {
+                setError(err instanceof Error ? `导入失败: ${err.message}` : '导入 JSON 文件失败');
+            }
+        };
+        
+        reader.readAsText(file);
+        // 清空文件输入，允许重复选择同一文件
+        event.target.value = '';
+    };
+
     return (
         <div className="max-w-7xl mx-auto p-6 text-white bg-[#3D3D3D] min-h-screen">
             <div className="mb-8">
@@ -82,14 +180,44 @@ export default function ScorePage() {
                         <h1 className="text-4xl font-bold mb-2">比赛分数展示</h1>
                         <p className="text-gray-300">查看 osu! 比赛房间的详细分数数据，按图池分类展示</p>
                     </div>
-                    {matchData && (
-                        <button
-                            onClick={clearData}
-                            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                        >
-                            清空数据
-                        </button>
-                    )}
+                    <div className="flex items-center gap-3">
+                        {/* 导入JSON按钮 */}
+                        <div className="relative">
+                            <input
+                                type="file"
+                                accept=".json"
+                                onChange={handleFileImport}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                id="jsonFileInput"
+                            />
+                            <label
+                                htmlFor="jsonFileInput"
+                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer font-semibold"
+                            >
+                                📁 导入JSON
+                            </label>
+                        </div>
+                        
+                        {/* 下载JSON按钮 */}
+                        {matchData && (
+                            <button
+                                onClick={downloadJSON}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                            >
+                                💾 下载JSON
+                            </button>
+                        )}
+                        
+                        {/* 清空数据按钮 */}
+                        {matchData && (
+                            <button
+                                onClick={clearData}
+                                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                            >
+                                🗑️ 清空数据
+                            </button>
+                        )}
+                    </div>
                 </div>
                 
                 {/* 比赛ID输入表单 */}
@@ -137,6 +265,22 @@ export default function ScorePage() {
                         </div>
                     </div>
                 )}
+
+                {/* 功能说明 */}
+                <div className="mb-6 p-4 bg-[#2A2A2A] border border-gray-600 rounded-lg">
+                    <div className="flex items-start">
+                        <span className="text-blue-400 mr-3 text-xl">💡</span>
+                        <div>
+                            <h3 className="text-white font-semibold mb-2">功能说明</h3>
+                            <div className="text-gray-300 text-sm space-y-1">
+                                <p>• <strong>在线获取：</strong>输入比赛房间ID直接从 osu! API 获取最新数据</p>
+                                <p>• <strong>导出JSON：</strong>将当前比赛数据保存为JSON文件，便于分享和备份</p>
+                                <p>• <strong>导入JSON：</strong>上传之前导出的JSON文件，离线查看比赛数据</p>
+                                <p>• <strong>图池集成：</strong>自动按图池分类展示，支持 NM、HD、HR、DT、FM、TB 等分类</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 {/* 图池加载状态 */}
                 {mapPoolLoading && (
