@@ -6,6 +6,9 @@ import ScoreCard from '../components/ScoreCard';
 import { MapPool, MatchData, getMapPoolData } from '@/lib/osu-api';
 
 export default function ScorePage() {
+    const [session, setSession] = useState<any>(null);
+    const [authUrl, setAuthUrl] = useState<string>('');
+    const [sessionLoading, setSessionLoading] = useState(true);
     const [mapPool, setMapPool] = useState<MapPool>({});
     const [matchData, setMatchData] = useState<MatchData | null>(null);
     const [loading, setLoading] = useState(false);
@@ -13,9 +16,43 @@ export default function ScorePage() {
     const [matchId, setMatchId] = useState<string>('');
     const [mapPoolLoading, setMapPoolLoading] = useState(true);
 
-    // 加载图池数据
+    // 检查登录状态
+    useEffect(() => {
+        async function checkSession() {
+            try {
+                setSessionLoading(true);
+                const response = await fetch('/api/session/get');
+                const data = await response.json();
+                
+                if (data.success && data.session) {
+                    setSession(data.session);
+                } else {
+                    // 获取登录链接
+                    const authResponse = await fetch('/api/auth/url');
+                    const authData = await authResponse.json();
+                    if (authData.success) {
+                        setAuthUrl(authData.authUrl);
+                    }
+                }
+            } catch (err) {
+                console.error('检查登录状态失败:', err);
+            } finally {
+                setSessionLoading(false);
+            }
+        }
+        
+        checkSession();
+    }, []);
+
+    // 加载图池数据（需要登录状态）
     useEffect(() => {
         async function loadMapPool() {
+            if (!session) {
+                // 如果没有登录，跳过图池加载
+                setMapPoolLoading(false);
+                return;
+            }
+            
             try {
                 setMapPoolLoading(true);
                 const data = await getMapPoolData(siteConfig.nowSeason);
@@ -29,11 +66,16 @@ export default function ScorePage() {
         }
         
         loadMapPool();
-    }, []);
+    }, [session]); // 依赖session状态
 
     // 获取比赛数据
     const fetchMatchData = async (id: string) => {
         if (!id.trim()) return;
+        
+        if (!session) {
+            setError('需要登录 osu! 账号才能获取比赛数据');
+            return;
+        }
         
         setLoading(true);
         setError(null);
@@ -42,7 +84,7 @@ export default function ScorePage() {
             const response = await fetch(`/api/osu-match/${id}`);
             if (!response.ok) {
                 if (response.status === 401) {
-                    throw new Error('需要登录 osu! 账号才能查看比赛数据');
+                    throw new Error('登录状态已过期，请重新登录');
                 } else if (response.status === 404) {
                     throw new Error('找不到该比赛房间，请检查房间ID是否正确');
                 } else {
@@ -72,6 +114,12 @@ export default function ScorePage() {
         setMatchData(null);
         setError(null);
         setMatchId('');
+    };
+
+    const handleLogin = () => {
+        if (authUrl) {
+            window.location.href = authUrl;
+        }
     };
 
     // 下载JSON功能
@@ -174,13 +222,49 @@ export default function ScorePage() {
 
     return (
         <div className="max-w-7xl mx-auto p-6 text-white bg-[#3D3D3D] min-h-screen">
-            <div className="mb-8">
+            {/* 登录状态加载中 */}
+            {sessionLoading ? (
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="text-center">
+                        <svg className="animate-spin h-12 w-12 text-blue-500 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p className="text-gray-300">正在检查登录状态...</p>
+                    </div>
+                </div>
+            ) : (
+                <>
+                    <div className="mb-8">
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h1 className="text-4xl font-bold mb-2">比赛分数展示</h1>
                         <p className="text-gray-300">查看 osu! 比赛房间的详细分数数据，按图池分类展示</p>
                     </div>
                     <div className="flex items-center gap-3">
+                        {/* 用户登录状态 */}
+                        {session ? (
+                            <div className="flex items-center bg-[#2A2A2A] rounded-lg px-4 py-2 border border-gray-600">
+                                <img 
+                                    src={session.avatar_url} 
+                                    alt={session.username}
+                                    className="w-8 h-8 rounded-full mr-3"
+                                />
+                                <div>
+                                    <div className="text-white font-semibold">{session.username}</div>
+                                    <div className="text-xs text-green-400">已登录</div>
+                                </div>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleLogin}
+                                className="flex items-center gap-2 bg-[#FF66AA] hover:bg-[#E055AA] text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                            >
+                                <span>🎵</span>
+                                登录 osu!
+                            </button>
+                        )}
+                        
                         {/* 导入JSON按钮 */}
                         <div className="relative">
                             <input
@@ -231,8 +315,9 @@ export default function ScorePage() {
                                 type="text"
                                 value={matchId}
                                 onChange={(e) => setMatchId(e.target.value)}
-                                placeholder="请输入比赛房间ID (例如: 114514)"
-                                className="w-full px-4 py-3 bg-[#2A2A2A] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                placeholder={session ? "请输入比赛房间ID (例如: 114514)" : "请先登录 osu! 账号"}
+                                disabled={!session}
+                                className="w-full px-4 py-3 bg-[#2A2A2A] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                             <p className="text-xs text-gray-400 mt-1">
                                 可以从 osu! 比赛房间链接中获取 ID，如：osu.ppy.sh/mp/114514
@@ -240,7 +325,7 @@ export default function ScorePage() {
                         </div>
                         <button
                             type="submit"
-                            disabled={loading || !matchId.trim()}
+                            disabled={loading || !matchId.trim() || !session}
                             className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
                         >
                             {loading ? (
@@ -262,6 +347,21 @@ export default function ScorePage() {
                         <div className="flex items-center">
                             <span className="text-red-400 mr-2">❌</span>
                             <span className="text-red-200">{error}</span>
+                        </div>
+                    </div>
+                )}
+
+                {/* 未登录提示 */}
+                {!session && (
+                    <div className="mb-6 p-6 bg-[#FF66AA]/10 border border-[#FF66AA]/30 rounded-lg">
+                        <div className="flex items-center">
+                            <span className="text-[#FF66AA] mr-3 text-2xl">🎵</span>
+                            <div>
+                                <h3 className="text-[#FF66AA] font-bold">需要登录 osu! 账号</h3>
+                                <p className="text-gray-300 text-sm">
+                                    请先登录您的 osu! 账号以获取比赛数据和图池信息的访问权限
+                                </p>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -380,6 +480,8 @@ export default function ScorePage() {
                         输入 osu! 比赛房间ID，获取详细的分数数据和按图池分类的展示
                     </p>
                 </div>
+            )}
+                </>
             )}
         </div>
     );
