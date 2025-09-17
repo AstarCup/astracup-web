@@ -55,7 +55,6 @@ export default function Photos() {
                                     {seasons.length}
                                 </span>
                             </div>
-
                         </div>
                     </div>
                 </div>
