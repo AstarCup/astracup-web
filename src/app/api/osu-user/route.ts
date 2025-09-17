@@ -58,7 +58,7 @@ async function getUserDataFromAPI(username: string): Promise<OsuUser | null> {
     }
 
     try {
-        const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/users/${username}`, {
+        const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/users/${username}/osu`, {
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
@@ -71,6 +71,7 @@ async function getUserDataFromAPI(username: string): Promise<OsuUser | null> {
         }
 
         const data = await response.json();
+        console.log('Original osu! API response:', data); // 添加调试日志
 
         return {
             id: data.id,
