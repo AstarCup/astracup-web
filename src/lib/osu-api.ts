@@ -462,12 +462,19 @@ export function parseBeatmapUrl(url: string): { beatmapId?: number; beatmapsetId
 }
 
 // 获取单个beatmap信息
-export async function getBeatmapInfo(beatmapId: number): Promise<BeatmapInfo | null> {
+export async function getBeatmapInfo(beatmapId: number, accessToken?: string): Promise<BeatmapInfo | null> {
     try {
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+        };
+
+        // 如果提供了访问令牌，使用它进行认证
+        if (accessToken) {
+            headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+
         const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/beatmaps/${beatmapId}`, {
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers,
         });
 
         if (!response.ok) {
@@ -499,12 +506,19 @@ export async function getBeatmapInfo(beatmapId: number): Promise<BeatmapInfo | n
 }
 
 // 获取beatmapset中的所有beatmap
-export async function getBeatmapsetInfo(beatmapsetId: number): Promise<BeatmapInfo[]> {
+export async function getBeatmapsetInfo(beatmapsetId: number, accessToken?: string): Promise<BeatmapInfo[]> {
     try {
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+        };
+
+        // 如果提供了访问令牌，使用它进行认证
+        if (accessToken) {
+            headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+
         const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/beatmapsets/${beatmapsetId}`, {
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers,
         });
 
         if (!response.ok) {

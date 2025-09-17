@@ -9,6 +9,7 @@ import {
 } from '@/lib/map-selection';
 import { getBeatmapInfo, getBeatmapsetInfo, parseBeatmapUrl } from '@/lib/osu-api';
 import { get } from '@vercel/edge-config';
+import { cookies } from 'next/headers';
 
 // 验证选图权限的辅助函数
 async function verifyMapSelectionAuth(osuId: string): Promise<boolean> {
@@ -131,6 +132,22 @@ export async function POST(request: NextRequest) {
         // 初始化数据库
         await initMapSelectionDatabase();
 
+        // 获取用户的access token
+        let accessToken: string | undefined;
+        try {
+            const cookieStore = await cookies();
+            const sessionCookie = cookieStore.get('astra_session');
+            
+            if (sessionCookie?.value) {
+                const session = JSON.parse(sessionCookie.value);
+                accessToken = session.access_token;
+                console.log('Using user access token for beatmap API');
+            }
+        } catch (error) {
+            console.error('Error getting user session for access token:', error);
+            // 继续执行，不使用token
+        }
+
         // 解析URL
         const parsedUrl = parseBeatmapUrl(url);
         if (!parsedUrl.beatmapId && !parsedUrl.beatmapsetId) {
@@ -145,10 +162,10 @@ export async function POST(request: NextRequest) {
         try {
             if (parsedUrl.beatmapId) {
                 // 如果有具体的beatmap ID，直接获取
-                beatmapInfo = await getBeatmapInfo(parsedUrl.beatmapId);
+                beatmapInfo = await getBeatmapInfo(parsedUrl.beatmapId, accessToken);
             } else if (parsedUrl.beatmapsetId) {
                 // 如果只有beatmapset ID，获取所有难度并让用户选择第一个
-                const beatmaps = await getBeatmapsetInfo(parsedUrl.beatmapsetId);
+                const beatmaps = await getBeatmapsetInfo(parsedUrl.beatmapsetId, accessToken);
                 if (beatmaps.length === 0) {
                     throw new Error('该beatmapset中没有找到任何beatmap');
                 }
