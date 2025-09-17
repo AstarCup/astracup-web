@@ -54,7 +54,7 @@ export default function Navbar() {
                         </div>
 
                         {/* Desktop Menu */}
-                        <ul className="hidden md:flex space-x-8 text-[#FFFFFF] p-2 m-2">
+                        <ul className="hidden xl:flex space-x-8 text-[#FFFFFF] p-2 m-2">
                             {navLinks.map((link) => (
                                 <li key={link.href} className="flex flex-col items-center relative text-shadow-lg">
                                     {activeLink === link.href && (
@@ -74,7 +74,7 @@ export default function Navbar() {
                                     )}
                                     <Link
                                         href={link.href}
-                                        className={`hover:text-[#3BE9D8] transition duration-200 ${isActive(link.href) ? 'text-[#3BE9D8] font-semibold background-white' : ''}`}
+                                        className={`hover:text-[#E93B66] transition duration-200 ${isActive(link.href) ? 'text-[#3BE9D8] font-semibold background-white' : ''}`}
                                         onClick={() => setActiveLink(link.href)}
                                     >
                                         {link.name}
@@ -86,7 +86,7 @@ export default function Navbar() {
 
                         {/* Mobile Menu Button */}
                         <button
-                            className="md:hidden flex flex-col items-left space-y-1 p-2"
+                            className="xl:hidden flex flex-col items-left space-y-1 p-2"
                             onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
                             aria-expanded={isMobileMenuOpen}
                             aria-label="Toggle mobile menu"
@@ -99,28 +99,28 @@ export default function Navbar() {
 
                     {/* Mobile Menu Panel */}
                     <div
-                        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-180 py-4 opacity-100' : 'max-h-0 opacity-90'
+                        className={`xl:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-180 py-4 opacity-99' : 'max-h-0 opacity-0'
                             }`}
                     >
-                        <ul className="flex flex-col space-y-3 bg-[#3BE9D8] p-4">
-                            {navLinks.map((link) => (
-                                <li key={link.href} className="flex flex-col items-center">
-                                    {activeLink === link.href && (
-                                        <span className="mb-1 text-xs text-white">{link.tip}</span>
-                                    )}
-                                    <Link
-                                        href={link.href}
-                                        className={`block py-3 px-4 text-center hover:bg-gray-700 transition ${isActive(link.href) ? 'bg-gray-700 font-semibold' : ''}`}
-                                        onClick={() => {
-                                            setActiveLink(link.href);
-                                            setMobileMenuOpen(false);
-                                        }}
-                                    >
-                                        {link.name}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
+                        <div className="bg-[#3d3d3d] p-4">
+                            <div className="grid grid-cols-2 gap-2">
+                                {navLinks.map((link) => (
+                                    <div key={link.href} className="bg-white/50 hover:bg-[#3BE9D8] transition-colors duration-200">
+                                        <Link
+                                            href={link.href}
+                                            className={`block p-3 text-center text-sm font-medium ${isActive(link.href) ? 'bg-[#3BE9D8] text-white font-bold' : 'text-gray-800 hover:text-white'}`}
+                                            onClick={() => {
+                                                setActiveLink(link.href);
+                                                setMobileMenuOpen(false);
+                                            }}
+                                        >
+                                            <div className="text-xs font-bold mb-1">{link.name}</div>
+                                            <div className="text-xs opacity-75">{link.tip}</div>
+                                        </Link>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

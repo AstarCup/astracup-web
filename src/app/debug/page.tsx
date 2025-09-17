@@ -23,6 +23,12 @@ export default function DebugPage() {
     const [staffLoading, setStaffLoading] = useState(false);
     const [generatedStaffData, setGeneratedStaffData] = useState<any>(null);
 
+    // Staff 列表管理相关状态
+    const [staffList, setStaffList] = useState<any>({});
+    const [staffJsonInput, setStaffJsonInput] = useState('');
+    const [editingStaff, setEditingStaff] = useState<any>(null);
+    const [staffManagementVisible, setStaffManagementVisible] = useState(false);
+
     useEffect(() => {
         // 检查用户会话和权限
         fetch('/api/session/get', {
@@ -163,7 +169,6 @@ export default function DebugPage() {
         setStaffLoading(true);
         try {
             const response = await fetch(`/api/osu-user?username=${encodeURIComponent(staffUsername)}`);
-            console.log('API 响应状态:', response.status);
 
             if (response.ok) {
                 const userData = await response.json();
@@ -179,18 +184,38 @@ export default function DebugPage() {
                     'designers': '设计团队'
                 };
 
+                // 构建完整的用户头像URL
+                let avatarUrl = userData.avatar_url;
+                if (!avatarUrl || avatarUrl === '') {
+                    // 如果API没有返回头像URL，使用标准格式
+                    avatarUrl = `https://a.ppy.sh/${userData.id}`;
+                } else if (!avatarUrl.startsWith('http')) {
+                    // 如果返回的是相对路径，构建完整URL
+                    avatarUrl = `https://a.ppy.sh${avatarUrl}`;
+                }
+
+                // 获取封面URL
+                let coverUrl = null;
+                if (userData.cover) {
+                    coverUrl = userData.cover.custom_url || userData.cover.url || null;
+                }
+
                 const staffData = {
                     name: userData.username,
                     osuId: userData.id.toString(),
-                    avatarUrl: userData.avatar_url || `https://a.ppy.sh/${userData.id}`,
+                    avatarUrl: avatarUrl,
                     role: roleMapping[staffRole] || staffRole,
                     description: staffDescription.trim() || `${roleMapping[staffRole] || staffRole} 成员`,
-                    coverUrl: userData.cover?.custom_url || userData.cover?.url || null
+                    coverUrl: coverUrl
                 };
 
                 setGeneratedStaffData(staffData);
+
+                // 显示成功信息
+                alert(`成功获取 ${userData.username} 的数据！\n头像: ${avatarUrl ? '✓' : '✗'}\n封面: ${coverUrl ? '✓' : '✗'}`);
             } else {
-                alert('获取用户数据失败');
+                const errorData = await response.json().catch(() => ({}));
+                alert(`获取用户数据失败: ${errorData.error || '未知错误'}`);
             }
         } catch (error) {
             console.error('Error generating staff data:', error);
@@ -204,6 +229,83 @@ export default function DebugPage() {
             navigator.clipboard.writeText(JSON.stringify(generatedStaffData, null, 2));
             alert('已复制到剪贴板');
         }
+    };
+
+    // Staff 列表管理函数
+    const loadStaffFromJson = () => {
+        try {
+            const parsed = JSON.parse(staffJsonInput);
+            setStaffList(parsed);
+            alert('Staff 列表导入成功');
+        } catch (error) {
+            alert('JSON 格式错误，请检查输入');
+        }
+    };
+
+    const addStaffToList = () => {
+        if (!generatedStaffData) {
+            alert('请先生成 Staff 数据');
+            return;
+        }
+
+        const roleKey = Object.keys({
+            'organizers': '主办方',
+            'administrators': '管理团队',
+            'referees': '裁判',
+            'mappool_selectors': '图池选择',
+            'streamers': '直播团队',
+            'commentators': '解说团队',
+            'designers': '设计团队'
+        }).find(key => generatedStaffData.role === {
+            'organizers': '主办方',
+            'administrators': '管理团队',
+            'referees': '裁判',
+            'mappool_selectors': '图池选择',
+            'streamers': '直播团队',
+            'commentators': '解说团队',
+            'designers': '设计团队'
+        }[key]) || staffRole;
+
+        const newStaffList = { ...staffList };
+        if (!newStaffList[roleKey]) {
+            newStaffList[roleKey] = [];
+        }
+
+        // 检查是否已存在相同的用户
+        const exists = newStaffList[roleKey].some((staff: any) => staff.osuId === generatedStaffData.osuId);
+        if (exists) {
+            alert('该用户已存在于此角色中');
+            return;
+        }
+
+        newStaffList[roleKey].push(generatedStaffData);
+        setStaffList(newStaffList);
+        alert('Staff 已添加到列表');
+    };
+
+    const removeStaffFromList = (roleKey: string, index: number) => {
+        const newStaffList = { ...staffList };
+        newStaffList[roleKey].splice(index, 1);
+        setStaffList(newStaffList);
+    };
+
+    const editStaffInList = (roleKey: string, index: number, staff: any) => {
+        setEditingStaff({ roleKey, index, staff });
+    };
+
+    const saveEditedStaff = () => {
+        if (!editingStaff) return;
+
+        const newStaffList = { ...staffList };
+        newStaffList[editingStaff.roleKey][editingStaff.index] = editingStaff.staff;
+        setStaffList(newStaffList);
+        setEditingStaff(null);
+        alert('Staff 信息已更新');
+    };
+
+    const exportStaffJson = () => {
+        navigator.clipboard.writeText(JSON.stringify(staffList, null, 2));
+        alert('Staff 列表已复制到剪贴板');
     };
 
     // 如果用户未登录或不是管理员，显示提示信息
@@ -432,6 +534,16 @@ export default function DebugPage() {
                 <div className="mb-6">
                     <h2 className="text-xl font-semibold mb-3">Staff 数据生成器</h2>
                     <div className="bg-purple-50 border border-purple-200 rounded-md p-4">
+                        <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+                            <h3 className="text-sm font-medium text-blue-800 mb-1">自动数据获取说明</h3>
+                            <ul className="text-xs text-blue-700 list-disc list-inside space-y-1">
+                                <li>系统将自动获取用户的头像URL和封面背景图</li>
+                                <li>头像URL：从 osu! API 获取最新头像链接</li>
+                                <li>封面URL：获取用户设置的 profile cover 图片</li>
+                                <li>如果用户没有设置封面，coverUrl 将为 null</li>
+                                <li>所有数据都是实时从 osu! 官方 API 获取</li>
+                            </ul>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -481,34 +593,245 @@ export default function DebugPage() {
                             disabled={staffLoading}
                             className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed mb-4"
                         >
-                            {staffLoading ? '生成中...' : '生成 Staff 数据'}
+                            {staffLoading ? '正在获取数据...' : '🔄 获取完整 Staff 数据'}
                         </button>
 
                         {generatedStaffData && (
                             <div className="bg-white border border-purple-300 rounded-md p-4">
-                                <div className="flex justify-between items-center mb-2">
-                                    <h3 className="text-lg font-medium text-purple-800">生成的 Staff 数据</h3>
+                                <div className="flex justify-between items-center mb-3">
+                                    <h3 className="text-lg font-medium text-purple-800">✅ 获取成功的 Staff 数据</h3>
                                     <button
                                         onClick={copyToClipboard}
                                         className="bg-green-500 text-white px-3 py-1 rounded-md text-sm hover:bg-green-600"
                                     >
-                                        复制 JSON
+                                        📋 复制 JSON
                                     </button>
                                 </div>
-                                <pre className="text-sm bg-gray-100 p-3 rounded overflow-x-auto">
+
+                                {/* 数据预览 */}
+                                <div className="bg-gray-50 border border-gray-200 rounded-md p-3 mb-3">
+                                    <h4 className="font-medium text-gray-800 mb-2">数据预览:</h4>
+                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                        <div><strong>用户名:</strong> {generatedStaffData.name}</div>
+                                        <div><strong>osu! ID:</strong> {generatedStaffData.osuId}</div>
+                                        <div><strong>角色:</strong> {generatedStaffData.role}</div>
+                                        <div><strong>描述:</strong> {generatedStaffData.description}</div>
+                                        <div><strong>头像:</strong> {generatedStaffData.avatarUrl ? '✅ 已获取' : '❌ 未获取'}</div>
+                                        <div><strong>封面:</strong> {generatedStaffData.coverUrl ? '✅ 已获取' : '⚪ 无封面'}</div>
+                                    </div>
+                                    {generatedStaffData.coverUrl && (
+                                        <div className="mt-2">
+                                            <a
+                                                href={generatedStaffData.coverUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-500 hover:underline text-sm"
+                                            >
+                                                🖼️ 查看封面图片
+                                            </a>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <pre className="text-sm bg-gray-100 p-3 rounded overflow-x-auto mb-3">
                                     {JSON.stringify(generatedStaffData, null, 2)}
                                 </pre>
-                                <div className="mt-3 text-sm text-purple-700">
-                                    <p><strong>说明：</strong></p>
-                                    <ul className="list-disc list-inside mt-1">
-                                        <li>将生成的 JSON 数据复制到对应的 staff.json 文件中</li>
-                                        <li>coverUrl 字段包含用户的封面图片URL，可用于背景显示</li>
-                                        <li>如果用户没有封面图片，coverUrl 将为 null</li>
+
+                                <div className="text-sm text-purple-700">
+                                    <p><strong>✨ 自动获取说明：</strong></p>
+                                    <ul className="list-disc list-inside mt-1 space-y-1">
+                                        <li>头像URL: 从 osu! API 实时获取最新头像</li>
+                                        <li>封面URL: 自动获取用户的 profile cover 背景图</li>
+                                        <li>所有数据已完整填充，可直接添加到 staff 列表</li>
                                     </ul>
                                 </div>
                             </div>
                         )}
                     </div>
+                </div>
+
+                {/* Staff 列表管理 */}
+                <div className="bg-indigo-50 border border-indigo-200 rounded-md p-4">
+                    <div className="flex justify-between items-center mb-3">
+                        <h2 className="text-xl font-semibold">Staff 列表管理</h2>
+                        <button
+                            onClick={() => setStaffManagementVisible(!staffManagementVisible)}
+                            className="bg-indigo-500 text-white px-3 py-1 rounded-md text-sm hover:bg-indigo-600"
+                        >
+                            {staffManagementVisible ? '隐藏' : '显示'}
+                        </button>
+                    </div>
+
+                    {staffManagementVisible && (
+                        <div className="space-y-4">
+                            {/* JSON 导入 */}
+                            <div>
+                                <label className="block text-sm font-medium text-indigo-700 mb-2">
+                                    导入 Staff JSON 数据
+                                </label>
+                                <textarea
+                                    value={staffJsonInput}
+                                    onChange={(e) => setStaffJsonInput(e.target.value)}
+                                    placeholder="粘贴完整的 staff.json 内容..."
+                                    className="w-full h-32 border border-indigo-300 rounded-md px-3 py-2 text-sm"
+                                />
+                                <button
+                                    onClick={loadStaffFromJson}
+                                    className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                                >
+                                    导入 JSON
+                                </button>
+                            </div>
+
+                            {/* 添加生成的 Staff 到列表 */}
+                            {generatedStaffData && (
+                                <div className="bg-white border border-indigo-300 rounded-md p-3">
+                                    <h3 className="text-lg font-medium text-indigo-800 mb-2">添加到列表</h3>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={addStaffToList}
+                                            className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+                                        >
+                                            添加到 Staff 列表
+                                        </button>
+                                        <button
+                                            onClick={exportStaffJson}
+                                            className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600"
+                                        >
+                                            导出完整 JSON
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Staff 列表显示和编辑 */}
+                            {Object.keys(staffList).length > 0 && (
+                                <div className="bg-white border border-indigo-300 rounded-md p-3">
+                                    <h3 className="text-lg font-medium text-indigo-800 mb-3">当前 Staff 列表</h3>
+
+                                    {Object.entries(staffList).map(([roleKey, members]: [string, any]) => (
+                                        <div key={roleKey} className="mb-4">
+                                            <h4 className="font-medium text-indigo-700 mb-2 capitalize">
+                                                {roleKey} ({Array.isArray(members) ? members.length : 0})
+                                            </h4>
+
+                                            {Array.isArray(members) && members.map((staff: any, index: number) => (
+                                                <div key={index} className="bg-gray-50 border border-gray-200 rounded p-3 mb-2">
+                                                    <div className="flex justify-between items-start">
+                                                        <div className="flex-1">
+                                                            <p><strong>姓名:</strong> {staff.name}</p>
+                                                            <p><strong>osu! ID:</strong> {staff.osuId}</p>
+                                                            <p><strong>角色:</strong> {staff.role}</p>
+                                                            <p><strong>描述:</strong> {staff.description}</p>
+                                                            {staff.coverUrl && (
+                                                                <p><strong>封面:</strong>
+                                                                    <a href={staff.coverUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline ml-1">
+                                                                        查看封面
+                                                                    </a>
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex gap-2 ml-4">
+                                                            <button
+                                                                onClick={() => editStaffInList(roleKey, index, staff)}
+                                                                className="bg-yellow-500 text-white px-2 py-1 rounded text-sm hover:bg-yellow-600"
+                                                            >
+                                                                编辑
+                                                            </button>
+                                                            <button
+                                                                onClick={() => removeStaffFromList(roleKey, index)}
+                                                                className="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"
+                                                            >
+                                                                删除
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* 编辑模态框 */}
+                            {editingStaff && (
+                                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                                    <div className="bg-white rounded-lg p-6 w-96 max-h-96 overflow-y-auto">
+                                        <h3 className="text-lg font-bold mb-4">编辑 Staff 信息</h3>
+
+                                        <div className="space-y-3">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1">姓名</label>
+                                                <input
+                                                    type="text"
+                                                    value={editingStaff.staff.name}
+                                                    onChange={(e) => setEditingStaff({
+                                                        ...editingStaff,
+                                                        staff: { ...editingStaff.staff, name: e.target.value }
+                                                    })}
+                                                    className="w-full border border-gray-300 rounded px-3 py-2"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1">角色</label>
+                                                <input
+                                                    type="text"
+                                                    value={editingStaff.staff.role}
+                                                    onChange={(e) => setEditingStaff({
+                                                        ...editingStaff,
+                                                        staff: { ...editingStaff.staff, role: e.target.value }
+                                                    })}
+                                                    className="w-full border border-gray-300 rounded px-3 py-2"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1">描述</label>
+                                                <input
+                                                    type="text"
+                                                    value={editingStaff.staff.description}
+                                                    onChange={(e) => setEditingStaff({
+                                                        ...editingStaff,
+                                                        staff: { ...editingStaff.staff, description: e.target.value }
+                                                    })}
+                                                    className="w-full border border-gray-300 rounded px-3 py-2"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1">封面 URL</label>
+                                                <input
+                                                    type="text"
+                                                    value={editingStaff.staff.coverUrl || ''}
+                                                    onChange={(e) => setEditingStaff({
+                                                        ...editingStaff,
+                                                        staff: { ...editingStaff.staff, coverUrl: e.target.value || null }
+                                                    })}
+                                                    className="w-full border border-gray-300 rounded px-3 py-2"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-2 mt-4">
+                                            <button
+                                                onClick={saveEditedStaff}
+                                                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                                            >
+                                                保存
+                                            </button>
+                                            <button
+                                                onClick={() => setEditingStaff(null)}
+                                                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                                            >
+                                                取消
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
