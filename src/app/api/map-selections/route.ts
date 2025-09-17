@@ -24,7 +24,7 @@ async function verifyMapSelectionAuth(osuId: string): Promise<boolean> {
                 );
             }
         }
-        
+
         // 如果Edge Config没有数据，尝试从环境变量获取
         if (mapSelectionTeam.length === 0 && process.env.MAP_SELECTION_TEAM_IDS) {
             mapSelectionTeam = process.env.MAP_SELECTION_TEAM_IDS
@@ -32,7 +32,7 @@ async function verifyMapSelectionAuth(osuId: string): Promise<boolean> {
                 .map(id => id.trim())
                 .filter(id => id !== '');
         }
-        
+
         // 如果都没有数据，使用默认测试ID
         if (mapSelectionTeam.length === 0) {
             mapSelectionTeam = ['2']; // 示例ID
@@ -41,11 +41,11 @@ async function verifyMapSelectionAuth(osuId: string): Promise<boolean> {
         // 检查osu ID是否在授权列表中 - 支持数字和字符串比较
         const userIdStr = osuId.toString();
         const userIdNum = parseInt(osuId);
-        
+
         return mapSelectionTeam.some(teamId => {
             const teamIdStr = teamId.toString();
             const teamIdNum = parseInt(teamId);
-            
+
             // 比较字符串和数字形式
             return teamIdStr === userIdStr || teamIdNum === userIdNum;
         });

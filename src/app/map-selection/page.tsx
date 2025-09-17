@@ -94,25 +94,36 @@ export default function MapSelectionPage() {
 
     const checkUserAuth = async () => {
         try {
+            console.log('Starting auth check...');
+
             // Check if user is logged in
+            console.log('Fetching session...');
             const sessionResponse = await fetch('/api/session');
+            console.log('Session response status:', sessionResponse.status);
+
             if (!sessionResponse.ok) {
-                router.push('/register');
+                console.log('Session check failed, redirecting to register');
+                setError('Not logged in. Redirecting to login page...');
+                setTimeout(() => router.push('/register'), 3000); // 3秒后跳转
                 return;
             }
 
             const sessionData = await sessionResponse.json();
+            console.log('Session data:', sessionData);
             const currentUser = sessionData.user;
 
             if (!currentUser) {
-                router.push('/register');
+                console.log('No user in session, redirecting to register');
+                setError('No user session found. Redirecting to login page...');
+                setTimeout(() => router.push('/register'), 3000); // 3秒后跳转
                 return;
             }
 
             setUser(currentUser);
-            console.log('Current user:', currentUser);
+            console.log('Current user set:', currentUser);
 
             // Verify map selection permissions
+            console.log('Checking map selection permissions for user ID:', currentUser.id);
             const authResponse = await fetch('/api/map-selection-auth', {
                 method: 'POST',
                 headers: {
@@ -128,25 +139,28 @@ export default function MapSelectionPage() {
             console.log('Auth response data:', authError);
 
             if (authResponse.ok) {
+                console.log('Authorization successful');
                 setIsAuthorized(true);
             } else {
+                console.log('Authorization failed');
                 // 显示详细的调试信息
                 let errorMessage = authError.error || 'You do not have permission to access the map selection system';
-                
+
                 if (authError.debug) {
                     errorMessage += `\n\nDebug Info:\n`;
                     errorMessage += `Your ID: ${authError.debug.yourId} (${authError.debug.yourIdType})\n`;
                     errorMessage += `Authorized IDs: ${JSON.stringify(authError.debug.authorizedIds)}\n`;
                     errorMessage += `Comparison Details:\n${JSON.stringify(authError.debug.comparisonDetails, null, 2)}`;
                 }
-                
+
                 setError(errorMessage);
             }
 
         } catch (error) {
             console.error('Auth check failed:', error);
-            setError('Error verifying user permissions');
+            setError(`Error verifying user permissions: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
+            console.log('Auth check completed');
             setIsLoading(false);
         }
     };
@@ -284,18 +298,27 @@ export default function MapSelectionPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center to-pink-900">
-                <div className="text-white text-xl">Verifying permissions...</div>
+            <div className="min-h-screen flex items-center justify-center bg-white">
+                <div className="text-center">
+                    <div className="text-gray-800 text-xl mb-4">Verifying permissions...</div>
+                    {error && (
+                        <div className="bg-red-500/20 border border-red-500 rounded-lg p-4 max-w-2xl">
+                            <pre className="text-gray-800 whitespace-pre-wrap text-sm">
+                                {error}
+                            </pre>
+                        </div>
+                    )}
+                </div>
             </div>
         );
     }
 
     if (!isAuthorized) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900">
+            <div className="min-h-screen flex items-center justify-center bg-white">
                 <div className="bg-red-500/20 border border-red-500 rounded-lg p-6 max-w-2xl">
-                    <h2 className="text-white text-xl font-bold mb-4">Access Denied</h2>
-                    <pre className="text-white mb-4 whitespace-pre-wrap text-sm bg-black/20 p-4 rounded overflow-auto max-h-96">
+                    <h2 className="text-gray-800 text-xl font-bold mb-4">Access Denied</h2>
+                    <pre className="text-gray-800 mb-4 whitespace-pre-wrap text-sm bg-black/20 p-4 rounded overflow-auto max-h-96">
                         {error}
                     </pre>
                     <button
@@ -310,14 +333,14 @@ export default function MapSelectionPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900 p-6">
+        <div className="min-h-screen bg-white p-6">
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold text-white">Map Selection System</h1>
+                    <h1 className="text-3xl font-bold text-gray-800">Map Selection System</h1>
                     <div className="flex items-center space-x-4">
                         {user && (
-                            <div className="flex items-center space-x-2 text-white">
+                            <div className="flex items-center space-x-2 text-gray-800">
                                 <img
                                     src={user.avatar_url}
                                     alt={user.username}
@@ -338,10 +361,10 @@ export default function MapSelectionPage() {
                 {/* Error and message alerts */}
                 {error && (
                     <div className="bg-red-500/20 border border-red-500 rounded-lg p-4 mb-6">
-                        <p className="text-white">{error}</p>
+                        <p className="text-gray-800">{error}</p>
                         <button
                             onClick={() => setError('')}
-                            className="text-red-300 hover:text-red-100 mt-2"
+                            className="text-red-600 hover:text-red-800 mt-2"
                         >
                             Close
                         </button>
@@ -350,10 +373,10 @@ export default function MapSelectionPage() {
 
                 {message && (
                     <div className="bg-green-500/20 border border-green-500 rounded-lg p-4 mb-6">
-                        <p className="text-white">{message}</p>
+                        <p className="text-gray-800">{message}</p>
                         <button
                             onClick={() => setMessage('')}
-                            className="text-green-300 hover:text-green-100 mt-2"
+                            className="text-green-600 hover:text-green-800 mt-2"
                         >
                             Close
                         </button>
@@ -361,26 +384,26 @@ export default function MapSelectionPage() {
                 )}
 
                 {/* Control panel */}
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 mb-6">
+                <div className="bg-gray-100 rounded-lg p-6 mb-6">
                     <div className="flex flex-wrap gap-4 items-center justify-between">
                         <div className="flex gap-4 items-center">
                             <div>
-                                <label className="block text-white text-sm mb-1">Season</label>
+                                <label className="block text-gray-800 text-sm mb-1">Season</label>
                                 <select
                                     value={season}
                                     onChange={(e) => setSeason(e.target.value)}
-                                    className="bg-gray-700 text-white px-3 py-2 rounded"
+                                    className="bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
                                 >
                                     <option value="s1">Season 1</option>
                                     <option value="s2">Season 2</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-white text-sm mb-1">Category</label>
+                                <label className="block text-gray-800 text-sm mb-1">Category</label>
                                 <select
                                     value={category}
                                     onChange={(e) => setCategory(e.target.value)}
-                                    className="bg-gray-700 text-white px-3 py-2 rounded"
+                                    className="bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
                                 >
                                     {CATEGORY_OPTIONS.map(option => (
                                         <option key={option.value} value={option.value}>
@@ -401,19 +424,19 @@ export default function MapSelectionPage() {
 
                 {/* Add map form */}
                 {showAddForm && (
-                    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 mb-6">
-                        <h3 className="text-white text-xl font-bold mb-4">Add New Map Selection</h3>
+                    <div className="bg-gray-100 rounded-lg p-6 mb-6">
+                        <h3 className="text-gray-800 text-xl font-bold mb-4">Add New Map Selection</h3>
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-white text-sm mb-2">Beatmap URL</label>
+                                <label className="block text-gray-800 text-sm mb-2">Beatmap URL</label>
                                 <div className="flex gap-2">
                                     <input
                                         type="text"
                                         value={urlInput}
                                         onChange={(e) => setUrlInput(e.target.value)}
                                         placeholder="https://osu.ppy.sh/beatmaps/123456 or https://osu.ppy.sh/beatmapsets/12345"
-                                        className="flex-1 bg-gray-700 text-white px-3 py-2 rounded"
+                                        className="flex-1 bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
                                     />
                                     <button
                                         onClick={parseBeatmapUrl}
@@ -427,9 +450,9 @@ export default function MapSelectionPage() {
 
                             {/* Beatmap preview */}
                             {beatmapPreview && (
-                                <div className="bg-gray-700/50 rounded-lg p-4">
-                                    <h4 className="text-white font-bold mb-2">Beatmap Preview</h4>
-                                    <div className="text-white space-y-1">
+                                <div className="bg-gray-200 rounded-lg p-4">
+                                    <h4 className="text-gray-800 font-bold mb-2">Beatmap Preview</h4>
+                                    <div className="text-gray-800 space-y-1">
                                         <p><strong>Title:</strong> {beatmapPreview.title}</p>
                                         <p><strong>Artist:</strong> {beatmapPreview.artist}</p>
                                         <p><strong>Difficulty:</strong> {beatmapPreview.version}</p>
@@ -443,11 +466,11 @@ export default function MapSelectionPage() {
 
                             <div className="flex gap-4">
                                 <div className="flex-1">
-                                    <label className="block text-white text-sm mb-2">Mod</label>
+                                    <label className="block text-gray-800 text-sm mb-2">Mod</label>
                                     <select
                                         value={selectedMods}
                                         onChange={(e) => setSelectedMods(e.target.value)}
-                                        className="w-full bg-gray-700 text-white px-3 py-2 rounded"
+                                        className="w-full bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
                                     >
                                         {MOD_OPTIONS.map(mod => (
                                             <option key={mod} value={mod}>{mod}</option>
@@ -455,13 +478,13 @@ export default function MapSelectionPage() {
                                     </select>
                                 </div>
                                 <div className="flex-2">
-                                    <label className="block text-white text-sm mb-2">Comment</label>
+                                    <label className="block text-gray-800 text-sm mb-2">Comment</label>
                                     <input
                                         type="text"
                                         value={comment}
                                         onChange={(e) => setComment(e.target.value)}
                                         placeholder="Optional comment"
-                                        className="w-full bg-gray-700 text-white px-3 py-2 rounded"
+                                        className="w-full bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
                                     />
                                 </div>
                             </div>
@@ -493,28 +516,28 @@ export default function MapSelectionPage() {
                 )}
 
                 {/* Map selection list */}
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-                    <h3 className="text-white text-xl font-bold mb-4">
+                <div className="bg-gray-100 rounded-lg p-6">
+                    <h3 className="text-gray-800 text-xl font-bold mb-4">
                         Selected Maps ({selections.length})
                     </h3>
 
                     {selections.length === 0 ? (
-                        <p className="text-white/70 text-center py-8">No map selections</p>
+                        <p className="text-gray-600 text-center py-8">No map selections</p>
                     ) : (
                         <div className="space-y-4">
                             {selections.map((selection) => (
-                                <div key={selection.id} className="bg-gray-700/50 rounded-lg p-4">
+                                <div key={selection.id} className="bg-gray-200 rounded-lg p-4">
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-2">
                                                 <span className="bg-blue-500 text-white px-2 py-1 rounded text-sm font-bold">
                                                     {selection.selectedMods}
                                                 </span>
-                                                <h4 className="text-white font-bold">
+                                                <h4 className="text-gray-800 font-bold">
                                                     {selection.title} - {selection.artist}
                                                 </h4>
                                             </div>
-                                            <div className="text-white/80 space-y-1">
+                                            <div className="text-gray-700 space-y-1">
                                                 <p><strong>Difficulty:</strong> {selection.version}</p>
                                                 <p><strong>Mapper:</strong> {selection.creator}</p>
                                                 <p><strong>Star Rating:</strong> {selection.starRating.toFixed(2)}★</p>

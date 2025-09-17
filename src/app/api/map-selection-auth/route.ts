@@ -69,22 +69,22 @@ export async function POST(request: NextRequest) {
         // 检查osu ID是否在授权列表中 - 支持数字和字符串比较
         const userIdStr = osuId.toString();
         const userIdNum = parseInt(osuId);
-        
+
         const isAuthorized = mapSelectionTeam.some(teamId => {
             const teamIdStr = teamId.toString();
             const teamIdNum = parseInt(teamId);
-            
+
             // 比较字符串和数字形式
             const match = teamIdStr === userIdStr || teamIdNum === userIdNum;
             console.log(`Comparing ${teamIdStr} with ${userIdStr}: ${match}`);
             return match;
         });
-        
+
         console.log('Final authorization result:', isAuthorized);
 
         if (!isAuthorized) {
             return NextResponse.json(
-                { 
+                {
                     error: '您没有权限访问选图系统',
                     debug: {
                         yourId: osuId,
