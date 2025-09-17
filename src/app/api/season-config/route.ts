@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
         // 根据当前赛季生成可用的赛季选项
         const availableSeasons = [];
-        
+
         if (nowSeason === 's1') {
             // 如果当前是s1，只显示s1
             availableSeasons.push({ value: 's1', label: 'Season 1' });
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     } catch (error) {
         console.error('Error getting season config:', error);
-        
+
         // 返回默认配置
         return NextResponse.json({
             success: true,

@@ -111,31 +111,31 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
         } catch (error: any) {
             if (error.code === 'ER_BAD_FIELD_ERROR') {
                 console.log('Adding new difficulty fields to existing table...');
-                
+
                 // 添加AR字段
                 await connection.execute(`
                     ALTER TABLE map_selections 
                     ADD COLUMN ar DECIMAL(4,2) NOT NULL DEFAULT 0.00 AFTER totalLength
                 `);
-                
+
                 // 添加CS字段
                 await connection.execute(`
                     ALTER TABLE map_selections 
                     ADD COLUMN cs DECIMAL(4,2) NOT NULL DEFAULT 0.00 AFTER ar
                 `);
-                
+
                 // 添加OD字段
                 await connection.execute(`
                     ALTER TABLE map_selections 
                     ADD COLUMN od DECIMAL(4,2) NOT NULL DEFAULT 0.00 AFTER cs
                 `);
-                
+
                 // 添加HP字段
                 await connection.execute(`
                     ALTER TABLE map_selections 
                     ADD COLUMN hp DECIMAL(4,2) NOT NULL DEFAULT 0.00 AFTER od
                 `);
-                
+
                 console.log('Successfully added difficulty fields: ar, cs, od, hp');
             }
         }
@@ -325,7 +325,7 @@ export const mapSelectionStorage = {
     },
 
     // 更新选图信息
-    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment'>>, selectedBy: string): Promise<boolean> {
+    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved'>>, selectedBy: string): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
 
@@ -340,6 +340,11 @@ export const mapSelectionStorage = {
             if (updates.comment !== undefined) {
                 setClause.push('comment = ?');
                 params.push(updates.comment);
+            }
+
+            if (updates.approved !== undefined) {
+                setClause.push('approved = ?');
+                params.push(updates.approved);
             }
 
             if (setClause.length === 0) {

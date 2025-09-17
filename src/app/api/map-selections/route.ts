@@ -62,7 +62,27 @@ export async function GET(request: NextRequest) {
         const season = searchParams.get('season') || 's1';
         const category = searchParams.get('category') || undefined;
         const osuId = searchParams.get('osuId');
+        const approved = searchParams.get('approved'); // 新增approved参数
 
+        // 如果只是获取已过审的图，则不需要权限验证（公开访问）
+        if (approved === 'true') {
+            // 初始化数据库（如果需要）
+            await initMapSelectionDatabase();
+
+            // 获取选图列表
+            const selections = await getMapSelections(season, category);
+            
+            // 只返回已过审的图
+            const approvedSelections = selections.filter(selection => selection.approved);
+
+            return NextResponse.json({
+                success: true,
+                selections: approvedSelections,
+                count: approvedSelections.length
+            });
+        }
+
+        // 对于非公开访问，需要权限验证
         if (!osuId) {
             return NextResponse.json(
                 { error: '缺少osu ID' },
@@ -291,6 +311,7 @@ export async function PUT(request: NextRequest) {
             id,
             selectedMods,
             comment,
+            approved,
             selectedBy
         } = await request.json();
 
@@ -311,9 +332,10 @@ export async function PUT(request: NextRequest) {
         }
 
         // 准备更新数据
-        const updates: { selectedMods?: string; comment?: string } = {};
+        const updates: { selectedMods?: string; comment?: string; approved?: boolean } = {};
         if (selectedMods !== undefined) updates.selectedMods = selectedMods;
         if (comment !== undefined) updates.comment = comment;
+        if (approved !== undefined) updates.approved = approved;
 
         if (Object.keys(updates).length === 0) {
             return NextResponse.json(

@@ -59,6 +59,9 @@ export default function MapoolTable({ data, title, downloadUrl }: MapoolTablePro
                             } else if (row.Slot?.includes("FM")) {
                                 bgClass = "text-green-700";
                                 slotClass = "bg-green-700 p-2 text-white text-center font-bold";
+                            } else if (row.Slot?.includes("LZ")) {
+                                bgClass = "text-blue-500";
+                                slotClass = "bg-blue-400 p-2 text-white text-center font-bold";
                             } else if (row.Slot?.includes("TB")) {
                                 bgClass = "text-grey-500";
                                 slotClass = "bg-black p-2 text-white text-center font-bold";
