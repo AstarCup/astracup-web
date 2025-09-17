@@ -110,6 +110,12 @@ export default function MapSelectionPage() {
 
             const sessionData = await sessionResponse.json();
             console.log('Session data:', sessionData);
+            console.log('Session structure:', {
+                success: sessionData.success,
+                hasSession: !!sessionData.session,
+                sessionType: typeof sessionData.session,
+                sessionKeys: sessionData.session ? Object.keys(sessionData.session) : 'no session'
+            });
 
             if (!sessionData.success || !sessionData.session) {
                 console.log('No user in session, redirecting to register');
@@ -118,11 +124,25 @@ export default function MapSelectionPage() {
                 return;
             }
 
-            const currentUser = sessionData.session; setUser(currentUser);
+            const currentUser = sessionData.session;
+            console.log('Current user details:', {
+                id: currentUser.id,
+                username: currentUser.username,
+                idType: typeof currentUser.id
+            });
+            setUser(currentUser);
             console.log('Current user set:', currentUser);
 
             // Verify map selection permissions
             console.log('Checking map selection permissions for user ID:', currentUser.id);
+
+            if (!currentUser.id) {
+                console.log('No user ID found in session');
+                setError('Invalid user session - no user ID found. Redirecting to login page...');
+                setTimeout(() => router.push('/register'), 3000);
+                return;
+            }
+
             const authResponse = await fetch('/api/map-selection-auth', {
                 method: 'POST',
                 headers: {
