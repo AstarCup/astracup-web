@@ -53,20 +53,27 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout 
 
 async function getUserDataFromAPI(username: string): Promise<OsuUser | null> {
     const apiKey = process.env.OSU_API_KEY;
+    console.log('API Key exists:', !!apiKey); // 检查 API 密钥
+
     if (!apiKey) {
+        console.log('No API key found, returning null');
         return null;
     }
 
+    console.log(`Calling official API for user: ${username}`); // 添加调用日志
+
     try {
-        const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/users/${username}/osu`, {
+        const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/users/${username}`, {
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
             },
         });
 
+        console.log(`API response status: ${response.status}`); // 添加状态日志
+
         if (!response.ok) {
-            // console.log(`Official API failed with status: ${response.status}`);
+            console.log(`Official API failed with status: ${response.status}`);
             return null;
         }
 
