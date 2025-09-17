@@ -1,0 +1,94 @@
+{
+    "organizers": [
+        {
+            "name": "AeCw",
+            "osuId": "6781503",
+            "avatarUrl": "https://a.ppy.sh/6781503",
+            "role": "主办方",
+            "description": "比赛总负责人"
+        }
+    ],
+    "administrators": [],
+    "referees": [
+        {
+            "name": "ShikaNai",
+            "osuId": "17898289",
+            "avatarUrl": "https://a.ppy.sh/17898289",
+            "role": "裁判",
+            "description": "比赛裁判"
+        },
+        {
+            "name": "Yoizuki",
+            "osuId": "25767690",
+            "avatarUrl": "https://a.ppy.sh/25767690",
+            "role": "裁判",
+            "description": "比赛裁判&解说"
+        }
+    ],
+    "mappool_selectors": [
+        {
+            "name": "Kieost",
+            "osuId": "17823832",
+            "avatarUrl": "https://a.ppy.sh/17823832",
+            "role": "图池选择",
+            "description": "图池策划"
+        },
+        {
+            "name": "bobbycyl",
+            "osuId": "30826405",
+            "avatarUrl": "https://a.ppy.sh/30826405",
+            "role": "图池选择",
+            "description": "图池策划"
+        },
+        {
+            "name": "-xxx Rumia-",
+            "osuId": "5936405",
+            "avatarUrl": "https://a.ppy.sh/5936405",
+            "role": "图池选择",
+            "description": "图池策划"
+        }
+    ],
+    "mapool_testers": [
+        {
+            "name": "Bochi the osu",
+            "osuId": "30284920",
+            "avatarUrl": "https://a.ppy.sh/30284920",
+            "role": "图池测试",
+            "description": "测试比赛图池"
+        },
+        {
+            "name": "oliwakami",
+            "osuId": "3046750",
+            "avatarUrl": "https://a.ppy.sh/3046750",
+            "role": "图池测试",
+            "description": "测试比赛图池"
+        }
+    ],
+    "streamers": [
+        {
+            "name": "（暂时无人）",
+            "osuId": "77777777",
+            "avatarUrl": "https://a.ppy.sh/77777777",
+            "role": "直播",
+            "description": "比赛直播"
+        }
+    ],
+    "commentators": [
+        {
+            "name": "Yoizuki",
+            "osuId": "25767690",
+            "avatarUrl": "https://a.ppy.sh/25767690",
+            "role": "裁判",
+            "description": "比赛裁判&解说"
+        }
+    ],
+    "designers": [
+        {
+            "name": "AeCw",
+            "osuId": "6781503",
+            "avatarUrl": "https://a.ppy.sh/6781503",
+            "role": "主办方",
+            "description": "视觉设计"
+        }
+    ]
+}
