@@ -1,0 +1,369 @@
+import { NextRequest, NextResponse } from 'next/server';
+import {
+    getMapSelections,
+    addMapSelection,
+    deleteMapSelection,
+    updateMapSelection,
+    initMapSelectionDatabase
+} from '@/lib/map-selection';
+import { getBeatmapInfo, getBeatmapsetInfo, parseBeatmapUrl } from '@/lib/osu-api';
+import { get } from '@vercel/edge-config';
+import { cookies } from 'next/headers';
+
+// 验证选图权限的辅助函数
+async function verifyMapSelectionAuth(osuId: string): Promise<boolean> {
+    try {
+        let mapSelectionTeam: string[] = [];
+
+        // 优先尝试从Edge Config获取（无论开发还是生产环境）
+        if (process.env.EDGE_CONFIG) {
+            const teamConfig = await get('mapSelectionTeam');
+            if (teamConfig && Array.isArray(teamConfig)) {
+                mapSelectionTeam = teamConfig.filter((id): id is string =>
+                    typeof id === 'string' && id.trim() !== ''
+                );
+            }
+        }
+
+        // 如果Edge Config没有数据，尝试从环境变量获取
+        if (mapSelectionTeam.length === 0 && process.env.MAP_SELECTION_TEAM_IDS) {
+            mapSelectionTeam = process.env.MAP_SELECTION_TEAM_IDS
+                .split(',')
+                .map(id => id.trim())
+                .filter(id => id !== '');
+        }
+
+        // 如果都没有数据，使用默认测试ID
+        if (mapSelectionTeam.length === 0) {
+            mapSelectionTeam = ['2']; // 示例ID
+        }
+
+        // 检查osu ID是否在授权列表中 - 支持数字和字符串比较
+        const userIdStr = osuId.toString();
+        const userIdNum = parseInt(osuId);
+
+        return mapSelectionTeam.some(teamId => {
+            const teamIdStr = teamId.toString();
+            const teamIdNum = parseInt(teamId);
+
+            // 比较字符串和数字形式
+            return teamIdStr === userIdStr || teamIdNum === userIdNum;
+        });
+    } catch (error) {
+        console.error('Error verifying auth:', error);
+        return false;
+    }
+}
+
+// GET - 获取选图列表
+export async function GET(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const season = searchParams.get('season') || 's1';
+        const category = searchParams.get('category') || undefined;
+        const osuId = searchParams.get('osuId');
+        const approved = searchParams.get('approved'); // 新增approved参数
+
+        // 如果只是获取已过审的图，则不需要权限验证（公开访问）
+        if (approved === 'true') {
+            // 初始化数据库（如果需要）
+            await initMapSelectionDatabase();
+
+            // 获取选图列表
+            const selections = await getMapSelections(season, category);
+
+            // 只返回已过审的图
+            const approvedSelections = selections.filter(selection => selection.approved);
+
+            return NextResponse.json({
+                success: true,
+                selections: approvedSelections,
+                count: approvedSelections.length
+            });
+        }
+
+        // 对于非公开访问，需要权限验证
+        if (!osuId) {
+            return NextResponse.json(
+                { error: '缺少osu ID' },
+                { status: 400 }
+            );
+        }
+
+        // 验证权限
+        const isAuthorized = await verifyMapSelectionAuth(osuId);
+        if (!isAuthorized) {
+            return NextResponse.json(
+                { error: '您没有权限访问选图系统' },
+                { status: 403 }
+            );
+        }
+
+        // 初始化数据库（如果需要）
+        await initMapSelectionDatabase();
+
+        // 获取选图列表
+        const selections = await getMapSelections(season, category);
+
+        return NextResponse.json({
+            success: true,
+            selections,
+            count: selections.length
+        });
+
+    } catch (error) {
+        console.error('Error getting map selections:', error);
+        return NextResponse.json(
+            { error: '获取选图列表失败' },
+            { status: 500 }
+        );
+    }
+}
+
+// POST - 添加新选图
+export async function POST(request: NextRequest) {
+    try {
+        const {
+            url,
+            selectedMods,
+            modPosition = 1,
+            comment,
+            approved = false,
+            selectedBy,
+            season = 's1',
+            category = 'qualification'
+        } = await request.json();
+
+        if (!url || !selectedBy) {
+            return NextResponse.json(
+                { error: '缺少必要参数：url 和 selectedBy' },
+                { status: 400 }
+            );
+        }
+
+        // 验证权限
+        const isAuthorized = await verifyMapSelectionAuth(selectedBy);
+        if (!isAuthorized) {
+            return NextResponse.json(
+                { error: '您没有权限访问选图系统' },
+                { status: 403 }
+            );
+        }
+
+        // 初始化数据库
+        await initMapSelectionDatabase();
+
+        // 获取用户的access token
+        let accessToken: string | undefined;
+        try {
+            const cookieStore = await cookies();
+            const sessionCookie = cookieStore.get('astra_session');
+
+            if (sessionCookie?.value) {
+                const session = JSON.parse(sessionCookie.value);
+                accessToken = session.access_token;
+                console.log('Using user access token for beatmap API');
+            }
+        } catch (error) {
+            console.error('Error getting user session for access token:', error);
+            // 继续执行，不使用token
+        }
+
+        // 解析URL
+        const parsedUrl = parseBeatmapUrl(url);
+        if (!parsedUrl.beatmapId && !parsedUrl.beatmapsetId) {
+            return NextResponse.json(
+                { error: '无效的osu! beatmap URL' },
+                { status: 400 }
+            );
+        }
+
+        let beatmapInfo;
+
+        try {
+            if (parsedUrl.beatmapId) {
+                // 如果有具体的beatmap ID，直接获取
+                beatmapInfo = await getBeatmapInfo(parsedUrl.beatmapId, accessToken);
+            } else if (parsedUrl.beatmapsetId) {
+                // 如果只有beatmapset ID，获取所有难度并让用户选择第一个
+                const beatmaps = await getBeatmapsetInfo(parsedUrl.beatmapsetId, accessToken);
+                if (beatmaps.length === 0) {
+                    throw new Error('该beatmapset中没有找到任何beatmap');
+                }
+                beatmapInfo = beatmaps[0]; // 使用第一个难度
+            } else {
+                throw new Error('无法解析beatmap信息');
+            }
+        } catch (apiError) {
+            console.error('Error fetching beatmap info:', apiError);
+            return NextResponse.json(
+                { error: `获取beatmap信息失败: ${apiError instanceof Error ? apiError.message : '未知错误'}` },
+                { status: 400 }
+            );
+        }
+
+        if (!beatmapInfo) {
+            return NextResponse.json(
+                { error: '无法获取beatmap信息' },
+                { status: 400 }
+            );
+        }
+
+        // 添加选图（允许重复添加）
+        const success = await addMapSelection({
+            beatmapId: beatmapInfo.id,
+            beatmapsetId: beatmapInfo.beatmapset_id,
+            title: beatmapInfo.title,
+            artist: beatmapInfo.artist,
+            version: beatmapInfo.version,
+            creator: beatmapInfo.creator,
+            starRating: beatmapInfo.star_rating,
+            bpm: beatmapInfo.bpm,
+            totalLength: beatmapInfo.total_length,
+            ar: beatmapInfo.ar,
+            cs: beatmapInfo.cs,
+            od: beatmapInfo.od,
+            hp: beatmapInfo.hp,
+            selectedMods: selectedMods || 'NM',
+            modPosition: modPosition || 1,
+            comment: comment || '',
+            selectedBy,
+            season,
+            category,
+            url: beatmapInfo.url,
+            coverUrl: beatmapInfo.cover_url || '',
+            approved: approved || false
+        });
+
+        if (!success) {
+            return NextResponse.json(
+                { error: '添加选图失败' },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: '选图添加成功',
+            beatmapInfo
+        });
+
+    } catch (error) {
+        console.error('Error adding map selection:', error);
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : '添加选图失败' },
+            { status: 500 }
+        );
+    }
+}
+
+// DELETE - 删除选图
+export async function DELETE(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+        const selectedBy = searchParams.get('selectedBy');
+
+        if (!id || !selectedBy) {
+            return NextResponse.json(
+                { error: '缺少必要参数：id 和 selectedBy' },
+                { status: 400 }
+            );
+        }
+
+        // 验证权限
+        const isAuthorized = await verifyMapSelectionAuth(selectedBy);
+        if (!isAuthorized) {
+            return NextResponse.json(
+                { error: '您没有权限访问选图系统' },
+                { status: 403 }
+            );
+        }
+
+        // 删除选图
+        const success = await deleteMapSelection(parseInt(id), selectedBy);
+
+        if (!success) {
+            return NextResponse.json(
+                { error: '删除选图失败或您没有权限删除此选图' },
+                { status: 400 }
+            );
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: '选图删除成功'
+        });
+
+    } catch (error) {
+        console.error('Error deleting map selection:', error);
+        return NextResponse.json(
+            { error: '删除选图失败' },
+            { status: 500 }
+        );
+    }
+}
+
+// PUT - 更新选图信息
+export async function PUT(request: NextRequest) {
+    try {
+        const {
+            id,
+            selectedMods,
+            comment,
+            approved,
+            selectedBy
+        } = await request.json();
+
+        if (!id || !selectedBy) {
+            return NextResponse.json(
+                { error: '缺少必要参数：id 和 selectedBy' },
+                { status: 400 }
+            );
+        }
+
+        // 验证权限
+        const isAuthorized = await verifyMapSelectionAuth(selectedBy);
+        if (!isAuthorized) {
+            return NextResponse.json(
+                { error: '您没有权限访问选图系统' },
+                { status: 403 }
+            );
+        }
+
+        // 准备更新数据
+        const updates: { selectedMods?: string; comment?: string; approved?: boolean } = {};
+        if (selectedMods !== undefined) updates.selectedMods = selectedMods;
+        if (comment !== undefined) updates.comment = comment;
+        if (approved !== undefined) updates.approved = approved;
+
+        if (Object.keys(updates).length === 0) {
+            return NextResponse.json(
+                { error: '没有提供要更新的字段' },
+                { status: 400 }
+            );
+        }
+
+        // 更新选图
+        const success = await updateMapSelection(parseInt(id), updates, selectedBy);
+
+        if (!success) {
+            return NextResponse.json(
+                { error: '更新选图失败或您没有权限更新此选图' },
+                { status: 400 }
+            );
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: '选图更新成功'
+        });
+
+    } catch (error) {
+        console.error('Error updating map selection:', error);
+        return NextResponse.json(
+            { error: '更新选图失败' },
+            { status: 500 }
+        );
+    }
+}

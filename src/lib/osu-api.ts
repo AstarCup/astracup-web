@@ -421,3 +421,142 @@ export async function getMapPoolData(season: string = 's1'): Promise<MapPool> {
         throw error;
     }
 }
+
+// Beatmap 信息类型定义
+export interface BeatmapInfo {
+    id: number;
+    beatmapset_id: number;
+    title: string;
+    artist: string;
+    version: string;
+    creator: string;
+    star_rating: number;
+    bpm: number;
+    total_length: number;
+    ar: number;             // Approach Rate
+    cs: number;             // Circle Size
+    od: number;             // Overall Difficulty
+    hp: number;             // Health Points (HP Drain Rate)
+    url: string;
+    cover_url: string;
+}
+
+// 从URL解析beatmap ID和beatmapset ID
+export function parseBeatmapUrl(url: string): { beatmapId?: number; beatmapsetId?: number } {
+    const patterns = [
+        /osu\.ppy\.sh\/b\/(\d+)/,              // /b/{beatmap_id}
+        /osu\.ppy\.sh\/beatmaps\/(\d+)/,       // /beatmaps/{beatmap_id}
+        /osu\.ppy\.sh\/s\/(\d+)/,              // /s/{beatmapset_id}
+        /osu\.ppy\.sh\/beatmapsets\/(\d+)/,    // /beatmapsets/{beatmapset_id}
+    ];
+
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) {
+            const id = parseInt(match[1]);
+            if (url.includes('/b/') || url.includes('/beatmaps/')) {
+                return { beatmapId: id };
+            } else {
+                return { beatmapsetId: id };
+            }
+        }
+    }
+
+    return {};
+}
+
+// 获取单个beatmap信息
+export async function getBeatmapInfo(beatmapId: number, accessToken?: string): Promise<BeatmapInfo | null> {
+    try {
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+        };
+
+        // 如果提供了访问令牌，使用它进行认证
+        if (accessToken) {
+            headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+
+        const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/beatmaps/${beatmapId}`, {
+            headers,
+        });
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('Beatmap不存在');
+            }
+            throw new Error(`获取Beatmap信息失败 (状态码: ${response.status})`);
+        }
+
+        const data = await response.json();
+
+        return {
+            id: data.id,
+            beatmapset_id: data.beatmapset_id,
+            title: data.beatmapset?.title || '',
+            artist: data.beatmapset?.artist || '',
+            version: data.version || '',
+            creator: data.beatmapset?.creator || '',
+            star_rating: data.difficulty_rating || 0,
+            bpm: data.bpm || 0,
+            total_length: data.total_length || 0,
+            ar: data.ar || 0,
+            cs: data.cs || 0,
+            od: data.accuracy || 0,  // accuracy 对应 OD
+            hp: data.drain || 0,     // drain 对应 HP
+            url: data.url || `https://osu.ppy.sh/beatmaps/${data.id}`,
+            cover_url: data.beatmapset?.covers?.cover || data.beatmapset?.covers?.card || ''
+        };
+    } catch (error) {
+        console.error('Error fetching beatmap info:', error);
+        throw error;
+    }
+}
+
+// 获取beatmapset中的所有beatmap
+export async function getBeatmapsetInfo(beatmapsetId: number, accessToken?: string): Promise<BeatmapInfo[]> {
+    try {
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+        };
+
+        // 如果提供了访问令牌，使用它进行认证
+        if (accessToken) {
+            headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+
+        const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/beatmapsets/${beatmapsetId}`, {
+            headers,
+        });
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('Beatmapset不存在');
+            }
+            throw new Error(`获取Beatmapset信息失败 (状态码: ${response.status})`);
+        }
+
+        const data = await response.json();
+
+        return data.beatmaps?.map((beatmap: any) => ({
+            id: beatmap.id,
+            beatmapset_id: beatmap.beatmapset_id,
+            title: data.title || '',
+            artist: data.artist || '',
+            version: beatmap.version || '',
+            creator: data.creator || '',
+            star_rating: beatmap.difficulty_rating || 0,
+            bpm: beatmap.bpm || 0,
+            total_length: beatmap.total_length || 0,
+            ar: beatmap.ar || 0,
+            cs: beatmap.cs || 0,
+            od: beatmap.accuracy || 0,
+            hp: beatmap.drain || 0,
+            url: beatmap.url || `https://osu.ppy.sh/beatmaps/${beatmap.id}`,
+            cover_url: data.covers?.cover || data.covers?.card || ''
+        })) || [];
+    } catch (error) {
+        console.error('Error fetching beatmapset info:', error);
+        throw error;
+    }
+}

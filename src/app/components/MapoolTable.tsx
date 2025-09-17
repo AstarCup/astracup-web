@@ -12,15 +12,15 @@ export default function MapoolTable({ data, title, downloadUrl }: MapoolTablePro
     return (
         <div className="mb-20">
             <div className="flex justify-between items-start mb-0">
-                <h1 className="text-[120px] font-bold">{title}</h1>
-                {downloadUrl && (
+                <h1 className="text-xl font-bold text-white">{title}</h1>
+                {/* {downloadUrl && (
                     <a
                         href={downloadUrl}
                         className="px-5 py-3 bg-[#E93B66] text-white hover:bg-[#95E1D3] transition font-bold"
                     >
                         图包下载 MAPPAK DOWNLOAD
                     </a>
-                )}
+                )} */}
             </div>
             <div className="overflow-x-auto relative">
                 <table className="table-fixed min-w-[1800px]">
@@ -59,6 +59,9 @@ export default function MapoolTable({ data, title, downloadUrl }: MapoolTablePro
                             } else if (row.Slot?.includes("FM")) {
                                 bgClass = "text-green-700";
                                 slotClass = "bg-green-700 p-2 text-white text-center font-bold";
+                            } else if (row.Slot?.includes("LZ")) {
+                                bgClass = "text-blue-500";
+                                slotClass = "bg-blue-400 p-2 text-white text-center font-bold";
                             } else if (row.Slot?.includes("TB")) {
                                 bgClass = "text-grey-500";
                                 slotClass = "bg-black p-2 text-white text-center font-bold";

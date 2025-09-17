@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import initDatabase from '@/lib/mysql-registrations';
+import initMapSelectionDatabase from '@/lib/map-selection';
 
 export async function GET(request: NextRequest) {
     try {
         await initDatabase();
+        await initMapSelectionDatabase();
         return NextResponse.json({
             success: true,
             message: 'Database initialized successfully'
