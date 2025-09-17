@@ -168,20 +168,6 @@ export default function DebugPage() {
             if (response.ok) {
                 const userData = await response.json();
 
-                // 调试：打印原始数据
-                console.log('原始用户数据:', userData);
-                console.log('Cover 数据:', userData.cover);
-                console.log('Avatar URL:', userData.avatar_url);
-
-                // 检查是否有 cover 数据但是为 undefined 或 null
-                if (userData.cover === undefined) {
-                    console.log('Cover 字段为 undefined');
-                } else if (userData.cover === null) {
-                    console.log('Cover 字段为 null');
-                } else {
-                    console.log('Cover 字段存在:', userData.cover);
-                }
-
                 // 角色映射
                 const roleMapping: Record<string, string> = {
                     'organizers': '主办方',

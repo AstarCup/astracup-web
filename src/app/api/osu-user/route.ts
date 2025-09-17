@@ -56,7 +56,6 @@ async function getAccessToken(): Promise<string | null> {
     const clientSecret = process.env.OSU_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
-        console.log('Missing OSU_CLIENT_ID or OSU_CLIENT_SECRET');
         return null;
     }
 
@@ -75,8 +74,6 @@ async function getAccessToken(): Promise<string | null> {
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            console.log('Failed to get access token:', response.status, errorText);
             return null;
         }
 
@@ -89,16 +86,11 @@ async function getAccessToken(): Promise<string | null> {
 }
 
 async function getUserDataFromAPI(username: string): Promise<OsuUser | null> {
-    console.log('getUserDataFromAPI called for:', username);
-
     // 获取 access token
     const accessToken = await getAccessToken();
     if (!accessToken) {
-        console.log('Failed to get access token');
         return null;
     }
-
-    console.log('Making API request to osu! with access token');
 
     try {
         const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/users/${username}`, {
@@ -108,24 +100,11 @@ async function getUserDataFromAPI(username: string): Promise<OsuUser | null> {
             },
         });
 
-        console.log('API Response Status:', response.status);
-        console.log('API Response Headers:', Object.fromEntries(response.headers.entries()));
-
         if (!response.ok) {
-            console.log('API call failed with status:', response.status);
-            const errorText = await response.text();
-            console.log('Error response body:', errorText);
             return null;
         }
 
         const data = await response.json();
-
-        // 添加调试日志
-        console.log('API Response Keys:', Object.keys(data));
-        console.log('Cover field exists:', 'cover' in data);
-        console.log('Cover field value:', data.cover);
-        console.log('Cover_url field exists:', 'cover_url' in data);
-        console.log('Cover_url field value:', data.cover_url);
 
         return {
             id: data.id,
@@ -175,12 +154,10 @@ async function getUserDataFromPublic(username: string): Promise<OsuUser | null> 
         });
 
         if (!searchResponse.ok) {
-            // console.log(`Public method failed with status: ${searchResponse.status}`);
             return null;
         }
 
         const finalUrl = searchResponse.url;
-        // console.log(`Public method final URL: ${finalUrl}`);
 
         const html = await searchResponse.text();
 
@@ -222,7 +199,6 @@ async function getUserDataFromPublic(username: string): Promise<OsuUser | null> 
         // 如果无法解析JSON，尝试从URL中提取用户ID
         const userIdMatch = finalUrl.match(/\/users\/(\d+)/);
         if (userIdMatch && userIdMatch[1]) {
-            // console.log(`Found user ID from URL: ${userIdMatch[1]}`);
             // 返回基本用户信息
             return {
                 id: parseInt(userIdMatch[1]),
@@ -266,19 +242,15 @@ export async function GET(request: NextRequest) {
     // console.log(`Fetching osu! user data for: ${username}`);
 
     try {
-        // 检查环境变量
-        console.log('OSU_CLIENT_SECRET exists:', !!process.env.OSU_CLIENT_SECRET);
-
         // 首先尝试使用官方API
-        console.log('Trying official API...');
         let userData = await getUserDataFromAPI(username);
-        console.log('Official API result:', userData ? 'Success' : 'Failed');
+        // console.log(`Official API result for ${username}:`, userData ? 'Success' : 'Failed');
 
         // 如果官方API失败，尝试公开方法
         if (!userData) {
-            console.log('Trying public method...');
+            // console.log('Trying public method...');
             userData = await getUserDataFromPublic(username);
-            console.log('Public method result:', userData ? 'Success' : 'Failed');
+            // console.log(`Public method result for ${username}:`, userData ? 'Success' : 'Failed');
         }
 
         if (userData) {

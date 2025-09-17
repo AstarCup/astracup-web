@@ -3,10 +3,10 @@
         {
             "name": "AeCw",
             "osuId": "6781503",
-            "avatarUrl": "https://a.ppy.sh/6781503",
-            "role": "主办方",
-            "description": "比赛总负责人",
-            "coverUrl": null
+            "avatarUrl": "https://a.ppy.sh/6781503?1744380443.jpeg",
+            "role": "主办",
+            "description": "主办",
+            "coverUrl": "https://assets.ppy.sh/user-profile-covers/6781503/44363bc08c2b73a1c76d9eb6a1d06cbd1549c67617e03ee7133ee6d3496809af.png"
         }
     ],
     "administrators": [],
@@ -14,10 +14,10 @@
         {
             "name": "ShikaNai",
             "osuId": "17898289",
-            "avatarUrl": "https://a.ppy.sh/17898289",
+            "avatarUrl": "https://a.ppy.sh/17898289?1755197750.jpeg",
             "role": "裁判",
-            "description": "比赛裁判",
-            "coverUrl": null
+            "description": "裁判",
+            "coverUrl": "https://assets.ppy.sh/user-profile-covers/17898289/092d3dcced7c15ada456b2235cbad5e66ff4f0cca3f02e07e09a64ed63038eea.png"
         },
         {
             "name": "Yoizuki",
@@ -25,7 +25,7 @@
             "avatarUrl": "https://a.ppy.sh/25767690",
             "role": "裁判",
             "description": "比赛裁判&解说",
-            "coverUrl": null
+            "coverUrl": "https://assets.ppy.sh/user-profile-covers/25767690/92effb2f9be0511861d4548ad63cfc5c7fae367796fe977f91a830cd55786d90.jpeg"
         }
     ],
     "mappool_selectors": [
@@ -35,7 +35,7 @@
             "avatarUrl": "https://a.ppy.sh/17823832",
             "role": "图池选择",
             "description": "图池策划",
-            "coverUrl": null
+            "coverUrl": "https://assets.ppy.sh/user-profile-covers/17823832/bfbf62075d26f28498471820ae96c8315c2a53ca170e6959c36a32fb45485d3e.png"
         },
         {
             "name": "bobbycyl",
@@ -43,7 +43,7 @@
             "avatarUrl": "https://a.ppy.sh/30826405",
             "role": "图池选择",
             "description": "图池策划",
-            "coverUrl": null
+            "coverUrl": "https://assets.ppy.sh/user-profile-covers/30826405/4f1029eac55e6f04f618403032e69b230c31a57f7f2587c65572c276b21f6ca6.png"
         },
         {
             "name": "-xxx Rumia-",
@@ -51,7 +51,7 @@
             "avatarUrl": "https://a.ppy.sh/5936405",
             "role": "图池选择",
             "description": "图池策划",
-            "coverUrl": null
+            "coverUrl": "https://assets.ppy.sh/user-profile-covers/5936405/35713bf448d1a17bc222ccb975bf6e41725fbe59fbd171b35c4eebd80bcbafe0.jpeg"
         }
     ],
     "mapool_testers": [
@@ -61,7 +61,7 @@
             "avatarUrl": "https://a.ppy.sh/30284920",
             "role": "图池测试",
             "description": "测试比赛图池",
-            "coverUrl": null
+            "coverUrl": "https://assets.ppy.sh/user-profile-covers/30284920/d792a40a4eb4ae12b45360c8a29b97c29d53d45a108cc53725202e26e1394726.jpeg"
         },
         {
             "name": "oliwakami",
@@ -69,7 +69,7 @@
             "avatarUrl": "https://a.ppy.sh/3046750",
             "role": "图池测试",
             "description": "测试比赛图池",
-            "coverUrl": null
+            "coverUrl": "https://assets.ppy.sh/user-profile-covers/3046750/71b47e3de6e7ab7defcfcec0a331c25c1e2531b72e6806f4f85e60a8e470dfb5.jpeg"
         }
     ],
     "streamers": [],
@@ -80,7 +80,7 @@
             "avatarUrl": "https://a.ppy.sh/25767690",
             "role": "裁判",
             "description": "比赛裁判&解说",
-            "coverUrl": null
+            "coverUrl": "https://assets.ppy.sh/user-profile-covers/25767690/92effb2f9be0511861d4548ad63cfc5c7fae367796fe977f91a830cd55786d90.jpeg"
         }
     ],
     "designers": [
@@ -90,7 +90,7 @@
             "avatarUrl": "https://a.ppy.sh/6781503",
             "role": "主办方",
             "description": "视觉设计",
-            "coverUrl": null
+            "coverUrl": "https://assets.ppy.sh/user-profile-covers/6781503/44363bc08c2b73a1c76d9eb6a1d06cbd1549c67617e03ee7133ee6d3496809af.png"
         }
     ]
 }
