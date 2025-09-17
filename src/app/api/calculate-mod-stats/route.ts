@@ -47,6 +47,9 @@ export async function POST(req: NextRequest) {
         // 获取beatmap文件
         const beatmapContent = await getBeatmapFile(beatmapId, accessToken);
         
+        // 解析beatmap内容为Beatmap对象
+        const beatmap = new rosu.Beatmap(beatmapContent);
+        
         // 创建Performance计算器
         const performance = new rosu.Performance() as any;
         
@@ -69,8 +72,8 @@ export async function POST(req: NextRequest) {
             difficulty.mods(modValue);
         }
         
-        const difficultyResult = difficulty.calculate(beatmapContent);
-        const performanceResult = performance.calculate(beatmapContent);
+        const difficultyResult = difficulty.calculate(beatmap);
+        const performanceResult = performance.calculate(beatmap);
         
         const result = {
             ar: difficultyResult.ar || difficultyResult.approach_rate,
