@@ -19,15 +19,39 @@ export default function Footer() {
                 justifyContent: "flex-start",
                 letterSpacing: "1px",
                 position: "relative",
-                padding: "0 120px",
-                gap: "80px",
+                padding: "20px",
+                gap: "20px",
                 // 允许图片溢出footer区域
                 overflow: "visible",
             }}
+            className="footer-responsive"
         >
+            <style jsx>{`
+                    @media (min-width: 768px) {
+                        .footer-responsive {
+                            padding: 0 60px !important;
+                            gap: 40px !important;
+                        }
+                    }
+                    @media (min-width: 1024px) {
+                        .footer-responsive {
+                            padding: 0 120px !important;
+                            gap: 80px !important;
+                        }
+                    }
+                    @media (max-width: 640px) {
+                        .footer-responsive {
+                            flex-direction: column !important;
+                            align-items: flex-start !important;
+                            justify-content: center !important;
+                            gap: 20px !important;
+                            padding: 20px 20px 100px 20px !important;
+                        }
+                    }
+                `}</style>
             {/* 版权声明 */}
-            <div style={{ 
-                position: 'relative', 
+            <div style={{
+                position: 'relative',
                 zIndex: 1,
                 display: 'flex',
                 flexDirection: 'column',
@@ -42,15 +66,15 @@ export default function Footer() {
             </div>
 
             {/* 友情链接 */}
-            <div style={{ 
-                position: 'relative', 
+            <div style={{
+                position: 'relative',
                 zIndex: 1,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'flex-start'
             }}>
-                <div style={{ 
-                    display: 'flex', 
+                <div style={{
+                    display: 'flex',
                     flexDirection: 'column',
                     gap: '12px',
                     alignItems: 'flex-start'
@@ -58,12 +82,12 @@ export default function Footer() {
                     <span style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '8px' }}>
                         友情链接
                     </span>
-                    <a 
-                        href="https://osu.ppy.sh/" 
-                        target="_blank" 
+                    <a
+                        href="https://osu.ppy.sh/"
+                        target="_blank"
                         rel="noopener noreferrer"
-                        style={{ 
-                            color: '#fff', 
+                        style={{
+                            color: '#fff',
                             textDecoration: 'none',
                             fontSize: '0.95rem',
                             transition: 'color 0.3s'
@@ -73,12 +97,12 @@ export default function Footer() {
                     >
                         osu! 官网
                     </a>
-                    <a 
-                        href="https://lazer.g0v0.top" 
-                        target="_blank" 
+                    <a
+                        href="https://lazer.g0v0.top"
+                        target="_blank"
                         rel="noopener noreferrer"
-                        style={{ 
-                            color: '#fff', 
+                        style={{
+                            color: '#fff',
                             textDecoration: 'none',
                             fontSize: '0.95rem',
                             transition: 'color 0.3s'
@@ -88,15 +112,15 @@ export default function Footer() {
                     >
                         osu!lazer 咕哦服
                     </a>
-                    
+
                 </div>
             </div>
             <button
                 onClick={handleBackToTop}
                 style={{
                     position: "absolute",
-                    right: 40,
-                    bottom: 30,
+                    right: 20,
+                    bottom: 20,
                     padding: "0px 10px 0px 10px",
                     background: "#E93B66",
                     color: "#fff",
@@ -107,11 +131,24 @@ export default function Footer() {
                     opacity: 1,
                     transition: "background 0.2s, opacity 0.2s",
                 }}
+                className="return-top-btn"
                 onMouseOver={e => (e.currentTarget.style.background = '#3BE9D8')}
                 onMouseOut={e => (e.currentTarget.style.background = '#E93B66')}
             >
-                <img src="/icons/returnTop.svg" alt="返回顶部" width={80} height={80} />
+                <img src="/icons/returnTop.svg" alt="返回顶部" width={60} height={60} />
             </button>
+            <style jsx>{`
+                    @media (min-width: 768px) {
+                        .return-top-btn {
+                            right: 40px !important;
+                            bottom: 30px !important;
+                        }
+                        .return-top-btn img {
+                            width: 80px !important;
+                            height: 80px !important;
+                        }
+                    }
+                `}</style>
         </footer>
     );
 }

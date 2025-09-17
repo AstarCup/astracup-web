@@ -98,41 +98,54 @@ export default function Photos() {
                     <div key={season.seasonId} className="mb-16">
                         {/* 赛季信息头部 */}
                         <div className="mb-8">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center">
-                                    <h2 className="text-4xl font-bold text-white mr-4">
+                            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 gap-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center">
+                                    <h2 className="text-3xl sm:text-4xl font-bold text-white mr-0 sm:mr-4 mb-2 sm:mb-0">
                                         {season.seasonName}
                                     </h2>
-                                    <span className="text-2xl text-gray-400">({season.year})</span>
-                                    {season.status === 'ongoing' && (
-                                        <span className="ml-4 bg-green-500 text-white text-sm px-3 py-1 rounded-full animate-pulse">
-                                            进行中
-                                        </span>
-                                    )}
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-xl sm:text-2xl text-gray-400">({season.year})</span>
+                                        {season.status === 'ongoing' && (
+                                            <span className="bg-green-500 text-white text-sm px-3 py-1 rounded-full animate-pulse">
+                                                进行中
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="text-right text-gray-400">
-                                    <div>比赛日期: {season.matchDate}</div>
-                                    <div>参赛人数: {season.totalParticipants} 人</div>
+                                <div className="text-left lg:text-right text-gray-400 space-y-1">
+                                    <div className="text-sm sm:text-base">比赛日期: {season.matchDate}</div>
+                                    <div className="text-sm sm:text-base">参赛人数: {season.totalParticipants} 人</div>
                                 </div>
                             </div>
 
-                            <p className="text-gray-300 text-lg mb-6">{season.description}</p>
+                            <p className="text-gray-300 text-base sm:text-lg mb-6">{season.description}</p>
                         </div>
 
                         {/* 获奖者卡片 */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <WinnerCard
-                                winner={season.winners.first}
-                                seasonName={season.seasonName}
-                            />
-                            <WinnerCard
-                                winner={season.winners.second}
-                                seasonName={season.seasonName}
-                            />
-                            <WinnerCard
-                                winner={season.winners.third}
-                                seasonName={season.seasonName}
-                            />
+                        <div className="flex flex-col md:flex-row items-end justify-center gap-4 md:gap-8">
+                            {/* 第二名 - 左侧 */}
+                            <div className="order-2 md:order-1 transform md:scale-90 w-full md:w-auto md:min-w-[280px] flex-shrink-0">
+                                <WinnerCard
+                                    winner={season.winners.second}
+                                    seasonName={season.seasonName}
+                                />
+                            </div>
+
+                            {/* 第一名 - 中间，更大 */}
+                            <div className="order-1 md:order-2 transform md:scale-110 relative z-10 w-full md:w-auto md:min-w-[320px] flex-shrink-0">
+                                <WinnerCard
+                                    winner={season.winners.first}
+                                    seasonName={season.seasonName}
+                                />
+                            </div>
+
+                            {/* 第三名 - 右侧 */}
+                            <div className="order-3 md:order-3 transform md:scale-90 w-full md:w-auto md:min-w-[280px] flex-shrink-0">
+                                <WinnerCard
+                                    winner={season.winners.third}
+                                    seasonName={season.seasonName}
+                                />
+                            </div>
                         </div>
 
                         {/* 分隔线 */}

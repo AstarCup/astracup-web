@@ -102,20 +102,20 @@ export default function Navbar() {
                         className={`xl:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-180 py-4 opacity-99' : 'max-h-0 opacity-0'
                             }`}
                     >
-                        <div className="bg-[#3d3d3d] p-4">
+                        <div className=" p-4">
                             <div className="grid grid-cols-2 gap-2">
                                 {navLinks.map((link) => (
-                                    <div key={link.href} className="bg-white/50 hover:bg-[#3BE9D8] transition-colors duration-200">
+                                    <div key={link.href} className="bg-white/100 hover:bg-[#3BE9D8] transition-colors duration-200">
                                         <Link
                                             href={link.href}
-                                            className={`block p-3 text-center text-sm font-medium ${isActive(link.href) ? 'bg-[#3BE9D8] text-white font-bold' : 'text-gray-800 hover:text-white'}`}
+                                            className={`block p-3 text-left text-sm font-medium ${isActive(link.href) ? 'bg-[#3BE9D8] text-white font-bold' : 'text-gray-800 hover:text-white'}`}
                                             onClick={() => {
                                                 setActiveLink(link.href);
                                                 setMobileMenuOpen(false);
                                             }}
                                         >
-                                            <div className="text-xs font-bold mb-1">{link.name}</div>
-                                            <div className="text-xs opacity-75">{link.tip}</div>
+                                            <div className="text-xs opacity-75 font-bold mb-1">{link.name}</div>
+                                            <div className="text-3xl font-bold">{link.tip}</div>
                                         </Link>
                                     </div>
                                 ))}
