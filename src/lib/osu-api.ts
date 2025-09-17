@@ -448,16 +448,25 @@ export function parseBeatmapUrl(url: string): { beatmapId?: number; beatmapsetId
         /osu\.ppy\.sh\/beatmaps\/(\d+)/,       // /beatmaps/{beatmap_id}
         /osu\.ppy\.sh\/s\/(\d+)/,              // /s/{beatmapset_id}
         /osu\.ppy\.sh\/beatmapsets\/(\d+)/,    // /beatmapsets/{beatmapset_id}
+        /osu\.ppy\.sh\/beatmapsets\/(\d+)#[^\/]*\/(\d+)/, // /beatmapsets/{beatmapset_id}#{mode}/{beatmap_id}
     ];
 
     for (const pattern of patterns) {
         const match = url.match(pattern);
         if (match) {
-            const id = parseInt(match[1]);
             if (url.includes('/b/') || url.includes('/beatmaps/')) {
-                return { beatmapId: id };
+                // 直接的beatmap URL
+                const beatmapId = parseInt(match[1]);
+                return { beatmapId };
+            } else if (match[2]) {
+                // beatmapsets URL with specific beatmap ID
+                const beatmapsetId = parseInt(match[1]);
+                const beatmapId = parseInt(match[2]);
+                return { beatmapId, beatmapsetId };
             } else {
-                return { beatmapsetId: id };
+                // 只有beatmapset ID
+                const beatmapsetId = parseInt(match[1]);
+                return { beatmapsetId };
             }
         }
     }

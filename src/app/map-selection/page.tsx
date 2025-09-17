@@ -93,6 +93,8 @@ export default function MapSelectionPage() {
     const [approved, setApproved] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [beatmapPreview, setBeatmapPreview] = useState<BeatmapInfo | null>(null);
+    const [availableBeatmaps, setAvailableBeatmaps] = useState<BeatmapInfo[]>([]);
+    const [moddedStats, setModdedStats] = useState<any>(null);
 
     // Error and message
     const [error, setError] = useState('');
@@ -109,6 +111,20 @@ export default function MapSelectionPage() {
             fetchSelections();
         }
     }, [isAuthorized, user, season, category]);
+
+    // Calculate modded stats when beatmap or mods change
+    useEffect(() => {
+        const updateModdedStats = async () => {
+            if (beatmapPreview && user) {
+                const stats = await calculateModdedStatsAPI(beatmapPreview, selectedMods);
+                setModdedStats(stats);
+            } else {
+                setModdedStats(null);
+            }
+        };
+
+        updateModdedStats();
+    }, [beatmapPreview, selectedMods, user]);
 
     const checkUserAuth = async () => {
         try {
@@ -255,6 +271,7 @@ export default function MapSelectionPage() {
         setIsSubmitting(true);
         setError('');
         setBeatmapPreview(null);
+        setAvailableBeatmaps([]);
 
         try {
             const response = await fetch('/api/parse-beatmap', {
@@ -272,8 +289,11 @@ export default function MapSelectionPage() {
                 const data = await response.json();
                 if (data.data.type === 'single') {
                     setBeatmapPreview(data.data.beatmap);
+                    setAvailableBeatmaps([]);
                 } else {
-                    setBeatmapPreview(data.data.beatmaps[0]);
+                    // 多个beatmap，让用户选择
+                    setAvailableBeatmaps(data.data.beatmaps);
+                    setBeatmapPreview(data.data.beatmaps[0]); // 默认选择第一个
                 }
             } else {
                 const errorData = await response.json();
@@ -287,6 +307,46 @@ export default function MapSelectionPage() {
         }
     };
 
+    // 使用rosu-pp API计算应用mod后的参数值
+    const calculateModdedStatsAPI = async (beatmap: BeatmapInfo, mods: string) => {
+        try {
+            console.log('Calculating modded stats for:', { beatmapId: beatmap.id, mods });
+            const response = await fetch('/api/calculate-mod-stats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    beatmapId: beatmap.id,
+                    mods: mods,
+                    accessToken: user ? localStorage.getItem('osu_access_token') : null
+                }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API response error:', errorText);
+                throw new Error('API调用失败');
+            }
+
+            const data = await response.json();
+            console.log('API response data:', data);
+            console.log('Modded stats:', data.modStats);
+            return data.modStats;
+        } catch (error) {
+            console.error('计算mod参数失败:', error);
+            // 如果API失败，返回原始参数
+            return {
+                ar: beatmap.ar,
+                cs: beatmap.cs,
+                od: beatmap.od,
+                hp: beatmap.hp,
+                star_rating: beatmap.star_rating,
+                bpm: beatmap.bpm
+            };
+        }
+    };
+
     const addSelection = async () => {
         if (!beatmapPreview) {
             setError('请先解析有效的beatmap链接');
@@ -297,6 +357,9 @@ export default function MapSelectionPage() {
         setError('');
 
         try {
+            // 使用rosu-pp API计算应用mod后的参数
+            const moddedStats = await calculateModdedStatsAPI(beatmapPreview, selectedMods);
+
             const response = await fetch('/api/map-selections', {
                 method: 'POST',
                 headers: {
@@ -310,7 +373,9 @@ export default function MapSelectionPage() {
                     approved,
                     selectedBy: user?.id.toString(),
                     season,
-                    category
+                    category,
+                    // 包含计算后的mod参数
+                    moddedStats
                 })
             });
 
@@ -323,6 +388,7 @@ export default function MapSelectionPage() {
                 setModPosition(1);
                 setApproved(false);
                 setBeatmapPreview(null);
+                setAvailableBeatmaps([]);
                 fetchSelections();
             } else {
                 const errorData = await response.json();
@@ -532,7 +598,7 @@ export default function MapSelectionPage() {
                                         type="text"
                                         value={urlInput}
                                         onChange={(e) => setUrlInput(e.target.value)}
-                                        placeholder="https://osu.ppy.sh/beatmaps/123456 or https://osu.ppy.sh/beatmapsets/12345"
+                                        placeholder="https://osu.ppy.sh/beatmaps/sid#mod#bid"
                                         className="flex-1 bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
                                     />
                                     <button
@@ -549,6 +615,31 @@ export default function MapSelectionPage() {
                             {beatmapPreview && (
                                 <div className="bg-gray-200 rounded-lg p-4">
                                     <h4 className="text-gray-800 font-bold mb-2">歌曲预览</h4>
+
+                                    {/* 难度选择器 - 只在有多个难度时显示 */}
+                                    {availableBeatmaps.length > 1 && (
+                                        <div className="mb-4">
+                                            <label className="block text-gray-800 text-sm mb-2">选择难度</label>
+                                            <select
+                                                value={beatmapPreview.id}
+                                                onChange={(e) => {
+                                                    const selectedId = parseInt(e.target.value);
+                                                    const selectedBeatmap = availableBeatmaps.find(b => b.id === selectedId);
+                                                    if (selectedBeatmap) {
+                                                        setBeatmapPreview(selectedBeatmap);
+                                                    }
+                                                }}
+                                                className="w-full"
+                                            >
+                                                {availableBeatmaps.map(beatmap => (
+                                                    <option key={beatmap.id} value={beatmap.id}>
+                                                        {beatmap.version} - {beatmap.star_rating.toFixed(2)}★
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+
                                     <div className="flex gap-4">
                                         {/* Cover image */}
                                         <div className="flex-shrink-0">
@@ -567,10 +658,29 @@ export default function MapSelectionPage() {
                                             <p><strong>艺术家:</strong> {beatmapPreview.artist}</p>
                                             <p><strong>难度:</strong> {beatmapPreview.version}</p>
                                             <p><strong>作图者:</strong> {beatmapPreview.creator}</p>
-                                            <p><strong>星级:</strong> {beatmapPreview.star_rating.toFixed(2)}★</p>
-                                            <p><strong>BPM:</strong> {beatmapPreview.bpm}</p>
-                                            <p><strong>时长:</strong> {formatLength(beatmapPreview.total_length)}</p>
-                                            <p><strong>AR:</strong> {beatmapPreview.ar.toFixed(1)} | <strong>CS:</strong> {beatmapPreview.cs.toFixed(1)} | <strong>OD:</strong> {beatmapPreview.od.toFixed(1)} | <strong>HP:</strong> {beatmapPreview.hp.toFixed(1)}</p>
+
+                                            {/* 显示mod计算后的参数 */}
+                                            {moddedStats && (() => {
+                                                const isModded = selectedMods === 'HR' || selectedMods === 'DT';
+
+                                                return (
+                                                    <>
+                                                        <p><strong>星级:</strong> {(moddedStats.star_rating || 0).toFixed(2)}★ {isModded && <span className="text-sm text-blue-600">(+{selectedMods})</span>}</p>
+                                                        <p><strong>BPM:</strong> {moddedStats.bpm || 0} {isModded && selectedMods === 'DT' && <span className="text-sm text-blue-600">(+DT)</span>}</p>
+                                                        <p><strong>时长:</strong> {formatLength(beatmapPreview.total_length)}</p>
+                                                        <p>
+                                                            <strong>AR:</strong> {(moddedStats.ar || 0).toFixed(1)}
+                                                            {isModded && <span className="text-sm text-gray-500">({beatmapPreview.ar.toFixed(1)})</span>} |
+                                                            <strong> CS:</strong> {(moddedStats.cs || 0).toFixed(1)}
+                                                            {isModded && selectedMods === 'HR' && <span className="text-sm text-gray-500">({beatmapPreview.cs.toFixed(1)})</span>} |
+                                                            <strong> OD:</strong> {(moddedStats.od || 0).toFixed(1)}
+                                                            {isModded && <span className="text-sm text-gray-500">({beatmapPreview.od.toFixed(1)})</span>} |
+                                                            <strong> HP:</strong> {(moddedStats.hp || 0).toFixed(1)}
+                                                            {isModded && selectedMods === 'HR' && <span className="text-sm text-gray-500">({beatmapPreview.hp.toFixed(1)})</span>}
+                                                        </p>
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 </div>
@@ -636,6 +746,7 @@ export default function MapSelectionPage() {
                                         setModPosition(1);
                                         setApproved(false);
                                         setBeatmapPreview(null);
+                                        setAvailableBeatmaps([]);
                                         setError('');
                                     }}
                                     className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
