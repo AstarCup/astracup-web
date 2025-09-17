@@ -131,7 +131,8 @@ export async function POST(request: NextRequest) {
             approved = false,
             selectedBy,
             season = 's1',
-            category = 'qualification'
+            category = 'qualification',
+            moddedStats
         } = await request.json();
 
         if (!url || !selectedBy) {
@@ -209,6 +210,16 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // 使用mod计算后的参数（如果提供）或原参数
+        const finalStats = moddedStats || {
+            ar: beatmapInfo.ar,
+            cs: beatmapInfo.cs,
+            od: beatmapInfo.od,
+            hp: beatmapInfo.hp,
+            star_rating: beatmapInfo.star_rating,
+            bpm: beatmapInfo.bpm
+        };
+
         // 添加选图（允许重复添加）
         const success = await addMapSelection({
             beatmapId: beatmapInfo.id,
@@ -217,13 +228,13 @@ export async function POST(request: NextRequest) {
             artist: beatmapInfo.artist,
             version: beatmapInfo.version,
             creator: beatmapInfo.creator,
-            starRating: beatmapInfo.star_rating,
-            bpm: beatmapInfo.bpm,
+            starRating: finalStats.star_rating,
+            bpm: finalStats.bpm,
             totalLength: beatmapInfo.total_length,
-            ar: beatmapInfo.ar,
-            cs: beatmapInfo.cs,
-            od: beatmapInfo.od,
-            hp: beatmapInfo.hp,
+            ar: finalStats.ar,
+            cs: finalStats.cs,
+            od: finalStats.od,
+            hp: finalStats.hp,
             selectedMods: selectedMods || 'NM',
             modPosition: modPosition || 1,
             comment: comment || '',

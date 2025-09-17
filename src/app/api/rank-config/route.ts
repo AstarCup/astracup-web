@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
         const defaultConfig = {
             maxPpForRegistration: 7000,
             minPpForRegistration: 0,
-            rankRestrictionEnabled: true
+            rankRestrictionEnabled: false
         };
 
         return NextResponse.json(defaultConfig);
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
             maxPpForRegistration: 7000,
             minPpForRegistration: 0,
-            rankRestrictionEnabled: true
+            rankRestrictionEnabled: false
         });
     }
 }

@@ -94,6 +94,7 @@ export default function MapSelectionPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [beatmapPreview, setBeatmapPreview] = useState<BeatmapInfo | null>(null);
     const [availableBeatmaps, setAvailableBeatmaps] = useState<BeatmapInfo[]>([]);
+    const [moddedStats, setModdedStats] = useState<any>(null);
 
     // Error and message
     const [error, setError] = useState('');
@@ -110,6 +111,20 @@ export default function MapSelectionPage() {
             fetchSelections();
         }
     }, [isAuthorized, user, season, category]);
+
+    // Calculate modded stats when beatmap or mods change
+    useEffect(() => {
+        const updateModdedStats = async () => {
+            if (beatmapPreview && user) {
+                const stats = await calculateModdedStatsAPI(beatmapPreview, selectedMods);
+                setModdedStats(stats);
+            } else {
+                setModdedStats(null);
+            }
+        };
+        
+        updateModdedStats();
+    }, [beatmapPreview, selectedMods, user]);
 
     const checkUserAuth = async () => {
         try {
@@ -292,6 +307,41 @@ export default function MapSelectionPage() {
         }
     };
 
+    // 使用rosu-pp API计算应用mod后的参数值
+    const calculateModdedStatsAPI = async (beatmap: BeatmapInfo, mods: string) => {
+        try {
+            const response = await fetch('/api/calculate-mod-stats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    beatmapId: beatmap.id,
+                    mods: mods,
+                    accessToken: user ? localStorage.getItem('osu_access_token') : null
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('API调用失败');
+            }
+
+            const data = await response.json();
+            return data.modStats;
+        } catch (error) {
+            console.error('计算mod参数失败:', error);
+            // 如果API失败，返回原始参数
+            return {
+                ar: beatmap.ar,
+                cs: beatmap.cs,
+                od: beatmap.od,
+                hp: beatmap.hp,
+                star_rating: beatmap.star_rating,
+                bpm: beatmap.bpm
+            };
+        }
+    };
+
     const addSelection = async () => {
         if (!beatmapPreview) {
             setError('请先解析有效的beatmap链接');
@@ -302,6 +352,9 @@ export default function MapSelectionPage() {
         setError('');
 
         try {
+            // 使用rosu-pp API计算应用mod后的参数
+            const moddedStats = await calculateModdedStatsAPI(beatmapPreview, selectedMods);
+            
             const response = await fetch('/api/map-selections', {
                 method: 'POST',
                 headers: {
@@ -315,7 +368,9 @@ export default function MapSelectionPage() {
                     approved,
                     selectedBy: user?.id.toString(),
                     season,
-                    category
+                    category,
+                    // 包含计算后的mod参数
+                    moddedStats
                 })
             });
 
@@ -598,10 +653,29 @@ export default function MapSelectionPage() {
                                             <p><strong>艺术家:</strong> {beatmapPreview.artist}</p>
                                             <p><strong>难度:</strong> {beatmapPreview.version}</p>
                                             <p><strong>作图者:</strong> {beatmapPreview.creator}</p>
-                                            <p><strong>星级:</strong> {beatmapPreview.star_rating.toFixed(2)}★</p>
-                                            <p><strong>BPM:</strong> {beatmapPreview.bpm}</p>
-                                            <p><strong>时长:</strong> {formatLength(beatmapPreview.total_length)}</p>
-                                            <p><strong>AR:</strong> {beatmapPreview.ar.toFixed(1)} | <strong>CS:</strong> {beatmapPreview.cs.toFixed(1)} | <strong>OD:</strong> {beatmapPreview.od.toFixed(1)} | <strong>HP:</strong> {beatmapPreview.hp.toFixed(1)}</p>
+                                            
+                                            {/* 显示mod计算后的参数 */}
+                                            {moddedStats && (() => {
+                                                const isModded = selectedMods === 'HR' || selectedMods === 'DT';
+                                                
+                                                return (
+                                                    <>
+                                                        <p><strong>星级:</strong> {moddedStats.star_rating.toFixed(2)}★ {isModded && <span className="text-sm text-blue-600">(+{selectedMods})</span>}</p>
+                                                        <p><strong>BPM:</strong> {moddedStats.bpm} {isModded && selectedMods === 'DT' && <span className="text-sm text-blue-600">(+DT)</span>}</p>
+                                                        <p><strong>时长:</strong> {formatLength(beatmapPreview.total_length)}</p>
+                                                        <p>
+                                                            <strong>AR:</strong> {moddedStats.ar.toFixed(1)} 
+                                                            {isModded && <span className="text-sm text-gray-500">({beatmapPreview.ar.toFixed(1)})</span>} | 
+                                                            <strong> CS:</strong> {moddedStats.cs.toFixed(1)} 
+                                                            {isModded && selectedMods === 'HR' && <span className="text-sm text-gray-500">({beatmapPreview.cs.toFixed(1)})</span>} | 
+                                                            <strong> OD:</strong> {moddedStats.od.toFixed(1)} 
+                                                            {isModded && <span className="text-sm text-gray-500">({beatmapPreview.od.toFixed(1)})</span>} | 
+                                                            <strong> HP:</strong> {moddedStats.hp.toFixed(1)}
+                                                            {isModded && selectedMods === 'HR' && <span className="text-sm text-gray-500">({beatmapPreview.hp.toFixed(1)})</span>}
+                                                        </p>
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 </div>
