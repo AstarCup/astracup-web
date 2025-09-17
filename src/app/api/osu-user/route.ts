@@ -52,10 +52,16 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout 
 }
 
 async function getUserDataFromAPI(username: string): Promise<OsuUser | null> {
+    console.log('getUserDataFromAPI called for:', username);
     const apiKey = process.env.OSU_CLIENT_SECRET;
+    console.log('API Key in function:', apiKey ? 'EXISTS' : 'NOT_FOUND');
+
     if (!apiKey) {
+        console.log('No API key, returning null');
         return null;
     }
+
+    console.log('Making API request to osu!');
 
     try {
         const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/users/${username}`, {
@@ -217,15 +223,19 @@ export async function GET(request: NextRequest) {
     // console.log(`Fetching osu! user data for: ${username}`);
 
     try {
+        // 检查环境变量
+        console.log('OSU_CLIENT_SECRET exists:', !!process.env.OSU_CLIENT_SECRET);
+
         // 首先尝试使用官方API
+        console.log('Trying official API...');
         let userData = await getUserDataFromAPI(username);
-        // console.log(`Official API result for ${username}:`, userData ? 'Success' : 'Failed');
+        console.log('Official API result:', userData ? 'Success' : 'Failed');
 
         // 如果官方API失败，尝试公开方法
         if (!userData) {
-            // console.log('Trying public method...');
+            console.log('Trying public method...');
             userData = await getUserDataFromPublic(username);
-            // console.log(`Public method result for ${username}:`, userData ? 'Success' : 'Failed');
+            console.log('Public method result:', userData ? 'Success' : 'Failed');
         }
 
         if (userData) {
