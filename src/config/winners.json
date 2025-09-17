@@ -2,89 +2,9 @@
     "seasons": [
         {
             "seasonId": "s1",
-            "seasonName": "第一季",
-            "year": "2024",
-            "description": "AstaraCup 首届比赛",
-            "winners": {
-                "first": {
-                    "rank": 1,
-                    "playerName": "Champion1",
-                    "osuId": "12345678",
-                    "country": "CN",
-                    "avatarUrl": "https://a.ppy.sh/12345678",
-                    "teamName": "Red Dragons",
-                    "achievement": "完美表现，以绝对优势夺冠",
-                    "resultImage": "https://example.com/s1-champion-result.jpg"
-                },
-                "second": {
-                    "rank": 2,
-                    "playerName": "Runner1",
-                    "osuId": "87654321",
-                    "country": "JP",
-                    "avatarUrl": "https://a.ppy.sh/87654321",
-                    "teamName": "Blue Storm",
-                    "achievement": "实力强劲，表现出色",
-                    "resultImage": "https://example.com/s1-runner-result.jpg"
-                },
-                "third": {
-                    "rank": 3,
-                    "playerName": "Bronze1",
-                    "osuId": "11111111",
-                    "country": "KR",
-                    "avatarUrl": "https://a.ppy.sh/11111111",
-                    "teamName": "Green Wind",
-                    "achievement": "稳定发挥，获得季军",
-                    "resultImage": "https://example.com/s1-bronze-result.jpg"
-                }
-            },
-            "matchDate": "2024-12-15",
-            "totalParticipants": 64
-        },
-        {
-            "seasonId": "s2",
-            "seasonName": "第二季",
+            "seasonName": "第一届",
             "year": "2025",
-            "description": "AstaraCup 第二届比赛",
-            "winners": {
-                "first": {
-                    "rank": 1,
-                    "playerName": "Champion2",
-                    "osuId": "22222222",
-                    "country": "TW",
-                    "avatarUrl": "https://a.ppy.sh/22222222",
-                    "teamName": "Golden Eagles",
-                    "achievement": "刷新记录，卫冕成功",
-                    "resultImage": "https://example.com/s2-champion-result.jpg"
-                },
-                "second": {
-                    "rank": 2,
-                    "playerName": "Runner2",
-                    "osuId": "33333333",
-                    "country": "US",
-                    "avatarUrl": "https://a.ppy.sh/33333333",
-                    "teamName": "Silver Wolves",
-                    "achievement": "国际选手首次进入前二",
-                    "resultImage": "https://example.com/s2-runner-result.jpg"
-                },
-                "third": {
-                    "rank": 3,
-                    "playerName": "Bronze2",
-                    "osuId": "44444444",
-                    "country": "GB",
-                    "avatarUrl": "https://a.ppy.sh/44444444",
-                    "teamName": "Iron Lions",
-                    "achievement": "黑马选手，异军突起",
-                    "resultImage": "https://example.com/s2-bronze-result.jpg"
-                }
-            },
-            "matchDate": "2025-06-20",
-            "totalParticipants": 96
-        },
-        {
-            "seasonId": "s3",
-            "seasonName": "第三季",
-            "year": "2025",
-            "description": "AstaraCup 第三届比赛（进行中）",
+            "description": "AstaraCup 第一届",
             "winners": {
                 "first": {
                     "rank": 1,
@@ -118,7 +38,7 @@
                 }
             },
             "matchDate": "2025-12-25",
-            "totalParticipants": 128,
+            "totalParticipants": 0,
             "status": "ongoing"
         }
     ]

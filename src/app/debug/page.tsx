@@ -16,6 +16,13 @@ export default function DebugPage() {
     const [registrationsLoading, setRegistrationsLoading] = useState(false);
     const [deletingUser, setDeletingUser] = useState<string | null>(null);
 
+    // Staff 生成器相关状态
+    const [staffUsername, setStaffUsername] = useState('');
+    const [staffRole, setStaffRole] = useState('organizers');
+    const [staffDescription, setStaffDescription] = useState('');
+    const [staffLoading, setStaffLoading] = useState(false);
+    const [generatedStaffData, setGeneratedStaffData] = useState<any>(null);
+
     useEffect(() => {
         // 检查用户会话和权限
         fetch('/api/session/get', {
@@ -143,6 +150,48 @@ export default function DebugPage() {
             alert('审核用户注册信息时发生错误');
         } finally {
             setDeletingUser(null);
+        }
+    };
+
+    // 生成 Staff 数据
+    const generateStaffData = async () => {
+        if (!staffUsername.trim()) {
+            alert('请输入用户名');
+            return;
+        }
+
+        setStaffLoading(true);
+        try {
+            const response = await fetch(`/api/osu-user?username=${encodeURIComponent(staffUsername)}`);
+            if (response.ok) {
+                const userData = await response.json();
+
+                const staffData = {
+                    name: userData.username,
+                    osuId: userData.id.toString(),
+                    avatarUrl: userData.avatar_url,
+                    role: staffRole,
+                    description: staffDescription.trim() || `${staffRole} 成员`,
+                    coverUrl: userData.cover?.custom_url || userData.cover?.url || null
+                };
+
+                setGeneratedStaffData(staffData);
+            } else {
+                alert('获取用户数据失败');
+            }
+        } catch (error) {
+            console.error('Error generating staff data:', error);
+            alert('生成 Staff 数据时发生错误');
+        } finally {
+            setStaffLoading(false);
+        }
+    };
+
+    // 复制 JSON 到剪贴板
+    const copyToClipboard = () => {
+        if (generatedStaffData) {
+            navigator.clipboard.writeText(JSON.stringify(generatedStaffData, null, 2));
+            alert('已复制到剪贴板');
         }
     };
 
@@ -363,6 +412,89 @@ export default function DebugPage() {
                         {registrations.length === 0 && !registrationsLoading && (
                             <div className="text-center py-4 text-purple-700">
                                 <p>暂无报名用户数据，点击上方按钮获取</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Staff 数据生成器 */}
+                <div className="mb-6">
+                    <h2 className="text-xl font-semibold mb-3">Staff 数据生成器</h2>
+                    <div className="bg-purple-50 border border-purple-200 rounded-md p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    osu! 用户名
+                                </label>
+                                <input
+                                    type="text"
+                                    value={staffUsername}
+                                    onChange={(e) => setStaffUsername(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    placeholder="输入 osu! 用户名"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    角色类型
+                                </label>
+                                <select
+                                    value={staffRole}
+                                    onChange={(e) => setStaffRole(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                >
+                                    <option value="organizers">主办方</option>
+                                    <option value="administrators">管理团队</option>
+                                    <option value="referees">裁判团队</option>
+                                    <option value="mappool_selectors">图池选择</option>
+                                    <option value="streamers">直播团队</option>
+                                    <option value="commentators">解说团队</option>
+                                    <option value="designers">设计团队</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                描述（可选）
+                            </label>
+                            <input
+                                type="text"
+                                value={staffDescription}
+                                onChange={(e) => setStaffDescription(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="留空将使用默认描述"
+                            />
+                        </div>
+                        <button
+                            onClick={generateStaffData}
+                            disabled={staffLoading}
+                            className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+                        >
+                            {staffLoading ? '生成中...' : '生成 Staff 数据'}
+                        </button>
+
+                        {generatedStaffData && (
+                            <div className="bg-white border border-purple-300 rounded-md p-4">
+                                <div className="flex justify-between items-center mb-2">
+                                    <h3 className="text-lg font-medium text-purple-800">生成的 Staff 数据</h3>
+                                    <button
+                                        onClick={copyToClipboard}
+                                        className="bg-green-500 text-white px-3 py-1 rounded-md text-sm hover:bg-green-600"
+                                    >
+                                        复制 JSON
+                                    </button>
+                                </div>
+                                <pre className="text-sm bg-gray-100 p-3 rounded overflow-x-auto">
+                                    {JSON.stringify(generatedStaffData, null, 2)}
+                                </pre>
+                                <div className="mt-3 text-sm text-purple-700">
+                                    <p><strong>说明：</strong></p>
+                                    <ul className="list-disc list-inside mt-1">
+                                        <li>将生成的 JSON 数据复制到对应的 staff.json 文件中</li>
+                                        <li>coverUrl 字段包含用户的封面图片URL，可用于背景显示</li>
+                                        <li>如果用户没有封面图片，coverUrl 将为 null</li>
+                                    </ul>
+                                </div>
                             </div>
                         )}
                     </div>

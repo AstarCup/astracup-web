@@ -3,6 +3,11 @@ export interface OsuUser {
     username: string;
     avatar_url: string;
     country_code: string;
+    cover?: {
+        custom_url: string | null;
+        url: string;
+        id: string | null;
+    };
     statistics: {
         pp: number;
         global_rank: number | null;
@@ -78,6 +83,11 @@ export async function getUserData(username: string): Promise<OsuUser | null> {
             username: data.username,
             avatar_url: data.avatar_url,
             country_code: data.country_code,
+            cover: data.cover ? {
+                custom_url: data.cover.custom_url || null,
+                url: data.cover.url || '',
+                id: data.cover.id || null,
+            } : undefined,
             statistics: {
                 pp: data.statistics?.pp || 0,
                 global_rank: data.statistics?.global_rank || null,
@@ -302,7 +312,7 @@ export async function getMatchDataPublic(matchId: string): Promise<MatchData | n
         if (jsonMatch && jsonMatch[1]) {
             try {
                 const matchData = JSON.parse(jsonMatch[1]);
-                
+
                 // 标准化数据结构
                 return {
                     match: {
@@ -403,7 +413,7 @@ export async function getMapPoolData(season: string = 's1'): Promise<MapPool> {
         if (!response.ok) {
             throw new Error(`获取图池数据失败: ${response.status}`);
         }
-        
+
         const data = await response.json();
         return data;
     } catch (error) {

@@ -10,6 +10,7 @@ interface StaffMember {
     avatarUrl: string;
     role: string;
     description: string;
+    coverUrl?: string | null;
 }
 
 interface StaffData {

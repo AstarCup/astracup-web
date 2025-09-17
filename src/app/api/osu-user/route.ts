@@ -5,6 +5,11 @@ export interface OsuUser {
     username: string;
     avatar_url: string;
     country_code: string;
+    cover?: {
+        custom_url: string | null;
+        url: string;
+        id: string | null;
+    };
     statistics: {
         pp: number;
         global_rank: number | null;
@@ -72,6 +77,11 @@ async function getUserDataFromAPI(username: string): Promise<OsuUser | null> {
             username: data.username,
             avatar_url: data.avatar_url,
             country_code: data.country_code,
+            cover: data.cover ? {
+                custom_url: data.cover.custom_url || null,
+                url: data.cover.url || '',
+                id: data.cover.id || null,
+            } : undefined,
             statistics: {
                 pp: data.statistics?.pp || 0,
                 global_rank: data.statistics?.global_rank || null,
@@ -131,6 +141,11 @@ async function getUserDataFromPublic(username: string): Promise<OsuUser | null> 
                     username: userData.username,
                     avatar_url: userData.avatar_url,
                     country_code: userData.country_code,
+                    cover: userData.cover ? {
+                        custom_url: userData.cover.custom_url || null,
+                        url: userData.cover.url || '',
+                        id: userData.cover.id || null,
+                    } : undefined,
                     statistics: userData.statistics || {
                         pp: 0,
                         global_rank: null,
@@ -159,6 +174,7 @@ async function getUserDataFromPublic(username: string): Promise<OsuUser | null> 
                 username: username,
                 avatar_url: '',
                 country_code: '',
+                cover: undefined,
                 statistics: {
                     pp: 0,
                     global_rank: null,

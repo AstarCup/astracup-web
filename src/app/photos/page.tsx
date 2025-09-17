@@ -46,7 +46,7 @@ export default function Photos() {
                     <div className="text-center">
                         <h1 className="text-5xl font-bold text-white mb-4">荣誉榜</h1>
                         <p className="text-xl text-white/90 max-w-3xl mx-auto">
-                            记录每一季 AstaraCup 的冠亚季军得主，见证传奇的诞生
+                            记录每一届 AstaraCup 的冠亚季军得主，见证传奇的诞生
                         </p>
                         <div className="mt-6 flex justify-center items-center space-x-6">
                             <div className="flex items-center space-x-2">
@@ -65,7 +65,6 @@ export default function Photos() {
                 {/* 赛季筛选器 */}
                 <div className="mb-12">
                     <div className="bg-[#1A1A1A] p-6 border border-gray-700">
-                        <h3 className="text-xl font-bold text-white mb-4">筛选赛季</h3>
                         <div className="flex flex-wrap gap-3">
                             <button
                                 onClick={() => setSelectedSeason('all')}
@@ -150,20 +149,17 @@ export default function Photos() {
                         <h3 className="text-3xl font-bold text-white mb-4">成为传说的一部分</h3>
                         <p className="text-gray-400 mb-6 max-w-3xl mx-auto text-lg">
                             每一位获奖者都是 AstaraCup 历史的见证者。他们的名字将永远刻在荣誉榜上，
-                            激励着更多选手追求卓越，成就自己的传奇故事。
+                            激励着更多选手追求卓越，成就自己的传奇故事。（包括女装）
                         </p>
                         <div className="flex justify-center space-x-8">
                             <div className="text-center">
-                                <div className="text-3xl text-yellow-400 mb-2">👑</div>
-                                <div className="text-gray-300">冠军荣耀</div>
+                                <div className="text-3xl text-yellow-400 mb-2"><img src="/icons/1.svg" alt="1" width={48} height={48} /></div>
                             </div>
                             <div className="text-center">
-                                <div className="text-3xl text-gray-400 mb-2">🥈</div>
-                                <div className="text-gray-300">亚军风采</div>
+                                <div className="text-3xl text-gray-400 mb-2"><img src="/icons/2.svg" alt="2" width={48} height={48} /></div>
                             </div>
                             <div className="text-center">
-                                <div className="text-3xl text-amber-600 mb-2">🥉</div>
-                                <div className="text-gray-300">季军精神</div>
+                                <div className="text-3xl text-amber-600 mb-2"><img src="/icons/3.svg" alt="3" width={48} height={48} /></div>
                             </div>
                         </div>
                     </div>
