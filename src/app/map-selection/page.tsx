@@ -110,6 +110,7 @@ export default function MapSelectionPage() {
             }
 
             setUser(currentUser);
+            console.log('Current user:', currentUser);
 
             // Verify map selection permissions
             const authResponse = await fetch('/api/map-selection-auth', {
@@ -122,11 +123,24 @@ export default function MapSelectionPage() {
                 })
             });
 
+            console.log('Auth response status:', authResponse.status);
+            const authError = await authResponse.json();
+            console.log('Auth response data:', authError);
+
             if (authResponse.ok) {
                 setIsAuthorized(true);
             } else {
-                const authError = await authResponse.json();
-                setError(authError.error || 'You do not have permission to access the map selection system');
+                // 显示详细的调试信息
+                let errorMessage = authError.error || 'You do not have permission to access the map selection system';
+                
+                if (authError.debug) {
+                    errorMessage += `\n\nDebug Info:\n`;
+                    errorMessage += `Your ID: ${authError.debug.yourId} (${authError.debug.yourIdType})\n`;
+                    errorMessage += `Authorized IDs: ${JSON.stringify(authError.debug.authorizedIds)}\n`;
+                    errorMessage += `Comparison Details:\n${JSON.stringify(authError.debug.comparisonDetails, null, 2)}`;
+                }
+                
+                setError(errorMessage);
             }
 
         } catch (error) {
@@ -270,7 +284,7 @@ export default function MapSelectionPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900">
+            <div className="min-h-screen flex items-center justify-center to-pink-900">
                 <div className="text-white text-xl">Verifying permissions...</div>
             </div>
         );
@@ -279,9 +293,11 @@ export default function MapSelectionPage() {
     if (!isAuthorized) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900">
-                <div className="bg-red-500/20 border border-red-500 rounded-lg p-6 max-w-md">
+                <div className="bg-red-500/20 border border-red-500 rounded-lg p-6 max-w-2xl">
                     <h2 className="text-white text-xl font-bold mb-4">Access Denied</h2>
-                    <p className="text-white mb-4">{error}</p>
+                    <pre className="text-white mb-4 whitespace-pre-wrap text-sm bg-black/20 p-4 rounded overflow-auto max-h-96">
+                        {error}
+                    </pre>
                     <button
                         onClick={() => router.push('/')}
                         className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
