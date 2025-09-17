@@ -17,8 +17,23 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const handleLogout = () => {
-    setUser(null);
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/session/clear', {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        setUser(null);
+        // 显示退出成功提示
+        console.log('成功退出登录');
+      } else {
+        console.error('退出登录失败');
+      }
+    } catch (error) {
+      console.error('退出登录请求失败:', error);
+    }
   };
 
   useEffect(() => {
@@ -40,7 +55,7 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center">
 
-      
+
       <div className="relative w-full max-w-5xl flex flex-col items-left justify-center">
         <BackgroundSVG
           className="absolute top-0 -translate-x-80 -translate-y-25 object-cover object-center w-full h-full z-1 select-none pointer-events-auto"
@@ -145,32 +160,32 @@ export default function Home() {
               <Image src="/icons/live.svg" alt="直播间" width={240} height={124} />
             </a>
           </div>
-          
+
           {/* 新闻列表区域 */}
           <div className="flex-1 overflow-y-auto">
             <NewsListWithPagination />
           </div>
         </div>
-<div>
-  
-        <div className="md:col-span-1 md:row-span-1 m-1 items-center justify-center bg-[#3D3D3D] p-3 z-2 flex flex-col text-center min-h-32">
-          <div className="flex-1 flex flex-col justify-center">
-            <UserProfile user={user} onLogout={handleLogout} />
-            {!user ? (
-              <a href="/register" className="text-2xl px-3 py-3 bg-[#E93B66] text-white hover:bg-[#3BE9D8] transition mt-4"
-              ><Image src='icons/useOsuLogin.svg' width={700} height={300} alt="使用 osu! 账号登录" /></a>
-            ) : (
-              <RegistrationButton user={user} />
-            )}
+        <div>
+
+          <div className="md:col-span-1 md:row-span-1 m-1 items-center justify-center bg-[#3D3D3D] p-3 z-2 flex flex-col text-center min-h-32">
+            <div className="flex-1 flex flex-col justify-center">
+              <UserProfile user={user} onLogout={handleLogout} />
+              {!user ? (
+                <a href="/register" className="text-2xl px-3 py-3 bg-[#E93B66] text-white hover:bg-[#3BE9D8] transition mt-4"
+                ><Image src='icons/useOsuLogin.svg' width={700} height={300} alt="使用 osu! 账号登录" /></a>
+              ) : (
+                <RegistrationButton user={user} />
+              )}
+            </div>
+          </div>
+          <div className="w-full max-w-5xl flex justify-end pr-6">
+            <Image src="/Line.svg" alt="line" width={338} height={20} />
           </div>
         </div>
-          <div className="w-full max-w-5xl flex justify-end pr-6">
-        <Image src="/Line.svg" alt="line" width={338} height={20} />
       </div>
-</div>
-      </div>
-      
-      
+
+
 
 
     </div>
