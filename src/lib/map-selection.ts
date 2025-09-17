@@ -87,10 +87,22 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
                 updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 INDEX idx_beatmapId (beatmapId),
                 INDEX idx_selectedBy (selectedBy),
-                INDEX idx_season_category (season, category),
-                UNIQUE KEY unique_beatmap_season_category (beatmapId, season, category)
+                INDEX idx_season_category (season, category)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
+
+        // 移除唯一约束（如果存在）
+        try {
+            await connection.execute(`
+                ALTER TABLE map_selections DROP INDEX unique_beatmap_season_category
+            `);
+            console.log('Removed unique constraint to allow duplicate beatmaps');
+        } catch (error: any) {
+            // 如果约束不存在，忽略错误
+            if (error.code !== 'ER_CANT_DROP_FIELD_OR_KEY') {
+                console.log('Unique constraint removal:', error.message);
+            }
+        }
 
         // 检查并添加新字段（用于已存在的表）
         try {
@@ -270,9 +282,6 @@ export const mapSelectionStorage = {
             return insertResult.affectedRows > 0;
         } catch (error) {
             console.error('Error adding map selection:', error);
-            if (error instanceof Error && error.message.includes('Duplicate entry')) {
-                throw new Error('该beatmap已经在此赛季和类别中被选择过了');
-            }
             return false;
         }
     },
@@ -359,7 +368,6 @@ export const mapSelectionStorage = {
 export const getMapSelections = mapSelectionStorage.getMapSelections;
 export const addMapSelection = mapSelectionStorage.addMapSelection;
 export const deleteMapSelection = mapSelectionStorage.deleteMapSelection;
-export const isBeatmapSelected = mapSelectionStorage.isBeatmapSelected;
 export const updateMapSelection = mapSelectionStorage.updateMapSelection;
 
 export default initMapSelectionDatabase;

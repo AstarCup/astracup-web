@@ -3,7 +3,6 @@ import {
     getMapSelections,
     addMapSelection,
     deleteMapSelection,
-    isBeatmapSelected,
     updateMapSelection,
     initMapSelectionDatabase
 } from '@/lib/map-selection';
@@ -190,16 +189,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 检查是否已经选择过这个beatmap
-        const alreadySelected = await isBeatmapSelected(beatmapInfo.id, season, category);
-        if (alreadySelected) {
-            return NextResponse.json(
-                { error: '该beatmap已经在此赛季和类别中被选择过了' },
-                { status: 400 }
-            );
-        }
-
-        // 添加选图
+        // 添加选图（允许重复添加）
         const success = await addMapSelection({
             beatmapId: beatmapInfo.id,
             beatmapsetId: beatmapInfo.beatmapset_id,
