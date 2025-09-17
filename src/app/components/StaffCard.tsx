@@ -6,6 +6,7 @@ interface StaffMember {
     avatarUrl: string;
     role: string;
     description: string;
+    coverUrl?: string | null;
 }
 
 interface StaffCardProps {
@@ -19,10 +20,21 @@ export default function StaffCard({ member }: StaffCardProps) {
 
     return (
         <div
-            className="bg-gradient-to-br from-[#2A2A2A] to-[#1A1A1A] p-6 border border-gray-600 hover:border-[#FF66AA] transition-all duration-300 cursor-pointer group transform hover:scale-105 shadow-xl hover:shadow-2xl"
+            className="relative bg-gradient-to-br from-[#2A2A2A] to-[#1A1A1A] p-6 border border-gray-600 hover:border-[#FF66AA] transition-all duration-300 cursor-pointer group transform hover:scale-105 shadow-xl hover:shadow-2xl overflow-hidden"
             onClick={handleClick}
         >
-            <div className="flex flex-col items-center">
+            {/* Cover 背景图 */}
+            {member.coverUrl && (
+                <div
+                    className="absolute inset-0 bg-cover bg-center opacity-20 group-hover:opacity-30 transition-opacity duration-300"
+                    style={{
+                        backgroundImage: `url(${member.coverUrl})`,
+                    }}
+                />
+            )}
+
+            {/* 内容层，确保文字在背景图之上 */}
+            <div className="relative z-10 flex flex-col items-center">
                 {/* 头像 */}
                 <div className="relative mb-4">
                     <img
@@ -31,7 +43,7 @@ export default function StaffCard({ member }: StaffCardProps) {
                         className="w-20 h-20 rounded-full border-4 border-gray-600 group-hover:border-[#FF66AA] transition-colors duration-300"
                         onError={(e) => {
                             // 如果头像加载失败，使用默认头像
-                            (e.target as HTMLImageElement).src = '/default-avatar.png';
+                            (e.target as HTMLImageElement).src = '/icons/unknow.svg';
                         }}
                     />
                 </div>

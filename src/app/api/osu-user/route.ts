@@ -5,6 +5,11 @@ export interface OsuUser {
     username: string;
     avatar_url: string;
     country_code: string;
+    cover?: {
+        custom_url: string | null;
+        url: string;
+        id: string | null;
+    };
     statistics: {
         pp: number;
         global_rank: number | null;
@@ -46,22 +51,56 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout 
     }
 }
 
+async function getAccessToken(): Promise<string | null> {
+    const clientId = process.env.OSU_CLIENT_ID;
+    const clientSecret = process.env.OSU_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+        return null;
+    }
+
+    try {
+        const response = await fetch('https://osu.ppy.sh/oauth/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                client_id: clientId,
+                client_secret: clientSecret,
+                grant_type: 'client_credentials',
+                scope: 'public'
+            }),
+        });
+
+        if (!response.ok) {
+            return null;
+        }
+
+        const data = await response.json();
+        return data.access_token;
+    } catch (error) {
+        console.error('Error getting access token:', error);
+        return null;
+    }
+}
+
 async function getUserDataFromAPI(username: string): Promise<OsuUser | null> {
-    const apiKey = process.env.OSU_API_KEY;
-    if (!apiKey) {
+    // 获取 access token
+    const accessToken = await getAccessToken();
+    if (!accessToken) {
         return null;
     }
 
     try {
         const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/users/${username}`, {
             headers: {
-                'Authorization': `Bearer ${apiKey}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
             },
         });
 
         if (!response.ok) {
-            // console.log(`Official API failed with status: ${response.status}`);
             return null;
         }
 
@@ -72,6 +111,11 @@ async function getUserDataFromAPI(username: string): Promise<OsuUser | null> {
             username: data.username,
             avatar_url: data.avatar_url,
             country_code: data.country_code,
+            cover: data.cover ? {
+                custom_url: data.cover.custom_url || null,
+                url: data.cover.url || '',
+                id: data.cover.id || null,
+            } : undefined,
             statistics: {
                 pp: data.statistics?.pp || 0,
                 global_rank: data.statistics?.global_rank || null,
@@ -110,12 +154,10 @@ async function getUserDataFromPublic(username: string): Promise<OsuUser | null> 
         });
 
         if (!searchResponse.ok) {
-            // console.log(`Public method failed with status: ${searchResponse.status}`);
             return null;
         }
 
         const finalUrl = searchResponse.url;
-        // console.log(`Public method final URL: ${finalUrl}`);
 
         const html = await searchResponse.text();
 
@@ -131,6 +173,11 @@ async function getUserDataFromPublic(username: string): Promise<OsuUser | null> 
                     username: userData.username,
                     avatar_url: userData.avatar_url,
                     country_code: userData.country_code,
+                    cover: userData.cover ? {
+                        custom_url: userData.cover.custom_url || null,
+                        url: userData.cover.url || '',
+                        id: userData.cover.id || null,
+                    } : undefined,
                     statistics: userData.statistics || {
                         pp: 0,
                         global_rank: null,
@@ -152,13 +199,13 @@ async function getUserDataFromPublic(username: string): Promise<OsuUser | null> 
         // 如果无法解析JSON，尝试从URL中提取用户ID
         const userIdMatch = finalUrl.match(/\/users\/(\d+)/);
         if (userIdMatch && userIdMatch[1]) {
-            // console.log(`Found user ID from URL: ${userIdMatch[1]}`);
             // 返回基本用户信息
             return {
                 id: parseInt(userIdMatch[1]),
                 username: username,
                 avatar_url: '',
                 country_code: '',
+                cover: undefined,
                 statistics: {
                     pp: 0,
                     global_rank: null,

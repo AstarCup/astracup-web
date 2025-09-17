@@ -43,7 +43,7 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
                     bgGradient: 'from-yellow-400 via-yellow-500 to-yellow-600',
                     borderColor: 'border-yellow-400',
                     textColor: 'text-yellow-400',
-                    icon: '👑',
+                    icon: '/icons/1.svg',
                     title: '冠军'
                 };
             case 2:
@@ -51,7 +51,7 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
                     bgGradient: 'from-gray-300 via-gray-400 to-gray-500',
                     borderColor: 'border-gray-400',
                     textColor: 'text-gray-400',
-                    icon: '🥈',
+                    icon: '/icons/2.svg',
                     title: '亚军'
                 };
             case 3:
@@ -59,7 +59,7 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
                     bgGradient: 'from-amber-600 via-amber-700 to-amber-800',
                     borderColor: 'border-amber-600',
                     textColor: 'text-amber-600',
-                    icon: '🥉',
+                    icon: '/icons/3.svg',
                     title: '季军'
                 };
             default:
@@ -84,7 +84,7 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
             >
                 {/* 排名徽章 */}
                 <div className={`absolute -top-4 -right-4 w-12 h-12 bg-gradient-to-br ${rankStyle.bgGradient} rounded-full flex items-center justify-center border-4 border-[#1A1A1A] shadow-lg`}>
-                    <span className="text-2xl">{rankStyle.icon}</span>
+                    <span className="text-2xl"><img src={rankStyle.icon} alt={rankStyle.title} /></span>
                 </div>
 
                 {/* 排名标题 */}
@@ -101,16 +101,14 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
                 <div className="flex flex-col items-center mb-6">
                     {/* 头像 */}
                     <div className={`relative mb-4 p-1 rounded-full bg-gradient-to-br ${rankStyle.bgGradient}`}>
-                        {!isPending && winner.avatarUrl && (
-                            <img
-                                src={winner.avatarUrl}
-                                alt={winner.playerName}
-                                className="w-24 h-24 rounded-full border-4 border-[#1A1A1A]"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                }}
-                            />
-                        )}
+                        <img
+                            src={isPending ? '/icons/unknow.svg' : (winner.avatarUrl || '/icons/unknow.svg')}
+                            alt={winner.playerName}
+                            className="w-24 h-24 rounded-full border-4 border-[#1A1A1A]"
+                            onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/icons/unknow.svg';
+                            }}
+                        />
                         {/* 国旗 */}
                         {!isPending && (
                             <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-[#1A1A1A] rounded-full flex items-center justify-center border-2 border-gray-600 text-white">
@@ -161,7 +159,6 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
                         title="查看返图"
                     >
                         <div className="flex items-center justify-center">
-                            <span className="text-white text-lg mr-2">🔍</span>
                             <span className="text-white font-bold">查看返图</span>
                         </div>
                     </button>
