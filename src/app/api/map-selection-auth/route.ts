@@ -22,15 +22,15 @@ export async function POST(request: NextRequest) {
                 console.log('Trying to fetch from Edge Config...');
                 const teamConfig = await get('mapSelectionTeam');
                 console.log('Edge Config response:', teamConfig);
-                
+
                 if (teamConfig && Array.isArray(teamConfig)) {
-                    mapSelectionTeam = teamConfig.filter((id): id is string => 
+                    mapSelectionTeam = teamConfig.filter((id): id is string =>
                         typeof id === 'string' && id.trim() !== ''
                     );
                     console.log('Parsed team from Edge Config:', mapSelectionTeam);
                 }
             }
-            
+
             // 如果Edge Config没有数据，尝试从环境变量获取
             if (mapSelectionTeam.length === 0 && process.env.MAP_SELECTION_TEAM_IDS) {
                 console.log('Using environment variable fallback...');
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
                     .filter(id => id !== '');
                 console.log('Team from env var:', mapSelectionTeam);
             }
-            
+
             // 如果都没有数据，使用默认测试ID
             if (mapSelectionTeam.length === 0) {
                 console.log('Using default test IDs...');
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
                     '2', // peppy的ID作为示例
                 ];
             }
-            
+
         } catch (edgeConfigError) {
             console.error('Error fetching from Edge Config:', edgeConfigError);
             // Edge Config出错时使用环境变量
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             success: true,
             message: '权限验证成功',
             authorized: true
@@ -99,12 +99,12 @@ export async function GET(request: NextRequest) {
         if (process.env.EDGE_CONFIG) {
             const teamConfig = await get('mapSelectionTeam');
             if (teamConfig && Array.isArray(teamConfig)) {
-                mapSelectionTeam = teamConfig.filter((id): id is string => 
+                mapSelectionTeam = teamConfig.filter((id): id is string =>
                     typeof id === 'string' && id.trim() !== ''
                 );
             }
         }
-        
+
         // 如果Edge Config没有数据，尝试从环境变量获取
         if (mapSelectionTeam.length === 0 && process.env.MAP_SELECTION_TEAM_IDS) {
             mapSelectionTeam = process.env.MAP_SELECTION_TEAM_IDS
@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
                 .map(id => id.trim())
                 .filter(id => id !== '');
         }
-        
+
         // 如果都没有数据，使用默认测试ID
         if (mapSelectionTeam.length === 0) {
             mapSelectionTeam = ['2']; // 示例ID
@@ -122,8 +122,11 @@ export async function GET(request: NextRequest) {
             environment: process.env.NODE_ENV,
             hasEdgeConfig: !!process.env.EDGE_CONFIG,
             teamMemberCount: mapSelectionTeam.length,
-            // 在生产环境中，不返回实际的ID列表以保护隐私
-            teamMembers: process.env.NODE_ENV === 'development' ? mapSelectionTeam : undefined
+            // 显示团队成员列表用于调试（生产环境中也显示，因为需要调试）
+            teamMembers: mapSelectionTeam,
+            // 添加更多调试信息
+            edgeConfigUrl: process.env.EDGE_CONFIG ? 'configured' : 'not configured',
+            envTeamIds: process.env.MAP_SELECTION_TEAM_IDS || 'not set'
         });
 
     } catch (error) {

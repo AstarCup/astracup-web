@@ -95,17 +95,17 @@ export const mapSelectionStorage = {
             const connection = await getPool().getConnection();
             let query = 'SELECT * FROM map_selections WHERE season = ?';
             const params: any[] = [season];
-            
+
             if (category) {
                 query += ' AND category = ?';
                 params.push(category);
             }
-            
+
             query += ' ORDER BY selectedAt DESC';
-            
+
             const [rows] = await connection.execute(query, params);
             connection.release();
-            
+
             return (rows as any[]).map(row => ({
                 id: row.id,
                 beatmapId: row.beatmapId,
@@ -135,7 +135,7 @@ export const mapSelectionStorage = {
     async addMapSelection(selection: Omit<MapSelection, 'id' | 'selectedAt'>): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
-            
+
             const [result] = await connection.execute(`
                 INSERT INTO map_selections (
                     beatmapId, beatmapsetId, title, artist, version, creator,
@@ -159,7 +159,7 @@ export const mapSelectionStorage = {
                 selection.category,
                 selection.url
             ]);
-            
+
             connection.release();
             const insertResult = result as mysql.ResultSetHeader;
             return insertResult.affectedRows > 0;
@@ -176,12 +176,12 @@ export const mapSelectionStorage = {
     async deleteMapSelection(id: number, selectedBy: string): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
-            
+
             const [result] = await connection.execute(
                 'DELETE FROM map_selections WHERE id = ? AND selectedBy = ?',
                 [id, selectedBy]
             );
-            
+
             connection.release();
             const deleteResult = result as mysql.ResultSetHeader;
             return deleteResult.affectedRows > 0;
@@ -195,12 +195,12 @@ export const mapSelectionStorage = {
     async isBeatmapSelected(beatmapId: number, season: string, category: string): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
-            
+
             const [rows] = await connection.execute(
                 'SELECT COUNT(*) as count FROM map_selections WHERE beatmapId = ? AND season = ? AND category = ?',
                 [beatmapId, season, category]
             );
-            
+
             connection.release();
             const result = rows as any[];
             return result[0].count > 0;
@@ -214,32 +214,32 @@ export const mapSelectionStorage = {
     async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment'>>, selectedBy: string): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
-            
+
             const setClause = [];
             const params = [];
-            
+
             if (updates.selectedMods !== undefined) {
                 setClause.push('selectedMods = ?');
                 params.push(updates.selectedMods);
             }
-            
+
             if (updates.comment !== undefined) {
                 setClause.push('comment = ?');
                 params.push(updates.comment);
             }
-            
+
             if (setClause.length === 0) {
                 connection.release();
                 return false;
             }
-            
+
             params.push(id, selectedBy);
-            
+
             const [result] = await connection.execute(
                 `UPDATE map_selections SET ${setClause.join(', ')} WHERE id = ? AND selectedBy = ?`,
                 params
             );
-            
+
             connection.release();
             const updateResult = result as mysql.ResultSetHeader;
             return updateResult.affectedRows > 0;

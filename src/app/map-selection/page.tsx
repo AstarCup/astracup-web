@@ -62,12 +62,12 @@ export default function MapSelectionPage() {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthorized, setIsAuthorized] = useState(false);
-    
+
     // Map selection data
     const [selections, setSelections] = useState<MapSelection[]>([]);
     const [season, setSeason] = useState('s1');
     const [category, setCategory] = useState('qualification');
-    
+
     // Add selection form
     const [showAddForm, setShowAddForm] = useState(false);
     const [urlInput, setUrlInput] = useState('');
@@ -75,7 +75,7 @@ export default function MapSelectionPage() {
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [beatmapPreview, setBeatmapPreview] = useState<BeatmapInfo | null>(null);
-    
+
     // Error and message
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
@@ -97,13 +97,13 @@ export default function MapSelectionPage() {
             // Check if user is logged in
             const sessionResponse = await fetch('/api/session');
             if (!sessionResponse.ok) {
-                router.push('/register'); 
+                router.push('/register');
                 return;
             }
 
             const sessionData = await sessionResponse.json();
             const currentUser = sessionData.user;
-            
+
             if (!currentUser) {
                 router.push('/register');
                 return;
@@ -302,8 +302,8 @@ export default function MapSelectionPage() {
                     <div className="flex items-center space-x-4">
                         {user && (
                             <div className="flex items-center space-x-2 text-white">
-                                <img 
-                                    src={user.avatar_url} 
+                                <img
+                                    src={user.avatar_url}
                                     alt={user.username}
                                     className="w-8 h-8 rounded-full"
                                 />
@@ -323,7 +323,7 @@ export default function MapSelectionPage() {
                 {error && (
                     <div className="bg-red-500/20 border border-red-500 rounded-lg p-4 mb-6">
                         <p className="text-white">{error}</p>
-                        <button 
+                        <button
                             onClick={() => setError('')}
                             className="text-red-300 hover:text-red-100 mt-2"
                         >
@@ -335,7 +335,7 @@ export default function MapSelectionPage() {
                 {message && (
                     <div className="bg-green-500/20 border border-green-500 rounded-lg p-4 mb-6">
                         <p className="text-white">{message}</p>
-                        <button 
+                        <button
                             onClick={() => setMessage('')}
                             className="text-green-300 hover:text-green-100 mt-2"
                         >
@@ -387,7 +387,7 @@ export default function MapSelectionPage() {
                 {showAddForm && (
                     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 mb-6">
                         <h3 className="text-white text-xl font-bold mb-4">Add New Map Selection</h3>
-                        
+
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-white text-sm mb-2">Beatmap URL</label>
@@ -481,7 +481,7 @@ export default function MapSelectionPage() {
                     <h3 className="text-white text-xl font-bold mb-4">
                         Selected Maps ({selections.length})
                     </h3>
-                    
+
                     {selections.length === 0 ? (
                         <p className="text-white/70 text-center py-8">No map selections</p>
                     ) : (

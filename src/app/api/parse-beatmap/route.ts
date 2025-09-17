@@ -10,7 +10,7 @@ async function verifyMapSelectionAuth(osuId: string): Promise<boolean> {
         if (process.env.NODE_ENV === 'production' && process.env.EDGE_CONFIG) {
             const teamConfig = await get('mapSelectionTeam');
             if (teamConfig && Array.isArray(teamConfig)) {
-                mapSelectionTeam = teamConfig.filter((id): id is string => 
+                mapSelectionTeam = teamConfig.filter((id): id is string =>
                     typeof id === 'string' && id.trim() !== ''
                 );
             }
