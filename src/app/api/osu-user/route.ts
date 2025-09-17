@@ -69,7 +69,16 @@ async function getUserDataFromAPI(username: string): Promise<OsuUser | null> {
             return null;
         }
 
-        const data = await response.json(); return {
+        const data = await response.json();
+
+        // 添加调试日志
+        console.log('API Response Keys:', Object.keys(data));
+        console.log('Cover field exists:', 'cover' in data);
+        console.log('Cover field value:', data.cover);
+        console.log('Cover_url field exists:', 'cover_url' in data);
+        console.log('Cover_url field value:', data.cover_url);
+
+        return {
             id: data.id,
             username: data.username,
             avatar_url: data.avatar_url,
