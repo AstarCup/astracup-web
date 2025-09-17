@@ -43,13 +43,13 @@ export default function Mapool() {
     const [selectedCategory, setSelectedCategory] = useState('qualification');
 
     const CATEGORY_OPTIONS = [
-        { value: 'qualification', label: '资格赛' },
-        { value: 'ro32', label: '32强赛' },
-        { value: 'ro16', label: '16强赛' },
-        { value: 'quarterfinals', label: '四分之一决赛' },
-        { value: 'semifinals', label: '半决赛' },
-        { value: 'finals', label: '决赛' },
-        { value: 'grandfinals', label: '总决赛' }
+        { value: 'qualification', label: 'QUA' },
+        { value: 'ro32', label: 'RO32' },
+        { value: 'ro16', label: 'RO16' },
+        { value: 'quarterfinals', label: 'QF' },
+        { value: 'semifinals', label: 'SF' },
+        { value: 'finals', label: 'F' },
+        { value: 'grandfinals', label: 'GF' }
     ];
 
     useEffect(() => {
@@ -194,7 +194,7 @@ export default function Mapool() {
             </div>
 
             {mapPoolData.length === 0 ? (
-                <div className="text-center text-white py-8">
+                <div className="text-center text-white p-60">
                     <p>暂无已过审的图池数据</p>
                 </div>
             ) : (

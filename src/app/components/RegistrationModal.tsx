@@ -21,7 +21,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
     const [rankConfig, setRankConfig] = useState({
         maxPpForRegistration: 7000,
         minPpForRegistration: 0,
-        rankRestrictionEnabled: true
+        rankRestrictionEnabled: false
     });
     const [configLoading, setConfigLoading] = useState(true);
     const [edgeConfig, setEdgeConfig] = useState<any>(null);
@@ -191,7 +191,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                                         <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                     </svg>
                                 </div>
-                                <div className="ml-3">
+                                <div className="ml-3 text-left">
                                     <h3 className="text-sm font-medium text-yellow-800">报名限制</h3>
                                     <div className="mt-2 text-sm text-yellow-700">
                                         <p>很抱歉，您的PP值 ({Math.round(user.pp)}) 超过了{rankConfig.maxPpForRegistration}点的报名限制。</p>
@@ -210,7 +210,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
 
                     <div className="space-y-4">
                         {/* 用户信息确认 */}
-                        <div className="bg-gray-50 p-4 rounded-md">
+                        <div className="bg-gray-50 p-4 rounded-md text-left">
                             <h3 className="font-semibold text-gray-900 mb-2">您的账号信息</h3>
                             <div className="grid grid-cols-2 gap-2 text-sm">
                                 <div>
@@ -253,34 +253,82 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                             </div>
 
                             {showGuide ? (
-                                <div className="text-sm text-gray-600 space-y-2">
-                                    <p><strong>比赛规则:</strong></p>
-                                    <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>比赛采用 osu! standard 模式</li>
-                                        <li>所有参赛者必须使用bancho账号进行注册</li>
-                                        <li>禁止使用任何形式的作弊工具</li>
-                                        <li>比赛期间请保持良好竞技精神</li>
-                                    </ul>
+                                <div className="text-sm text-gray-600 space-y-3 max-h-96 overflow-y-auto text-left">
+                                    <div>
+                                        <p><strong>赛事介绍：</strong></p>
+                                        <p className="ml-4 mb-2">AstarCup是面向中高分段的一个娱乐性比赛，其目的是主办起星域了。比赛会办成系列赛，预计一年一届。本系列赛事模式为osu!std。使用lazer端进行比赛。</p>
+                                        <p className="ml-4">本赛事中，为个人淘汰赛赛制，不设置FM图池，改为lazer mod图池。</p>
+                                    </div>
 
-                                    <p><strong>报名要求:</strong></p>
-                                    <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>每人只能报名一次</li>
-                                        <li>报名信息提交后不可更改</li>
-                                        <li>请确保网络连接稳定</li>
-                                        <li>比赛期间需保持在线状态</li>
-                                    </ul>
+                                    <div>
+                                        <p><strong>报名要求：</strong></p>
+                                        <ul className="list-disc list-inside space-y-1 ml-4">
+                                            <li>本次报名要求pp段的区间为 <strong>2000pp - 8100pp</strong></li>
+                                            <li>本次赛事pp限制以报名时的pp作为基准</li>
+                                            <li>本次赛事仅限中国大陆玩家报名，港澳台地区如要报名，获得的奖品需要自付邮费</li>
+                                            <li>osu账号未处于长期离线状态的，近期无不良游玩记录的方可报名</li>
+                                            <li>请确保有充足时间参与，如果没有可以在截止报名前允许退赛</li>
+                                            <li>已报名但仍未进入赛群的玩家将视为弃赛</li>
+                                        </ul>
+                                    </div>
 
-                                    <p><strong>注意事项:</strong></p>
-                                    <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>请提前测试设备性能</li>
-                                        <li>建议使用有线网络连接</li>
-                                        <li>比赛前请关闭不必要的后台程序</li>
-                                        <li>如遇技术问题请及时联系管理员</li>
-                                    </ul>
+                                    <div>
+                                        <p><strong>比赛规则：</strong></p>
+                                        <ul className="list-disc list-inside space-y-1 ml-4">
+                                            <li>比赛中默认使用计分方式为 lazer score，默认不开启No Fail (NF)</li>
+                                            <li>每场比赛开始前5分钟，该局裁判将邀请双方进入多人游戏房间</li>
+                                            <li>如果比赛开始时对手还没到场，比赛可以推迟10分钟，否则判对方默认获胜</li>
+                                            <li>每方将有120s的时间选择谱面，以及120s的准备时间</li>
+                                            <li>可以申请延时，双方各2次机会（一次延时3min）</li>
+                                            <li>比赛开始后30秒以内可以请求重赛，超过30秒后不可以申请重赛</li>
+                                            <li>每场比赛掉线只有2次机会，第3次及以上掉线视为本次成绩无效</li>
+                                        </ul>
+                                    </div>
+
+                                    <div>
+                                        <p><strong>赛制说明：</strong></p>
+                                        <ul className="list-disc list-inside space-y-1 ml-4">
+                                            <li>若达成8人，则进入单败淘汰赛</li>
+                                            <li>若达成16人，则采用资格赛+双败赛制</li>
+                                            <li>当报名人数大于16人时，将通过资格赛决出前16位选手</li>
+                                            <li>双败阶段：一轮BO9（抢5），二三轮BO11（抢6），四五轮BO13（抢7）</li>
+                                        </ul>
+                                    </div>
+
+                                    <div>
+                                        <p><strong>图池组合：</strong></p>
+                                        <ul className="list-disc list-inside space-y-1 ml-4">
+                                            <li><strong>NM</strong> [No Mod]: 使用NF mod</li>
+                                            <li><strong>HD</strong> [Hidden]: 使用HD和NF mod</li>
+                                            <li><strong>HR</strong> [Hard Rock]: 使用HR和NF mod</li>
+                                            <li><strong>DT</strong> [DoubleTime]: 使用DT和NF mod</li>
+                                            <li><strong>LZ</strong> [Lazer]: lazer图，使用lazer fun mod内精心挑选的图，不可ban</li>
+                                            <li><strong>TB</strong> [Tiebreaker]: 进入双方赛点时才会被强制使用</li>
+                                        </ul>
+                                    </div>
+
+                                    <div>
+                                        <p><strong>奖励设置：</strong></p>
+                                        <ul className="list-disc list-inside space-y-1 ml-4">
+                                            <li>🥇 冠军：主办精选胡桃木jk一套（≥200元）</li>
+                                            <li>🥈 亚军：柔情猫娘一个（~110元）</li>
+                                            <li>🥉 季军：ok女仆一个（~71元）</li>
+                                        </ul>
+                                    </div>
+
+                                    <div>
+                                        <p><strong>重要提醒：</strong></p>
+                                        <ul className="list-disc list-inside space-y-1 ml-4">
+                                            <li>比赛途中出现问题请找staff，不要与玩家发生争执</li>
+                                            <li>如果开赛后在赛中被查到作弊行为的，将会取消本届的参赛资格</li>
+                                            <li>禁止使用任何形式的作弊工具</li>
+                                            <li>比赛期间请保持良好竞技精神</li>
+                                        </ul>
+                                    </div>
                                 </div>
                             ) : (
                                 <p className="text-sm text-gray-600">
-                                    请仔细阅读比赛规则和报名要求，并添加QQ群:1072271422。
+                                    请仔细阅读比赛规则和报名要求，并添加QQ群:1072271422。点击"查看详情"了解完整比赛手册。
                                 </p>
                             )}
                         </div>
