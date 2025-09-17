@@ -71,7 +71,13 @@ async function getUserDataFromAPI(username: string): Promise<OsuUser | null> {
             },
         });
 
+        console.log('API Response Status:', response.status);
+        console.log('API Response Headers:', Object.fromEntries(response.headers.entries()));
+
         if (!response.ok) {
+            console.log('API call failed with status:', response.status);
+            const errorText = await response.text();
+            console.log('Error response body:', errorText);
             return null;
         }
 
