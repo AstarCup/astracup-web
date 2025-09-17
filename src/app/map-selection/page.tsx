@@ -488,7 +488,6 @@ export default function MapSelectionPage() {
                                 <select
                                     value={season}
                                     onChange={(e) => setSeason(e.target.value)}
-                                    className="bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
                                 >
                                     {availableSeasons.map(seasonOption => (
                                         <option key={seasonOption.value} value={seasonOption.value}>
@@ -502,7 +501,6 @@ export default function MapSelectionPage() {
                                 <select
                                     value={category}
                                     onChange={(e) => setCategory(e.target.value)}
-                                    className="bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
                                 >
                                     {CATEGORY_OPTIONS.map(option => (
                                         <option key={option.value} value={option.value}>
@@ -584,7 +582,7 @@ export default function MapSelectionPage() {
                                     <select
                                         value={selectedMods}
                                         onChange={(e) => setSelectedMods(e.target.value)}
-                                        className="w-full bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
+                                        className="w-full"
                                     >
                                         {MOD_OPTIONS.map(mod => (
                                             <option key={mod} value={mod}>{mod}</option>

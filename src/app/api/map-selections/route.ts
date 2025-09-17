@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
 
             // 获取选图列表
             const selections = await getMapSelections(season, category);
-            
+
             // 只返回已过审的图
             const approvedSelections = selections.filter(selection => selection.approved);
 

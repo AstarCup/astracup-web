@@ -81,11 +81,11 @@ export default function Mapool() {
         try {
             setIsLoading(true);
             const response = await fetch(`/api/map-selections?season=${currentSeason}&category=${selectedCategory}&approved=true`);
-            
+
             if (response.ok) {
                 const data = await response.json();
                 const approvedMaps = data.selections?.filter((map: MapSelection) => map.approved) || [];
-                
+
                 // 转换数据格式为MapoolTable需要的格式
                 const convertedData = convertToMapoolFormat(approvedMaps);
                 setMapPoolData(convertedData);
@@ -105,11 +105,11 @@ export default function Mapool() {
         const sortedMaps = maps.sort((a, b) => {
             const aModIndex = MOD_ORDER.indexOf(a.selectedMods);
             const bModIndex = MOD_ORDER.indexOf(b.selectedMods);
-            
+
             if (aModIndex !== bModIndex) {
                 return aModIndex - bModIndex;
             }
-            
+
             // 如果mod相同，按位置排序
             return a.modPosition - b.modPosition;
         });
@@ -141,7 +141,7 @@ export default function Mapool() {
 
     if (isLoading) {
         return (
-            <div className="max-w-9xl mx-auto p-6">
+            <div className="max-w-9xl mx-auto p-60">
                 <div className="text-center text-white">
                     <div className="text-xl mb-4">正在加载图池数据...</div>
                 </div>
@@ -162,7 +162,7 @@ export default function Mapool() {
     return (
         <div className="max-w-9xl mx-auto p-6">
             <h1 className="text-3xl font-bold mb-6 text-white">图池</h1>
-            
+
             {/* 赛季和类别选择器 */}
             <div className="mb-6 flex gap-4 items-center">
                 <div>
@@ -170,7 +170,6 @@ export default function Mapool() {
                     <select
                         value={currentSeason}
                         onChange={(e) => setCurrentSeason(e.target.value)}
-                        className="bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
                     >
                         {availableSeasons.map(season => (
                             <option key={season.value} value={season.value}>
@@ -184,7 +183,6 @@ export default function Mapool() {
                     <select
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
                     >
                         {CATEGORY_OPTIONS.map(option => (
                             <option key={option.value} value={option.value}>
@@ -200,10 +198,10 @@ export default function Mapool() {
                     <p>暂无已过审的图池数据</p>
                 </div>
             ) : (
-                <MapoolTable 
-                    data={mapPoolData} 
+                <MapoolTable
+                    data={mapPoolData}
                     title={CATEGORY_OPTIONS.find(opt => opt.value === selectedCategory)?.label || selectedCategory}
-                    downloadUrl="/" 
+                    downloadUrl="/"
                 />
             )}
         </div>
