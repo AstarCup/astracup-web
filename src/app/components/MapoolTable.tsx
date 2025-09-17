@@ -115,7 +115,7 @@ export default function MapoolTable({ data, title, downloadUrl }: MapoolTablePro
                                         {row.MapInfo}
                                     </a></td>
                                     <td>{row._Creator}</td>
-                                    <td title="Star 星数">{row.SR}</td>
+                                    <td title="Star 星数">{row.SR}★</td>
                                     <td title={`原生CS: ${row._CS}`}>{row.CS}</td>
                                     <td title={`原生AR: ${row._AR}`}>{row.AR}</td>
                                     <td title={`原生OD: ${row._OD}`}>{row.OD}</td>
