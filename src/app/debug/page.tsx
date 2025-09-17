@@ -166,6 +166,10 @@ export default function DebugPage() {
             if (response.ok) {
                 const userData = await response.json();
 
+                // 调试：打印原始数据
+                console.log('原始用户数据:', userData);
+                console.log('Cover 数据:', userData.cover);
+
                 // 角色映射
                 const roleMapping: Record<string, string> = {
                     'organizers': '主办方',
