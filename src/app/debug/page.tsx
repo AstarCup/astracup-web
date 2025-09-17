@@ -166,12 +166,23 @@ export default function DebugPage() {
             if (response.ok) {
                 const userData = await response.json();
 
+                // 角色映射
+                const roleMapping: Record<string, string> = {
+                    'organizers': '主办方',
+                    'administrators': '管理团队',
+                    'referees': '裁判',
+                    'mappool_selectors': '图池选择',
+                    'streamers': '直播团队',
+                    'commentators': '解说团队',
+                    'designers': '设计团队'
+                };
+
                 const staffData = {
                     name: userData.username,
                     osuId: userData.id.toString(),
-                    avatarUrl: userData.avatar_url,
-                    role: staffRole,
-                    description: staffDescription.trim() || `${staffRole} 成员`,
+                    avatarUrl: userData.avatar_url || `https://a.ppy.sh/${userData.id}`,
+                    role: roleMapping[staffRole] || staffRole,
+                    description: staffDescription.trim() || `${roleMapping[staffRole] || staffRole} 成员`,
                     coverUrl: userData.cover?.custom_url || userData.cover?.url || null
                 };
 
@@ -185,9 +196,7 @@ export default function DebugPage() {
         } finally {
             setStaffLoading(false);
         }
-    };
-
-    // 复制 JSON 到剪贴板
+    };    // 复制 JSON 到剪贴板
     const copyToClipboard = () => {
         if (generatedStaffData) {
             navigator.clipboard.writeText(JSON.stringify(generatedStaffData, null, 2));
