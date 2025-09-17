@@ -13,30 +13,57 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 从Edge Config获取选图团队成员列表
+        // 从Edge Config和环境变量获取选图团队成员列表
         let mapSelectionTeam: string[] = [];
 
         try {
-            if (process.env.NODE_ENV === 'production' && process.env.EDGE_CONFIG) {
-                // 生产环境从Edge Config获取
+            // 优先尝试从Edge Config获取（无论开发还是生产环境）
+            if (process.env.EDGE_CONFIG) {
+                console.log('Trying to fetch from Edge Config...');
                 const teamConfig = await get('mapSelectionTeam');
+                console.log('Edge Config response:', teamConfig);
+                
                 if (teamConfig && Array.isArray(teamConfig)) {
                     mapSelectionTeam = teamConfig.filter((id): id is string => 
                         typeof id === 'string' && id.trim() !== ''
                     );
+                    console.log('Parsed team from Edge Config:', mapSelectionTeam);
                 }
-            } else {
-                // 开发环境使用默认配置（可以在这里添加测试用的osu ID）
+            }
+            
+            // 如果Edge Config没有数据，尝试从环境变量获取
+            if (mapSelectionTeam.length === 0 && process.env.MAP_SELECTION_TEAM_IDS) {
+                console.log('Using environment variable fallback...');
+                mapSelectionTeam = process.env.MAP_SELECTION_TEAM_IDS
+                    .split(',')
+                    .map(id => id.trim())
+                    .filter(id => id !== '');
+                console.log('Team from env var:', mapSelectionTeam);
+            }
+            
+            // 如果都没有数据，使用默认测试ID
+            if (mapSelectionTeam.length === 0) {
+                console.log('Using default test IDs...');
                 mapSelectionTeam = [
-                    // 添加测试用的osu ID，生产环境时通过Edge Config配置
-                    '2', // peppy的ID作为示例，实际使用时请替换
+                    '2', // peppy的ID作为示例
                 ];
             }
+            
         } catch (edgeConfigError) {
             console.error('Error fetching from Edge Config:', edgeConfigError);
-            // Edge Config出错时使用空数组
-            mapSelectionTeam = [];
+            // Edge Config出错时使用环境变量
+            if (process.env.MAP_SELECTION_TEAM_IDS) {
+                mapSelectionTeam = process.env.MAP_SELECTION_TEAM_IDS
+                    .split(',')
+                    .map(id => id.trim())
+                    .filter(id => id !== '');
+            } else {
+                mapSelectionTeam = ['2']; // 默认测试ID
+            }
         }
+
+        console.log('Final map selection team:', mapSelectionTeam);
+        console.log('Checking osu ID:', osuId);
 
         // 检查osu ID是否在授权列表中
         const isAuthorized = mapSelectionTeam.includes(osuId.toString());
@@ -68,19 +95,27 @@ export async function GET(request: NextRequest) {
     try {
         let mapSelectionTeam: string[] = [];
 
-        if (process.env.NODE_ENV === 'production' && process.env.EDGE_CONFIG) {
-            // 生产环境从Edge Config获取
+        // 优先尝试从Edge Config获取（无论开发还是生产环境）
+        if (process.env.EDGE_CONFIG) {
             const teamConfig = await get('mapSelectionTeam');
             if (teamConfig && Array.isArray(teamConfig)) {
                 mapSelectionTeam = teamConfig.filter((id): id is string => 
                     typeof id === 'string' && id.trim() !== ''
                 );
             }
-        } else {
-            // 开发环境使用默认配置
-            mapSelectionTeam = [
-                '2', // 示例ID
-            ];
+        }
+        
+        // 如果Edge Config没有数据，尝试从环境变量获取
+        if (mapSelectionTeam.length === 0 && process.env.MAP_SELECTION_TEAM_IDS) {
+            mapSelectionTeam = process.env.MAP_SELECTION_TEAM_IDS
+                .split(',')
+                .map(id => id.trim())
+                .filter(id => id !== '');
+        }
+        
+        // 如果都没有数据，使用默认测试ID
+        if (mapSelectionTeam.length === 0) {
+            mapSelectionTeam = ['2']; // 示例ID
         }
 
         return NextResponse.json({
