@@ -17,23 +17,8 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const handleLogout = async () => {
-    try {
-      const response = await fetch('/api/session/clear', {
-        method: 'POST',
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        setUser(null);
-        // 显示退出成功提示
-        console.log('成功退出登录');
-      } else {
-        console.error('退出登录失败');
-      }
-    } catch (error) {
-      console.error('退出登录请求失败:', error);
-    }
+  const handleLogout = () => {
+    setUser(null);
   };
 
   useEffect(() => {
@@ -56,7 +41,7 @@ export default function Home() {
     <div className="flex flex-col items-center justify-center">
 
 
-      <div className="relative w-full max-w-5xl flex flex-col items-left justify-center">
+      <div className="relative w-full max-w-5xl flex flex-col items-left justify-center px-4 sm:px-6">
         <BackgroundSVG
           className="absolute top-0 -translate-x-80 -translate-y-25 object-cover object-center w-full h-full z-1 select-none pointer-events-auto"
           style={{ minWidth: '180%', minHeight: '160%' }}
@@ -69,12 +54,24 @@ export default function Home() {
           .bg-block:hover {
             fill: #3BE9D8 !important;
           }
+          @media (max-width: 640px) {
+            .animated-logo {
+              transform: scale(0.7);
+              transform-origin: left center;
+            }
+          }
+          @media (max-width: 480px) {
+            .animated-logo {
+              transform: scale(0.5);
+              transform-origin: left center;
+            }
+          }
         `}</style>
-        <div className="relative">
+        <div className="relative animated-logo">
           <AnimatedLogo />
         </div>
-        <p className="text-4xl font-bold mb-4 z-2 relative text-white drop-shadow-lg -translate-y-25">星域杯</p>
-        <p className="mb-6 z-10 relative text-white drop-shadow-md -translate-y-25">这里是OSU!Lazer星域杯，面向中国大陆 8100pp 分段的 1v1 比赛。</p>
+        <p className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 z-2 relative text-white drop-shadow-lg -translate-y-25">星域杯</p>
+        <p className="text-sm sm:text-base mb-6 z-10 relative text-white drop-shadow-md -translate-y-25">这里是OSU!Lazer星域杯，面向中国大陆 8100pp 分段的 1v1 比赛。</p>
       </div>
       {/* 导航按钮区域 */}
       <div className="mt-0 w-full max-w-5xl z-10 relative p-6">
@@ -138,24 +135,24 @@ export default function Home() {
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-5xl p-6 z-10 relative">
-        <div className='md:col-span-2 m-1 bg-[#3D3D3D] p-3 z-2 flex flex-col'>
+        <div className='md:col-span-2 m-1 bg-[#3D3D3D] p-3 z-2 flex flex-col min-h-[400px] md:min-h-[500px]'>
           {/* 社交媒体链接区域 */}
-          <div className="flex flex-col md:flex-row items-center justify-center h-32 border-b border-gray-200 mb-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center min-h-[100px] md:h-32 border-b border-gray-200 mb-4">
             <a
               href="https://qm.qq.com/q/sFydxoQtaw"
-              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3BE9D8] hover:text-white transition h-full"
+              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3BE9D8] hover:text-white transition h-full min-h-[60px]"
             >
               <Image src="/icons/QQ.svg" alt="QQ群" width={240} height={124} />
             </a>
             <a
               href="https://space.bilibili.com/11872433"
-              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3BE9D8] hover:text-white transition h-full"
+              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3BE9D8] hover:text-white transition h-full min-h-[60px]"
             >
               <Image src="/icons/bilibili.svg" alt="主办B站" width={240} height={124} />
             </a>
             <a
               href="https://live.bilibili.com/725565"
-              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3BE9D8] hover:text-white transition h-full"
+              className="flex-1 p-3 flex items-center justify-center hover:bg-[#3BE9D8] hover:text-white transition h-full min-h-[60px]"
             >
               <Image src="/icons/live.svg" alt="直播间" width={240} height={124} />
             </a>
@@ -166,27 +163,23 @@ export default function Home() {
             <NewsListWithPagination />
           </div>
         </div>
-        <div>
 
-          <div className="md:col-span-1 md:row-span-1 m-1 items-center justify-center bg-[#3D3D3D] p-3 z-2 flex flex-col text-center min-h-32">
-            <div className="flex-1 flex flex-col justify-center">
-              <UserProfile user={user} onLogout={handleLogout} />
-              {!user ? (
-                <a href="/register" className="text-2xl px-3 py-3 bg-[#E93B66] text-white hover:bg-[#3BE9D8] transition mt-4"
-                ><Image src='icons/useOsuLogin.svg' width={700} height={300} alt="使用 osu! 账号登录" /></a>
-              ) : (
-                <RegistrationButton user={user} />
-              )}
-            </div>
-          </div>
-          <div className="w-full max-w-5xl flex justify-end pr-6">
-            <Image src="/Line.svg" alt="line" width={338} height={20} />
+        <div className="md:col-span-1 m-1 bg-[#3D3D3D] p-3 z-2 flex flex-col text-center min-h-[300px] md:min-h-[500px]">
+          <div className="flex-1 flex flex-col overflow-y-auto">
+            <UserProfile user={user} onLogout={handleLogout} />
+            {!user ? (
+              <a href="/register" className="text-2xl px-3 py-3 bg-[#E93B66] text-white hover:bg-[#3BE9D8] transition mt-4"
+              ><Image src='icons/useOsuLogin.svg' width={700} height={300} alt="使用 osu! 账号登录" /></a>
+            ) : (
+              <RegistrationButton user={user} />
+            )}
           </div>
         </div>
       </div>
 
-
-
+      <div className="w-full max-w-5xl flex justify-end pr-6">
+        <Image src="/Line.svg" alt="line" width={338} height={20} />
+      </div>
 
     </div>
   );

@@ -41,7 +41,7 @@ export default function RootLayout({
         <Navbar />
         <Analytics />
         <SpeedInsights />
-        <main className={`pt-50`}>
+        <main className={`pt-20`}>
           {children}
         </main>
         <Footer />
