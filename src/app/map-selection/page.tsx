@@ -93,6 +93,7 @@ export default function MapSelectionPage() {
     const [approved, setApproved] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [beatmapPreview, setBeatmapPreview] = useState<BeatmapInfo | null>(null);
+    const [availableBeatmaps, setAvailableBeatmaps] = useState<BeatmapInfo[]>([]);
 
     // Error and message
     const [error, setError] = useState('');
@@ -255,6 +256,7 @@ export default function MapSelectionPage() {
         setIsSubmitting(true);
         setError('');
         setBeatmapPreview(null);
+        setAvailableBeatmaps([]);
 
         try {
             const response = await fetch('/api/parse-beatmap', {
@@ -272,8 +274,11 @@ export default function MapSelectionPage() {
                 const data = await response.json();
                 if (data.data.type === 'single') {
                     setBeatmapPreview(data.data.beatmap);
+                    setAvailableBeatmaps([]);
                 } else {
-                    setBeatmapPreview(data.data.beatmaps[0]);
+                    // 多个beatmap，让用户选择
+                    setAvailableBeatmaps(data.data.beatmaps);
+                    setBeatmapPreview(data.data.beatmaps[0]); // 默认选择第一个
                 }
             } else {
                 const errorData = await response.json();
@@ -323,6 +328,7 @@ export default function MapSelectionPage() {
                 setModPosition(1);
                 setApproved(false);
                 setBeatmapPreview(null);
+                setAvailableBeatmaps([]);
                 fetchSelections();
             } else {
                 const errorData = await response.json();
@@ -532,7 +538,7 @@ export default function MapSelectionPage() {
                                         type="text"
                                         value={urlInput}
                                         onChange={(e) => setUrlInput(e.target.value)}
-                                        placeholder="https://osu.ppy.sh/beatmaps/123456 or https://osu.ppy.sh/beatmapsets/12345"
+                                        placeholder="https://osu.ppy.sh/beatmaps/sid#mod#bid"
                                         className="flex-1 bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
                                     />
                                     <button
@@ -549,6 +555,31 @@ export default function MapSelectionPage() {
                             {beatmapPreview && (
                                 <div className="bg-gray-200 rounded-lg p-4">
                                     <h4 className="text-gray-800 font-bold mb-2">歌曲预览</h4>
+                                    
+                                    {/* 难度选择器 - 只在有多个难度时显示 */}
+                                    {availableBeatmaps.length > 1 && (
+                                        <div className="mb-4">
+                                            <label className="block text-gray-800 text-sm mb-2">选择难度</label>
+                                            <select
+                                                value={beatmapPreview.id}
+                                                onChange={(e) => {
+                                                    const selectedId = parseInt(e.target.value);
+                                                    const selectedBeatmap = availableBeatmaps.find(b => b.id === selectedId);
+                                                    if (selectedBeatmap) {
+                                                        setBeatmapPreview(selectedBeatmap);
+                                                    }
+                                                }}
+                                                className="w-full"
+                                            >
+                                                {availableBeatmaps.map(beatmap => (
+                                                    <option key={beatmap.id} value={beatmap.id}>
+                                                        {beatmap.version} - {beatmap.star_rating.toFixed(2)}★
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+
                                     <div className="flex gap-4">
                                         {/* Cover image */}
                                         <div className="flex-shrink-0">
@@ -636,6 +667,7 @@ export default function MapSelectionPage() {
                                         setModPosition(1);
                                         setApproved(false);
                                         setBeatmapPreview(null);
+                                        setAvailableBeatmaps([]);
                                         setError('');
                                     }}
                                     className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
