@@ -660,17 +660,17 @@ export default function MapSelectionPage() {
                                                 
                                                 return (
                                                     <>
-                                                        <p><strong>星级:</strong> {moddedStats.star_rating.toFixed(2)}★ {isModded && <span className="text-sm text-blue-600">(+{selectedMods})</span>}</p>
-                                                        <p><strong>BPM:</strong> {moddedStats.bpm} {isModded && selectedMods === 'DT' && <span className="text-sm text-blue-600">(+DT)</span>}</p>
+                                                        <p><strong>星级:</strong> {(moddedStats.star_rating || 0).toFixed(2)}★ {isModded && <span className="text-sm text-blue-600">(+{selectedMods})</span>}</p>
+                                                        <p><strong>BPM:</strong> {moddedStats.bpm || 0} {isModded && selectedMods === 'DT' && <span className="text-sm text-blue-600">(+DT)</span>}</p>
                                                         <p><strong>时长:</strong> {formatLength(beatmapPreview.total_length)}</p>
                                                         <p>
-                                                            <strong>AR:</strong> {moddedStats.ar.toFixed(1)} 
+                                                            <strong>AR:</strong> {(moddedStats.ar || 0).toFixed(1)} 
                                                             {isModded && <span className="text-sm text-gray-500">({beatmapPreview.ar.toFixed(1)})</span>} | 
-                                                            <strong> CS:</strong> {moddedStats.cs.toFixed(1)} 
+                                                            <strong> CS:</strong> {(moddedStats.cs || 0).toFixed(1)} 
                                                             {isModded && selectedMods === 'HR' && <span className="text-sm text-gray-500">({beatmapPreview.cs.toFixed(1)})</span>} | 
-                                                            <strong> OD:</strong> {moddedStats.od.toFixed(1)} 
+                                                            <strong> OD:</strong> {(moddedStats.od || 0).toFixed(1)} 
                                                             {isModded && <span className="text-sm text-gray-500">({beatmapPreview.od.toFixed(1)})</span>} | 
-                                                            <strong> HP:</strong> {moddedStats.hp.toFixed(1)}
+                                                            <strong> HP:</strong> {(moddedStats.hp || 0).toFixed(1)}
                                                             {isModded && selectedMods === 'HR' && <span className="text-sm text-gray-500">({beatmapPreview.hp.toFixed(1)})</span>}
                                                         </p>
                                                     </>

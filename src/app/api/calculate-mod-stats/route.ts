@@ -75,18 +75,30 @@ export async function POST(req: NextRequest) {
         const difficultyResult = difficulty.calculate(beatmap);
         const performanceResult = performance.calculate(beatmap);
         
+        // 调试输出
+        console.log('Difficulty result:', difficultyResult);
+        console.log('Performance result:', performanceResult);
+        console.log('Difficulty result keys:', Object.keys(difficultyResult || {}));
+        console.log('Performance result keys:', Object.keys(performanceResult || {}));
+        
         const result = {
-            ar: difficultyResult.ar || difficultyResult.approach_rate,
-            cs: difficultyResult.cs || difficultyResult.circle_size,
-            od: difficultyResult.od || difficultyResult.overall_difficulty,
-            hp: difficultyResult.hp || difficultyResult.drain_rate,
-            star_rating: difficultyResult.stars || difficultyResult.star_rating,
-            bpm: difficultyResult.bpm || 0
+            ar: difficultyResult?.ar ?? difficultyResult?.approach_rate ?? 0,
+            cs: difficultyResult?.cs ?? difficultyResult?.circle_size ?? 0,
+            od: difficultyResult?.od ?? difficultyResult?.overall_difficulty ?? 0,
+            hp: difficultyResult?.hp ?? difficultyResult?.drain_rate ?? 0,
+            star_rating: difficultyResult?.stars ?? difficultyResult?.star_rating ?? 0,
+            bpm: difficultyResult?.bpm ?? beatmap?.bpm ?? 0
         };
+
+        console.log('Final result:', result);
 
         return NextResponse.json({ 
             modStats: result,
-            method: 'rosu-pp' 
+            method: 'rosu-pp',
+            debug: {
+                difficultyKeys: Object.keys(difficultyResult || {}),
+                performanceKeys: Object.keys(performanceResult || {})
+            }
         });
 
     } catch (error) {
