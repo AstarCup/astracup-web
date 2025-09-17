@@ -51,22 +51,59 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout 
     }
 }
 
-async function getUserDataFromAPI(username: string): Promise<OsuUser | null> {
-    console.log('getUserDataFromAPI called for:', username);
-    const apiKey = process.env.OSU_CLIENT_SECRET;
-    console.log('API Key in function:', apiKey ? 'EXISTS' : 'NOT_FOUND');
+async function getAccessToken(): Promise<string | null> {
+    const clientId = process.env.OSU_CLIENT_ID;
+    const clientSecret = process.env.OSU_CLIENT_SECRET;
 
-    if (!apiKey) {
-        console.log('No API key, returning null');
+    if (!clientId || !clientSecret) {
+        console.log('Missing OSU_CLIENT_ID or OSU_CLIENT_SECRET');
         return null;
     }
 
-    console.log('Making API request to osu!');
+    try {
+        const response = await fetch('https://osu.ppy.sh/oauth/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                client_id: clientId,
+                client_secret: clientSecret,
+                grant_type: 'client_credentials',
+                scope: 'public'
+            }),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.log('Failed to get access token:', response.status, errorText);
+            return null;
+        }
+
+        const data = await response.json();
+        return data.access_token;
+    } catch (error) {
+        console.error('Error getting access token:', error);
+        return null;
+    }
+}
+
+async function getUserDataFromAPI(username: string): Promise<OsuUser | null> {
+    console.log('getUserDataFromAPI called for:', username);
+
+    // 获取 access token
+    const accessToken = await getAccessToken();
+    if (!accessToken) {
+        console.log('Failed to get access token');
+        return null;
+    }
+
+    console.log('Making API request to osu! with access token');
 
     try {
         const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/users/${username}`, {
             headers: {
-                'Authorization': `Bearer ${apiKey}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
             },
         });
