@@ -126,17 +126,25 @@ export default function MapSelectionPage() {
 
             const currentUser = sessionData.session;
             console.log('Current user details:', {
-                id: currentUser.id,
+                id: currentUser.osuId,
                 username: currentUser.username,
-                idType: typeof currentUser.id
+                idType: typeof currentUser.osuId
             });
-            setUser(currentUser);
-            console.log('Current user set:', currentUser);
+            
+            // 为了兼容现有的User接口，我们需要将osuId转换为id
+            const userForState = {
+                id: parseInt(currentUser.osuId),
+                username: currentUser.username,
+                avatar_url: currentUser.avatar_url
+            };
+            
+            setUser(userForState);
+            console.log('Current user set:', userForState);
 
             // Verify map selection permissions
-            console.log('Checking map selection permissions for user ID:', currentUser.id);
+            console.log('Checking map selection permissions for user ID:', currentUser.osuId);
 
-            if (!currentUser.id) {
+            if (!currentUser.osuId) {
                 console.log('No user ID found in session');
                 setError('Invalid user session - no user ID found. Redirecting to login page...');
                 setTimeout(() => router.push('/register'), 3000);
@@ -149,7 +157,7 @@ export default function MapSelectionPage() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    osuId: currentUser.id.toString()
+                    osuId: currentUser.osuId.toString()
                 })
             });
 
