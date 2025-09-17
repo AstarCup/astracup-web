@@ -50,44 +50,45 @@ export async function POST(req: NextRequest) {
         // 解析beatmap内容为Beatmap对象
         const beatmap = new rosu.Beatmap(beatmapContent);
         
-        // 创建Performance计算器
-        const performance = new rosu.Performance() as any;
+        // 创建BeatmapAttributesBuilder来获取基础参数
+        const attributesBuilder = new rosu.BeatmapAttributesBuilder();
         
         // 设置mod
         let modValue = 0;
-        if (mods) {
+        if (mods && mods !== 'NM') {
             const modString = mods.toUpperCase();
             if (modString.includes('HR')) modValue |= 16;  // Hard Rock
             if (modString.includes('DT')) modValue |= 64;  // Double Time
             if (modString.includes('HD')) modValue |= 8;   // Hidden
+            
+            if (modValue > 0) {
+                attributesBuilder.mods = modValue;
+            }
         }
         
-        if (modValue > 0) {
-            performance.mods(modValue);
-        }
+        // 获取带mod的beatmap属性
+        const beatmapAttributes = attributesBuilder.build();
         
-        // 计算难度
-        const difficulty = new rosu.Difficulty() as any;
+        // 计算难度（获取星级）
+        const difficulty = new rosu.Difficulty();
         if (modValue > 0) {
-            difficulty.mods(modValue);
+            difficulty.mods = modValue;
         }
         
         const difficultyResult = difficulty.calculate(beatmap);
-        const performanceResult = performance.calculate(beatmap);
         
-        // 调试输出
+        console.log('Beatmap attributes:', beatmapAttributes);
         console.log('Difficulty result:', difficultyResult);
-        console.log('Performance result:', performanceResult);
+        console.log('Beatmap attributes keys:', Object.keys(beatmapAttributes || {}));
         console.log('Difficulty result keys:', Object.keys(difficultyResult || {}));
-        console.log('Performance result keys:', Object.keys(performanceResult || {}));
         
         const result = {
-            ar: difficultyResult?.ar ?? difficultyResult?.approach_rate ?? 0,
-            cs: difficultyResult?.cs ?? difficultyResult?.circle_size ?? 0,
-            od: difficultyResult?.od ?? difficultyResult?.overall_difficulty ?? 0,
-            hp: difficultyResult?.hp ?? difficultyResult?.drain_rate ?? 0,
-            star_rating: difficultyResult?.stars ?? difficultyResult?.star_rating ?? 0,
-            bpm: difficultyResult?.bpm ?? beatmap?.bpm ?? 0
+            ar: beatmapAttributes.ar || 0,
+            cs: beatmapAttributes.cs || 0,
+            od: beatmapAttributes.od || 0,
+            hp: beatmapAttributes.hp || 0,
+            star_rating: difficultyResult.stars || 0,
+            bpm: Math.round((beatmapAttributes.clockRate || 1) * 120) // 默认BPM估算
         };
 
         console.log('Final result:', result);
@@ -96,8 +97,9 @@ export async function POST(req: NextRequest) {
             modStats: result,
             method: 'rosu-pp',
             debug: {
+                beatmapKeys: Object.keys(beatmapAttributes || {}),
                 difficultyKeys: Object.keys(difficultyResult || {}),
-                performanceKeys: Object.keys(performanceResult || {})
+                modsApplied: mods
             }
         });
 
