@@ -98,7 +98,7 @@ export default function MapSelectionPage() {
 
             // Check if user is logged in
             console.log('Fetching session...');
-            const sessionResponse = await fetch('/api/session');
+            const sessionResponse = await fetch('/api/session/get');
             console.log('Session response status:', sessionResponse.status);
 
             if (!sessionResponse.ok) {
@@ -110,16 +110,15 @@ export default function MapSelectionPage() {
 
             const sessionData = await sessionResponse.json();
             console.log('Session data:', sessionData);
-            const currentUser = sessionData.user;
 
-            if (!currentUser) {
+            if (!sessionData.success || !sessionData.session) {
                 console.log('No user in session, redirecting to register');
                 setError('No user session found. Redirecting to login page...');
                 setTimeout(() => router.push('/register'), 3000); // 3秒后跳转
                 return;
             }
 
-            setUser(currentUser);
+            const currentUser = sessionData.session; setUser(currentUser);
             console.log('Current user set:', currentUser);
 
             // Verify map selection permissions
