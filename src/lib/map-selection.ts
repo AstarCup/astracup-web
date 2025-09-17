@@ -88,11 +88,87 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
                 INDEX idx_beatmapId (beatmapId),
                 INDEX idx_selectedBy (selectedBy),
                 INDEX idx_season_category (season, category),
-                INDEX idx_selectedAt (selectedAt),
-                INDEX idx_approved (approved),
                 UNIQUE KEY unique_beatmap_season_category (beatmapId, season, category)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
+
+        // 检查并添加新字段（用于已存在的表）
+        try {
+            // 检查ar字段是否存在
+            await connection.execute(`SELECT ar FROM map_selections LIMIT 1`);
+        } catch (error: any) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding new difficulty fields to existing table...');
+                
+                // 添加AR字段
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN ar DECIMAL(4,2) NOT NULL DEFAULT 0.00 AFTER totalLength
+                `);
+                
+                // 添加CS字段
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN cs DECIMAL(4,2) NOT NULL DEFAULT 0.00 AFTER ar
+                `);
+                
+                // 添加OD字段
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN od DECIMAL(4,2) NOT NULL DEFAULT 0.00 AFTER cs
+                `);
+                
+                // 添加HP字段
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN hp DECIMAL(4,2) NOT NULL DEFAULT 0.00 AFTER od
+                `);
+                
+                console.log('Successfully added difficulty fields: ar, cs, od, hp');
+            }
+        }
+
+        // 检查并添加modPosition字段
+        try {
+            await connection.execute(`SELECT modPosition FROM map_selections LIMIT 1`);
+        } catch (error: any) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding modPosition field...');
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN modPosition INT NOT NULL DEFAULT 1 AFTER selectedMods
+                `);
+                console.log('Successfully added modPosition field');
+            }
+        }
+
+        // 检查并添加coverUrl字段
+        try {
+            await connection.execute(`SELECT coverUrl FROM map_selections LIMIT 1`);
+        } catch (error: any) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding coverUrl field...');
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN coverUrl TEXT AFTER url
+                `);
+                console.log('Successfully added coverUrl field');
+            }
+        }
+
+        // 检查并添加approved字段
+        try {
+            await connection.execute(`SELECT approved FROM map_selections LIMIT 1`);
+        } catch (error: any) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding approved field...');
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN approved BOOLEAN DEFAULT FALSE AFTER coverUrl
+                `);
+                console.log('Successfully added approved field');
+            }
+        }
 
         connection.release();
         console.log('Map selection database initialized successfully');
