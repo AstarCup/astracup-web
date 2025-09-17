@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import path from 'path';
+import fs from 'fs';
 
 // 从osu! API获取beatmap文件内容
 async function getBeatmapFile(beatmapId: number, accessToken?: string): Promise<string> {
@@ -19,6 +21,18 @@ async function getBeatmapFile(beatmapId: number, accessToken?: string): Promise<
     return await response.text();
 }
 
+// 动态加载rosu-pp-js模块
+async function loadRosuPP() {
+    try {
+        // 尝试动态导入
+        const rosu = await import('rosu-pp-js');
+        return rosu;
+    } catch (error) {
+        console.error('Failed to load rosu-pp-js:', error);
+        throw new Error('rosu-pp-js module could not be loaded');
+    }
+}
+
 export async function POST(req: NextRequest) {
     try {
         const { beatmapId, mods, accessToken } = await req.json();
@@ -27,8 +41,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'beatmapId is required' }, { status: 400 });
         }
 
-        // 使用rosu-pp计算
-        const rosu = require('rosu-pp-js');
+        // 动态加载rosu-pp模块
+        const rosu = await loadRosuPP();
         
         // 获取beatmap文件
         const beatmapContent = await getBeatmapFile(beatmapId, accessToken);
