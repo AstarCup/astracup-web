@@ -5,7 +5,7 @@ import fs from 'fs';
 // 从osu! API获取beatmap文件内容
 async function getBeatmapFile(beatmapId: number, accessToken?: string): Promise<string> {
     const headers: HeadersInit = {};
-    
+
     if (accessToken) {
         headers['Authorization'] = `Bearer ${accessToken}`;
     }
@@ -43,16 +43,18 @@ export async function POST(req: NextRequest) {
 
         // 动态加载rosu-pp模块
         const rosu = await loadRosuPP();
-        
+
         // 获取beatmap文件
         const beatmapContent = await getBeatmapFile(beatmapId, accessToken);
-        
+
         // 解析beatmap内容为Beatmap对象
         const beatmap = new rosu.Beatmap(beatmapContent);
-        
+
         // 创建BeatmapAttributesBuilder来获取基础参数
-        const attributesBuilder = new rosu.BeatmapAttributesBuilder();
-        
+        const attributesBuilder = new rosu.BeatmapAttributesBuilder({
+            map: beatmap  // 指定beatmap
+        });
+
         // 设置mod
         let modValue = 0;
         if (mods && mods !== 'NM') {
@@ -60,28 +62,29 @@ export async function POST(req: NextRequest) {
             if (modString.includes('HR')) modValue |= 16;  // Hard Rock
             if (modString.includes('DT')) modValue |= 64;  // Double Time
             if (modString.includes('HD')) modValue |= 8;   // Hidden
-            
+
             if (modValue > 0) {
                 attributesBuilder.mods = modValue;
             }
         }
-        
+
         // 获取带mod的beatmap属性
         const beatmapAttributes = attributesBuilder.build();
-        
+
         // 计算难度（获取星级）
         const difficulty = new rosu.Difficulty();
         if (modValue > 0) {
             difficulty.mods = modValue;
         }
-        
+
         const difficultyResult = difficulty.calculate(beatmap);
-        
+
+        console.log('Mod value:', modValue);
         console.log('Beatmap attributes:', beatmapAttributes);
         console.log('Difficulty result:', difficultyResult);
         console.log('Beatmap attributes keys:', Object.keys(beatmapAttributes || {}));
         console.log('Difficulty result keys:', Object.keys(difficultyResult || {}));
-        
+
         const result = {
             ar: beatmapAttributes.ar || 0,
             cs: beatmapAttributes.cs || 0,
@@ -93,7 +96,7 @@ export async function POST(req: NextRequest) {
 
         console.log('Final result:', result);
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             modStats: result,
             method: 'rosu-pp',
             debug: {
@@ -105,7 +108,7 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         console.error('Error calculating mod stats:', error);
-        return NextResponse.json({ 
+        return NextResponse.json({
             error: 'Failed to calculate mod stats',
             details: error instanceof Error ? error.message : String(error)
         }, { status: 500 });

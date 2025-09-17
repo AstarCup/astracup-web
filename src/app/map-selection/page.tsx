@@ -122,7 +122,7 @@ export default function MapSelectionPage() {
                 setModdedStats(null);
             }
         };
-        
+
         updateModdedStats();
     }, [beatmapPreview, selectedMods, user]);
 
@@ -310,6 +310,7 @@ export default function MapSelectionPage() {
     // 使用rosu-pp API计算应用mod后的参数值
     const calculateModdedStatsAPI = async (beatmap: BeatmapInfo, mods: string) => {
         try {
+            console.log('Calculating modded stats for:', { beatmapId: beatmap.id, mods });
             const response = await fetch('/api/calculate-mod-stats', {
                 method: 'POST',
                 headers: {
@@ -323,10 +324,14 @@ export default function MapSelectionPage() {
             });
 
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API response error:', errorText);
                 throw new Error('API调用失败');
             }
 
             const data = await response.json();
+            console.log('API response data:', data);
+            console.log('Modded stats:', data.modStats);
             return data.modStats;
         } catch (error) {
             console.error('计算mod参数失败:', error);
@@ -354,7 +359,7 @@ export default function MapSelectionPage() {
         try {
             // 使用rosu-pp API计算应用mod后的参数
             const moddedStats = await calculateModdedStatsAPI(beatmapPreview, selectedMods);
-            
+
             const response = await fetch('/api/map-selections', {
                 method: 'POST',
                 headers: {
@@ -610,7 +615,7 @@ export default function MapSelectionPage() {
                             {beatmapPreview && (
                                 <div className="bg-gray-200 rounded-lg p-4">
                                     <h4 className="text-gray-800 font-bold mb-2">歌曲预览</h4>
-                                    
+
                                     {/* 难度选择器 - 只在有多个难度时显示 */}
                                     {availableBeatmaps.length > 1 && (
                                         <div className="mb-4">
@@ -653,23 +658,23 @@ export default function MapSelectionPage() {
                                             <p><strong>艺术家:</strong> {beatmapPreview.artist}</p>
                                             <p><strong>难度:</strong> {beatmapPreview.version}</p>
                                             <p><strong>作图者:</strong> {beatmapPreview.creator}</p>
-                                            
+
                                             {/* 显示mod计算后的参数 */}
                                             {moddedStats && (() => {
                                                 const isModded = selectedMods === 'HR' || selectedMods === 'DT';
-                                                
+
                                                 return (
                                                     <>
                                                         <p><strong>星级:</strong> {(moddedStats.star_rating || 0).toFixed(2)}★ {isModded && <span className="text-sm text-blue-600">(+{selectedMods})</span>}</p>
                                                         <p><strong>BPM:</strong> {moddedStats.bpm || 0} {isModded && selectedMods === 'DT' && <span className="text-sm text-blue-600">(+DT)</span>}</p>
                                                         <p><strong>时长:</strong> {formatLength(beatmapPreview.total_length)}</p>
                                                         <p>
-                                                            <strong>AR:</strong> {(moddedStats.ar || 0).toFixed(1)} 
-                                                            {isModded && <span className="text-sm text-gray-500">({beatmapPreview.ar.toFixed(1)})</span>} | 
-                                                            <strong> CS:</strong> {(moddedStats.cs || 0).toFixed(1)} 
-                                                            {isModded && selectedMods === 'HR' && <span className="text-sm text-gray-500">({beatmapPreview.cs.toFixed(1)})</span>} | 
-                                                            <strong> OD:</strong> {(moddedStats.od || 0).toFixed(1)} 
-                                                            {isModded && <span className="text-sm text-gray-500">({beatmapPreview.od.toFixed(1)})</span>} | 
+                                                            <strong>AR:</strong> {(moddedStats.ar || 0).toFixed(1)}
+                                                            {isModded && <span className="text-sm text-gray-500">({beatmapPreview.ar.toFixed(1)})</span>} |
+                                                            <strong> CS:</strong> {(moddedStats.cs || 0).toFixed(1)}
+                                                            {isModded && selectedMods === 'HR' && <span className="text-sm text-gray-500">({beatmapPreview.cs.toFixed(1)})</span>} |
+                                                            <strong> OD:</strong> {(moddedStats.od || 0).toFixed(1)}
+                                                            {isModded && <span className="text-sm text-gray-500">({beatmapPreview.od.toFixed(1)})</span>} |
                                                             <strong> HP:</strong> {(moddedStats.hp || 0).toFixed(1)}
                                                             {isModded && selectedMods === 'HR' && <span className="text-sm text-gray-500">({beatmapPreview.hp.toFixed(1)})</span>}
                                                         </p>
