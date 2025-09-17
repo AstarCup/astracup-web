@@ -52,9 +52,9 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout 
 export async function getUserData(username: string): Promise<OsuUser | null> {
     try {
         // 检查是否有API密钥
-        const apiKey = process.env.OSU_API_KEY;
+        const apiKey = process.env.OSU_CLIENT_SECRET;
         if (!apiKey) {
-            // console.log('No OSU_API_KEY found, using public method');
+            // console.log('No OSU_CLIENT_SECRET found, using public method');
             return getUserDataPublic(username);
         }
 
