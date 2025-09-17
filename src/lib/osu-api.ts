@@ -433,6 +433,10 @@ export interface BeatmapInfo {
     star_rating: number;
     bpm: number;
     total_length: number;
+    ar: number;             // Approach Rate
+    cs: number;             // Circle Size
+    od: number;             // Overall Difficulty
+    hp: number;             // Health Points (HP Drain Rate)
     url: string;
     cover_url: string;
 }
@@ -496,6 +500,10 @@ export async function getBeatmapInfo(beatmapId: number, accessToken?: string): P
             star_rating: data.difficulty_rating || 0,
             bpm: data.bpm || 0,
             total_length: data.total_length || 0,
+            ar: data.ar || 0,
+            cs: data.cs || 0,
+            od: data.accuracy || 0,  // accuracy 对应 OD
+            hp: data.drain || 0,     // drain 对应 HP
             url: data.url || `https://osu.ppy.sh/beatmaps/${data.id}`,
             cover_url: data.beatmapset?.covers?.cover || data.beatmapset?.covers?.card || ''
         };
@@ -540,6 +548,10 @@ export async function getBeatmapsetInfo(beatmapsetId: number, accessToken?: stri
             star_rating: beatmap.difficulty_rating || 0,
             bpm: beatmap.bpm || 0,
             total_length: beatmap.total_length || 0,
+            ar: beatmap.ar || 0,
+            cs: beatmap.cs || 0,
+            od: beatmap.accuracy || 0,
+            hp: beatmap.drain || 0,
             url: beatmap.url || `https://osu.ppy.sh/beatmaps/${beatmap.id}`,
             cover_url: data.covers?.cover || data.covers?.card || ''
         })) || [];

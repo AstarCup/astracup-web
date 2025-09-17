@@ -35,13 +35,20 @@ export interface MapSelection {
     starRating: number;         // 星级
     bpm: number;                // BPM
     totalLength: number;        // 总长度（秒）
+    ar: number;                 // Approach Rate
+    cs: number;                 // Circle Size
+    od: number;                 // Overall Difficulty
+    hp: number;                 // Health Points (HP Drain Rate)
     selectedMods: string;       // 选择的mod，如 "NM", "HD", "HR" 等
+    modPosition: number;        // mod位数，如 nm1的1, hd2的2
     comment: string;            // 注释信息
     selectedBy: string;         // 选图者的osu ID
     selectedAt: string;         // 选图时间
     season: string;             // 赛季标识，如 "s1", "s2"
     category: string;           // 类别，如 "qualification", "ro32", "ro16" 等
     url: string;                // beatmap URL
+    coverUrl: string;           // 封面URL
+    approved: boolean;          // 是否过审
 }
 
 // 初始化选图数据库表
@@ -62,19 +69,27 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
                 starRating DECIMAL(5,2) NOT NULL DEFAULT 0.00,
                 bpm DECIMAL(6,2) NOT NULL DEFAULT 0.00,
                 totalLength INT NOT NULL DEFAULT 0,
+                ar DECIMAL(4,2) NOT NULL DEFAULT 0.00,
+                cs DECIMAL(4,2) NOT NULL DEFAULT 0.00,
+                od DECIMAL(4,2) NOT NULL DEFAULT 0.00,
+                hp DECIMAL(4,2) NOT NULL DEFAULT 0.00,
                 selectedMods VARCHAR(50) NOT NULL DEFAULT 'NM',
+                modPosition INT NOT NULL DEFAULT 1,
                 comment TEXT,
                 selectedBy VARCHAR(255) NOT NULL,
                 selectedAt DATETIME NOT NULL,
                 season VARCHAR(50) NOT NULL DEFAULT 's1',
                 category VARCHAR(50) NOT NULL DEFAULT 'qualification',
                 url TEXT NOT NULL,
+                coverUrl TEXT,
+                approved BOOLEAN DEFAULT FALSE,
                 createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 INDEX idx_beatmapId (beatmapId),
                 INDEX idx_selectedBy (selectedBy),
                 INDEX idx_season_category (season, category),
                 INDEX idx_selectedAt (selectedAt),
+                INDEX idx_approved (approved),
                 UNIQUE KEY unique_beatmap_season_category (beatmapId, season, category)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
@@ -117,13 +132,20 @@ export const mapSelectionStorage = {
                 starRating: parseFloat(row.starRating),
                 bpm: parseFloat(row.bpm),
                 totalLength: row.totalLength,
+                ar: parseFloat(row.ar) || 0,
+                cs: parseFloat(row.cs) || 0,
+                od: parseFloat(row.od) || 0,
+                hp: parseFloat(row.hp) || 0,
                 selectedMods: row.selectedMods,
+                modPosition: row.modPosition || 1,
                 comment: row.comment || '',
                 selectedBy: row.selectedBy,
                 selectedAt: row.selectedAt,
                 season: row.season,
                 category: row.category,
-                url: row.url
+                url: row.url,
+                coverUrl: row.coverUrl || '',
+                approved: Boolean(row.approved)
             }));
         } catch (error) {
             console.error('Error getting map selections:', error);
@@ -139,9 +161,9 @@ export const mapSelectionStorage = {
             const [result] = await connection.execute(`
                 INSERT INTO map_selections (
                     beatmapId, beatmapsetId, title, artist, version, creator,
-                    starRating, bpm, totalLength, selectedMods, comment,
-                    selectedBy, selectedAt, season, category, url
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?)
+                    starRating, bpm, totalLength, ar, cs, od, hp, selectedMods, modPosition, comment,
+                    selectedBy, selectedAt, season, category, url, coverUrl, approved
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)
             `, [
                 selection.beatmapId,
                 selection.beatmapsetId,
@@ -152,12 +174,19 @@ export const mapSelectionStorage = {
                 selection.starRating,
                 selection.bpm,
                 selection.totalLength,
+                selection.ar,
+                selection.cs,
+                selection.od,
+                selection.hp,
                 selection.selectedMods,
+                selection.modPosition,
                 selection.comment,
                 selection.selectedBy,
                 selection.season,
                 selection.category,
-                selection.url
+                selection.url,
+                selection.coverUrl,
+                selection.approved
             ]);
 
             connection.release();

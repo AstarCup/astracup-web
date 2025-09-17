@@ -19,6 +19,10 @@ interface BeatmapInfo {
     star_rating: number;
     bpm: number;
     total_length: number;
+    ar: number;
+    cs: number;
+    od: number;
+    hp: number;
     url: string;
     cover_url: string;
 }
@@ -34,17 +38,24 @@ interface MapSelection {
     starRating: number;
     bpm: number;
     totalLength: number;
+    ar: number;
+    cs: number;
+    od: number;
+    hp: number;
     selectedMods: string;
+    modPosition: number;
     comment: string;
     selectedBy: string;
     selectedAt: string;
     season: string;
     category: string;
     url: string;
+    coverUrl: string;
+    approved: boolean;
 }
 
 const MOD_OPTIONS = [
-    'NM', 'HD', 'HR', 'DT', 'FM', 'TB'
+    'NM', 'HD', 'HR', 'DT', 'FM', 'LZ', 'TB'
 ];
 
 const CATEGORY_OPTIONS = [
@@ -63,6 +74,11 @@ export default function MapSelectionPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthorized, setIsAuthorized] = useState(false);
 
+    // Season configuration
+    const [availableSeasons, setAvailableSeasons] = useState([
+        { value: 's1', label: 'Season 1' }
+    ]);
+
     // Map selection data
     const [selections, setSelections] = useState<MapSelection[]>([]);
     const [season, setSeason] = useState('s1');
@@ -72,7 +88,9 @@ export default function MapSelectionPage() {
     const [showAddForm, setShowAddForm] = useState(false);
     const [urlInput, setUrlInput] = useState('');
     const [selectedMods, setSelectedMods] = useState('NM');
+    const [modPosition, setModPosition] = useState(1);
     const [comment, setComment] = useState('');
+    const [approved, setApproved] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [beatmapPreview, setBeatmapPreview] = useState<BeatmapInfo | null>(null);
 
@@ -130,14 +148,14 @@ export default function MapSelectionPage() {
                 username: currentUser.username,
                 idType: typeof currentUser.osuId
             });
-            
+
             // 为了兼容现有的User接口，我们需要将osuId转换为id
             const userForState = {
                 id: parseInt(currentUser.osuId),
                 username: currentUser.username,
                 avatar_url: currentUser.avatar_url
             };
-            
+
             setUser(userForState);
             console.log('Current user set:', userForState);
 
@@ -168,6 +186,9 @@ export default function MapSelectionPage() {
             if (authResponse.ok) {
                 console.log('Authorization successful');
                 setIsAuthorized(true);
+                
+                // 获取赛季配置
+                await loadSeasonConfig();
             } else {
                 console.log('Authorization failed');
                 // 显示详细的调试信息
@@ -189,6 +210,23 @@ export default function MapSelectionPage() {
         } finally {
             console.log('Auth check completed');
             setIsLoading(false);
+        }
+    };
+
+    const loadSeasonConfig = async () => {
+        try {
+            const response = await fetch('/api/season-config');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    setAvailableSeasons(data.availableSeasons);
+                    setSeason(data.defaultSeason);
+                    console.log('Season config loaded:', data);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load season config:', error);
+            // 使用默认配置
         }
     };
 
@@ -267,7 +305,9 @@ export default function MapSelectionPage() {
                 body: JSON.stringify({
                     url: urlInput,
                     selectedMods,
+                    modPosition,
                     comment,
+                    approved,
                     selectedBy: user?.id.toString(),
                     season,
                     category
@@ -280,6 +320,8 @@ export default function MapSelectionPage() {
                 setUrlInput('');
                 setComment('');
                 setSelectedMods('NM');
+                setModPosition(1);
+                setApproved(false);
                 setBeatmapPreview(null);
                 fetchSelections();
             } else {
@@ -421,8 +463,11 @@ export default function MapSelectionPage() {
                                     onChange={(e) => setSeason(e.target.value)}
                                     className="bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
                                 >
-                                    <option value="s1">Season 1</option>
-                                    <option value="s2">Season 2</option>
+                                    {availableSeasons.map(seasonOption => (
+                                        <option key={seasonOption.value} value={seasonOption.value}>
+                                            {seasonOption.label}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
@@ -479,14 +524,29 @@ export default function MapSelectionPage() {
                             {beatmapPreview && (
                                 <div className="bg-gray-200 rounded-lg p-4">
                                     <h4 className="text-gray-800 font-bold mb-2">Beatmap Preview</h4>
-                                    <div className="text-gray-800 space-y-1">
-                                        <p><strong>Title:</strong> {beatmapPreview.title}</p>
-                                        <p><strong>Artist:</strong> {beatmapPreview.artist}</p>
-                                        <p><strong>Difficulty:</strong> {beatmapPreview.version}</p>
-                                        <p><strong>Mapper:</strong> {beatmapPreview.creator}</p>
-                                        <p><strong>Star Rating:</strong> {beatmapPreview.star_rating.toFixed(2)}★</p>
-                                        <p><strong>BPM:</strong> {beatmapPreview.bpm}</p>
-                                        <p><strong>Length:</strong> {formatLength(beatmapPreview.total_length)}</p>
+                                    <div className="flex gap-4">
+                                        {/* Cover image */}
+                                        <div className="flex-shrink-0">
+                                            <img 
+                                                src={beatmapPreview.cover_url} 
+                                                alt={`${beatmapPreview.title} cover`}
+                                                className="w-24 h-24 rounded-lg object-cover"
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = 'none';
+                                                }}
+                                            />
+                                        </div>
+                                        {/* Beatmap info */}
+                                        <div className="text-gray-800 space-y-1 flex-1">
+                                            <p><strong>Title:</strong> {beatmapPreview.title}</p>
+                                            <p><strong>Artist:</strong> {beatmapPreview.artist}</p>
+                                            <p><strong>Difficulty:</strong> {beatmapPreview.version}</p>
+                                            <p><strong>Mapper:</strong> {beatmapPreview.creator}</p>
+                                            <p><strong>Star Rating:</strong> {beatmapPreview.star_rating.toFixed(2)}★</p>
+                                            <p><strong>BPM:</strong> {beatmapPreview.bpm}</p>
+                                            <p><strong>Length:</strong> {formatLength(beatmapPreview.total_length)}</p>
+                                            <p><strong>AR:</strong> {beatmapPreview.ar.toFixed(1)} | <strong>CS:</strong> {beatmapPreview.cs.toFixed(1)} | <strong>OD:</strong> {beatmapPreview.od.toFixed(1)} | <strong>HP:</strong> {beatmapPreview.hp.toFixed(1)}</p>
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -504,6 +564,18 @@ export default function MapSelectionPage() {
                                         ))}
                                     </select>
                                 </div>
+                                <div className="flex-1">
+                                    <label className="block text-gray-800 text-sm mb-2">Mod Position</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="20"
+                                        value={modPosition}
+                                        onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
+                                        placeholder="1"
+                                        className="w-full bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
+                                    />
+                                </div>
                                 <div className="flex-2">
                                     <label className="block text-gray-800 text-sm mb-2">Comment</label>
                                     <input
@@ -516,6 +588,19 @@ export default function MapSelectionPage() {
                                 </div>
                             </div>
 
+                            {/* Approval checkbox */}
+                            <div className="flex items-center">
+                                <label className="flex items-center text-gray-800">
+                                    <input
+                                        type="checkbox"
+                                        checked={approved}
+                                        onChange={(e) => setApproved(e.target.checked)}
+                                        className="mr-2 h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                                    />
+                                    过审 (Approved)
+                                </label>
+                            </div>
+
                             <div className="flex gap-2 justify-end">
                                 <button
                                     onClick={() => {
@@ -523,6 +608,8 @@ export default function MapSelectionPage() {
                                         setUrlInput('');
                                         setComment('');
                                         setSelectedMods('NM');
+                                        setModPosition(1);
+                                        setApproved(false);
                                         setBeatmapPreview(null);
                                         setError('');
                                     }}
@@ -555,25 +642,47 @@ export default function MapSelectionPage() {
                             {selections.map((selection) => (
                                 <div key={selection.id} className="bg-gray-200 rounded-lg p-4">
                                     <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <span className="bg-blue-500 text-white px-2 py-1 rounded text-sm font-bold">
-                                                    {selection.selectedMods}
-                                                </span>
-                                                <h4 className="text-gray-800 font-bold">
-                                                    {selection.title} - {selection.artist}
-                                                </h4>
-                                            </div>
-                                            <div className="text-gray-700 space-y-1">
-                                                <p><strong>Difficulty:</strong> {selection.version}</p>
-                                                <p><strong>Mapper:</strong> {selection.creator}</p>
-                                                <p><strong>Star Rating:</strong> {selection.starRating.toFixed(2)}★</p>
-                                                <p><strong>BPM:</strong> {selection.bpm}</p>
-                                                <p><strong>Length:</strong> {formatLength(selection.totalLength)}</p>
-                                                {selection.comment && (
-                                                    <p><strong>Comment:</strong> {selection.comment}</p>
-                                                )}
-                                                <p><strong>Selected At:</strong> {new Date(selection.selectedAt).toLocaleString()}</p>
+                                        <div className="flex gap-4 flex-1">
+                                            {/* Cover image */}
+                                            {selection.coverUrl && (
+                                                <div className="flex-shrink-0">
+                                                    <img 
+                                                        src={selection.coverUrl} 
+                                                        alt={`${selection.title} cover`}
+                                                        className="w-20 h-20 rounded-lg object-cover"
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                            {/* Content */}
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <span className="bg-blue-500 text-white px-2 py-1 rounded text-sm font-bold">
+                                                        {selection.selectedMods}{selection.modPosition}
+                                                    </span>
+                                                    {selection.approved && (
+                                                        <span className="bg-green-500 text-white px-2 py-1 rounded text-sm font-bold">
+                                                            ✓ 过审
+                                                        </span>
+                                                    )}
+                                                    <h4 className="text-gray-800 font-bold">
+                                                        {selection.title} - {selection.artist}
+                                                    </h4>
+                                                </div>
+                                                <div className="text-gray-700 space-y-1">
+                                                    <p><strong>Difficulty:</strong> {selection.version}</p>
+                                                    <p><strong>Mapper:</strong> {selection.creator}</p>
+                                                    <p><strong>Star Rating:</strong> {selection.starRating.toFixed(2)}★</p>
+                                                    <p><strong>BPM:</strong> {selection.bpm}</p>
+                                                    <p><strong>Length:</strong> {formatLength(selection.totalLength)}</p>
+                                                    <p><strong>AR:</strong> {selection.ar.toFixed(1)} | <strong>CS:</strong> {selection.cs.toFixed(1)} | <strong>OD:</strong> {selection.od.toFixed(1)} | <strong>HP:</strong> {selection.hp.toFixed(1)}</p>
+                                                    {selection.comment && (
+                                                        <p><strong>Comment:</strong> {selection.comment}</p>
+                                                    )}
+                                                    <p><strong>Selected At:</strong> {new Date(selection.selectedAt).toLocaleString()}</p>
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="flex gap-2 ml-4">

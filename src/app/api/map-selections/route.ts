@@ -107,7 +107,9 @@ export async function POST(request: NextRequest) {
         const {
             url,
             selectedMods,
+            modPosition = 1,
             comment,
+            approved = false,
             selectedBy,
             season = 's1',
             category = 'qualification'
@@ -137,7 +139,7 @@ export async function POST(request: NextRequest) {
         try {
             const cookieStore = await cookies();
             const sessionCookie = cookieStore.get('astra_session');
-            
+
             if (sessionCookie?.value) {
                 const session = JSON.parse(sessionCookie.value);
                 accessToken = session.access_token;
@@ -208,12 +210,19 @@ export async function POST(request: NextRequest) {
             starRating: beatmapInfo.star_rating,
             bpm: beatmapInfo.bpm,
             totalLength: beatmapInfo.total_length,
+            ar: beatmapInfo.ar,
+            cs: beatmapInfo.cs,
+            od: beatmapInfo.od,
+            hp: beatmapInfo.hp,
             selectedMods: selectedMods || 'NM',
+            modPosition: modPosition || 1,
             comment: comment || '',
             selectedBy,
             season,
             category,
-            url: beatmapInfo.url
+            url: beatmapInfo.url,
+            coverUrl: beatmapInfo.cover_url || '',
+            approved: approved || false
         });
 
         if (!success) {

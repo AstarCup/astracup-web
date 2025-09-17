@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         try {
             const cookieStore = await cookies();
             const sessionCookie = cookieStore.get('astra_session');
-            
+
             if (sessionCookie?.value) {
                 const session = JSON.parse(sessionCookie.value);
                 accessToken = session.access_token;
