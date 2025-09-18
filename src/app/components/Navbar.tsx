@@ -115,7 +115,7 @@ export default function Navbar() {
                                             }}
                                         >
                                             <div className="text-xs opacity-75 font-bold mb-1 leading-tight">{link.name}</div>
-                                            <div className="text-base font-bold leading-tight overflow-hidden">{link.tip}</div>
+                                            <div className="text-2xl font-bold leading-tight overflow-hidden">{link.tip}</div>
                                         </Link>
                                     </div>
                                 ))}
