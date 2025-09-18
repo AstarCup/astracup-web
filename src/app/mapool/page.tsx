@@ -141,7 +141,7 @@ export default function Mapool() {
 
     if (isLoading) {
         return (
-            <div className="max-w-9xl mx-auto p-60">
+            <div className="max-w-9xl mx-auto pt-60 pb-60">
                 <div className="text-center text-white">
                     <div className="text-xl mb-4">正在加载图池数据...</div>
                 </div>
@@ -194,7 +194,7 @@ export default function Mapool() {
             </div>
 
             {mapPoolData.length === 0 ? (
-                <div className="text-center text-white p-60">
+                <div className="text-center text-white pt-60 pb-60">
                     <p>暂无已过审的图池数据</p>
                 </div>
             ) : (

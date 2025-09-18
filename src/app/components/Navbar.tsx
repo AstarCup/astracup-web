@@ -105,17 +105,17 @@ export default function Navbar() {
                         <div className=" p-4">
                             <div className="grid grid-cols-2 gap-2">
                                 {navLinks.map((link) => (
-                                    <div key={link.href} className="bg-white/100 hover:bg-[#3BE9D8] transition-colors duration-200">
+                                    <div key={link.href} className="bg-white/100 hover:bg-[#3BE9D8] transition-colors duration-200 min-h-20 flex">
                                         <Link
                                             href={link.href}
-                                            className={`block p-3 text-left text-sm font-medium ${isActive(link.href) ? 'bg-[#3BE9D8] text-white font-bold' : 'text-gray-800 hover:text-white'}`}
+                                            className={`flex-1 p-3 text-left text-sm font-medium flex flex-col justify-center ${isActive(link.href) ? 'bg-[#3BE9D8] text-white font-bold' : 'text-gray-800 hover:text-white'}`}
                                             onClick={() => {
                                                 setActiveLink(link.href);
                                                 setMobileMenuOpen(false);
                                             }}
                                         >
-                                            <div className="text-xs opacity-75 font-bold mb-1">{link.name}</div>
-                                            <div className="text-3xl font-bold">{link.tip}</div>
+                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight">{link.name}</div>
+                                            <div className="text-2xl font-bold leading-tight">{link.tip}</div>
                                         </Link>
                                     </div>
                                 ))}
