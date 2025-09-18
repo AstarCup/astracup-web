@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOsuToken, getOsuUserInfo } from '@/lib/osu-auth';
-import { addRegistration, isUserRegistered } from '@/lib/registrations';
-import { count } from 'console';
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
@@ -24,58 +22,7 @@ export async function GET(request: NextRequest) {
         // 获取用户信息
         const userInfo = await getOsuUserInfo(access_token);
 
-        // 检查是否已注册
-        const isRegistered = await isUserRegistered(userInfo.id.toString());
-
-        if (isRegistered) {
-            // 已注册用户，直接设置会话cookie并重定向到首页
-            const redirectResponse = NextResponse.redirect(new URL('/', request.url));
-
-            // 设置会话cookie
-            const isProduction = process.env.NODE_ENV === 'production';
-            const cookieOptions: any = {
-                httpOnly: false,
-                secure: isProduction,
-                sameSite: isProduction ? 'none' : 'lax',
-                maxAge: 60 * 60 * 24 * 30, // 30 days
-                path: '/',
-            };
-
-            if (isProduction) {
-                cookieOptions.domain = '.rino.ink';
-            }
-
-            redirectResponse.cookies.set('astra_session', JSON.stringify({
-                osuId: userInfo.id.toString(),
-                username: userInfo.username,
-                avatar_url: userInfo.avatar_url,
-                pp: userInfo.statistics?.pp || 0,
-                global_rank: userInfo.statistics?.global_rank || null,
-                country_rank: userInfo.statistics?.country_rank || null,
-                country: userInfo.country_code || '',
-                access_token: access_token, // 保存访问令牌用于API调用
-            }), cookieOptions);
-
-            return redirectResponse;
-        }
-
-        // 存储注册信息到数据库
-        await addRegistration({
-            osuId: userInfo.id.toString(),
-            username: userInfo.username,
-            inGameName: userInfo.username,
-            timezone: "UTC+8",
-            availability: "",
-            avatar_url: userInfo.avatar_url,
-            pp: userInfo.statistics?.pp || 0,
-            global_rank: userInfo.statistics?.global_rank || null,
-            country_rank: userInfo.statistics?.country_rank || null,
-            country: userInfo.country_code || '',
-            approved: false,
-            approvedAt: null,
-        });
-
-        // 设置用户会话cookie并重定向到首页
+        // 设置用户会话cookie并重定向到首页（不再自动报名）
         const redirectResponse = NextResponse.redirect(new URL('/', request.url));
 
         // 设置会话cookie
