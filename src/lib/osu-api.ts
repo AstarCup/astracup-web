@@ -443,6 +443,15 @@ export interface BeatmapInfo {
 
 // 从URL解析beatmap ID和beatmapset ID
 export function parseBeatmapUrl(url: string): { beatmapId?: number; beatmapsetId?: number } {
+    // 首先检查是否直接输入了数字ID
+    const trimmedUrl = url.trim();
+
+    // 检查是否是纯数字（直接的beatmap ID）
+    if (/^\d+$/.test(trimmedUrl)) {
+        const beatmapId = parseInt(trimmedUrl);
+        return { beatmapId };
+    }
+
     const patterns = [
         /osu\.ppy\.sh\/b\/(\d+)/,              // /b/{beatmap_id}
         /osu\.ppy\.sh\/beatmaps\/(\d+)/,       // /beatmaps/{beatmap_id}
