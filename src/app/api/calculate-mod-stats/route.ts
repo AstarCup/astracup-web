@@ -35,7 +35,14 @@ async function loadRosuPP() {
 
 export async function POST(req: NextRequest) {
     try {
-        const { beatmapId, mods, accessToken } = await req.json();
+        const {
+            beatmapId,
+            mods,
+            accessToken,
+            customModName,
+            customDASettings,
+            customDTRate
+        } = await req.json();
 
         if (!beatmapId) {
             return NextResponse.json({ error: 'beatmapId is required' }, { status: 400 });
@@ -55,16 +62,52 @@ export async function POST(req: NextRequest) {
             map: beatmap  // 指定beatmap
         });
 
-        // 设置mod
+        // 处理mod设置
         let modValue = 0;
+        let clockRate = 1.0;
+
         if (mods && mods !== 'NM') {
             const modString = mods.toUpperCase();
-            if (modString.includes('HR')) modValue |= 16;  // Hard Rock
-            if (modString.includes('DT')) modValue |= 64;  // Double Time
-            if (modString.includes('HD')) modValue |= 8;   // Hidden
+
+            // 处理LZ模式
+            if (modString === 'LZ' && customModName) {
+                const customMod = customModName.toUpperCase();
+
+                // 处理DA模式 - 自定义属性将在后面应用
+                if (customMod === 'DA') {
+                    // DA模式不需要特殊的mod值，属性会直接覆盖
+                    console.log('DA mod detected, will apply custom attributes later');
+                }
+                // 处理其他已知的Lazer特有mod
+                else if (['WG', 'MR', 'RD', 'AS', 'CL', 'SG', 'TC', 'AC'].includes(customMod)) {
+                    // 这些mod大多是视觉或转换效果，不影响难度计算
+                    // 但我们记录它们以便将来扩展
+                    console.log(`Lazer mod detected: ${customMod} (visual/conversion effect)`);
+                }
+                // 其他未知的lazer mod
+                else {
+                    console.log('Unknown lazer mod:', customMod);
+                }
+            }
+            // 处理标准mod
+            else {
+                if (modString.includes('HR')) modValue |= 16;  // Hard Rock
+                if (modString.includes('HD')) modValue |= 8;   // Hidden
+
+                // DT处理 - 支持自定义倍率
+                if (modString.includes('DT')) {
+                    modValue |= 64;  // Double Time
+                    clockRate = customDTRate && customDTRate !== 1.5 ? customDTRate : 1.5;
+                }
+            }
 
             if (modValue > 0) {
                 attributesBuilder.mods = modValue;
+            }
+
+            // 设置时钟倍率（用于DT自定义倍率）
+            if (clockRate !== 1.0) {
+                attributesBuilder.clockRate = clockRate;
             }
         }
 
@@ -76,25 +119,45 @@ export async function POST(req: NextRequest) {
         if (modValue > 0) {
             difficulty.mods = modValue;
         }
+        if (clockRate !== 1.0) {
+            difficulty.clockRate = clockRate;
+        }
 
         const difficultyResult = difficulty.calculate(beatmap);
 
         console.log('Mod value:', modValue);
+        console.log('Clock rate:', clockRate);
+        console.log('Custom settings:', { customModName, customDASettings, customDTRate });
         console.log('Beatmap attributes:', beatmapAttributes);
         console.log('Difficulty result:', difficultyResult);
-        console.log('Beatmap attributes keys:', Object.keys(beatmapAttributes || {}));
-        console.log('Difficulty result keys:', Object.keys(difficultyResult || {}));
 
-        const result = {
+        // 构建结果 - 优先使用计算出的属性
+        let result = {
             ar: beatmapAttributes.ar || 0,
             cs: beatmapAttributes.cs || 0,
             od: beatmapAttributes.od || 0,
             hp: beatmapAttributes.hp || 0,
             star_rating: difficultyResult.stars || 0,
-            bpm: Math.round((beatmapAttributes.clockRate || 1) * 120) // 默认BPM估算
+            bpm: Math.round((beatmapAttributes.clockRate || clockRate) * (beatmap.bpm || 120))
         };
 
-        console.log('Final result:', result);
+        // 应用DA模式的自定义属性覆盖
+        if (mods === 'LZ' && customModName === 'DA' && customDASettings) {
+            if (customDASettings.cs !== null && customDASettings.cs !== undefined) {
+                result.cs = customDASettings.cs;
+            }
+            if (customDASettings.ar !== null && customDASettings.ar !== undefined) {
+                result.ar = customDASettings.ar;
+            }
+            if (customDASettings.od !== null && customDASettings.od !== undefined) {
+                result.od = customDASettings.od;
+            }
+            if (customDASettings.hp !== null && customDASettings.hp !== undefined) {
+                result.hp = customDASettings.hp;
+            }
+        }
+
+        console.log('Final result after DA override:', result);
 
         return NextResponse.json({
             modStats: result,
@@ -102,7 +165,12 @@ export async function POST(req: NextRequest) {
             debug: {
                 beatmapKeys: Object.keys(beatmapAttributes || {}),
                 difficultyKeys: Object.keys(difficultyResult || {}),
-                modsApplied: mods
+                modsApplied: mods,
+                customModName,
+                customDASettings,
+                customDTRate,
+                clockRate,
+                modValue
             }
         });
 

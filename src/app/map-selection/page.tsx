@@ -52,6 +52,15 @@ interface MapSelection {
     url: string;
     coverUrl: string;
     approved: boolean;
+    // 新增字段
+    customModName?: string;
+    customDASettings?: {
+        cs?: number | null;
+        ar?: number | null;
+        od?: number | null;
+        hp?: number | null;
+    } | null;
+    customDTRate?: number | null;
 }
 
 const MOD_OPTIONS = [
@@ -96,6 +105,19 @@ export default function MapSelectionPage() {
     const [availableBeatmaps, setAvailableBeatmaps] = useState<BeatmapInfo[]>([]);
     const [moddedStats, setModdedStats] = useState<any>(null);
 
+    // Lazer特有mod相关状态
+    const [customModName, setCustomModName] = useState('');
+    const [availableLazerMods, setAvailableLazerMods] = useState<{ name: string, description: string }[]>([]);
+
+    // DA mod自定义属性
+    const [customCS, setCustomCS] = useState<number | ''>('');
+    const [customAR, setCustomAR] = useState<number | ''>('');
+    const [customOD, setCustomOD] = useState<number | ''>('');
+    const [customHP, setCustomHP] = useState<number | ''>('');
+
+    // DT自定义倍率
+    const [customDTRate, setCustomDTRate] = useState<number | ''>(1.5);
+
     // Error and message
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
@@ -103,7 +125,48 @@ export default function MapSelectionPage() {
     // Check user login status and permissions
     useEffect(() => {
         checkUserAuth();
+        fetchAvailableLazerMods();
     }, []);
+
+    // 获取可用的Lazer特有mod
+    const fetchAvailableLazerMods = async () => {
+        try {
+            const response = await fetch('/api/get-available-mods');
+            if (response.ok) {
+                const data = await response.json();
+                setAvailableLazerMods(data.availableMods || []);
+            } else {
+                // 如果API失败，使用预定义的mod列表
+                const fallbackMods = [
+                    { name: 'DA', description: 'Difficulty Adjust - 自定义难度属性' },
+                    { name: 'WG', description: 'Wiggle - 摆动效果' },
+                    { name: 'MR', description: 'Mirror - 镜像' },
+                    { name: 'RD', description: 'Random - 随机' },
+                    { name: 'AS', description: 'Adaptive Speed - 自适应速度' },
+                    { name: 'CL', description: 'Classic - 经典模式' },
+                    { name: 'SG', description: 'Single Tap - 单键模式' },
+                    { name: 'TC', description: 'Target Practice - 目标练习' },
+                    { name: 'AC', description: 'Accuracy Challenge - 精确度挑战' }
+                ];
+                setAvailableLazerMods(fallbackMods);
+            }
+        } catch (error) {
+            console.error('Failed to fetch available Lazer mods:', error);
+            // 使用预定义的mod列表作为备选
+            const fallbackMods = [
+                { name: 'DA', description: 'Difficulty Adjust - 自定义难度属性' },
+                { name: 'WG', description: 'Wiggle - 摆动效果' },
+                { name: 'MR', description: 'Mirror - 镜像' },
+                { name: 'RD', description: 'Random - 随机' },
+                { name: 'AS', description: 'Adaptive Speed - 自适应速度' },
+                { name: 'CL', description: 'Classic - 经典模式' },
+                { name: 'SG', description: 'Single Tap - 单键模式' },
+                { name: 'TC', description: 'Target Practice - 目标练习' },
+                { name: 'AC', description: 'Accuracy Challenge - 精确度挑战' }
+            ];
+            setAvailableLazerMods(fallbackMods);
+        }
+    };
 
     // Get selection list
     useEffect(() => {
@@ -116,7 +179,17 @@ export default function MapSelectionPage() {
     useEffect(() => {
         const updateModdedStats = async () => {
             if (beatmapPreview && user) {
-                const stats = await calculateModdedStatsAPI(beatmapPreview, selectedMods);
+                const customSettings = {
+                    customModName: selectedMods === 'LZ' ? customModName : undefined,
+                    customDASettings: customModName === 'DA' && selectedMods === 'LZ' ? {
+                        cs: customCS !== '' ? customCS : null,
+                        ar: customAR !== '' ? customAR : null,
+                        od: customOD !== '' ? customOD : null,
+                        hp: customHP !== '' ? customHP : null,
+                    } : null,
+                    customDTRate: selectedMods === 'DT' && customDTRate !== '' ? customDTRate : null,
+                };
+                const stats = await calculateModdedStatsAPI(beatmapPreview, selectedMods, customSettings);
                 setModdedStats(stats);
             } else {
                 setModdedStats(null);
@@ -124,7 +197,7 @@ export default function MapSelectionPage() {
         };
 
         updateModdedStats();
-    }, [beatmapPreview, selectedMods, user]);
+    }, [beatmapPreview, selectedMods, customModName, customCS, customAR, customOD, customHP, customDTRate, user]);
 
     const checkUserAuth = async () => {
         try {
@@ -308,9 +381,18 @@ export default function MapSelectionPage() {
     };
 
     // 使用rosu-pp API计算应用mod后的参数值
-    const calculateModdedStatsAPI = async (beatmap: BeatmapInfo, mods: string) => {
+    const calculateModdedStatsAPI = async (beatmap: BeatmapInfo, mods: string, customSettings?: {
+        customModName?: string;
+        customDASettings?: {
+            cs?: number | null;
+            ar?: number | null;
+            od?: number | null;
+            hp?: number | null;
+        } | null;
+        customDTRate?: number | null;
+    }) => {
         try {
-            console.log('Calculating modded stats for:', { beatmapId: beatmap.id, mods });
+            console.log('Calculating modded stats for:', { beatmapId: beatmap.id, mods, customSettings });
             const response = await fetch('/api/calculate-mod-stats', {
                 method: 'POST',
                 headers: {
@@ -319,7 +401,11 @@ export default function MapSelectionPage() {
                 body: JSON.stringify({
                     beatmapId: beatmap.id,
                     mods: mods,
-                    accessToken: user ? localStorage.getItem('osu_access_token') : null
+                    accessToken: user ? localStorage.getItem('osu_access_token') : null,
+                    // 添加自定义mod设置
+                    customModName: customSettings?.customModName,
+                    customDASettings: customSettings?.customDASettings,
+                    customDTRate: customSettings?.customDTRate,
                 }),
             });
 
@@ -358,7 +444,17 @@ export default function MapSelectionPage() {
 
         try {
             // 使用rosu-pp API计算应用mod后的参数
-            const moddedStats = await calculateModdedStatsAPI(beatmapPreview, selectedMods);
+            const customSettings = {
+                customModName: selectedMods === 'LZ' ? customModName : undefined,
+                customDASettings: customModName === 'DA' && selectedMods === 'LZ' ? {
+                    cs: customCS !== '' ? customCS : null,
+                    ar: customAR !== '' ? customAR : null,
+                    od: customOD !== '' ? customOD : null,
+                    hp: customHP !== '' ? customHP : null,
+                } : null,
+                customDTRate: selectedMods === 'DT' && customDTRate !== '' ? customDTRate : null,
+            };
+            const moddedStats = await calculateModdedStatsAPI(beatmapPreview, selectedMods, customSettings);
 
             const response = await fetch('/api/map-selections', {
                 method: 'POST',
@@ -375,7 +471,16 @@ export default function MapSelectionPage() {
                     season,
                     category,
                     // 包含计算后的mod参数
-                    moddedStats
+                    moddedStats,
+                    // 自定义mod设置
+                    customModName: selectedMods === 'LZ' ? customModName : '',
+                    customDASettings: customModName === 'DA' && selectedMods === 'LZ' ? {
+                        cs: customCS !== '' ? customCS : null,
+                        ar: customAR !== '' ? customAR : null,
+                        od: customOD !== '' ? customOD : null,
+                        hp: customHP !== '' ? customHP : null,
+                    } : null,
+                    customDTRate: selectedMods === 'DT' && customDTRate !== '' ? customDTRate : null,
                 })
             });
 
@@ -386,6 +491,12 @@ export default function MapSelectionPage() {
                 setComment('');
                 setSelectedMods('NM');
                 setModPosition(1);
+                setCustomModName('');
+                setCustomCS('');
+                setCustomAR('');
+                setCustomOD('');
+                setCustomHP('');
+                setCustomDTRate(1.5);
                 setApproved(false);
                 setBeatmapPreview(null);
                 setAvailableBeatmaps([]);
@@ -723,6 +834,121 @@ export default function MapSelectionPage() {
                                 </div>
                             </div>
 
+                            {/* LZ模式：自定义mod名称 */}
+                            {selectedMods === 'LZ' && (
+                                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded">
+                                    <h4 className="text-sm font-semibold text-blue-800 mb-2">Lazer特有模组设置</h4>
+                                    <div>
+                                        <label className="block text-gray-800 text-sm mb-2">选择Lazer模组</label>
+                                        <select
+                                            value={customModName}
+                                            onChange={(e) => setCustomModName(e.target.value)}
+                                            className="w-full bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
+                                        >
+                                            <option value="">请选择一个Lazer特有模组</option>
+                                            {availableLazerMods.map(mod => (
+                                                <option key={mod.name} value={mod.name}>
+                                                    {mod.name} - {mod.description}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {availableLazerMods.length === 0 && (
+                                            <p className="text-xs text-gray-600 mt-1">正在加载可用模组...</p>
+                                        )}
+                                        {customModName && (
+                                            <div className="mt-2 p-2 bg-blue-100 rounded">
+                                                <p className="text-xs text-blue-700">
+                                                    <strong>已选择：</strong> {customModName}
+                                                    {customModName === 'DA' && ' - 可在下方自定义难度属性'}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* DA模式：自定义属性 */}
+                            {customModName === 'DA' && selectedMods === 'LZ' && (
+                                <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded">
+                                    <h4 className="text-sm font-semibold text-orange-800 mb-2">DA模组自定义属性</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-gray-800 text-sm mb-2">CS (Circle Size)</label>
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                min="0"
+                                                max="10"
+                                                value={customCS}
+                                                onChange={(e) => setCustomCS(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                placeholder="留空使用原始值"
+                                                className="w-full bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-gray-800 text-sm mb-2">AR (Approach Rate)</label>
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                min="0"
+                                                max="10"
+                                                value={customAR}
+                                                onChange={(e) => setCustomAR(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                placeholder="留空使用原始值"
+                                                className="w-full bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-gray-800 text-sm mb-2">OD (Overall Difficulty)</label>
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                min="0"
+                                                max="10"
+                                                value={customOD}
+                                                onChange={(e) => setCustomOD(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                placeholder="留空使用原始值"
+                                                className="w-full bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-gray-800 text-sm mb-2">HP (Health Points)</label>
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                min="0"
+                                                max="10"
+                                                value={customHP}
+                                                onChange={(e) => setCustomHP(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                placeholder="留空使用原始值"
+                                                className="w-full bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* DT模式：自定义倍率 */}
+                            {selectedMods === 'DT' && (
+                                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">
+                                    <h4 className="text-sm font-semibold text-green-800 mb-2">DT自定义倍率设置</h4>
+                                    <div>
+                                        <label className="block text-gray-800 text-sm mb-2">速度倍率</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="1.01"
+                                            max="2.0"
+                                            value={customDTRate}
+                                            onChange={(e) => setCustomDTRate(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                            placeholder="1.5"
+                                            className="w-full bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
+                                        />
+                                        <p className="text-xs text-gray-600 mt-1">标准DT为1.5倍速，可自定义1.01-2.0倍速</p>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Approval checkbox */}
                             <div className="flex items-center">
                                 <label className="flex items-center text-gray-800">
@@ -748,6 +974,12 @@ export default function MapSelectionPage() {
                                         setBeatmapPreview(null);
                                         setAvailableBeatmaps([]);
                                         setError('');
+                                        setCustomModName('');
+                                        setCustomCS('');
+                                        setCustomAR('');
+                                        setCustomOD('');
+                                        setCustomHP('');
+                                        setCustomDTRate(1.5);
                                     }}
                                     className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
                                 >
@@ -796,8 +1028,19 @@ export default function MapSelectionPage() {
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-3 mb-2">
                                                     <span className="bg-blue-500 text-white px-2 py-1 rounded text-sm font-bold">
-                                                        {selection.selectedMods}{selection.modPosition}
+                                                        {selection.selectedMods === 'LZ' && selection.customModName ?
+                                                            `${selection.customModName}${selection.modPosition}` :
+                                                            `${selection.selectedMods}${selection.modPosition}`
+                                                        }
+                                                        {selection.selectedMods === 'DT' && selection.customDTRate && selection.customDTRate !== 1.5 && (
+                                                            <span className="text-xs ml-1">({selection.customDTRate}x)</span>
+                                                        )}
                                                     </span>
+                                                    {selection.customDASettings && (
+                                                        <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs">
+                                                            DA自定义
+                                                        </span>
+                                                    )}
                                                     {selection.approved && (
                                                         <span className="bg-green-500 text-white px-2 py-1 rounded text-sm font-bold">
                                                             ✓ 过审
@@ -814,6 +1057,20 @@ export default function MapSelectionPage() {
                                                     <p><strong>BPM:</strong> {selection.bpm}</p>
                                                     <p><strong>时长:</strong> {formatLength(selection.totalLength)}</p>
                                                     <p><strong>AR:</strong> {selection.ar.toFixed(1)} | <strong>CS:</strong> {selection.cs.toFixed(1)} | <strong>OD:</strong> {selection.od.toFixed(1)} | <strong>HP:</strong> {selection.hp.toFixed(1)}</p>
+
+                                                    {/* 显示自定义DA设置 */}
+                                                    {selection.customDASettings && (
+                                                        <div className="bg-orange-50 border border-orange-200 rounded p-2 mt-2">
+                                                            <p className="text-orange-800 font-semibold text-sm">DA自定义属性:</p>
+                                                            <p className="text-sm">
+                                                                {selection.customDASettings.cs !== null && <span>CS: {selection.customDASettings.cs} </span>}
+                                                                {selection.customDASettings.ar !== null && <span>AR: {selection.customDASettings.ar} </span>}
+                                                                {selection.customDASettings.od !== null && <span>OD: {selection.customDASettings.od} </span>}
+                                                                {selection.customDASettings.hp !== null && <span>HP: {selection.customDASettings.hp} </span>}
+                                                            </p>
+                                                        </div>
+                                                    )}
+
                                                     {selection.comment && (
                                                         <p><strong>注释:</strong> {selection.comment}</p>
                                                     )}
