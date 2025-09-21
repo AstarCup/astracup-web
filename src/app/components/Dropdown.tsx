@@ -17,14 +17,10 @@ export interface DropdownProps {
     label?: string;
     showClearButton?: boolean;
     clearButtonText?: string;
-    className?: string;
-    buttonClassName?: string;
-    dropdownClassName?: string;
-    optionClassName?: string;
-    selectedOptionClassName?: string;
     disabled?: boolean;
     maxHeight?: string;
     minWidth?: string;
+    darkMode?: boolean;
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -35,14 +31,10 @@ const Dropdown: React.FC<DropdownProps> = ({
     label,
     showClearButton = false,
     clearButtonText = "清除",
-    className = "",
-    buttonClassName = "",
-    dropdownClassName = "",
-    optionClassName = "",
-    selectedOptionClassName = "",
     disabled = false,
-    maxHeight = "12rem", // max-h-48
-    minWidth = "7.5rem", // min-w-[120px]
+    maxHeight = "12rem",
+    minWidth = "7.5rem",
+    darkMode = false,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -94,10 +86,29 @@ const Dropdown: React.FC<DropdownProps> = ({
         return value && getSelectedOption();
     };
 
+    const getButtonClass = () => {
+        return darkMode
+            ? 'dropdown-button dropdown-button-dark'
+            : 'dropdown-button';
+    };
+
+    const getOptionClass = (optionValue: string) => {
+        const baseClass = darkMode
+            ? 'dropdown-option dropdown-option-dark'
+            : 'dropdown-option';
+
+        if (value === optionValue) {
+            return darkMode
+                ? `${baseClass} dropdown-option-selected-dark`
+                : `${baseClass} dropdown-option-selected`;
+        }
+        return baseClass;
+    };
+
     return (
-        <div className={`flex items-center gap-2 ${className}`}>
+        <div className="dropdown-container">
             {label && (
-                <label className="text-gray-800 text-sm font-medium">
+                <label className={`dropdown-label ${darkMode ? 'dropdown-label-dark' : ''}`}>
                     {label}
                 </label>
             )}
@@ -107,22 +118,14 @@ const Dropdown: React.FC<DropdownProps> = ({
                     type="button"
                     onClick={() => !disabled && setIsOpen(!isOpen)}
                     disabled={disabled}
-                    className={`
-                        bg-white border border-gray-300 text-gray-800 px-3 py-1 rounded text-sm 
-                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer 
-                        flex items-center justify-between hover:bg-gray-50 transition-colors duration-200
-                        disabled:opacity-50 disabled:cursor-not-allowed
-                        ${minWidth}
-                        ${buttonClassName}
-                    `}
+                    className={getButtonClass()}
                     style={{ minWidth }}
                 >
-                    <span className="truncate">
+                    <span className="truncate flex-1 text-left">
                         {getDisplayText()}
                     </span>
                     <svg
-                        className={`w-3 h-3 ml-2 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''
-                            }`}
+                        className={`w-3 h-3 ml-2 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -133,11 +136,7 @@ const Dropdown: React.FC<DropdownProps> = ({
 
                 {isOpen && (
                     <div
-                        className={`
-                            absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 
-                            rounded shadow-lg z-50 overflow-y-auto
-                            ${dropdownClassName}
-                        `}
+                        className="dropdown-menu"
                         style={{ maxHeight }}
                     >
                         {options.map((option) => (
@@ -146,18 +145,7 @@ const Dropdown: React.FC<DropdownProps> = ({
                                 type="button"
                                 onClick={() => !option.disabled && handleOptionClick(option.value)}
                                 disabled={option.disabled}
-                                className={`
-                                    w-full px-3 py-2 text-left text-sm transition-colors duration-200
-                                    disabled:opacity-50 disabled:cursor-not-allowed
-                                    ${option.disabled
-                                        ? 'text-gray-400'
-                                        : 'hover:bg-gray-100 text-gray-800'
-                                    }
-                                    ${value === option.value
-                                        ? `bg-blue-100 text-blue-700 ${selectedOptionClassName}`
-                                        : optionClassName
-                                    }
-                                `}
+                                className={getOptionClass(option.value)}
                             >
                                 {option.count !== undefined
                                     ? `${option.label} (${option.count})`
@@ -172,7 +160,7 @@ const Dropdown: React.FC<DropdownProps> = ({
             {showClearButton && hasValidSelection() && (
                 <button
                     onClick={() => onChange('')}
-                    className="text-xs text-blue-600 hover:text-blue-800 underline"
+                    className="dropdown-clear-button"
                     title={`清除选择`}
                 >
                     {clearButtonText}

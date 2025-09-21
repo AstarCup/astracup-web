@@ -439,3 +439,48 @@ select:disabled {
     text-overflow: '';
   }
 }
+
+/* Dropdown 组件全局样式 */
+.dropdown-container {
+  @apply flex gap-2 items-center;
+}
+
+.dropdown-button {
+  @apply bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer flex items-center justify-between hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.dropdown-label {
+  @apply text-sm font-medium text-gray-800;
+}
+
+.dropdown-label-dark {
+  @apply text-sm font-medium text-white;
+}
+
+.dropdown-button-dark {
+  @apply bg-gray-800 border-gray-600 text-white hover:bg-[#E93B66] focus:ring-[#E93B66] focus:border-[#E93B66];
+}
+
+.dropdown-menu {
+  @apply absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 shadow-lg z-50 overflow-y-auto;
+}
+
+.dropdown-option {
+  @apply w-full px-3 py-2 text-left text-sm transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 text-gray-800;
+}
+
+.dropdown-option-dark {
+  @apply text-left text-gray-800 hover:bg-[#E93B66];
+}
+
+.dropdown-option-selected {
+  @apply bg-blue-100 text-blue-700;
+}
+
+.dropdown-option-selected-dark {
+  @apply bg-[#E93B66] text-white hover:bg-[#3BE9D8];
+}
+
+.dropdown-clear-button {
+  @apply text-xs text-blue-600 hover:text-blue-800 underline;
+}

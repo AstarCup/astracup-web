@@ -743,32 +743,20 @@ export default function MapSelectionPage() {
                     <div className="bg-gray-100 rounded-lg p-6 mb-6">
                         <div className="flex flex-wrap gap-4 items-center justify-between">
                             <div className="flex gap-4 items-center">
-                                <div>
-                                    <label className="block text-gray-800 text-sm mb-1">赛季</label>
-                                    <select
-                                        value={season}
-                                        onChange={(e) => setSeason(e.target.value)}
-                                    >
-                                        {availableSeasons.map(seasonOption => (
-                                            <option key={seasonOption.value} value={seasonOption.value}>
-                                                {seasonOption.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-gray-800 text-sm mb-1">类别</label>
-                                    <select
-                                        value={category}
-                                        onChange={(e) => setCategory(e.target.value)}
-                                    >
-                                        {CATEGORY_OPTIONS.map(option => (
-                                            <option key={option.value} value={option.value}>
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                                <Dropdown
+                                    label="赛季"
+                                    options={availableSeasons}
+                                    value={season}
+                                    onChange={setSeason}
+                                    minWidth="8rem"
+                                />
+                                <Dropdown
+                                    label="类别"
+                                    options={CATEGORY_OPTIONS}
+                                    value={category}
+                                    onChange={setCategory}
+                                    minWidth="8rem"
+                                />
                             </div>
                             <button
                                 onClick={() => setShowAddForm(true)}
@@ -825,24 +813,22 @@ export default function MapSelectionPage() {
                                         {/* 难度选择器 - 只在有多个难度时显示 */}
                                         {availableBeatmaps.length > 1 && (
                                             <div className="mb-4">
-                                                <label className="block text-gray-800 text-sm mb-2">选择难度</label>
-                                                <select
-                                                    value={beatmapPreview.id}
-                                                    onChange={(e) => {
-                                                        const selectedId = parseInt(e.target.value);
+                                                <Dropdown
+                                                    label="选择难度"
+                                                    options={availableBeatmaps.map(beatmap => ({
+                                                        value: beatmap.id.toString(),
+                                                        label: `${beatmap.version} - ${beatmap.star_rating.toFixed(2)}★`
+                                                    }))}
+                                                    value={beatmapPreview.id.toString()}
+                                                    onChange={(value) => {
+                                                        const selectedId = parseInt(value);
                                                         const selectedBeatmap = availableBeatmaps.find(b => b.id === selectedId);
                                                         if (selectedBeatmap) {
                                                             setBeatmapPreview(selectedBeatmap);
                                                         }
                                                     }}
-                                                    className="w-full"
-                                                >
-                                                    {availableBeatmaps.map(beatmap => (
-                                                        <option key={beatmap.id} value={beatmap.id}>
-                                                            {beatmap.version} - {beatmap.star_rating.toFixed(2)}★
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                                    minWidth="100%"
+                                                />
                                             </div>
                                         )}
 
@@ -894,16 +880,14 @@ export default function MapSelectionPage() {
 
                                 <div className="flex gap-4">
                                     <div className="flex-1">
-                                        <label className="block text-gray-800 text-sm mb-2">模组</label>
-                                        <select
+                                        <label className="block text-gray-800 text-sm mb-2">选择Mod</label>
+                                        <Dropdown
+                                            label=""
+                                            options={MOD_OPTIONS.map(mod => ({ value: mod, label: mod }))}
                                             value={selectedMods}
-                                            onChange={(e) => setSelectedMods(e.target.value)}
-                                            className="w-full"
-                                        >
-                                            {MOD_OPTIONS.map(mod => (
-                                                <option key={mod} value={mod}>{mod}</option>
-                                            ))}
-                                        </select>
+                                            onChange={setSelectedMods}
+                                            minWidth="100%"
+                                        />
                                     </div>
                                     <div className="flex-1">
                                         <label className="block text-gray-800 text-sm mb-2">模组位置</label>
