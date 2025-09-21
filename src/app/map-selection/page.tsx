@@ -4,7 +4,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { showSuccess, showError, showInfo } from '../components/Notification';
 import Dropdown, { DropdownOption } from '../components/Dropdown';
-import RatingSystem from '../components/RatingSystem';
+import RatingDisplay from '../components/RatingDisplay';
+import CommentComponent from '../components/CommentComponent';
+import CurrentRating from '../components/CurrentRating';
 
 interface User {
     id: number;
@@ -1184,19 +1186,20 @@ export default function MapSelectionPage() {
                                                                 </span>
                                                             </div>
                                                             <p><strong>提名者:</strong> {selection.selectedByUsername} ({selection.selectedBy})</p>
-                                                            {/* 评分系统 */}
-                                                            <div className="bg-white rounded-lg p-3 border">
-                                                                <RatingSystem
-                                                                    mapSelectionId={selection.id}
-                                                                    userId={user?.id.toString() || null}
+                                                            <p><div className="flex-1">
+                                                                <RatingDisplay
+                                                                    ratings={[]} // 这里需要获取实际的评分数据
                                                                     selectedBy={selection.selectedBy}
-                                                                    onRatingUpdate={fetchSelections}
+                                                                    currentUserId={user?.id.toString() || null}
                                                                 />
-                                                            </div>
+                                                            </div></p>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
+
+
+
                                             <div className="flex flex-col gap-2 ml-4">
 
                                                 {/* 过审状态勾选框 */}
@@ -1236,6 +1239,21 @@ export default function MapSelectionPage() {
                                                             删除
                                                         </button>
                                                     )}
+                                                </div>
+                                                <div>
+                                                    <CurrentRating
+                                                        rating={0} // 这里需要获取用户的实际评分
+                                                        onRatingChange={() => { }} // 这里需要实现评分处理函数
+                                                        isSubmitting={false}
+                                                        userId={user?.id.toString() || null}
+                                                    />
+                                                    <CommentComponent
+                                                        mapSelectionId={selection.id}
+                                                        userId={user?.id.toString() || null}
+                                                        initialComment=""
+                                                        initialRating={0}
+                                                        onCommentUpdate={fetchSelections}
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
