@@ -22,8 +22,20 @@ interface UserRating {
     comment: string;
 }
 
+interface MapRating {
+    id: number;
+    mapSelectionId: number;
+    userId: string;
+    username: string;
+    rating: number;
+    comment: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export default function RatingSystem({ mapSelectionId, userId, onRatingUpdate }: RatingProps) {
     const [userRating, setUserRating] = useState<UserRating | null>(null);
+    const [allRatings, setAllRatings] = useState<MapRating[]>([]);
     const [stats, setStats] = useState<RatingStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,12 +53,14 @@ export default function RatingSystem({ mapSelectionId, userId, onRatingUpdate }:
         try {
             setIsLoading(true);
 
-            // 获取用户评分
+            // 获取所有评分
             const ratingResponse = await fetch(`/api/map-ratings?mapSelectionId=${mapSelectionId}`);
             if (ratingResponse.ok) {
                 const ratingData = await ratingResponse.json();
                 if (ratingData.success) {
-                    const userRating = ratingData.ratings.find((r: any) => r.userId === userId);
+                    setAllRatings(ratingData.ratings);
+
+                    const userRating = ratingData.ratings.find((r: MapRating) => r.userId === userId);
                     if (userRating) {
                         setUserRating({
                             rating: userRating.rating,
@@ -162,14 +176,17 @@ export default function RatingSystem({ mapSelectionId, userId, onRatingUpdate }:
                 onClick={() => interactive && handleRating(star)}
                 disabled={!interactive || isSubmitting}
                 className={`text-2xl ${star <= rating
-                        ? 'text-yellow-400'
-                        : 'text-gray-300'
+                    ? 'text-yellow-400'
+                    : 'text-gray-300'
                     } ${interactive ? 'hover:text-yellow-300 cursor-pointer' : 'cursor-default'}`}
             >
                 ★
             </button>
         ));
     };
+
+    // 获取其他用户的评分（排除当前用户）
+    const otherRatings = allRatings.filter(rating => rating.userId !== userId);
 
     if (isLoading) {
         return (
@@ -182,43 +199,17 @@ export default function RatingSystem({ mapSelectionId, userId, onRatingUpdate }:
 
     return (
         <div className="space-y-4">
-            {/* 评分统计 */}
-            {stats && (
+            {/* 简化评分统计 - 只显示平均分 */}
+            {stats && stats.totalRatings > 0 && (
                 <div className="bg-white rounded-lg p-4 border">
-                    <h4 className="font-semibold text-gray-800 mb-2">评分统计</h4>
-                    <div className="flex items-center space-x-2 mb-2">
+                    <div className="flex items-center space-x-2">
                         <div className="text-2xl font-bold text-yellow-500">
                             {stats.averageRating.toFixed(1)}
                         </div>
-                        <div className="text-gray-600">
+                        <div className="text-gray-600 text-sm">
                             ({stats.totalRatings} 个评分)
                         </div>
                     </div>
-                    <div className="flex items-center space-x-1">
-                        {renderStars(Math.round(stats.averageRating))}
-                    </div>
-
-                    {/* 评分分布 */}
-                    {stats.totalRatings > 0 && (
-                        <div className="mt-3 space-y-1">
-                            {[5, 4, 3, 2, 1].map(rating => (
-                                <div key={rating} className="flex items-center space-x-2">
-                                    <span className="text-sm text-gray-600 w-4">{rating}★</span>
-                                    <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                        <div
-                                            className="bg-yellow-400 h-2 rounded-full"
-                                            style={{
-                                                width: `${(stats.ratingDistribution[rating] / stats.totalRatings) * 100}%`
-                                            }}
-                                        ></div>
-                                    </div>
-                                    <span className="text-sm text-gray-600 w-8">
-                                        {stats.ratingDistribution[rating]}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
                 </div>
             )}
 
@@ -289,6 +280,46 @@ export default function RatingSystem({ mapSelectionId, userId, onRatingUpdate }:
                             )}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* 其他用户的评分 */}
+            {otherRatings.length > 0 && (
+                <div className="bg-white rounded-lg p-4 border">
+                    <h4 className="font-semibold text-gray-800 mb-3">其他评分</h4>
+                    <div className="space-y-3">
+                        {otherRatings.map((rating) => (
+                            <div key={rating.id} className="border-b border-gray-100 pb-3 last:border-b-0">
+                                <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center space-x-2">
+                                        {/* 用户头像占位符 */}
+                                        <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                                            <span className="text-xs text-gray-600">
+                                                {rating.username.charAt(0).toUpperCase()}
+                                            </span>
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-800">
+                                            {rating.username}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center space-x-1">
+                                        {renderStars(rating.rating)}
+                                        <span className="text-sm text-gray-600">
+                                            {rating.rating}分
+                                        </span>
+                                    </div>
+                                </div>
+                                {rating.comment && (
+                                    <p className="text-gray-700 text-sm mt-2 pl-10">
+                                        {rating.comment}
+                                    </p>
+                                )}
+                                <div className="text-xs text-gray-500 mt-1 pl-10">
+                                    {new Date(rating.createdAt).toLocaleDateString('zh-CN')}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>

@@ -16,7 +16,7 @@ async function verifyUserAuth(osuId: string): Promise<{ authorized: boolean; use
         const isAuthorized = await verifyMapSelectionAuth(osuId);
 
         if (isAuthorized) {
-            // 尝试从session获取用户名
+            // 在生产环境中，用户已经通过OAuth登录，主要依赖session获取用户名
             try {
                 const sessionResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/session/get`);
                 if (sessionResponse.ok) {
