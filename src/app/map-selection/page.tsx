@@ -102,6 +102,7 @@ export default function MapSelectionPage() {
 
     // Rating states
     const [userRatings, setUserRatings] = useState<{ [key: number]: number }>({});
+    const [mapRatings, setMapRatings] = useState<{ [key: number]: any[] }>({});
     const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
 
     // Add selection form
@@ -622,6 +623,24 @@ export default function MapSelectionPage() {
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
+    // 获取特定选图的评分数据
+    const fetchMapRatings = async (mapSelectionId: number) => {
+        try {
+            const response = await fetch(`/api/map-ratings?mapSelectionId=${mapSelectionId}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    setMapRatings(prev => ({
+                        ...prev,
+                        [mapSelectionId]: data.ratings
+                    }));
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching map ratings:', error);
+        }
+    };
+
     // 处理评分
     const handleRating = async (mapSelectionId: number, rating: number) => {
         if (!user?.id) {
@@ -651,6 +670,8 @@ export default function MapSelectionPage() {
                     [mapSelectionId]: rating
                 }));
                 showSuccess('评分成功');
+                // 刷新评分数据
+                fetchMapRatings(mapSelectionId);
                 fetchSelections(); // 刷新数据以获取最新的评分统计
             } else {
                 const errorData = await response.json();
@@ -1235,9 +1256,10 @@ export default function MapSelectionPage() {
                                                         </div>
                                                         <p><div className="flex-1">
                                                             <RatingDisplay
-                                                                ratings={[]} // 这里需要获取实际的评分数据
+                                                                ratings={mapRatings[selection.id] || []}
                                                                 selectedBy={selection.selectedBy}
                                                                 currentUserId={user?.id.toString() || null}
+                                                                onRefresh={() => fetchMapRatings(selection.id)}
                                                             />
                                                         </div></p>
                                                     </div>

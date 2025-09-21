@@ -133,6 +133,28 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // 获取用户头像URL
+        let avatarUrl = '';
+        try {
+            // 在API路由中，直接从请求头获取host信息
+            const host = process.env.VERCEL_URL || 'localhost:3000';
+            const protocol = host.includes('localhost') ? 'http' : 'https';
+            const sessionResponse = await fetch(`${protocol}://${host}/api/session/get`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            if (sessionResponse.ok) {
+                const sessionData = await sessionResponse.json();
+                if (sessionData.success && sessionData.session) {
+                    avatarUrl = sessionData.session.avatar_url || '';
+                }
+            }
+        } catch (sessionError) {
+            console.error('Error getting session for avatar:', sessionError);
+            // 如果获取session失败，使用默认头像
+        }
+
         // 初始化数据库
         await initMapRatingsDatabase();
 
@@ -142,7 +164,8 @@ export async function POST(request: NextRequest) {
             userId,
             authResult.username || `User_${userId}`,
             rating,
-            comment
+            comment,
+            avatarUrl
         );
 
         if (!success) {

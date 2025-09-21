@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface MapRating {
     id: number;
@@ -18,10 +18,17 @@ interface RatingDisplayProps {
     ratings: MapRating[];
     selectedBy: string;
     currentUserId: string | null;
+    onRefresh?: () => void;
 }
 
-export default function RatingDisplay({ ratings, selectedBy, currentUserId }: RatingDisplayProps) {
+export default function RatingDisplay({ ratings, selectedBy, currentUserId, onRefresh }: RatingDisplayProps) {
     const [hoveredUser, setHoveredUser] = useState<string | null>(null);
+    const [lastUpdated, setLastUpdated] = useState(Date.now());
+
+    // 当ratings变化时更新显示
+    useEffect(() => {
+        setLastUpdated(Date.now());
+    }, [ratings]);
 
     const renderStars = (rating: number, size: string = 'text-lg') => {
         return Array.from({ length: 5 }, (_, i) => i + 1).map(star => (

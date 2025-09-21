@@ -47,6 +47,10 @@ export default function CommentComponent({
                 setShowCommentForm(false);
                 showSuccess('评论提交成功');
                 onCommentUpdate();
+                // 调用刷新回调（如果存在）
+                if (typeof (window as any).refreshRatings === 'function') {
+                    (window as any).refreshRatings();
+                }
             } else {
                 const errorData = await response.json();
                 showError(errorData.error || '评论提交失败');

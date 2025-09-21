@@ -8,6 +8,7 @@ export interface MapRating {
     mapSelectionId: number;     // 关联的选图ID
     userId: string;             // 评分用户的osu ID
     username: string;           // 评分用户的用户名
+    avatar_url: string;         // 用户头像URL
     rating: number;             // 评分 (1-5)
     comment: string;            // 评论内容
     createdAt: string;          // 创建时间
@@ -35,6 +36,7 @@ export const initMapRatingsDatabase = async (): Promise<void> => {
                 mapSelectionId INT NOT NULL,
                 userId VARCHAR(255) NOT NULL,
                 username VARCHAR(255) NOT NULL,
+                avatar_url VARCHAR(500) NOT NULL DEFAULT '',
                 rating TINYINT NOT NULL,
                 comment TEXT,
                 createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -74,6 +76,7 @@ export const mapRatingsStorage = {
                 mapSelectionId: row.mapSelectionId,
                 userId: row.userId,
                 username: row.username,
+                avatar_url: row.avatar_url || '',
                 rating: row.rating,
                 comment: row.comment || '',
                 createdAt: row.createdAt,
@@ -108,6 +111,7 @@ export const mapRatingsStorage = {
                 mapSelectionId: row.mapSelectionId,
                 userId: row.userId,
                 username: row.username,
+                avatar_url: row.avatar_url || '',
                 rating: row.rating,
                 comment: row.comment || '',
                 createdAt: row.createdAt,
@@ -125,7 +129,8 @@ export const mapRatingsStorage = {
         userId: string,
         username: string,
         rating: number,
-        comment: string
+        comment: string,
+        avatar_url: string = ''
     ): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
@@ -136,8 +141,8 @@ export const mapRatingsStorage = {
             if (existingRating) {
                 // 更新现有评分
                 const [result] = await connection.execute(
-                    'UPDATE map_ratings SET rating = ?, comment = ?, username = ? WHERE id = ?',
-                    [rating, comment, username, existingRating.id]
+                    'UPDATE map_ratings SET rating = ?, comment = ?, username = ?, avatar_url = ? WHERE id = ?',
+                    [rating, comment, username, avatar_url, existingRating.id]
                 );
 
                 connection.release();
@@ -146,8 +151,8 @@ export const mapRatingsStorage = {
             } else {
                 // 添加新评分
                 const [result] = await connection.execute(
-                    'INSERT INTO map_ratings (mapSelectionId, userId, username, rating, comment) VALUES (?, ?, ?, ?, ?)',
-                    [mapSelectionId, userId, username, rating, comment]
+                    'INSERT INTO map_ratings (mapSelectionId, userId, username, rating, comment, avatar_url) VALUES (?, ?, ?, ?, ?, ?)',
+                    [mapSelectionId, userId, username, rating, comment, avatar_url]
                 );
 
                 connection.release();
@@ -246,6 +251,7 @@ export const mapRatingsStorage = {
                 mapSelectionId: row.mapSelectionId,
                 userId: row.userId,
                 username: row.username,
+                avatar_url: row.avatar_url || '',
                 rating: row.rating,
                 comment: row.comment || '',
                 createdAt: row.createdAt,
