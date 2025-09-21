@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import MapoolTable from '@/app/components/MapoolTable';
+import Dropdown, { DropdownOption } from '@/app/components/Dropdown';
 
 interface MapSelection {
     id: number;
@@ -164,33 +165,37 @@ export default function Mapool() {
             <h1 className="text-3xl font-bold mb-6 text-white">图池</h1>
 
             {/* 赛季和类别选择器 */}
-            <div className="mb-6 flex gap-4 items-center">
-                <div>
-                    <label className="block text-white text-sm mb-1">赛季</label>
-                    <select
-                        value={currentSeason}
-                        onChange={(e) => setCurrentSeason(e.target.value)}
-                    >
-                        {availableSeasons.map(season => (
-                            <option key={season.value} value={season.value}>
-                                {season.label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div>
-                    <label className="block text-white text-sm mb-1">类别</label>
-                    <select
-                        value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                    >
-                        {CATEGORY_OPTIONS.map(option => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+            <div className="mb-6 flex gap-6 items-end">
+                <Dropdown
+                    label="赛季"
+                    options={availableSeasons.map(season => ({
+                        value: season.value,
+                        label: season.label
+                    }))}
+                    value={currentSeason}
+                    onChange={setCurrentSeason}
+                    buttonClassName="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 focus:ring-blue-400 focus:border-blue-400"
+                    dropdownClassName="bg-gray-800 border-gray-600 shadow-xl"
+                    optionClassName="text-white hover:bg-gray-700"
+                    selectedOptionClassName="bg-blue-600 text-white hover:bg-blue-500"
+                    className="text-white"
+                    minWidth="8rem"
+                />
+                <Dropdown
+                    label="类别"
+                    options={CATEGORY_OPTIONS.map(option => ({
+                        value: option.value,
+                        label: option.label
+                    }))}
+                    value={selectedCategory}
+                    onChange={setSelectedCategory}
+                    buttonClassName="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 focus:ring-blue-400 focus:border-blue-400"
+                    dropdownClassName="bg-gray-800 border-gray-600 shadow-xl"
+                    optionClassName="text-white hover:bg-gray-700"
+                    selectedOptionClassName="bg-blue-600 text-white hover:bg-blue-500"
+                    className="text-white"
+                    minWidth="6rem"
+                />
             </div>
 
             {mapPoolData.length === 0 ? (
