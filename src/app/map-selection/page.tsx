@@ -813,24 +813,22 @@ export default function MapSelectionPage() {
                                         {/* 难度选择器 - 只在有多个难度时显示 */}
                                         {availableBeatmaps.length > 1 && (
                                             <div className="mb-4">
-                                                <label className="block text-gray-800 text-sm mb-2">选择难度</label>
-                                                <select
-                                                    value={beatmapPreview.id}
-                                                    onChange={(e) => {
-                                                        const selectedId = parseInt(e.target.value);
+                                                <Dropdown
+                                                    label="选择难度"
+                                                    options={availableBeatmaps.map(beatmap => ({
+                                                        value: beatmap.id.toString(),
+                                                        label: `${beatmap.version} - ${beatmap.star_rating.toFixed(2)}★`
+                                                    }))}
+                                                    value={beatmapPreview.id.toString()}
+                                                    onChange={(value) => {
+                                                        const selectedId = parseInt(value);
                                                         const selectedBeatmap = availableBeatmaps.find(b => b.id === selectedId);
                                                         if (selectedBeatmap) {
                                                             setBeatmapPreview(selectedBeatmap);
                                                         }
                                                     }}
-                                                    className="w-full"
-                                                >
-                                                    {availableBeatmaps.map(beatmap => (
-                                                        <option key={beatmap.id} value={beatmap.id}>
-                                                            {beatmap.version} - {beatmap.star_rating.toFixed(2)}★
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                                    minWidth="100%"
+                                                />
                                             </div>
                                         )}
 
@@ -882,16 +880,13 @@ export default function MapSelectionPage() {
 
                                 <div className="flex gap-4">
                                     <div className="flex-1">
-                                        <label className="block text-gray-800 text-sm mb-2">模组</label>
-                                        <select
+                                        <Dropdown
+                                            label="模组"
+                                            options={MOD_OPTIONS.map(mod => ({ value: mod, label: mod }))}
                                             value={selectedMods}
-                                            onChange={(e) => setSelectedMods(e.target.value)}
-                                            className="w-full"
-                                        >
-                                            {MOD_OPTIONS.map(mod => (
-                                                <option key={mod} value={mod}>{mod}</option>
-                                            ))}
-                                        </select>
+                                            onChange={setSelectedMods}
+                                            minWidth="100%"
+                                        />
                                     </div>
                                     <div className="flex-1">
                                         <label className="block text-gray-800 text-sm mb-2">模组位置</label>
