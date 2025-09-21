@@ -93,6 +93,7 @@ export default function MapSelectionPage() {
     const [selections, setSelections] = useState<MapSelection[]>([]);
     const [season, setSeason] = useState('s1');
     const [category, setCategory] = useState('qualification');
+    const [modFilter, setModFilter] = useState<string>('all'); // 新增：mod筛选状态
 
     // Add selection form
     const [showAddForm, setShowAddForm] = useState(false);
@@ -680,6 +681,31 @@ export default function MapSelectionPage() {
         }
     };
 
+    // 计算筛选后的选图列表
+    const filteredSelections = selections.filter(selection => {
+        if (modFilter === 'all') return true;
+
+        // 处理LZ特有mod的情况
+        if (selection.selectedMods === 'LZ' && selection.customModName) {
+            return modFilter === 'LZ';
+        }
+
+        return selection.selectedMods === modFilter;
+    });
+
+    // 获取当前选图中存在的所有mod类型
+    const getAvailableModsFromSelections = () => {
+        const mods = new Set<string>();
+        selections.forEach(selection => {
+            if (selection.selectedMods === 'LZ' && selection.customModName) {
+                mods.add('LZ');
+            } else {
+                mods.add(selection.selectedMods);
+            }
+        });
+        return Array.from(mods).sort();
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-white">
@@ -1089,15 +1115,57 @@ export default function MapSelectionPage() {
 
                     {/* Map selection list */}
                     <div className="bg-gray-100 rounded-lg p-6">
-                        <h3 className="text-gray-800 text-xl font-bold mb-4">
-                            已选歌曲 ({selections.length})
-                        </h3>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                            <h3 className="text-gray-800 text-xl font-bold">
+                                已选歌曲 ({filteredSelections.length}/{selections.length})
+                            </h3>
 
-                        {selections.length === 0 ? (
-                            <p className="text-gray-600 text-center py-8">暂无选图</p>
+                            {/* Mod 筛选器 */}
+                            <div className="flex items-center gap-2">
+                                <label className="text-gray-800 text-sm font-medium">按Mod筛选:</label>
+                                <select
+                                    value={modFilter}
+                                    onChange={(e) => setModFilter(e.target.value)}
+                                    className="bg-white border border-gray-300 text-gray-800 px-3 py-1 rounded text-sm min-w-[120px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="all">全部 ({selections.length})</option>
+                                    {getAvailableModsFromSelections().map(mod => {
+                                        const count = selections.filter(s => {
+                                            if (s.selectedMods === 'LZ' && s.customModName) {
+                                                return mod === 'LZ';
+                                            }
+                                            return s.selectedMods === mod;
+                                        }).length;
+                                        return (
+                                            <option key={mod} value={mod}>
+                                                {mod} ({count})
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                                {modFilter !== 'all' && (
+                                    <button
+                                        onClick={() => setModFilter('all')}
+                                        className="text-xs text-blue-600 hover:text-blue-800 underline"
+                                        title="清除筛选"
+                                    >
+                                        清除
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {filteredSelections.length === 0 ? (
+                            <div className="text-center py-8">
+                                {selections.length === 0 ? (
+                                    <p className="text-gray-600">暂无选图</p>
+                                ) : (
+                                    <p className="text-gray-600">没有找到符合条件的选图</p>
+                                )}
+                            </div>
                         ) : (
                             <div className="space-y-4">
-                                {selections.map((selection) => (
+                                {filteredSelections.map((selection) => (
                                     <div key={selection.id} className="bg-gray-200 rounded-lg p-4">
                                         <div className="flex justify-between items-start">
                                             <div className="flex gap-4 flex-1">
