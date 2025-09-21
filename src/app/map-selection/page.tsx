@@ -1186,14 +1186,14 @@ export default function MapSelectionPage() {
                                                                 </span>
                                                             </div>
                                                             <p><strong>提名者:</strong> {selection.selectedByUsername} ({selection.selectedBy})</p>
-                                                            <p><div className="flex-1">
-                                                                <RatingDisplay
-                                                                    ratings={[]} // 这里需要获取实际的评分数据
-                                                                    selectedBy={selection.selectedBy}
-                                                                    currentUserId={user?.id.toString() || null}
-                                                                />
-                                                            </div></p>
                                                         </div>
+                                                        <p><div className="flex-1">
+                                                            <RatingDisplay
+                                                                ratings={[]} // 这里需要获取实际的评分数据
+                                                                selectedBy={selection.selectedBy}
+                                                                currentUserId={user?.id.toString() || null}
+                                                            />
+                                                        </div></p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1251,7 +1251,7 @@ export default function MapSelectionPage() {
                                                         mapSelectionId={selection.id}
                                                         userId={user?.id.toString() || null}
                                                         initialComment=""
-                                                        initialRating={0}
+                                                        currentRating={0}
                                                         onCommentUpdate={fetchSelections}
                                                     />
                                                 </div>

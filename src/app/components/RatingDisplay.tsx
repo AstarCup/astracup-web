@@ -123,9 +123,7 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId }: Ra
                                         </div>
                                     )}
                                 </div>
-                                <span className="text-xs text-gray-600 truncate max-w-[80px]">
-                                    {rating.username}
-                                </span>
+
                             </div>
                             <div className="flex items-center space-x-1">
                                 {renderStars(rating.rating)}

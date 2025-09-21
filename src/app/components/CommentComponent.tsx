@@ -7,7 +7,7 @@ interface CommentComponentProps {
     mapSelectionId: number;
     userId: string | null;
     initialComment: string;
-    initialRating: number;
+    currentRating: number; // 改为currentRating，实时获取当前评分
     onCommentUpdate: () => void;
 }
 
@@ -15,7 +15,7 @@ export default function CommentComponent({
     mapSelectionId,
     userId,
     initialComment,
-    initialRating,
+    currentRating,
     onCommentUpdate
 }: CommentComponentProps) {
     const [showCommentForm, setShowCommentForm] = useState(false);
@@ -23,7 +23,7 @@ export default function CommentComponent({
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleCommentSubmit = async () => {
-        if (!userId || initialRating === 0) {
+        if (!userId || currentRating === 0) {
             showError('请先评分');
             return;
         }
@@ -37,7 +37,7 @@ export default function CommentComponent({
                 },
                 body: JSON.stringify({
                     mapSelectionId,
-                    rating: initialRating,
+                    rating: currentRating,
                     comment: commentInput,
                     userId
                 })
