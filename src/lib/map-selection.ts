@@ -46,6 +46,8 @@ export interface MapSelection {
     customModName?: string;     // 自定义mod名称（用于LZ mod）
     comment: string;            // 注释信息
     selectedBy: string;         // 选图者的osu ID
+    selectedByUsername: string; // 选图者的用户名
+    selectedByAvatar: string;   // 选图者的头像URL
     selectedAt: string;         // 选图时间
     season: string;             // 赛季标识，如 "s1", "s2"
     category: string;           // 类别，如 "qualification", "ro32", "ro16" 等
@@ -288,6 +290,7 @@ export const mapSelectionStorage = {
                 comment: row.comment || '',
                 selectedBy: row.selectedBy,
                 selectedByUsername: row.selectedByUsername || `User_${row.selectedBy}`, // 使用存储的用户名
+                selectedByAvatar: row.selectedByAvatar || '', // 使用存储的头像URL
                 selectedAt: row.selectedAt,
                 season: row.season,
                 category: row.category,

@@ -1370,7 +1370,20 @@ export default function MapSelectionPage() {
                                                         )}
                                                         <p><strong>选择时间:</strong> {new Date(selection.selectedAt).toLocaleString()}</p>
                                                         <div className="flex items-center space-x-2">
-                                                            <div className="w-6 h-6 bg-blue-300 rounded-full flex items-center justify-center">
+                                                            {selection.selectedByAvatar ? (
+                                                                <img
+                                                                    src={selection.selectedByAvatar}
+                                                                    alt={`${selection.selectedByUsername} avatar`}
+                                                                    className="w-6 h-6 rounded-full object-cover"
+                                                                    onError={(e) => {
+                                                                        e.currentTarget.style.display = 'none';
+                                                                        // 回退到显示首字母
+                                                                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                                                        if (fallback) fallback.style.display = 'flex';
+                                                                    }}
+                                                                />
+                                                            ) : null}
+                                                            <div className={`w-6 h-6 bg-blue-300 rounded-full flex items-center justify-center ${selection.selectedByAvatar ? 'hidden' : ''}`}>
                                                                 <span className="text-xs text-blue-800 font-medium">
                                                                     {selection.selectedByUsername?.charAt(0).toUpperCase() || 'N'}
                                                                 </span>
