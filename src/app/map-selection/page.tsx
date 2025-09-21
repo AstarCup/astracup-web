@@ -901,7 +901,7 @@ export default function MapSelectionPage() {
                                             className="w-full bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
                                         />
                                     </div>
-                                    <div className="flex-2">
+                                    <div className="flex-14">
                                         <label className="block text-gray-800 text-sm mb-2">注释</label>
                                         <input
                                             type="text"
