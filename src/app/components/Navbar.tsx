@@ -116,17 +116,22 @@ export default function Navbar() {
                                             }}
                                         >
                                             {/* {link.name} decorative background */}
-                                            <div className="absolute inset-0 z-0 opacity-80 pointer-events-none flex items-center justify-bottom">
-                                                <span className="text-gray-400 text-3xl font-mono font-bold">
-                                                    {link.name}
-                                                </span>
-                                            </div>
-
+                                            <span
+                                                className={`${audiowide.className} absolute bottom-0 right-0 text-gray-400 text-[45px] font-mono font-bold whitespace-nowrap`}
+                                                style={{
+                                                    color: '#3f3f3f03',
+                                                    WebkitTextStroke: '0.2px #37373764',
+                                                    fontWeight: 700,
+                                                    letterSpacing: '0.2px',
+                                                    direction: 'rtl',
+                                                    textAlign: 'right',
+                                                }}
+                                            >
+                                                {link.name}
+                                            </span>
                                             <div className="text-xs opacity-75 font-bold mb-1 leading-tight relative z-10">{link.name}
-
                                             </div>
                                             <div className="text-2xl font-bold leading-tight inline-flex relative z-10">{link.tip}
-
                                             </div>
 
                                         </Link>
