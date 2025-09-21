@@ -1297,7 +1297,7 @@ export default function MapSelectionPage() {
                                                         mapSelectionId={selection.id}
                                                         userId={user?.id.toString() || null}
                                                         initialComment=""
-                                                        currentRating={0}
+                                                        currentRating={userRatings[selection.id] || 0}
                                                         onCommentUpdate={fetchSelections}
                                                     />
                                                 </div>
