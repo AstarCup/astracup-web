@@ -7,6 +7,7 @@ interface MapRating {
     mapSelectionId: number;
     userId: string;
     username: string;
+    avatar_url: string;
     rating: number;
     comment: string;
     createdAt: string;
@@ -52,13 +53,26 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId }: Ra
                         <div className="flex items-center space-x-2">
                             {/* 提名者头像 */}
                             <div
-                                className="w-8 h-8 bg-blue-300 rounded-full flex items-center justify-center relative group"
+                                className="w-8 h-8 rounded-full relative group"
                                 onMouseEnter={() => setHoveredUser(selectedBy)}
                                 onMouseLeave={() => setHoveredUser(null)}
                             >
-                                <span className="text-xs text-blue-800 font-medium">
-                                    {nominatorRating.username?.charAt(0).toUpperCase() || 'N'}
-                                </span>
+                                <img
+                                    src={nominatorRating.avatar_url}
+                                    alt={nominatorRating.username}
+                                    className="w-8 h-8 rounded-full object-cover"
+                                    onError={(e) => {
+                                        // 如果头像加载失败，显示首字母
+                                        e.currentTarget.style.display = 'none';
+                                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                        if (fallback) fallback.style.display = 'flex';
+                                    }}
+                                />
+                                <div className="w-8 h-8 bg-blue-300 rounded-full flex items-center justify-center absolute inset-0" style={{ display: 'none' }}>
+                                    <span className="text-xs text-blue-800 font-medium">
+                                        {nominatorRating.username?.charAt(0).toUpperCase() || 'N'}
+                                    </span>
+                                </div>
 
                                 {/* Hover提示 */}
                                 {hoveredUser === selectedBy && (
@@ -101,10 +115,23 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId }: Ra
                         >
                             <div className="flex items-center space-x-2">
                                 {/* 用户头像 */}
-                                <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center relative">
-                                    <span className="text-xs text-gray-600">
-                                        {rating.username?.charAt(0).toUpperCase() || 'U'}
-                                    </span>
+                                <div className="w-6 h-6 rounded-full relative">
+                                    <img
+                                        src={rating.avatar_url}
+                                        alt={rating.username}
+                                        className="w-6 h-6 rounded-full object-cover"
+                                        onError={(e) => {
+                                            // 如果头像加载失败，显示首字母
+                                            e.currentTarget.style.display = 'none';
+                                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                            if (fallback) fallback.style.display = 'flex';
+                                        }}
+                                    />
+                                    <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center absolute inset-0" style={{ display: 'none' }}>
+                                        <span className="text-xs text-gray-600">
+                                            {rating.username?.charAt(0).toUpperCase() || 'U'}
+                                        </span>
+                                    </div>
 
                                     {/* Hover提示 */}
                                     {hoveredUser === rating.userId && (
