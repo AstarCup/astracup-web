@@ -36,7 +36,6 @@ export const initMapRatingsDatabase = async (): Promise<void> => {
                 mapSelectionId INT NOT NULL,
                 userId VARCHAR(255) NOT NULL,
                 username VARCHAR(255) NOT NULL,
-                avatar_url VARCHAR(500) NOT NULL DEFAULT '',
                 rating TINYINT NOT NULL,
                 comment TEXT,
                 createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -48,6 +47,21 @@ export const initMapRatingsDatabase = async (): Promise<void> => {
                 CHECK (rating >= 1 AND rating <= 5)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
+
+        // 检查并添加avatar_url字段（如果不存在）
+        try {
+            const [columns] = await connection.execute('SHOW COLUMNS FROM map_ratings LIKE ?', ['avatar_url']);
+            if ((columns as any[]).length === 0) {
+                // avatar_url字段不存在，添加它
+                await connection.execute(`
+                    ALTER TABLE map_ratings
+                    ADD COLUMN avatar_url VARCHAR(500) NOT NULL DEFAULT ''
+                `);
+                console.log('Added avatar_url column to map_ratings table');
+            }
+        } catch (alterError) {
+            console.log('Error checking/adding avatar_url column:', (alterError as Error).message);
+        }
 
         connection.release();
         console.log('Map ratings database initialized successfully');

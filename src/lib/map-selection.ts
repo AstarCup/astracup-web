@@ -42,6 +42,8 @@ export interface MapSelection {
     hp: number;                 // Health Points (HP Drain Rate)
     selectedMods: string;       // 选择的mod，如 "NM", "HD", "HR" 等
     modPosition: number;        // mod位数，如 nm1的1, hd2的2
+    customDTRate?: number;      // 自定义DT倍率（可选）
+    customModName?: string;     // 自定义mod名称（用于LZ mod）
     comment: string;            // 注释信息
     selectedBy: string;         // 选图者的osu ID
     selectedAt: string;         // 选图时间
@@ -211,6 +213,34 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
             }
         }
 
+        // 检查并添加customDTRate字段
+        try {
+            await connection.execute(`SELECT customDTRate FROM map_selections LIMIT 1`);
+        } catch (error: any) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding customDTRate field...');
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN customDTRate DECIMAL(4,2) DEFAULT NULL AFTER selectedByAvatar
+                `);
+                console.log('Successfully added customDTRate field');
+            }
+        }
+
+        // 检查并添加customModName字段
+        try {
+            await connection.execute(`SELECT customModName FROM map_selections LIMIT 1`);
+        } catch (error: any) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding customModName field...');
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN customModName VARCHAR(50) DEFAULT NULL AFTER customDTRate
+                `);
+                console.log('Successfully added customModName field');
+            }
+        }
+
         connection.release();
         console.log('Map selection database initialized successfully');
     } catch (error) {
@@ -279,9 +309,9 @@ export const mapSelectionStorage = {
             const [result] = await connection.execute(`
                 INSERT INTO map_selections (
                     beatmapId, beatmapsetId, title, artist, version, creator,
-                    starRating, bpm, totalLength, ar, cs, od, hp, selectedMods, modPosition, comment,
+                    starRating, bpm, totalLength, ar, cs, od, hp, selectedMods, modPosition, customDTRate, customModName, comment,
                     selectedBy, selectedByUsername, selectedByAvatar, selectedAt, season, category, url, coverUrl, approved
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)
             `, [
                 selection.beatmapId,
                 selection.beatmapsetId,
@@ -298,6 +328,8 @@ export const mapSelectionStorage = {
                 selection.hp,
                 selection.selectedMods,
                 selection.modPosition,
+                selection.customDTRate || null,
+                selection.customModName || null,
                 selection.comment,
                 selection.selectedBy,
                 selection.selectedByUsername || null, // 存储用户名

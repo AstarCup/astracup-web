@@ -127,6 +127,8 @@ export async function POST(request: NextRequest) {
             url,
             selectedMods,
             modPosition = 1,
+            customDTRate,
+            customModName,
             comment,
             approved = false,
             selectedBy,
@@ -239,6 +241,8 @@ export async function POST(request: NextRequest) {
             hp: finalStats.hp,
             selectedMods: selectedMods || 'NM',
             modPosition: modPosition || 1,
+            customDTRate: customDTRate || undefined,
+            customModName: customModName || undefined,
             comment: comment || '',
             selectedBy,
             selectedByUsername: selectedByUsername, // 传递用户名

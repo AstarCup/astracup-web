@@ -7,7 +7,7 @@ interface CommentComponentProps {
     mapSelectionId: number;
     userId: string | null;
     initialComment: string;
-    currentRating: number; // 改为currentRating，实时获取当前评分
+    initialRating: number; // 用户之前的评分（如果有）
     onCommentUpdate: () => void;
 }
 
@@ -15,16 +15,27 @@ export default function CommentComponent({
     mapSelectionId,
     userId,
     initialComment,
-    currentRating,
+    initialRating,
     onCommentUpdate
 }: CommentComponentProps) {
     const [showCommentForm, setShowCommentForm] = useState(false);
     const [commentInput, setCommentInput] = useState(initialComment);
+    const [ratingInput, setRatingInput] = useState(initialRating);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleCommentSubmit = async () => {
-        if (!userId || currentRating === 0) {
-            showError('请先评分');
+        if (!userId) {
+            showError('请先登录');
+            return;
+        }
+
+        if (ratingInput === 0) {
+            showError('请选择评分');
+            return;
+        }
+
+        if (!commentInput.trim()) {
+            showError('请输入评论内容');
             return;
         }
 
@@ -37,8 +48,8 @@ export default function CommentComponent({
                 },
                 body: JSON.stringify({
                     mapSelectionId,
-                    rating: currentRating,
-                    comment: commentInput,
+                    rating: ratingInput,
+                    comment: commentInput.trim(),
                     userId
                 })
             });
@@ -89,7 +100,31 @@ export default function CommentComponent({
     }
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-3">
+            {/* 评分选择器 */}
+            <div className="flex items-center justify-center space-x-2">
+                <span className="text-sm text-gray-600">评分：</span>
+                <div className="flex space-x-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                            key={star}
+                            type="button"
+                            onClick={() => setRatingInput(star)}
+                            className={`w-8 h-8 text-lg ${star <= ratingInput
+                                    ? 'text-yellow-400'
+                                    : 'text-gray-300'
+                                } hover:text-yellow-400 transition-colors`}
+                        >
+                            ★
+                        </button>
+                    ))}
+                </div>
+                <span className="text-sm text-gray-500 ml-2">
+                    {ratingInput > 0 && `${ratingInput} 星`}
+                </span>
+            </div>
+
+            {/* 评论输入框 */}
             <textarea
                 value={commentInput}
                 onChange={(e) => setCommentInput(e.target.value)}
@@ -97,6 +132,7 @@ export default function CommentComponent({
                 className="w-full p-2 border border-gray-300 rounded text-sm text-gray-800"
                 rows={3}
             />
+
             <div className="flex space-x-2 justify-center">
                 <button
                     onClick={handleCommentSubmit}
@@ -109,6 +145,7 @@ export default function CommentComponent({
                     onClick={() => {
                         setShowCommentForm(false);
                         setCommentInput(initialComment);
+                        setRatingInput(initialRating);
                     }}
                     className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
                 >

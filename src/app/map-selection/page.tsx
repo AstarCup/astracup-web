@@ -377,6 +377,13 @@ export default function MapSelectionPage() {
             if (response.ok) {
                 const data = await response.json();
                 setSelections(data.selections || []);
+
+                // 获取所有选图的评分数据
+                if (data.selections && data.selections.length > 0) {
+                    for (const selection of data.selections) {
+                        fetchMapRatings(selection.id);
+                    }
+                }
             } else {
                 const errorData = await response.json();
                 showError(errorData.error || '获取选图列表失败');
@@ -682,6 +689,28 @@ export default function MapSelectionPage() {
             showError('评分失败');
         } finally {
             setIsRatingSubmitting(false);
+        }
+    };
+
+    // 获取mod对应的颜色类名
+    const getModColorClass = (mod: string) => {
+        switch (mod.toUpperCase()) {
+            case 'NM':
+                return 'bg-blue-500';
+            case 'HD':
+                return 'bg-yellow-500';
+            case 'HR':
+                return 'bg-red-500';
+            case 'DT':
+                return 'bg-purple-500';
+            case 'TB':
+                return 'bg-black';
+            case 'FM':
+                return 'bg-green-500';
+            case 'LZ':
+                return 'bg-pink-500';
+            default:
+                return 'bg-gray-500';
         }
     };
 
@@ -1198,14 +1227,13 @@ export default function MapSelectionPage() {
                                                 {/* Content */}
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-3 mb-2">
-                                                        <span className="bg-blue-500 text-white px-2 py-1 rounded text-sm font-bold">
+                                                        <span className={`${getModColorClass(selection.selectedMods)} text-white px-2 py-1 rounded text-sm font-bold`}>
                                                             {selection.selectedMods === 'LZ' && selection.customModName ?
-                                                                `${selection.customModName}${selection.modPosition}` :
-                                                                `${selection.selectedMods}${selection.modPosition}`
+                                                                `LZ${selection.modPosition}-${selection.customModName}` :
+                                                                selection.selectedMods === 'DT' && selection.customDTRate && selection.customDTRate !== 1.5 ?
+                                                                    `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}` :
+                                                                    `${selection.selectedMods}${selection.modPosition}`
                                                             }
-                                                            {selection.selectedMods === 'DT' && selection.customDTRate && selection.customDTRate !== 1.5 && (
-                                                                <span className="text-xs ml-1">({selection.customDTRate}x)</span>
-                                                            )}
                                                         </span>
                                                         {selection.customDASettings && (
                                                             <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs">
@@ -1315,13 +1343,20 @@ export default function MapSelectionPage() {
                                                         isSubmitting={isRatingSubmitting}
                                                         userId={user?.id.toString() || null}
                                                     />
-                                                    <CommentComponent
-                                                        mapSelectionId={selection.id}
-                                                        userId={user?.id.toString() || null}
-                                                        initialComment=""
-                                                        currentRating={userRatings[selection.id] || 0}
-                                                        onCommentUpdate={fetchSelections}
-                                                    />
+                                                    {(() => {
+                                                        const userRating = mapRatings[selection.id]?.find(
+                                                            (rating: any) => rating.userId === user?.id.toString()
+                                                        );
+                                                        return (
+                                                            <CommentComponent
+                                                                mapSelectionId={selection.id}
+                                                                userId={user?.id.toString() || null}
+                                                                initialComment={userRating?.comment || ''}
+                                                                initialRating={userRating?.rating || 0}
+                                                                onCommentUpdate={fetchSelections}
+                                                            />
+                                                        );
+                                                    })()}
                                                 </div>
                                             </div>
                                         </div>
