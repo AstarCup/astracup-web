@@ -880,8 +880,9 @@ export default function MapSelectionPage() {
 
                                 <div className="flex gap-4">
                                     <div className="flex-1">
+                                        <label className="block text-gray-800 text-sm mb-2">选择Mod</label>
                                         <Dropdown
-                                            label="模组"
+                                            label=""
                                             options={MOD_OPTIONS.map(mod => ({ value: mod, label: mod }))}
                                             value={selectedMods}
                                             onChange={setSelectedMods}
