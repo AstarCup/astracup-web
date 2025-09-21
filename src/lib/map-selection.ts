@@ -205,7 +205,7 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
                 console.log('Adding selectedByAvatar field...');
                 await connection.execute(`
                     ALTER TABLE map_selections 
-                    ADD COLUMN selectedByAvatar TEXT AFTER selectedByUsername
+                    ADD COLUMN selectedByAvatar VARCHAR(500) AFTER selectedByUsername
                 `);
                 console.log('Successfully added selectedByAvatar field');
             }

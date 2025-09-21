@@ -1184,20 +1184,20 @@ export default function MapSelectionPage() {
                                                                 </span>
                                                             </div>
                                                             <p><strong>提名者:</strong> {selection.selectedByUsername} ({selection.selectedBy})</p>
+                                                            {/* 评分系统 */}
+                                                            <div className="bg-white rounded-lg p-3 border">
+                                                                <RatingSystem
+                                                                    mapSelectionId={selection.id}
+                                                                    userId={user?.id.toString() || null}
+                                                                    selectedBy={selection.selectedBy}
+                                                                    onRatingUpdate={fetchSelections}
+                                                                />
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="flex flex-col gap-2 ml-4">
-                                                {/* 评分系统 */}
-                                                <div className="bg-white rounded-lg p-3 border">
-                                                    <RatingSystem
-                                                        mapSelectionId={selection.id}
-                                                        userId={user?.id.toString() || null}
-                                                        selectedBy={selection.selectedBy}
-                                                        onRatingUpdate={fetchSelections}
-                                                    />
-                                                </div>
 
                                                 {/* 过审状态勾选框 */}
                                                 <div className="flex items-center">
