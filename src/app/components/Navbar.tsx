@@ -105,7 +105,7 @@ export default function Navbar() {
                         <div className=" p-4">
                             <div className="grid grid-cols-2 gap-2">
                                 {navLinks.map((link) => (
-                                    <div key={link.href} className="bg-white/100 hover:bg-[#3BE9D8] transition-colors duration-200 min-h-20 flex">
+                                    <div key={link.href} className="border-b-4 border-[#E93B66] bg-white/100 hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-20 flex">
                                         <Link
                                             href={link.href}
                                             className={`flex-1 p-3 text-left text-sm font-medium flex flex-col justify-center ${isActive(link.href) ? 'bg-[#3BE9D8] text-white font-bold' : 'text-gray-800 hover:text-white'}`}
@@ -114,8 +114,15 @@ export default function Navbar() {
                                                 setMobileMenuOpen(false);
                                             }}
                                         >
-                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight">{link.name}</div>
+                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight">{link.name}
+
+                                            </div>
                                             <div className="text-2xl font-bold leading-tight">{link.tip}</div>
+                                            <div className=" bottom-4 right-4 z-0 opacity-20 pointer-events-none">
+                                                <span className="text-white text-4xl font-bold tracking-widest px-4 py-2">
+                                                    {link.name}
+                                                </span>
+                                            </div>
                                         </Link>
                                     </div>
                                 ))}
