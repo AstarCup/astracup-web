@@ -54,7 +54,7 @@ const NotificationItem = ({ id, type, message, duration = 2000, onRemove }: Noti
         <div
             className={`
                 ${getStyles()}
-                flex flex-col items-center gap-2 px-6 py-4 border shadow-lg
+                flex flex-col items-center gap-2 px-6 py-4 border border-b-4 shadow-lg
                 animate-in slide-in-from-bottom-full duration-300
                 min-w-[200px] max-w-[300px]
             `}
