@@ -455,9 +455,9 @@ export function parseBeatmapUrl(url: string): { beatmapId?: number; beatmapsetId
     const patterns = [
         /osu\.ppy\.sh\/b\/(\d+)/,              // /b/{beatmap_id}
         /osu\.ppy\.sh\/beatmaps\/(\d+)/,       // /beatmaps/{beatmap_id}
+        /osu\.ppy\.sh\/beatmapsets\/(\d+)#[^\/]*\/(\d+)/, // /beatmapsets/{beatmapset_id}#{mode}/{beatmap_id} - 优先处理有具体beatmap ID的情况
         /osu\.ppy\.sh\/s\/(\d+)/,              // /s/{beatmapset_id}
         /osu\.ppy\.sh\/beatmapsets\/(\d+)/,    // /beatmapsets/{beatmapset_id}
-        /osu\.ppy\.sh\/beatmapsets\/(\d+)#[^\/]*\/(\d+)/, // /beatmapsets/{beatmapset_id}#{mode}/{beatmap_id}
     ];
 
     for (const pattern of patterns) {
@@ -468,10 +468,10 @@ export function parseBeatmapUrl(url: string): { beatmapId?: number; beatmapsetId
                 const beatmapId = parseInt(match[1]);
                 return { beatmapId };
             } else if (match[2]) {
-                // beatmapsets URL with specific beatmap ID
+                // beatmapsets URL with specific beatmap ID - 优先使用beatmap ID
                 const beatmapsetId = parseInt(match[1]);
                 const beatmapId = parseInt(match[2]);
-                return { beatmapId, beatmapsetId };
+                return { beatmapId };
             } else {
                 // 只有beatmapset ID
                 const beatmapsetId = parseInt(match[1]);

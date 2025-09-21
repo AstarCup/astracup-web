@@ -569,6 +569,27 @@ export default function MapSelectionPage() {
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
+    // 复制beatmap ID到剪贴板
+    const copyBeatmapId = async (beatmapId: number) => {
+        try {
+            await navigator.clipboard.writeText(beatmapId.toString());
+            setMessage(`已复制 Beatmap ID: ${beatmapId}`);
+            // 3秒后自动清除消息
+            setTimeout(() => setMessage(''), 3000);
+        } catch (error) {
+            console.error('Failed to copy beatmap ID:', error);
+            // 备用方案：使用传统的选中复制方法
+            const textArea = document.createElement('textarea');
+            textArea.value = beatmapId.toString();
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            setMessage(`已复制 Beatmap ID: ${beatmapId}`);
+            setTimeout(() => setMessage(''), 3000);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-white">
@@ -1093,6 +1114,13 @@ export default function MapSelectionPage() {
                                             </div>
                                             {/* 操作按钮 */}
                                             <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => copyBeatmapId(selection.beatmapId)}
+                                                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                                                    title={`复制 Beatmap ID: ${selection.beatmapId}`}
+                                                >
+                                                    📋 BID
+                                                </button>
                                                 <a
                                                     href={selection.url}
                                                     target="_blank"
