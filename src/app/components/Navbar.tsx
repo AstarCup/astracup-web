@@ -44,7 +44,8 @@ export default function Navbar() {
                     background: 'linear-gradient(to bottom, rgba(233, 59, 102, 0.6) 0%, rgba(233, 59, 102, 0.3) 10%, rgba(233, 59, 102, 0.1) 30%, rgba(233, 59, 102, 0) 50%)'
                 }}></div>
 
-                <img src="/NavbarBackground.svg" alt="Background" className="absolute inset-0 object-cover bg-center opacity-90" style={{ zIndex: -2 }} />
+                <img src="/NavbarBackground.svg" alt="Background" className="absolute inset-0 object-cover bg-center opacity-90 bg-repeat-x" style={{ zIndex: -2 }} />
+
 
                 <div className="max-w-7xl mx-auto px-2">
                     <div className="flex justify-between items-center h-30">
@@ -105,17 +106,20 @@ export default function Navbar() {
                         <div className=" p-4">
                             <div className="grid grid-cols-2 gap-2">
                                 {navLinks.map((link) => (
-                                    <div key={link.href} className="bg-white/100 hover:bg-[#3BE9D8] transition-colors duration-200 min-h-20 flex">
+                                    <div key={link.href} className="border-b-4 border-[#E93B66] bg-white/100 hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-20 flex">
                                         <Link
                                             href={link.href}
-                                            className={`flex-1 p-3 text-left text-sm font-medium flex flex-col justify-center ${isActive(link.href) ? 'bg-[#3BE9D8] text-white font-bold' : 'text-gray-800 hover:text-white'}`}
+                                            className={`flex-1 p-3 text-left text-sm font-medium flex flex-col justify-center relative ${isActive(link.href) ? 'bg-[#3BE9D8] text-white font-bold' : 'text-gray-800 hover:text-white'}`}
                                             onClick={() => {
                                                 setActiveLink(link.href);
                                                 setMobileMenuOpen(false);
                                             }}
                                         >
-                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight">{link.name}</div>
-                                            <div className="text-2xl font-bold leading-tight">{link.tip}</div>
+                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight relative z-10">{link.name}
+                                            </div>
+                                            <div className="text-2xl font-bold leading-tight inline-flex relative z-10">{link.tip}
+                                            </div>
+
                                         </Link>
                                     </div>
                                 ))}

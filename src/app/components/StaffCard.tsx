@@ -20,7 +20,7 @@ export default function StaffCard({ member }: StaffCardProps) {
 
     return (
         <div
-            className="relative bg-gradient-to-br from-[#2A2A2A] to-[#1A1A1A] p-6 border border-gray-600 hover:border-[#FF66AA] transition-all duration-300 cursor-pointer group transform hover:scale-105 shadow-xl hover:shadow-2xl overflow-hidden"
+            className="relative bg-gradient-to-br from-[#2A2A2A] to-[#1A1A1A] p-6 border-b-4 border-[#E93B66] hover:border-[#3BE9D8] transition-all duration-300 cursor-pointer group transform hover:scale-105 shadow-xl hover:shadow-2xl overflow-hidden"
             onClick={handleClick}
         >
             {/* Cover 背景图 */}
@@ -40,7 +40,7 @@ export default function StaffCard({ member }: StaffCardProps) {
                     <img
                         src={member.avatarUrl}
                         alt={member.name}
-                        className="w-20 h-20 rounded-full border-4 border-gray-600 group-hover:border-[#FF66AA] transition-colors duration-300"
+                        className="w-20 h-20 rounded-full border-4 border-gray-600 group-hover:border-[#3BE9D8] transition-colors duration-300"
                         onError={(e) => {
                             // 如果头像加载失败，使用默认头像
                             (e.target as HTMLImageElement).src = '/icons/unknow.svg';
@@ -49,7 +49,7 @@ export default function StaffCard({ member }: StaffCardProps) {
                 </div>
 
                 {/* 用户名 */}
-                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[#FF66AA] transition-colors duration-300">
+                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[#3BE9D8] transition-colors duration-300">
                     {member.name}
                 </h3>
 
@@ -66,7 +66,7 @@ export default function StaffCard({ member }: StaffCardProps) {
 
                 {/* 悬停提示 */}
                 <div className="mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span className="text-[#FF66AA] text-xs">点击访问 osu! 主页 →</span>
+                    <span className="text-[#3BE9D8] text-xs">点击访问 osu! 主页 →</span>
                 </div>
             </div>
         </div>

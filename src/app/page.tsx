@@ -38,10 +38,9 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center">
+    <div className="flex flex-col items-center justify-center relative">
 
-
-      <div className="relative w-full max-w-5xl flex flex-col items-left justify-center px-4 sm:px-6">
+      <div className="relative w-full max-w-5xl flex flex-col items-left justify-center px-4 sm:px-6" style={{ minHeight: '400px' }}>
         <BackgroundSVG
           className="absolute top-0 -translate-x-80 -translate-y-25 object-cover object-center w-full h-full z-1 select-none pointer-events-auto"
           style={{ minWidth: '180%', minHeight: '160%' }}
@@ -70,15 +69,17 @@ export default function Home() {
         <div className="relative animated-logo">
           <AnimatedLogo />
         </div>
-        <p className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 z-2 relative text-white drop-shadow-lg -translate-y-25">星域杯</p>
-        <p className="text-sm sm:text-base mb-6 z-10 relative text-white drop-shadow-md -translate-y-25">这里是OSU!Lazer星域杯，面向中国大陆 8100pp 分段的 1v1 比赛。</p>
+        <div className="relative flex flex-col items-start">
+          <span className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 z-2 relative text-gray-800 drop-shadow-lg -translate-y-25 bg-[#ffffff] px-2 py-1 w-fit border-b-4 border-[#E93B66]">星域杯</span>
+          <span className="text-sm sm:text-base z-10 relative text-gray-800 drop-shadow-md -translate-y-25 bg-[#ffffff] px-2 py-1 w-fit border-b-4 border-[#E93B66]">这里是OSU!Lazer星域杯，面向中国大陆 8100pp 分段的 1v1 比赛。</span>
+        </div>
       </div>
       {/* 导航按钮区域 */}
       <div className="mt-0 w-full max-w-5xl z-10 relative p-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <a
             href="/guide"
-            className="p-6 flex flex-col items-center justify-center hover:transition-colors group relative"
+            className="p-6 flex flex-col items-center justify-center hover:transition-colors group relative bg-[#3D3D3D80] border-b-4 border-[#E93B66] hover:border-[#3BE9D8]"
           >
             <span className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]">
               <GuideIcon className="guide-icon-main" color="#E93B66" />
@@ -90,7 +91,7 @@ export default function Home() {
           </a>
           <a
             href="/schedule"
-            className="p-6 flex flex-col items-center justify-center hover:transition-colors group relative"
+            className="p-6 flex flex-col items-center justify-center hover:transition-colors group relative bg-[#3D3D3D80] border-b-4 border-[#E93B66] hover:border-[#3BE9D8]"
           >
             <span className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]">
               <ScheduleIcon className="schedule-icon-main" color="#E93B66" />
@@ -100,7 +101,7 @@ export default function Home() {
           </a>
           <a
             href="/mapool"
-            className="p-6 flex flex-col items-center justify-center hover:transition-colors group relative"
+            className="p-6 flex flex-col items-center justify-center hover:transition-colors group relative bg-[#3D3D3D80] border-b-4 border-[#E93B66] hover:border-[#3BE9D8]"
           >
             <span className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]">
               <MapoolIcon className="mapool-icon-main" color="#E93B66" />
@@ -110,7 +111,7 @@ export default function Home() {
           </a>
           <a
             href="/contact"
-            className="p-6 flex flex-col items-center justify-center hover:transition-colors group relative"
+            className="p-6 flex flex-col items-center justify-center hover:transition-colors group relative bg-[#3D3D3D80] border-b-4 border-[#E93B66] hover:border-[#3BE9D8]"
           >
             <span className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]">
               <ContactIcon className="contact-icon-main" color="#E93B66" />
@@ -135,7 +136,7 @@ export default function Home() {
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-5xl p-6 z-10 relative">
-        <div className='md:col-span-2 m-1 bg-[#3D3D3D] p-3 z-2 flex flex-col min-h-[400px] md:min-h-[500px]'>
+        <div className='md:col-span-2 m-1 bg-[#3D3D3D] p-3 z-2 flex flex-col min-h-[400px] md:min-h-[500px] border-b-4 border-[#E93B66]'>
           {/* 社交媒体链接区域 */}
           <div className="flex flex-col sm:flex-row items-center justify-center min-h-[100px] md:h-32 border-b border-gray-200 mb-4">
             <a
@@ -159,12 +160,12 @@ export default function Home() {
           </div>
 
           {/* 新闻列表区域 */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto ">
             <NewsListWithPagination />
           </div>
         </div>
 
-        <div className="md:col-span-1 m-1 bg-[#3D3D3D] p-3 z-2 flex flex-col text-center min-h-[300px] md:min-h-[500px]">
+        <div className="md:col-span-1 m-1 bg-[#3D3D3D] p-3 z-2 flex flex-col text-center min-h-[300px] md:min-h-[500px] border-b-4 border-[#E93B66]">
           <div className="flex-1 flex flex-col overflow-y-auto">
             <UserProfile user={user} onLogout={handleLogout} />
             {!user ? (

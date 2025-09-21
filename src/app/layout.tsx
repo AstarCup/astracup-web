@@ -6,6 +6,7 @@ import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/footer';
 import NoiseBackground from './components/NoiseBackground';
 import { NotificationContainer } from './components/Notification';
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "AstraCup 星域杯",
@@ -38,7 +39,15 @@ export default function RootLayout({
   return (
     <html lang="zh">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <NoiseBackground />ß
+        <NoiseBackground />
+        <Image
+          src="/background-top.svg"
+          alt="Background"
+          className="object-cover object-center z-0 select-none pointer-events-none opacity-50"
+          style={{ position: 'fixed', zIndex: -9999, width: '100%', height: '100%', top: 0, left: 0 }}
+          width={1000}
+          height={500}
+        />
         <Navbar />
         <Analytics />
         <SpeedInsights />

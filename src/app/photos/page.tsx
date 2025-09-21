@@ -63,7 +63,7 @@ export default function Photos() {
             <div className="max-w-7xl mx-auto px-6">
                 {/* 赛季筛选器 */}
                 <div className="mb-12">
-                    <div className="bg-[#1A1A1A] p-6 border border-gray-700">
+                    <div className="bg-[#1A1A1A] p-6 border-b-4 border-[#E93B66]">
                         <div className="flex flex-wrap gap-3">
                             <button
                                 onClick={() => setSelectedSeason('all')}
@@ -157,7 +157,7 @@ export default function Photos() {
 
                 {/* 页面底部信息 */}
                 <div className="mt-20 text-center">
-                    <div className="bg-gradient-to-r from-[#1A1A1A] to-[#2A2A2A] p-8 border border-gray-700">
+                    <div className="bg-gradient-to-r from-[#1A1A1A] to-[#2A2A2A] p-8 border-b-4 border-[#E93B66]">
                         <h3 className="text-3xl font-bold text-white mb-4">成为传说的一部分</h3>
                         <p className="text-gray-400 mb-6 max-w-3xl mx-auto text-lg">
                             每一位获奖者都是 AstaraCup 历史的见证者。他们的名字将永远刻在荣誉榜上，

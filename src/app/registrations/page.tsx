@@ -90,8 +90,8 @@ export default function RegistrationsPage() {
                 </div>
 
                 {registrations.length === 0 ? (
-                    <div className="text-center py-12">
-                        <div className="shadow-md p-8">
+                    <div className="text-center py-12 bg-[#3d3d3d] border-b-4 border-[#E93B66]">
+                        <div className="p-8">
                             <h3 className="text-xl font-semibold text-white mb-2">暂无报名玩家</h3>
                             <p className="text-gray-400">还没有玩家报名参加比赛</p>
                         </div>
