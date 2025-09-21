@@ -39,10 +39,10 @@ export const initMapRatingsDatabase = async (): Promise<void> => {
                 comment TEXT,
                 createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                UNIQUE KEY unique_user_rating (mapSelectionId, userId),
-                INDEX idx_mapSelectionId (mapSelectionId),
-                INDEX idx_userId (userId),
-                INDEX idx_rating (rating),
+                UNIQUE KEY idx_unique_user_map (mapSelectionId, userId),
+                INDEX idx_map_id (mapSelectionId),
+                INDEX idx_user_id (userId),
+                INDEX idx_rating_val (rating),
                 CHECK (rating >= 1 AND rating <= 5)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);

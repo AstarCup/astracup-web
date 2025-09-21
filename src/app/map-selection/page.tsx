@@ -49,6 +49,7 @@ interface MapSelection {
     modPosition: number;
     comment: string;
     selectedBy: string;
+    selectedByUsername?: string; // 新增：提名者的用户名
     selectedAt: string;
     season: string;
     category: string;
@@ -512,6 +513,8 @@ export default function MapSelectionPage() {
                     comment,
                     approved,
                     selectedBy: user?.id.toString(),
+                    selectedByUsername: user?.username, // 传递用户名
+                    selectedByAvatar: user?.avatar_url, // 传递头像
                     season,
                     category,
                     // 包含计算后的mod参数
@@ -1174,7 +1177,14 @@ export default function MapSelectionPage() {
                                                             <p><strong>注释:</strong> {selection.comment}</p>
                                                         )}
                                                         <p><strong>选择时间:</strong> {new Date(selection.selectedAt).toLocaleString()}</p>
-                                                        <p><strong>提名者:</strong> {selection.selectedBy}</p>
+                                                        <div className="flex items-center space-x-2">
+                                                            <div className="w-6 h-6 bg-blue-300 rounded-full flex items-center justify-center">
+                                                                <span className="text-xs text-blue-800 font-medium">
+                                                                    {selection.selectedByUsername?.charAt(0).toUpperCase() || 'N'}
+                                                                </span>
+                                                            </div>
+                                                            <p><strong>提名者:</strong> {selection.selectedByUsername} ({selection.selectedBy})</p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

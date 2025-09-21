@@ -128,6 +128,118 @@ export async function getUserData(username: string): Promise<OsuUser | null> {
 }
 
 // 备用方案：使用公开API（不需要API密钥）
+// 通过用户ID获取用户信息
+export async function getUserById(userId: number): Promise<OsuUser | null> {
+    try {
+        // 首先尝试使用API密钥
+        const apiKey = process.env.OSU_CLIENT_SECRET;
+        if (apiKey) {
+            const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/users/${userId}`, {
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return {
+                    id: data.id,
+                    username: data.username,
+                    avatar_url: data.avatar_url,
+                    country_code: data.country_code,
+                    cover: data.cover ? {
+                        custom_url: data.cover.custom_url || null,
+                        url: data.cover.url || '',
+                        id: data.cover.id || null,
+                    } : undefined,
+                    statistics: {
+                        pp: data.statistics?.pp || 0,
+                        global_rank: data.statistics?.global_rank || null,
+                        country_rank: data.statistics?.country_rank || null,
+                        country: data.country_code || '',
+                        ranked_score: data.statistics?.ranked_score || 0,
+                        hit_accuracy: data.statistics?.hit_accuracy || 0,
+                        play_count: data.statistics?.play_count || 0,
+                        play_time: data.statistics?.play_time || 0,
+                        level: {
+                            current: data.statistics?.level?.current || 0,
+                            progress: data.statistics?.level?.progress || 0,
+                        },
+                        grade_counts: {
+                            ss: data.statistics?.grade_counts?.ss || 0,
+                            ssh: data.statistics?.grade_counts?.ssh || 0,
+                            s: data.statistics?.grade_counts?.s || 0,
+                            sh: data.statistics?.grade_counts?.sh || 0,
+                            a: data.statistics?.grade_counts?.a || 0,
+                        },
+                    },
+                };
+            }
+        }
+
+        // 如果API失败或没有API密钥，使用公开方法
+        return getUserByIdPublic(userId);
+    } catch (error) {
+        console.error('Error fetching user by ID:', error);
+        return getUserByIdPublic(userId);
+    }
+}
+
+// 备用方案：通过用户ID获取用户信息（公开方法）
+export async function getUserByIdPublic(userId: number): Promise<OsuUser | null> {
+    try {
+        // 使用用户ID直接访问用户页面
+        const response = await fetchWithTimeout(`https://osu.ppy.sh/users/${userId}`, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        });
+
+        if (!response.ok) {
+            return null;
+        }
+
+        const html = await response.text();
+
+        // 尝试从页面中提取JSON数据
+        const jsonMatch = html.match(/<script id="json-user" type="application\/json">(.+?)<\/script>/);
+
+        if (jsonMatch && jsonMatch[1]) {
+            try {
+                const userData = JSON.parse(jsonMatch[1]);
+
+                return {
+                    id: userData.id,
+                    username: userData.username,
+                    avatar_url: userData.avatar_url,
+                    country_code: userData.country_code,
+                    statistics: userData.statistics || {
+                        pp: 0,
+                        global_rank: null,
+                        country_rank: null,
+                        country: '',
+                        ranked_score: 0,
+                        hit_accuracy: 0,
+                        play_count: 0,
+                        play_time: 0,
+                        level: { current: 0, progress: 0 },
+                        grade_counts: { ss: 0, ssh: 0, s: 0, sh: 0, a: 0 },
+                    },
+                };
+            } catch (parseError) {
+                console.error('Error parsing user data:', parseError);
+                return null;
+            }
+        }
+
+        return null;
+    } catch (error) {
+        console.error('Error fetching public user data by ID:', error);
+        return null;
+    }
+}
+
 export async function getUserDataPublic(username: string): Promise<OsuUser | null> {
     try {
         // 使用代理或直接访问，避免CORS问题

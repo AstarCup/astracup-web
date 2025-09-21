@@ -1,5 +1,6 @@
 // 选图系统数据库管理
 import mysql from 'mysql2/promise';
+import { getUserById } from './osu-api';
 
 // 数据库连接配置（复用现有配置）
 const dbConfig = {
@@ -182,6 +183,34 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
             }
         }
 
+        // 检查并添加selectedByUsername字段
+        try {
+            await connection.execute(`SELECT selectedByUsername FROM map_selections LIMIT 1`);
+        } catch (error: any) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding selectedByUsername field...');
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN selectedByUsername VARCHAR(255) AFTER selectedBy
+                `);
+                console.log('Successfully added selectedByUsername field');
+            }
+        }
+
+        // 检查并添加selectedByAvatar字段
+        try {
+            await connection.execute(`SELECT selectedByAvatar FROM map_selections LIMIT 1`);
+        } catch (error: any) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding selectedByAvatar field...');
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN selectedByAvatar TEXT AFTER selectedByUsername
+                `);
+                console.log('Successfully added selectedByAvatar field');
+            }
+        }
+
         connection.release();
         console.log('Map selection database initialized successfully');
     } catch (error) {
@@ -228,6 +257,7 @@ export const mapSelectionStorage = {
                 modPosition: row.modPosition || 1,
                 comment: row.comment || '',
                 selectedBy: row.selectedBy,
+                selectedByUsername: row.selectedByUsername || `User_${row.selectedBy}`, // 使用存储的用户名
                 selectedAt: row.selectedAt,
                 season: row.season,
                 category: row.category,
@@ -242,7 +272,7 @@ export const mapSelectionStorage = {
     },
 
     // 添加选图
-    async addMapSelection(selection: Omit<MapSelection, 'id' | 'selectedAt'>): Promise<boolean> {
+    async addMapSelection(selection: Omit<MapSelection, 'id' | 'selectedAt'> & { selectedByUsername?: string; selectedByAvatar?: string }): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
 
@@ -250,8 +280,8 @@ export const mapSelectionStorage = {
                 INSERT INTO map_selections (
                     beatmapId, beatmapsetId, title, artist, version, creator,
                     starRating, bpm, totalLength, ar, cs, od, hp, selectedMods, modPosition, comment,
-                    selectedBy, selectedAt, season, category, url, coverUrl, approved
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)
+                    selectedBy, selectedByUsername, selectedByAvatar, selectedAt, season, category, url, coverUrl, approved
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)
             `, [
                 selection.beatmapId,
                 selection.beatmapsetId,
@@ -270,6 +300,8 @@ export const mapSelectionStorage = {
                 selection.modPosition,
                 selection.comment,
                 selection.selectedBy,
+                selection.selectedByUsername || null, // 存储用户名
+                selection.selectedByAvatar || null,   // 存储头像
                 selection.season,
                 selection.category,
                 selection.url,

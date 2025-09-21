@@ -130,6 +130,8 @@ export async function POST(request: NextRequest) {
             comment,
             approved = false,
             selectedBy,
+            selectedByUsername,
+            selectedByAvatar,
             season = 's1',
             category = 'qualification',
             moddedStats
@@ -239,6 +241,8 @@ export async function POST(request: NextRequest) {
             modPosition: modPosition || 1,
             comment: comment || '',
             selectedBy,
+            selectedByUsername: selectedByUsername, // 传递用户名
+            selectedByAvatar: selectedByAvatar,     // 传递头像
             season,
             category,
             url: beatmapInfo.url,
