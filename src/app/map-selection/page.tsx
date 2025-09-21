@@ -1184,6 +1184,7 @@ export default function MapSelectionPage() {
                                                     <RatingSystem
                                                         mapSelectionId={selection.id}
                                                         userId={user?.id.toString() || null}
+                                                        selectedBy={selection.selectedBy}
                                                         onRatingUpdate={fetchSelections}
                                                     />
                                                 </div>

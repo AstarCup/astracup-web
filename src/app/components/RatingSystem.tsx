@@ -6,6 +6,7 @@ import { showSuccess, showError } from './Notification';
 interface RatingProps {
     mapSelectionId: number;
     userId: string | null;
+    selectedBy: string; // 提名者的osu ID
     onRatingUpdate?: () => void;
 }
 
@@ -33,7 +34,7 @@ interface MapRating {
     updatedAt: string;
 }
 
-export default function RatingSystem({ mapSelectionId, userId, onRatingUpdate }: RatingProps) {
+export default function RatingSystem({ mapSelectionId, userId, selectedBy, onRatingUpdate }: RatingProps) {
     const [userRating, setUserRating] = useState<UserRating | null>(null);
     const [allRatings, setAllRatings] = useState<MapRating[]>([]);
     const [stats, setStats] = useState<RatingStats | null>(null);
@@ -41,6 +42,7 @@ export default function RatingSystem({ mapSelectionId, userId, onRatingUpdate }:
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showCommentForm, setShowCommentForm] = useState(false);
     const [commentInput, setCommentInput] = useState('');
+    const [hoveredUser, setHoveredUser] = useState<string | null>(null);
 
     // 获取用户评分和统计信息
     useEffect(() => {
@@ -169,13 +171,13 @@ export default function RatingSystem({ mapSelectionId, userId, onRatingUpdate }:
         }
     };
 
-    const renderStars = (rating: number, interactive: boolean = false) => {
+    const renderStars = (rating: number, interactive: boolean = false, size: string = 'text-2xl') => {
         return Array.from({ length: 5 }, (_, i) => i + 1).map(star => (
             <button
                 key={star}
                 onClick={() => interactive && handleRating(star)}
                 disabled={!interactive || isSubmitting}
-                className={`text-2xl ${star <= rating
+                className={`${size} ${star <= rating
                     ? 'text-yellow-400'
                     : 'text-gray-300'
                     } ${interactive ? 'hover:text-yellow-300 cursor-pointer' : 'cursor-default'}`}
@@ -185,8 +187,13 @@ export default function RatingSystem({ mapSelectionId, userId, onRatingUpdate }:
         ));
     };
 
-    // 获取其他用户的评分（排除当前用户）
-    const otherRatings = allRatings.filter(rating => rating.userId !== userId);
+    // 获取提名者的评分
+    const nominatorRating = allRatings.find(rating => rating.userId === selectedBy);
+
+    // 获取其他用户的评分（排除当前用户和提名者）
+    const otherRatings = allRatings.filter(rating =>
+        rating.userId !== userId && rating.userId !== selectedBy
+    );
 
     if (isLoading) {
         return (
@@ -199,129 +206,192 @@ export default function RatingSystem({ mapSelectionId, userId, onRatingUpdate }:
 
     return (
         <div className="space-y-4">
-            {/* 简化评分统计 - 只显示平均分 */}
-            {stats && stats.totalRatings > 0 && (
-                <div className="bg-white rounded-lg p-4 border">
-                    <div className="flex items-center space-x-2">
-                        <div className="text-2xl font-bold text-yellow-500">
-                            {stats.averageRating.toFixed(1)}
-                        </div>
-                        <div className="text-gray-600 text-sm">
-                            ({stats.totalRatings} 个评分)
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* 左右布局 */}
+            <div className="flex flex-col md:flex-row gap-6">
+                {/* 左侧：其他用户评分 */}
+                <div className="flex-1">
+                    <h4 className="font-semibold text-gray-800 mb-3 text-sm">其他评分</h4>
 
-            {/* 用户评分区域 */}
-            {userId && (
-                <div className="bg-white rounded-lg p-4 border">
-                    <h4 className="font-semibold text-gray-800 mb-3">我的评分</h4>
+                    {/* 提名者评分 */}
+                    {nominatorRating && (
+                        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                    {/* 提名者头像 */}
+                                    <div
+                                        className="w-8 h-8 bg-blue-300 rounded-full flex items-center justify-center relative group"
+                                        onMouseEnter={() => setHoveredUser(selectedBy)}
+                                        onMouseLeave={() => setHoveredUser(null)}
+                                    >
+                                        <span className="text-xs text-blue-800 font-medium">
+                                            {nominatorRating.username?.charAt(0).toUpperCase() || 'N'}
+                                        </span>
 
-                    {/* 评分星星 */}
-                    <div className="flex items-center space-x-1 mb-3">
-                        {renderStars(userRating?.rating || 0, true)}
-                        {userRating?.rating && (
-                            <span className="text-sm text-gray-600 ml-2">
-                                {userRating.rating}分
-                            </span>
-                        )}
-                    </div>
-
-                    {/* 评论区域 */}
-                    {userRating?.rating && (
-                        <div>
-                            {showCommentForm ? (
-                                <div className="space-y-2">
-                                    <textarea
-                                        value={commentInput}
-                                        onChange={(e) => setCommentInput(e.target.value)}
-                                        placeholder="写下你的评论..."
-                                        className="w-full p-2 border border-gray-300 rounded text-sm text-gray-800"
-                                        rows={3}
-                                    />
-                                    <div className="flex space-x-2">
-                                        <button
-                                            onClick={handleCommentSubmit}
-                                            disabled={isSubmitting}
-                                            className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm"
-                                        >
-                                            {isSubmitting ? '提交中...' : '提交评论'}
-                                        </button>
-                                        <button
-                                            onClick={() => setShowCommentForm(false)}
-                                            className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
-                                        >
-                                            取消
-                                        </button>
+                                        {/* Hover提示 */}
+                                        {hoveredUser === selectedBy && (
+                                            <div className="absolute top-full left-0 mt-2 bg-gray-800 text-white text-xs rounded p-2 z-10 min-w-[120px]">
+                                                <div className="font-medium">{nominatorRating.username}</div>
+                                                <div className="text-gray-300">osu!ID: {selectedBy}</div>
+                                                <div className="flex items-center mt-1">
+                                                    {renderStars(nominatorRating.rating, false, 'text-sm')}
+                                                    <span className="ml-1 text-yellow-400">{nominatorRating.rating}</span>
+                                                </div>
+                                                {nominatorRating.comment && (
+                                                    <div className="mt-1 border-t border-gray-600 pt-1">
+                                                        {nominatorRating.comment}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
+                                    <span className="text-sm text-gray-700">提名者</span>
                                 </div>
-                            ) : (
-                                <div>
-                                    {userRating.comment ? (
-                                        <div>
-                                            <p className="text-gray-800 text-sm mb-2">{userRating.comment}</p>
-                                            <button
-                                                onClick={() => setShowCommentForm(true)}
-                                                className="text-blue-500 hover:text-blue-600 text-sm"
-                                            >
-                                                编辑评论
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            onClick={() => setShowCommentForm(true)}
-                                            className="text-blue-500 hover:text-blue-600 text-sm"
-                                        >
-                                            添加评论
-                                        </button>
-                                    )}
+                                <div className="flex items-center space-x-1">
+                                    {renderStars(nominatorRating.rating)}
+                                    <span className="text-sm text-gray-600">
+                                        {nominatorRating.rating}分
+                                    </span>
                                 </div>
-                            )}
+                            </div>
                         </div>
                     )}
-                </div>
-            )}
 
-            {/* 其他用户的评分 */}
-            {otherRatings.length > 0 && (
-                <div className="bg-white rounded-lg p-4 border">
-                    <h4 className="font-semibold text-gray-800 mb-3">其他评分</h4>
-                    <div className="space-y-3">
-                        {otherRatings.map((rating) => (
-                            <div key={rating.id} className="border-b border-gray-100 pb-3 last:border-b-0">
-                                <div className="flex items-center justify-between mb-1">
+                    {/* 其他用户评分 */}
+                    {otherRatings.length > 0 && (
+                        <div className="space-y-2">
+                            {otherRatings.map((rating) => (
+                                <div
+                                    key={rating.id}
+                                    className="flex items-center justify-between p-2 bg-gray-100 rounded hover:bg-gray-200 transition-colors group"
+                                    onMouseEnter={() => setHoveredUser(rating.userId)}
+                                    onMouseLeave={() => setHoveredUser(null)}
+                                >
                                     <div className="flex items-center space-x-2">
-                                        {/* 用户头像占位符 */}
-                                        <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                                        {/* 用户头像 */}
+                                        <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center relative">
                                             <span className="text-xs text-gray-600">
-                                                {rating.username.charAt(0).toUpperCase()}
+                                                {rating.username?.charAt(0).toUpperCase() || 'U'}
                                             </span>
+
+                                            {/* Hover提示 */}
+                                            {hoveredUser === rating.userId && (
+                                                <div className="absolute top-full left-0 mt-1 bg-gray-800 text-white text-xs rounded p-2 z-10 min-w-[120px]">
+                                                    <div className="font-medium">{rating.username}</div>
+                                                    <div className="text-gray-300">osu!ID: {rating.userId}</div>
+                                                    <div className="flex items-center mt-1">
+                                                        {renderStars(rating.rating, false, 'text-sm')}
+                                                        <span className="ml-1 text-yellow-400">{rating.rating}</span>
+                                                    </div>
+                                                    {rating.comment && (
+                                                        <div className="mt-1 border-t border-gray-600 pt-1">
+                                                            {rating.comment}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                        <span className="text-sm font-medium text-gray-800">
+                                        <span className="text-xs text-gray-600 truncate max-w-[80px]">
                                             {rating.username}
                                         </span>
                                     </div>
                                     <div className="flex items-center space-x-1">
-                                        {renderStars(rating.rating)}
-                                        <span className="text-sm text-gray-600">
-                                            {rating.rating}分
+                                        {renderStars(rating.rating, false, 'text-lg')}
+                                        <span className="text-xs text-gray-600">
+                                            {rating.rating}
                                         </span>
                                     </div>
                                 </div>
-                                {rating.comment && (
-                                    <p className="text-gray-700 text-sm mt-2 pl-10">
-                                        {rating.comment}
-                                    </p>
-                                )}
-                                <div className="text-xs text-gray-500 mt-1 pl-10">
-                                    {new Date(rating.createdAt).toLocaleDateString('zh-CN')}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {otherRatings.length === 0 && !nominatorRating && (
+                        <p className="text-gray-500 text-sm">暂无其他评分</p>
+                    )}
                 </div>
-            )}
+
+                {/* 右侧：当前用户评分区域 */}
+                <div className="flex-1">
+                    <h4 className="font-semibold text-gray-800 mb-3 text-sm">我的评分</h4>
+
+                    <div className="bg-white rounded-lg p-4 border">
+                        {/* 评分星星 */}
+                        <div className="flex items-center space-x-1 mb-3 justify-center">
+                            {renderStars(userRating?.rating || 0, true)}
+                            {userRating?.rating && (
+                                <span className="text-sm text-gray-600 ml-2">
+                                    {userRating.rating}分
+                                </span>
+                            )}
+                        </div>
+
+                        {/* 评论区域 */}
+                        {userRating?.rating && (
+                            <div className="text-center">
+                                {showCommentForm ? (
+                                    <div className="space-y-2">
+                                        <textarea
+                                            value={commentInput}
+                                            onChange={(e) => setCommentInput(e.target.value)}
+                                            placeholder="写下你的评论..."
+                                            className="w-full p-2 border border-gray-300 rounded text-sm text-gray-800"
+                                            rows={2}
+                                        />
+                                        <div className="flex space-x-2 justify-center">
+                                            <button
+                                                onClick={handleCommentSubmit}
+                                                disabled={isSubmitting}
+                                                className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm"
+                                            >
+                                                {isSubmitting ? '提交中...' : '提交评论'}
+                                            </button>
+                                            <button
+                                                onClick={() => setShowCommentForm(false)}
+                                                className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
+                                            >
+                                                取消
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        {userRating.comment ? (
+                                            <div>
+                                                <p className="text-gray-800 text-sm mb-2">{userRating.comment}</p>
+                                                <button
+                                                    onClick={() => setShowCommentForm(true)}
+                                                    className="text-blue-500 hover:text-blue-600 text-sm"
+                                                >
+                                                    编辑评论
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => setShowCommentForm(true)}
+                                                className="text-blue-500 hover:text-blue-600 text-sm"
+                                            >
+                                                添加评论
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 评分统计 */}
+                    {stats && stats.totalRatings > 0 && (
+                        <div className="mt-4 bg-white rounded-lg p-3 border text-center">
+                            <div className="text-2xl font-bold text-yellow-500">
+                                {stats.averageRating.toFixed(1)}
+                            </div>
+                            <div className="text-gray-600 text-xs">
+                                ({stats.totalRatings} 个评分)
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
