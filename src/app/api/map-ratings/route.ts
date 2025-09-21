@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import {
     getRatingsForMap,
     getUserRating,
     addOrUpdateRating,
     deleteRating,
-    getRatingStats,
-    initMapRatingsDatabase
+    getRatingStats
 } from '@/lib/map-ratings';
 import { verifyMapSelectionAuth } from '../map-selections/route';
 
@@ -16,24 +16,17 @@ async function verifyUserAuth(osuId: string): Promise<{ authorized: boolean; use
         const isAuthorized = await verifyMapSelectionAuth(osuId);
 
         if (isAuthorized) {
-            // 在生产环境中，用户已经通过OAuth登录，主要依赖session获取用户名
+            // 直接从cookie获取session信息
             try {
-                // 在API路由中，直接从请求头获取host信息
-                const host = process.env.VERCEL_URL || 'localhost:3000';
-                const protocol = host.includes('localhost') ? 'http' : 'https';
-                const sessionResponse = await fetch(`${protocol}://${host}/api/session/get`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-                if (sessionResponse.ok) {
-                    const sessionData = await sessionResponse.json();
-                    if (sessionData.success && sessionData.session) {
-                        return {
-                            authorized: true,
-                            username: sessionData.session.username || `User_${osuId}`
-                        };
-                    }
+                const cookieStore = await cookies();
+                const sessionCookie = cookieStore.get('astra_session');
+
+                if (sessionCookie?.value) {
+                    const session = JSON.parse(sessionCookie.value);
+                    return {
+                        authorized: true,
+                        username: session.username || `User_${osuId}`
+                    };
                 }
             } catch (sessionError) {
                 console.error('Error getting session for username:', sessionError);
@@ -66,12 +59,7 @@ export async function GET(request: NextRequest) {
         }
 
         // 自动初始化数据库（如果需要）
-        try {
-            await initMapRatingsDatabase();
-        } catch (error) {
-            console.error('Error auto-initializing ratings database:', error);
-            // 继续执行，表可能已经存在
-        }
+        // 数据库已初始化，跳过此步骤
 
         if (statsOnly) {
             // 只获取评分统计
@@ -136,19 +124,13 @@ export async function POST(request: NextRequest) {
         // 获取用户头像URL
         let avatarUrl = '';
         try {
-            // 在API路由中，直接从请求头获取host信息
-            const host = process.env.VERCEL_URL || 'localhost:3000';
-            const protocol = host.includes('localhost') ? 'http' : 'https';
-            const sessionResponse = await fetch(`${protocol}://${host}/api/session/get`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-            if (sessionResponse.ok) {
-                const sessionData = await sessionResponse.json();
-                if (sessionData.success && sessionData.session) {
-                    avatarUrl = sessionData.session.avatar_url || '';
-                }
+            // 直接从当前请求的cookie中获取session
+            const cookieStore = await cookies();
+            const sessionCookie = cookieStore.get('astra_session');
+
+            if (sessionCookie?.value) {
+                const session = JSON.parse(sessionCookie.value);
+                avatarUrl = session.avatar_url || '';
             }
         } catch (sessionError) {
             console.error('Error getting session for avatar:', sessionError);
@@ -156,7 +138,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 初始化数据库
-        await initMapRatingsDatabase();
+        // 数据库已初始化，跳过此步骤
 
         // 添加或更新评分
         const success = await addOrUpdateRating(
@@ -213,7 +195,7 @@ export async function DELETE(request: NextRequest) {
         }
 
         // 初始化数据库
-        await initMapRatingsDatabase();
+        // 数据库已初始化，跳过此步骤
 
         // 删除评分
         const success = await deleteRating(parseInt(mapSelectionId), userId);
