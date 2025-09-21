@@ -25,28 +25,28 @@ const NotificationItem = ({ id, type, message, duration = 2000, onRemove }: Noti
     const getIcon = () => {
         switch (type) {
             case 'success':
-                return '✓';
+                return '/icons/success.svg';
             case 'error':
-                return '✕';
+                return '/icons/error.svg';
             case 'warning':
-                return '⚠';
+                return '/icons/warning.svg';
             case 'info':
             default:
-                return 'ℹ';
+                return '/icons/info.svg';
         }
     };
 
     const getStyles = () => {
         switch (type) {
             case 'success':
-                return 'bg-green-500 text-white border-green-600';
+                return 'bg-white text-green-600 border-green-200';
             case 'error':
-                return 'bg-red-500 text-white border-red-600';
+                return 'bg-white text-red-600 border-red-200';
             case 'warning':
-                return 'bg-yellow-500 text-black border-yellow-600';
+                return 'bg-white text-yellow-600 border-yellow-200';
             case 'info':
             default:
-                return 'bg-blue-500 text-white border-blue-600';
+                return 'bg-white text-gray-600 border-blue-200';
         }
     };
 
@@ -60,7 +60,7 @@ const NotificationItem = ({ id, type, message, duration = 2000, onRemove }: Noti
             `}
         >
             <span className="text-2xl font-bold">
-                {getIcon()}
+                <img src={getIcon()} alt={type} width={36} height={36} />
             </span>
             <span className="text-sm font-medium text-center leading-tight">
                 {message}
