@@ -120,11 +120,7 @@ export default function MapSelectionPage() {
     // DT自定义倍率
     const [customDTRate, setCustomDTRate] = useState<number | ''>(1.5);
 
-    // Auto-parsing related state
-    const [lastParsedUrl, setLastParsedUrl] = useState('');
-    const [isAutoParseEnabled, setIsAutoParseEnabled] = useState(true);
-    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const blurTimerRef = useRef<NodeJS.Timeout | null>(null);
+    // Remove auto-parsing, use Enter key instead
 
     // Mod filter dropdown state
     const [isModFilterOpen, setIsModFilterOpen] = useState(false);
@@ -348,74 +344,26 @@ export default function MapSelectionPage() {
         return false;
     };
 
-    // 检测URL是否看起来完整
-    const isUrlComplete = (input: string): boolean => {
-        // 基本的URL格式检查
-        return input.includes('osu.ppy.sh') &&
-            (input.includes('/beatmaps/') || input.includes('/beatmapsets/')) &&
-            /\d+/.test(input); // 包含数字
-    };
 
-    // 防抖解析函数
-    const debouncedParse = useCallback((url: string) => {
-        // 清除之前的定时器
-        if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-        }
 
-        // 如果URL和上次解析的相同，不重复解析
-        if (url === lastParsedUrl || !url.trim()) {
-            return;
-        }
 
-        // 如果还在输入数字，延长等待时间
-        const delay = isLikelyTypingNumbers(url) ? 2000 : 800;
-
-        debounceTimerRef.current = setTimeout(() => {
-            if (isUrlComplete(url) && isAutoParseEnabled) {
-                parseBeatmapUrl();
-                setLastParsedUrl(url);
-            }
-        }, delay);
-    }, [lastParsedUrl, isAutoParseEnabled]);
 
     // 处理输入变化
     const handleUrlInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newValue = e.target.value;
-        setUrlInput(newValue);
+        setUrlInput(e.target.value);
+    };
 
-        // 清除失焦定时器
-        if (blurTimerRef.current) {
-            clearTimeout(blurTimerRef.current);
-            blurTimerRef.current = null;
+    // 处理按键事件（回车键解析）
+    const handleUrlInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && !isSubmitting && urlInput.trim()) {
+            e.preventDefault();
+            parseBeatmapUrl();
         }
-
-        // 触发防抖解析
-        debouncedParse(newValue);
     };
 
-    // 处理输入框失焦
-    const handleUrlInputBlur = () => {
-        // 失焦时，如果URL看起来完整且未解析过，则立即解析
-        blurTimerRef.current = setTimeout(() => {
-            if (urlInput && urlInput !== lastParsedUrl && isUrlComplete(urlInput) && isAutoParseEnabled) {
-                parseBeatmapUrl();
-                setLastParsedUrl(urlInput);
-            }
-        }, 300); // 短暂延迟，避免点击按钮时的冲突
-    };
 
-    // 清理定时器
-    useEffect(() => {
-        return () => {
-            if (debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current);
-            }
-            if (blurTimerRef.current) {
-                clearTimeout(blurTimerRef.current);
-            }
-        };
-    }, []);
+
+
 
     const fetchSelections = async () => {
         try {
@@ -852,8 +800,8 @@ export default function MapSelectionPage() {
                                             type="text"
                                             value={urlInput}
                                             onChange={handleUrlInputChange}
-                                            onBlur={handleUrlInputBlur}
-                                            placeholder="https://osu.ppy.sh/beatmaps/sid#mod#bid"
+                                            onKeyDown={handleUrlInputKeyDown}
+                                            placeholder="https://osu.ppy.sh/beatmaps/sid#mod#/bid (按回车解析)"
                                             className="flex-1 bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
                                         />
                                         <button
