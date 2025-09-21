@@ -138,7 +138,7 @@ export default function Contact() {
 
                 {/* 页面底部信息 */}
                 <div className="mt-20 text-center">
-                    <div className="bg-[#1A1A1A] p-8 border border-gray-700">
+                    <div className="bg-[#1A1A1A] p-8 border-b-4 border-[#E93B66]">
                         <h3 className="text-2xl font-bold text-white mb-4">想要加入我们？</h3>
                         <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
                             AstaraCup 始终欢迎有热情的志愿者加入我们的团队。如果您想要参与比赛的组织工作，请联系我们！
@@ -146,7 +146,7 @@ export default function Contact() {
                         <div className="flex justify-center space-x-4">
                             <div className="bg-[#2A2A2A] px-4 py-2">
                                 <span className="text-gray-400 text-sm">联系方式：</span>
-                                <span className="text-white ml-2"><a
+                                <span className="text-[#3BE9D8] ml-2"><a
                                     href="https://qm.qq.com/q/sFydxoQtaw">点击加入QQ群</a></span>
                             </div>
                         </div>

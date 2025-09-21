@@ -44,7 +44,7 @@ export default function Navbar() {
                     background: 'linear-gradient(to bottom, rgba(233, 59, 102, 0.6) 0%, rgba(233, 59, 102, 0.3) 10%, rgba(233, 59, 102, 0.1) 30%, rgba(233, 59, 102, 0) 50%)'
                 }}></div>
 
-                <img src="/NavbarBackground.svg" alt="Background" className="absolute inset-0 object-cover bg-center opacity-90" style={{ zIndex: -2 }} />
+                <img src="/NavbarBackground.svg" alt="Background" className="absolute inset-0 object-cover bg-center opacity-90 bg-repeat-x" style={{ zIndex: -2 }} />
 
 
                 <div className="max-w-7xl mx-auto px-2">
@@ -115,20 +115,6 @@ export default function Navbar() {
                                                 setMobileMenuOpen(false);
                                             }}
                                         >
-                                            {/* {link.name} decorative background */}
-                                            <span
-                                                className={`${audiowide.className} absolute bottom-0 right-0 text-gray-400 text-[45px] font-mono font-bold whitespace-nowrap`}
-                                                style={{
-                                                    color: '#3f3f3f03',
-                                                    WebkitTextStroke: '0.2px #37373764',
-                                                    fontWeight: 700,
-                                                    letterSpacing: '0.2px',
-                                                    direction: 'rtl',
-                                                    textAlign: 'right',
-                                                }}
-                                            >
-                                                {link.name}
-                                            </span>
                                             <div className="text-xs opacity-75 font-bold mb-1 leading-tight relative z-10">{link.name}
                                             </div>
                                             <div className="text-2xl font-bold leading-tight inline-flex relative z-10">{link.tip}

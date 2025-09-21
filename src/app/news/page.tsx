@@ -23,7 +23,7 @@ export default async function NewsList() {
     });
 
     return (
-        <div className="max-w-5xl mx-auto p-6">
+        <div className="max-w-5xl mx-auto pt-10 ">
             <header className="mb-8">
                 <h1 className="text-4xl font-bold mb-4 text-white">新闻中心</h1>
                 <p className="text-gray-400">了解 AstraCup 星域杯的最新动态</p>
@@ -36,12 +36,12 @@ export default async function NewsList() {
                         <Link
                             key={news.slug}
                             href={link}
-                            className="block bg-[#3D3D3D] p-6 border border-gray-700 hover:border-[#E93B66] transition-colors group"
+                            className="border-b-4 border-[#E93B66] block bg-[#3D3D3D] p-6 hover:border-[#3BE9D8] transition-colors group"
                             style={{ textDecoration: 'none' }}
                         >
                             <article>
                                 <header className="mb-3">
-                                    <h2 className="text-xl font-semibold mb-2 text-white group-hover:text-[#E93B66] transition-colors">
+                                    <h2 className="text-xl font-semibold mb-2 text-white group-hover:text-[#3BE9D8] transition-colors">
                                         {news.frontmatter.title}
                                     </h2>
                                     <div className="flex items-center space-x-4 text-sm text-gray-400">
