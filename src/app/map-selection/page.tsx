@@ -891,17 +891,18 @@ export default function MapSelectionPage() {
                                     </div>
                                     <div className="flex-1">
                                         <label className="block text-gray-800 text-sm mb-2">模组位置</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            max="20"
-                                            value={modPosition}
-                                            onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
-                                            placeholder="1"
-                                            className="w-full bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
+                                        <Dropdown
+                                            label=""
+                                            options={Array.from({ length: 20 }, (_, i) => ({
+                                                value: (i + 1).toString(),
+                                                label: (i + 1).toString()
+                                            }))}
+                                            value={modPosition.toString()}
+                                            onChange={(value) => setModPosition(parseInt(value) || 1)}
+                                            minWidth="100%"
                                         />
                                     </div>
-                                    <div className="flex-2">
+                                    <div className="flex-14">
                                         <label className="block text-gray-800 text-sm mb-2">注释</label>
                                         <input
                                             type="text"
