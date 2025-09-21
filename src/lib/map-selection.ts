@@ -13,7 +13,7 @@ const dbConfig = {
 // 创建数据库连接池
 let pool: mysql.Pool | null = null;
 
-const getPool = (): mysql.Pool => {
+export const getPool = (): mysql.Pool => {
     if (!pool) {
         pool = mysql.createPool({
             ...dbConfig,

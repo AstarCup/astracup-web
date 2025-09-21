@@ -11,7 +11,7 @@ import { get } from '@vercel/edge-config';
 import { cookies } from 'next/headers';
 
 // 验证选图权限的辅助函数
-async function verifyMapSelectionAuth(osuId: string): Promise<boolean> {
+export async function verifyMapSelectionAuth(osuId: string): Promise<boolean> {
     try {
         let mapSelectionTeam: string[] = [];
 

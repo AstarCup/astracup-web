@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { showSuccess, showError, showInfo } from '../components/Notification';
 import Dropdown, { DropdownOption } from '../components/Dropdown';
+import RatingSystem from '../components/RatingSystem';
 
 interface User {
     id: number;
@@ -1173,10 +1174,20 @@ export default function MapSelectionPage() {
                                                             <p><strong>注释:</strong> {selection.comment}</p>
                                                         )}
                                                         <p><strong>选择时间:</strong> {new Date(selection.selectedAt).toLocaleString()}</p>
+                                                        <p><strong>提名者:</strong> {selection.selectedBy}</p>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="flex flex-col gap-2 ml-4">
+                                                {/* 评分系统 */}
+                                                <div className="bg-white rounded-lg p-3 border">
+                                                    <RatingSystem
+                                                        mapSelectionId={selection.id}
+                                                        userId={user?.id.toString() || null}
+                                                        onRatingUpdate={fetchSelections}
+                                                    />
+                                                </div>
+
                                                 {/* 过审状态勾选框 */}
                                                 <div className="flex items-center">
                                                     <label className="flex items-center text-gray-800 text-sm">
