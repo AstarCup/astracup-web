@@ -100,6 +100,10 @@ export default function MapSelectionPage() {
     const [category, setCategory] = useState('qualification');
     const [modFilter, setModFilter] = useState<string>('all'); // 新增：mod筛选状态
 
+    // Rating states
+    const [userRatings, setUserRatings] = useState<{ [key: number]: number }>({});
+    const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
+
     // Add selection form
     const [showAddForm, setShowAddForm] = useState(false);
     const [urlInput, setUrlInput] = useState('');
@@ -616,6 +620,48 @@ export default function MapSelectionPage() {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = seconds % 60;
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    };
+
+    // 处理评分
+    const handleRating = async (mapSelectionId: number, rating: number) => {
+        if (!user?.id) {
+            showError('请先登录');
+            return;
+        }
+
+        setIsRatingSubmitting(true);
+        try {
+            const response = await fetch('/api/map-ratings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    mapSelectionId,
+                    rating,
+                    comment: '', // 先提交评分，评论可以后续添加
+                    userId: user.id.toString()
+                })
+            });
+
+            if (response.ok) {
+                // 更新本地评分状态
+                setUserRatings(prev => ({
+                    ...prev,
+                    [mapSelectionId]: rating
+                }));
+                showSuccess('评分成功');
+                fetchSelections(); // 刷新数据以获取最新的评分统计
+            } else {
+                const errorData = await response.json();
+                showError(errorData.error || '评分失败');
+            }
+        } catch (error) {
+            console.error('Error submitting rating:', error);
+            showError('评分失败');
+        } finally {
+            setIsRatingSubmitting(false);
+        }
     };
 
     // 复制beatmap ID到剪贴板
@@ -1242,9 +1288,9 @@ export default function MapSelectionPage() {
                                                 </div>
                                                 <div>
                                                     <CurrentRating
-                                                        rating={0} // 这里需要获取用户的实际评分
-                                                        onRatingChange={() => { }} // 这里需要实现评分处理函数
-                                                        isSubmitting={false}
+                                                        rating={userRatings[selection.id] || 0}
+                                                        onRatingChange={(rating) => handleRating(selection.id, rating)}
+                                                        isSubmitting={isRatingSubmitting}
                                                         userId={user?.id.toString() || null}
                                                     />
                                                     <CommentComponent
