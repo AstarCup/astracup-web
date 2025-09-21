@@ -46,6 +46,7 @@ export default function Navbar() {
 
                 <img src="/NavbarBackground.svg" alt="Background" className="absolute inset-0 object-cover bg-center opacity-90" style={{ zIndex: -2 }} />
 
+
                 <div className="max-w-7xl mx-auto px-2">
                     <div className="flex justify-between items-center h-30">
                         {/* Logo */}
@@ -108,21 +109,26 @@ export default function Navbar() {
                                     <div key={link.href} className="border-b-4 border-[#E93B66] bg-white/100 hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-20 flex">
                                         <Link
                                             href={link.href}
-                                            className={`flex-1 p-3 text-left text-sm font-medium flex flex-col justify-center ${isActive(link.href) ? 'bg-[#3BE9D8] text-white font-bold' : 'text-gray-800 hover:text-white'}`}
+                                            className={`flex-1 p-3 text-left text-sm font-medium flex flex-col justify-center relative ${isActive(link.href) ? 'bg-[#3BE9D8] text-white font-bold' : 'text-gray-800 hover:text-white'}`}
                                             onClick={() => {
                                                 setActiveLink(link.href);
                                                 setMobileMenuOpen(false);
                                             }}
                                         >
-                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight">{link.name}
-
-                                            </div>
-                                            <div className="text-2xl font-bold leading-tight">{link.tip}</div>
-                                            <div className=" bottom-4 right-4 z-0 opacity-20 pointer-events-none">
-                                                <span className="text-white text-4xl font-bold tracking-widest px-4 py-2">
+                                            {/* {link.name} decorative background */}
+                                            <div className="absolute inset-0 z-0 opacity-80 pointer-events-none flex items-center justify-bottom">
+                                                <span className="text-gray-400 text-3xl font-mono font-bold">
                                                     {link.name}
                                                 </span>
                                             </div>
+
+                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight relative z-10">{link.name}
+
+                                            </div>
+                                            <div className="text-2xl font-bold leading-tight inline-flex relative z-10">{link.tip}
+
+                                            </div>
+
                                         </Link>
                                     </div>
                                 ))}
