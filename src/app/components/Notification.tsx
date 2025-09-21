@@ -1,5 +1,5 @@
 'use client';
-
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
 export interface NotificationProps {
@@ -54,13 +54,13 @@ const NotificationItem = ({ id, type, message, duration = 2000, onRemove }: Noti
         <div
             className={`
                 ${getStyles()}
-                flex flex-col items-center gap-2 px-6 py-4 rounded-lg border shadow-lg
+                flex flex-col items-center gap-2 px-6 py-4 border shadow-lg
                 animate-in slide-in-from-bottom-full duration-300
                 min-w-[200px] max-w-[300px]
             `}
         >
             <span className="text-2xl font-bold">
-                <img src={getIcon()} alt={type} width={36} height={36} />
+                <Image src={getIcon()} alt={type} width={36} height={36} />
             </span>
             <span className="text-sm font-medium text-center leading-tight">
                 {message}
