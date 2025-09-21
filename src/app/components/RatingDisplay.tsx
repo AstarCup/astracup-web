@@ -34,79 +34,16 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId }: Ra
         ));
     };
 
-    // 获取提名者的评分
-    const nominatorRating = ratings.find(rating => rating.userId === selectedBy);
-
-    // 获取其他用户的评分（排除当前用户和提名者）
-    const otherRatings = ratings.filter(rating =>
-        rating.userId !== currentUserId && rating.userId !== selectedBy
-    );
+    // 获取所有评分
+    const allRatings = ratings;
 
     return (
         <div className="space-y-3">
-            <h4 className="font-semibold text-gray-800 mb-2 text-sm">其他评分</h4>
+            <h4 className="font-semibold text-gray-800 mb-2 text-sm">所有评分</h4>
 
-            {/* 提名者评分 */}
-            {nominatorRating && (
-                <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                            {/* 提名者头像 */}
-                            <div
-                                className="w-8 h-8 rounded-full relative group"
-                                onMouseEnter={() => setHoveredUser(selectedBy)}
-                                onMouseLeave={() => setHoveredUser(null)}
-                            >
-                                <img
-                                    src={nominatorRating.avatar_url}
-                                    alt={nominatorRating.username}
-                                    className="w-8 h-8 rounded-full object-cover"
-                                    onError={(e) => {
-                                        // 如果头像加载失败，显示首字母
-                                        e.currentTarget.style.display = 'none';
-                                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                                        if (fallback) fallback.style.display = 'flex';
-                                    }}
-                                />
-                                <div className="w-8 h-8 bg-blue-300 rounded-full flex items-center justify-center absolute inset-0" style={{ display: 'none' }}>
-                                    <span className="text-xs text-blue-800 font-medium">
-                                        {nominatorRating.username?.charAt(0).toUpperCase() || 'N'}
-                                    </span>
-                                </div>
-
-                                {/* Hover提示 */}
-                                {hoveredUser === selectedBy && (
-                                    <div className="absolute top-full left-0 mt-2 bg-gray-800 text-white text-xs rounded p-2 z-10 min-w-[120px]">
-                                        <div className="font-medium">{nominatorRating.username}</div>
-                                        <div className="text-gray-300">osu!ID: {selectedBy}</div>
-                                        <div className="flex items-center mt-1">
-                                            {renderStars(nominatorRating.rating, 'text-sm')}
-                                            <span className="ml-1 text-yellow-400">{nominatorRating.rating}</span>
-                                        </div>
-                                        {nominatorRating.comment && (
-                                            <div className="mt-1 border-t border-gray-600 pt-1">
-                                                {nominatorRating.comment}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                            <span className="text-sm text-gray-700">提名者</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                            {renderStars(nominatorRating.rating)}
-                            <span className="text-sm text-gray-600">
-                                {nominatorRating.rating}分
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* 其他用户评分 */}
-            {otherRatings.length > 0 && (
+            {allRatings.length > 0 ? (
                 <div className="space-y-2">
-                    {otherRatings.map((rating) => (
+                    {allRatings.map((rating) => (
                         <div
                             key={rating.id}
                             className="flex items-center justify-between p-2 bg-gray-100 rounded hover:bg-gray-200 transition-colors group"
@@ -151,9 +88,22 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId }: Ra
                                     )}
                                 </div>
 
+                                <div className="flex flex-col">
+                                    <span className="text-sm text-gray-700">
+                                        {rating.username}
+                                        {rating.userId === selectedBy && (
+                                            <span className="ml-1 text-blue-500 text-xs">(提名者)</span>
+                                        )}
+                                    </span>
+                                    {rating.comment && (
+                                        <span className="text-xs text-gray-500 mt-1">
+                                            {rating.comment}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                             <div className="flex items-center space-x-1">
-                                {renderStars(rating.rating)}
+                                {renderStars(rating.rating, 'text-sm')}
                                 <span className="text-xs text-gray-600">
                                     {rating.rating}
                                 </span>
@@ -161,10 +111,8 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId }: Ra
                         </div>
                     ))}
                 </div>
-            )}
-
-            {otherRatings.length === 0 && !nominatorRating && (
-                <p className="text-gray-500 text-sm">暂无其他评分</p>
+            ) : (
+                <p className="text-gray-500 text-sm">暂无评分</p>
             )}
         </div>
     );
