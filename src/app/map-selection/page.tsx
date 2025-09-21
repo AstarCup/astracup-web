@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { showSuccess, showError, showInfo } from '../components/Notification';
+import Dropdown, { DropdownOption } from '../components/Dropdown';
 
 interface User {
     id: number;
@@ -121,10 +122,6 @@ export default function MapSelectionPage() {
     const [customDTRate, setCustomDTRate] = useState<number | ''>(1.5);
 
     // Remove auto-parsing, use Enter key instead
-
-    // Mod filter dropdown state
-    const [isModFilterOpen, setIsModFilterOpen] = useState(false);
-    const modFilterRef = useRef<HTMLDivElement>(null);
 
     // Check user login status and permissions
     useEffect(() => {
@@ -658,29 +655,35 @@ export default function MapSelectionPage() {
         return Array.from(mods).sort();
     };
 
-    // Handle click outside to close mod filter dropdown
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (modFilterRef.current && !modFilterRef.current.contains(event.target as Node)) {
-                setIsModFilterOpen(false);
+    // 创建mod筛选的下拉选项
+    const getModFilterOptions = (): DropdownOption[] => {
+        const options: DropdownOption[] = [
+            {
+                value: 'all',
+                label: '全部',
+                count: selections.length
             }
-        };
+        ];
 
-        const handleEscKey = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                setIsModFilterOpen(false);
-            }
-        };
+        getAvailableModsFromSelections().forEach(mod => {
+            const count = selections.filter(s => {
+                if (s.selectedMods === 'LZ' && s.customModName) {
+                    return mod === 'LZ';
+                }
+                return s.selectedMods === mod;
+            }).length;
 
-        if (isModFilterOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-            document.addEventListener('keydown', handleEscKey);
-            return () => {
-                document.removeEventListener('mousedown', handleClickOutside);
-                document.removeEventListener('keydown', handleEscKey);
-            };
-        }
-    }, [isModFilterOpen]);
+            options.push({
+                value: mod,
+                label: mod,
+                count: count
+            });
+        });
+
+        return options;
+    };
+
+
 
     if (isLoading) {
         return (
@@ -1097,86 +1100,14 @@ export default function MapSelectionPage() {
                             </h3>
 
                             {/* Mod 筛选器 */}
-                            <div className="flex items-center gap-2">
-                                <label className="text-gray-800 text-sm font-medium">按Mod筛选:</label>
-                                <div ref={modFilterRef} className="relative">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsModFilterOpen(!isModFilterOpen)}
-                                        className="bg-white border border-gray-300 text-gray-800 px-3 py-1 rounded text-sm min-w-[120px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer flex items-center justify-between hover:bg-gray-50 transition-colors duration-200"
-                                    >
-                                        <span>
-                                            {modFilter === 'all'
-                                                ? `全部 (${selections.length})`
-                                                : (() => {
-                                                    const count = selections.filter(s => {
-                                                        if (s.selectedMods === 'LZ' && s.customModName) {
-                                                            return modFilter === 'LZ';
-                                                        }
-                                                        return s.selectedMods === modFilter;
-                                                    }).length;
-                                                    return `${modFilter} (${count})`;
-                                                })()
-                                            }
-                                        </span>
-                                        <svg
-                                            className={`w-3 h-3 ml-2 transition-transform duration-200 ${isModFilterOpen ? 'rotate-180' : ''}`}
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </button>
-
-                                    {isModFilterOpen && (
-                                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-50 max-h-48 overflow-y-auto">
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setModFilter('all');
-                                                    setIsModFilterOpen(false);
-                                                }}
-                                                className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 transition-colors duration-200 ${modFilter === 'all' ? 'bg-blue-100 text-blue-700' : 'text-gray-800'
-                                                    }`}
-                                            >
-                                                全部 ({selections.length})
-                                            </button>
-                                            {getAvailableModsFromSelections().map(mod => {
-                                                const count = selections.filter(s => {
-                                                    if (s.selectedMods === 'LZ' && s.customModName) {
-                                                        return mod === 'LZ';
-                                                    }
-                                                    return s.selectedMods === mod;
-                                                }).length;
-                                                return (
-                                                    <button
-                                                        key={mod}
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setModFilter(mod);
-                                                            setIsModFilterOpen(false);
-                                                        }}
-                                                        className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 transition-colors duration-200 ${modFilter === mod ? 'bg-blue-100 text-blue-700' : 'text-gray-800'
-                                                            }`}
-                                                    >
-                                                        {mod} ({count})
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-                                {modFilter !== 'all' && (
-                                    <button
-                                        onClick={() => setModFilter('all')}
-                                        className="text-xs text-blue-600 hover:text-blue-800 underline"
-                                        title="清除筛选"
-                                    >
-                                        清除
-                                    </button>
-                                )}
-                            </div>
+                            <Dropdown
+                                label="按Mod筛选:"
+                                options={getModFilterOptions()}
+                                value={modFilter}
+                                onChange={setModFilter}
+                                showClearButton={modFilter !== 'all'}
+                                clearButtonText="清除"
+                            />
                         </div>
 
                         {filteredSelections.length === 0 ? (
