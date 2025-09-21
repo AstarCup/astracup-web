@@ -50,7 +50,7 @@ export const initMapRatingsDatabase = async (): Promise<void> => {
 
         // 检查并添加avatar_url字段（如果不存在）
         try {
-            const [columns] = await connection.execute('SHOW COLUMNS FROM map_ratings LIKE ?', ['avatar_url']);
+            const [columns] = await connection.execute(`SHOW COLUMNS FROM map_ratings LIKE 'avatar_url'`);
             if ((columns as any[]).length === 0) {
                 // avatar_url字段不存在，添加它
                 await connection.execute(`

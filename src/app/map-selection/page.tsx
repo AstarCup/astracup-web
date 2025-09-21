@@ -117,6 +117,17 @@ export default function MapSelectionPage() {
     const [availableBeatmaps, setAvailableBeatmaps] = useState<BeatmapInfo[]>([]);
     const [moddedStats, setModdedStats] = useState<any>(null);
 
+    // 重复检查状态
+    const [duplicateWarning, setDuplicateWarning] = useState<{
+        show: boolean;
+        beatmapId: number;
+        existingSelections: any[];
+    }>({
+        show: false,
+        beatmapId: 0,
+        existingSelections: []
+    });
+
     // Lazer特有mod相关状态
     const [customModName, setCustomModName] = useState('');
     const [availableLazerMods, setAvailableLazerMods] = useState<{ name: string, description: string }[]>([]);
@@ -404,6 +415,7 @@ export default function MapSelectionPage() {
         // Clear error (using global notifications now)
         setBeatmapPreview(null);
         setAvailableBeatmaps([]);
+        setDuplicateWarning({ show: false, beatmapId: 0, existingSelections: [] });
 
         try {
             const response = await fetch('/api/parse-beatmap', {
@@ -419,14 +431,21 @@ export default function MapSelectionPage() {
 
             if (response.ok) {
                 const data = await response.json();
+                let selectedBeatmap: BeatmapInfo;
+
                 if (data.data.type === 'single') {
+                    selectedBeatmap = data.data.beatmap;
                     setBeatmapPreview(data.data.beatmap);
                     setAvailableBeatmaps([]);
                 } else {
                     // 多个beatmap，让用户选择
                     setAvailableBeatmaps(data.data.beatmaps);
-                    setBeatmapPreview(data.data.beatmaps[0]); // 默认选择第一个
+                    selectedBeatmap = data.data.beatmaps[0]; // 默认选择第一个
+                    setBeatmapPreview(data.data.beatmaps[0]);
                 }
+
+                // 检查是否与现有选图重复
+                await checkForDuplicates(selectedBeatmap.id);
             } else {
                 const errorData = await response.json();
                 showError(errorData.error || '解析beatmap链接失败');
@@ -436,6 +455,27 @@ export default function MapSelectionPage() {
             showError('解析链接时出错');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    // 检查beatmap是否与现有选图重复
+    const checkForDuplicates = async (beatmapId: number) => {
+        try {
+            const response = await fetch(`/api/map-selections?season=${season}&category=${category}&osuId=${user?.id.toString()}`);
+            if (response.ok) {
+                const data = await response.json();
+                const existingSelections = data.selections.filter((selection: any) => selection.beatmapId === beatmapId);
+
+                if (existingSelections.length > 0) {
+                    setDuplicateWarning({
+                        show: true,
+                        beatmapId,
+                        existingSelections
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Failed to check for duplicates:', error);
         }
     };
 
@@ -907,6 +947,58 @@ export default function MapSelectionPage() {
                                     </div>
                                 </div>
 
+                                {/* 重复警告 */}
+                                {duplicateWarning.show && (
+                                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                        <div className="flex items-start">
+                                            <div className="flex-shrink-0">
+                                                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <div className="ml-3 flex-1">
+                                                <h3 className="text-sm font-medium text-yellow-800">
+                                                    发现重复图谱
+                                                </h3>
+                                                <div className="mt-2 text-sm text-yellow-700">
+                                                    <p>此图谱已被选择 {duplicateWarning.existingSelections.length} 次，请谨慎操作：</p>
+                                                    <ul className="mt-1 list-disc list-inside space-y-1">
+                                                        {duplicateWarning.existingSelections.map((selection, index) => (
+                                                            <li key={index}>
+                                                                {selection.selectedMods === 'LZ' && selection.customModName ?
+                                                                    `LZ${selection.modPosition}-${selection.customModName}` :
+                                                                    selection.selectedMods === 'DT' && selection.customDTRate && selection.customDTRate !== 1.5 ?
+                                                                        `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}` :
+                                                                        `${selection.selectedMods}${selection.modPosition}`
+                                                                } - {selection.title} [{selection.version}]
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                                <div className="mt-3 flex space-x-3">
+                                                    <button
+                                                        onClick={() => setDuplicateWarning({ show: false, beatmapId: 0, existingSelections: [] })}
+                                                        className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1 text-sm rounded"
+                                                    >
+                                                        我知道了，继续添加
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setDuplicateWarning({ show: false, beatmapId: 0, existingSelections: [] });
+                                                            setUrlInput('');
+                                                            setBeatmapPreview(null);
+                                                            setAvailableBeatmaps([]);
+                                                        }}
+                                                        className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1 text-sm rounded"
+                                                    >
+                                                        取消
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Beatmap preview */}
                                 {beatmapPreview && (
                                     <div className="bg-gray-200 rounded-lg p-4">
@@ -927,6 +1019,8 @@ export default function MapSelectionPage() {
                                                         const selectedBeatmap = availableBeatmaps.find(b => b.id === selectedId);
                                                         if (selectedBeatmap) {
                                                             setBeatmapPreview(selectedBeatmap);
+                                                            // 检查新选择的难度是否重复
+                                                            checkForDuplicates(selectedBeatmap.id);
                                                         }
                                                     }}
                                                     minWidth="100%"
@@ -1155,6 +1249,7 @@ export default function MapSelectionPage() {
                                             setApproved(false);
                                             setBeatmapPreview(null);
                                             setAvailableBeatmaps([]);
+                                            setDuplicateWarning({ show: false, beatmapId: 0, existingSelections: [] });
                                             // Clear error (using global notifications now)
                                             setCustomModName('');
                                             setCustomCS('');
