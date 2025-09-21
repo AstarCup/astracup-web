@@ -109,7 +109,7 @@ export default function Navbar() {
                                     <div key={link.href} className="border-b-4 border-[#E93B66] bg-white/100 hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-20 flex">
                                         <Link
                                             href={link.href}
-                                            className={`flex-1 p-3 text-left text-sm font-medium flex flex-col justify-center relative ${isActive(link.href) ? 'bg-[#3BE9D8] text-white font-bold' : 'text-gray-800 hover:text-white'}`}
+                                            className={`flex-1 p-3 text-left text-sm font-medium flex flex-col justify-center relative ${isActive(link.href) ? 'bg-[#3BE9D8] font-bold' : 'text-gray-800 '}`}
                                             onClick={() => {
                                                 setActiveLink(link.href);
                                                 setMobileMenuOpen(false);
