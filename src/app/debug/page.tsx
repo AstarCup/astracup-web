@@ -319,7 +319,7 @@ export default function DebugPage() {
                     <p className="text-lg text-gray-700 mb-4">
                         {!userSession
                             ? '您需要登录后才能访问此页面'
-                            : '您没有权限访问调试页面'
+                            : '您没有权限访问页面'
                         }
                     </p>
                     <button
@@ -534,16 +534,7 @@ export default function DebugPage() {
                 <div className="mb-6">
                     <h2 className="text-xl font-semibold mb-3">Staff 数据生成器</h2>
                     <div className="bg-purple-50 border border-purple-200 rounded-md p-4">
-                        <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
-                            <h3 className="text-sm font-medium text-blue-800 mb-1">自动数据获取说明</h3>
-                            <ul className="text-xs text-blue-700 list-disc list-inside space-y-1">
-                                <li>系统将自动获取用户的头像URL和封面背景图</li>
-                                <li>头像URL：从 osu! API 获取最新头像链接</li>
-                                <li>封面URL：获取用户设置的 profile cover 图片</li>
-                                <li>如果用户没有设置封面，coverUrl 将为 null</li>
-                                <li>所有数据都是实时从 osu! 官方 API 获取</li>
-                            </ul>
-                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -604,7 +595,7 @@ export default function DebugPage() {
                                         onClick={copyToClipboard}
                                         className="bg-green-500 text-white px-3 py-1 rounded-md text-sm hover:bg-green-600"
                                     >
-                                        📋 复制 JSON
+                                        复制 JSON
                                     </button>
                                 </div>
 
@@ -637,14 +628,7 @@ export default function DebugPage() {
                                     {JSON.stringify(generatedStaffData, null, 2)}
                                 </pre>
 
-                                <div className="text-sm text-purple-700">
-                                    <p><strong>✨ 自动获取说明：</strong></p>
-                                    <ul className="list-disc list-inside mt-1 space-y-1">
-                                        <li>头像URL: 从 osu! API 实时获取最新头像</li>
-                                        <li>封面URL: 自动获取用户的 profile cover 背景图</li>
-                                        <li>所有数据已完整填充，可直接添加到 staff 列表</li>
-                                    </ul>
-                                </div>
+
                             </div>
                         )}
                     </div>
@@ -834,15 +818,7 @@ export default function DebugPage() {
                     )}
                 </div>
 
-                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-                    <h3 className="text-lg font-medium text-yellow-800 mb-2">调试说明</h3>
-                    <ul className="list-disc list-inside text-yellow-700 space-y-1">
-                        <li>如果 OSU_CLIENT_ID 显示为 NOT_SET，说明环境变量未正确配置</li>
-                        <li>请在 Vercel 项目设置中配置环境变量</li>
-                        <li>配置后需要重新部署项目</li>
-                        <li>OSU_CLIENT_SECRET 出于安全原因只显示是否设置，不显示具体值</li>
-                    </ul>
-                </div>
+
             </div>
         </div>
     );

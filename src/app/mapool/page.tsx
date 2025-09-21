@@ -174,12 +174,8 @@ export default function Mapool() {
                     }))}
                     value={currentSeason}
                     onChange={setCurrentSeason}
-                    buttonClassName="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 focus:ring-blue-400 focus:border-blue-400"
-                    dropdownClassName="bg-gray-800 border-gray-600 shadow-xl"
-                    optionClassName="text-white hover:bg-gray-700"
-                    selectedOptionClassName="bg-blue-600 text-white hover:bg-blue-500"
-                    className="text-white"
                     minWidth="8rem"
+                    darkMode={true}
                 />
                 <Dropdown
                     label="类别"
@@ -189,12 +185,8 @@ export default function Mapool() {
                     }))}
                     value={selectedCategory}
                     onChange={setSelectedCategory}
-                    buttonClassName="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 focus:ring-blue-400 focus:border-blue-400"
-                    dropdownClassName="bg-gray-800 border-gray-600 shadow-xl"
-                    optionClassName="text-white hover:bg-gray-700"
-                    selectedOptionClassName="bg-blue-600 text-white hover:bg-blue-500"
-                    className="text-white"
                     minWidth="6rem"
+                    darkMode={true}
                 />
             </div>
 

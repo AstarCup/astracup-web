@@ -743,32 +743,20 @@ export default function MapSelectionPage() {
                     <div className="bg-gray-100 rounded-lg p-6 mb-6">
                         <div className="flex flex-wrap gap-4 items-center justify-between">
                             <div className="flex gap-4 items-center">
-                                <div>
-                                    <label className="block text-gray-800 text-sm mb-1">赛季</label>
-                                    <select
-                                        value={season}
-                                        onChange={(e) => setSeason(e.target.value)}
-                                    >
-                                        {availableSeasons.map(seasonOption => (
-                                            <option key={seasonOption.value} value={seasonOption.value}>
-                                                {seasonOption.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-gray-800 text-sm mb-1">类别</label>
-                                    <select
-                                        value={category}
-                                        onChange={(e) => setCategory(e.target.value)}
-                                    >
-                                        {CATEGORY_OPTIONS.map(option => (
-                                            <option key={option.value} value={option.value}>
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                                <Dropdown
+                                    label="赛季"
+                                    options={availableSeasons}
+                                    value={season}
+                                    onChange={setSeason}
+                                    minWidth="8rem"
+                                />
+                                <Dropdown
+                                    label="类别"
+                                    options={CATEGORY_OPTIONS}
+                                    value={category}
+                                    onChange={setCategory}
+                                    minWidth="8rem"
+                                />
                             </div>
                             <button
                                 onClick={() => setShowAddForm(true)}
