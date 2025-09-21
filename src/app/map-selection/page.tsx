@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { showSuccess, showError, showInfo } from '../components/Notification';
 
@@ -118,6 +118,12 @@ export default function MapSelectionPage() {
 
     // DT自定义倍率
     const [customDTRate, setCustomDTRate] = useState<number | ''>(1.5);
+
+    // Auto-parsing related state
+    const [lastParsedUrl, setLastParsedUrl] = useState('');
+    const [isAutoParseEnabled, setIsAutoParseEnabled] = useState(true);
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const blurTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Check user login status and permissions
     useEffect(() => {
@@ -315,6 +321,96 @@ export default function MapSelectionPage() {
             // 使用默认配置
         }
     };
+
+    // 检测输入是否像在输入数字（连续的数字字符，可能包含部分URL）
+    const isLikelyTypingNumbers = (input: string): boolean => {
+        // 如果输入为空或很短，不触发自动解析
+        if (!input || input.length < 10) return true;
+
+        // 检查是否包含完整的osu.ppy.sh域名
+        if (!input.includes('osu.ppy.sh')) return true;
+
+        // 检查是否以数字结尾（可能还在输入beatmap ID）
+        const lastChar = input[input.length - 1];
+        const lastFewChars = input.slice(-3);
+
+        // 如果最后的字符是数字，并且最近几个字符主要是数字，可能还在输入
+        if (/\d/.test(lastChar)) {
+            const digitCount = (lastFewChars.match(/\d/g) || []).length;
+            return digitCount >= 2; // 最近3个字符中有2个或更多数字
+        }
+
+        return false;
+    };
+
+    // 检测URL是否看起来完整
+    const isUrlComplete = (input: string): boolean => {
+        // 基本的URL格式检查
+        return input.includes('osu.ppy.sh') &&
+            (input.includes('/beatmaps/') || input.includes('/beatmapsets/')) &&
+            /\d+/.test(input); // 包含数字
+    };
+
+    // 防抖解析函数
+    const debouncedParse = useCallback((url: string) => {
+        // 清除之前的定时器
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+
+        // 如果URL和上次解析的相同，不重复解析
+        if (url === lastParsedUrl || !url.trim()) {
+            return;
+        }
+
+        // 如果还在输入数字，延长等待时间
+        const delay = isLikelyTypingNumbers(url) ? 2000 : 800;
+
+        debounceTimerRef.current = setTimeout(() => {
+            if (isUrlComplete(url) && isAutoParseEnabled) {
+                parseBeatmapUrl();
+                setLastParsedUrl(url);
+            }
+        }, delay);
+    }, [lastParsedUrl, isAutoParseEnabled]);
+
+    // 处理输入变化
+    const handleUrlInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = e.target.value;
+        setUrlInput(newValue);
+
+        // 清除失焦定时器
+        if (blurTimerRef.current) {
+            clearTimeout(blurTimerRef.current);
+            blurTimerRef.current = null;
+        }
+
+        // 触发防抖解析
+        debouncedParse(newValue);
+    };
+
+    // 处理输入框失焦
+    const handleUrlInputBlur = () => {
+        // 失焦时，如果URL看起来完整且未解析过，则立即解析
+        blurTimerRef.current = setTimeout(() => {
+            if (urlInput && urlInput !== lastParsedUrl && isUrlComplete(urlInput) && isAutoParseEnabled) {
+                parseBeatmapUrl();
+                setLastParsedUrl(urlInput);
+            }
+        }, 300); // 短暂延迟，避免点击按钮时的冲突
+    };
+
+    // 清理定时器
+    useEffect(() => {
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+            if (blurTimerRef.current) {
+                clearTimeout(blurTimerRef.current);
+            }
+        };
+    }, []);
 
     const fetchSelections = async () => {
         try {
@@ -685,12 +781,24 @@ export default function MapSelectionPage() {
 
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-gray-800 text-sm mb-2">Beatmap链接</label>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="block text-gray-800 text-sm">Beatmap链接</label>
+                                        <label className="flex items-center text-sm text-gray-600">
+                                            {/* <input
+                                                type="checkbox"
+                                                checked={isAutoParseEnabled}
+                                                onChange={(e) => setIsAutoParseEnabled(e.target.checked)}
+                                                className="mr-1 h-3 w-3"
+                                            />
+                                            自动解析 */}
+                                        </label>
+                                    </div>
                                     <div className="flex gap-2">
                                         <input
                                             type="text"
                                             value={urlInput}
-                                            onChange={(e) => setUrlInput(e.target.value)}
+                                            onChange={handleUrlInputChange}
+                                            onBlur={handleUrlInputBlur}
                                             placeholder="https://osu.ppy.sh/beatmaps/sid#mod#bid"
                                             className="flex-1 bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded"
                                         />
