@@ -18,9 +18,10 @@ async function verifyUserAuth(osuId: string): Promise<{ authorized: boolean; use
         if (isAuthorized) {
             // 在生产环境中，用户已经通过OAuth登录，主要依赖session获取用户名
             try {
-                // 使用绝对URL，在API路由中不能使用相对路径
-                const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-                const sessionResponse = await fetch(`${baseUrl}/api/session/get`, {
+                // 在API路由中，直接从请求头获取host信息
+                const host = process.env.VERCEL_URL || 'localhost:3000';
+                const protocol = host.includes('localhost') ? 'http' : 'https';
+                const sessionResponse = await fetch(`${protocol}://${host}/api/session/get`, {
                     headers: {
                         'Content-Type': 'application/json',
                     },
