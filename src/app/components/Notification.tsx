@@ -13,12 +13,23 @@ interface NotificationItemProps extends NotificationProps {
 }
 
 const NotificationItem = ({ id, type, message, duration = 2000, onRemove }: NotificationItemProps) => {
+    const [isExiting, setIsExiting] = useState(false);
+
     useEffect(() => {
-        const timer = setTimeout(() => {
+        // 设置定时器，在 duration - 400ms 时开始退出动画
+        const exitTimer = setTimeout(() => {
+            setIsExiting(true);
+        }, duration - 400); // 提前 400ms 开始退出动画
+
+        // 设置定时器，在 duration 时完全移除
+        const removeTimer = setTimeout(() => {
             onRemove(id);
         }, duration);
 
-        return () => clearTimeout(timer);
+        return () => {
+            clearTimeout(exitTimer);
+            clearTimeout(removeTimer);
+        };
     }, [id, duration, onRemove]);
 
     const getIcon = () => {
@@ -77,14 +88,14 @@ const NotificationItem = ({ id, type, message, duration = 2000, onRemove }: Noti
     const getStyles = () => {
         switch (type) {
             case 'success':
-                return 'bg-[#3d3d3d] text-green-600 border-green-200';
+                return 'bg-[#3d3d3d] text-white border-green-200';
             case 'error':
-                return 'bg-[#3d3d3d] text-red-600 border-red-200';
+                return 'bg-[#3d3d3d] text-white border-red-200';
             case 'warning':
-                return 'bg-[#3d3d3d] text-yellow-600 border-yellow-200';
+                return 'bg-[#3d3d3d] text-white border-yellow-200';
             case 'info':
             default:
-                return 'bg-[#3d3d3d] text-gray-600 border-blue-200';
+                return 'bg-[#3d3d3d] text-white border-blue-200';
         }
     };
 
@@ -96,7 +107,7 @@ const NotificationItem = ({ id, type, message, duration = 2000, onRemove }: Noti
                 min-w-[200px] max-w-[300px]
                 transform transition-all duration-500
                 hover:scale-105 hover:shadow-xl
-                notification-slide-in
+                ${isExiting ? 'notification-slide-out' : 'notification-slide-in'}
             `}
         >
             <span className="text-2xl font-bold icon-pulse">
