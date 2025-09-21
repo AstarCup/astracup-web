@@ -54,24 +54,17 @@ const NotificationItem = ({ id, type, message, duration = 2000, onRemove }: Noti
         <div
             className={`
                 ${getStyles()}
-                flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg
-                animate-in slide-in-from-right-full duration-300
-                min-w-[300px] max-w-[500px]
+                flex flex-col items-center gap-2 px-6 py-4 rounded-lg border shadow-lg
+                animate-in slide-in-from-bottom-full duration-300
+                min-w-[200px] max-w-[300px]
             `}
         >
-            <span className="text-lg font-bold flex-shrink-0">
+            <span className="text-2xl font-bold">
                 {getIcon()}
             </span>
-            <span className="text-sm font-medium flex-1">
+            <span className="text-sm font-medium text-center leading-tight">
                 {message}
             </span>
-            {/* <button
-                onClick={() => onRemove(id)}
-                className="text-current opacity-70 hover:opacity-100 ml-2 flex-shrink-0"
-                aria-label="关闭通知"
-            >
-                ✕
-            </button> */}
         </div>
     );
 };
@@ -102,7 +95,7 @@ export const NotificationContainer = () => {
 
     return (
         <div
-            className="fixed bottom-10 z-50 flex flex-col gap-2 pointer-events-none"
+            className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-3 pointer-events-none"
             style={{ zIndex: 9999 }}
         >
             {notifications.map((notification) => (

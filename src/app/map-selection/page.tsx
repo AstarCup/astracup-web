@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { NotificationContainer, showSuccess, showError, showInfo } from '../components/Notification';
+import { showSuccess, showError, showInfo } from '../components/Notification';
 
 interface User {
     id: number;
@@ -613,7 +613,6 @@ export default function MapSelectionPage() {
 
     return (
         <>
-            <NotificationContainer />
             <div className="min-h-screen bg-white p-6">
                 <div className="max-w-6xl mx-auto">
                     {/* Header */}
@@ -1069,7 +1068,7 @@ export default function MapSelectionPage() {
                                                             type="checkbox"
                                                             checked={selection.approved}
                                                             onChange={(e) => updateApprovalStatus(selection.id, e.target.checked)}
-                                                            className="mr-2 h-10 w-10 text-green-600 border-gray-300 focus:ring-green-500"
+                                                            className="mr-2 h-5 w-5 text-green-600 border-gray-300 focus:ring-green-500"
                                                         />
                                                         过审状态
                                                     </label>
@@ -1109,7 +1108,6 @@ export default function MapSelectionPage() {
                     </div>
                 </div>
             </div>
-            <NotificationContainer />
         </>
     );
 }

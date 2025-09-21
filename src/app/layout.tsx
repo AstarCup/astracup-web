@@ -5,6 +5,7 @@ import { Metadata } from "next";
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/footer';
 import NoiseBackground from './components/NoiseBackground';
+import { NotificationContainer } from './components/Notification';
 
 export const metadata: Metadata = {
   title: "AstraCup 星域杯",
@@ -45,6 +46,7 @@ export default function RootLayout({
           {children}
         </main>
         <Footer />
+        <NotificationContainer />
       </body>
     </html>
   );

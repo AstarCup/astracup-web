@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useState } from "react";
-import { NotificationContainer, showSuccess, showError, showInfo } from '../components/Notification';
+import { showSuccess, showError, showInfo } from '../components/Notification';
 
 interface MapoolTableProps {
     data: any[];
