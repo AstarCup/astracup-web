@@ -52,6 +52,7 @@ interface MapSelection {
     comment: string;
     selectedBy: string;
     selectedByUsername?: string; // 新增：提名者的用户名
+    selectedByAvatar?: string;   // 新增：提名者的头像URL
     selectedAt: string;
     season: string;
     category: string;
