@@ -1,6 +1,8 @@
 "use client";
 import Image from "next/image";
 import { useState } from "react";
+import { NotificationContainer, showSuccess, showError, showInfo } from '../components/Notification';
+
 interface MapoolTableProps {
     data: any[];
     title: string;
@@ -74,7 +76,7 @@ export default function MapoolTable({ data, title, downloadUrl }: MapoolTablePro
                                         title="点击复制BID"
                                         onClick={() => {
                                             navigator.clipboard.writeText(row.BID);
-                                            setCopiedIdx(idx);
+                                            showInfo('BID 已复制到剪贴板');
                                             setTimeout(() => setCopiedIdx(null), 1000);
                                         }}
                                         style={{ position: 'relative' }}
@@ -93,7 +95,6 @@ export default function MapoolTable({ data, title, downloadUrl }: MapoolTablePro
                                                 opacity: copiedIdx === idx ? 1 : undefined,
                                             }}
                                         >
-                                            {copiedIdx === idx ? '已复制' : '点击复制BID'}
                                         </span>
                                     </td>
                                     <td className="overflow-hidden">

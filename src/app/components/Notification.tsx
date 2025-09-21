@@ -65,13 +65,13 @@ const NotificationItem = ({ id, type, message, duration = 2000, onRemove }: Noti
             <span className="text-sm font-medium flex-1">
                 {message}
             </span>
-            <button
+            {/* <button
                 onClick={() => onRemove(id)}
                 className="text-current opacity-70 hover:opacity-100 ml-2 flex-shrink-0"
                 aria-label="关闭通知"
             >
                 ✕
-            </button>
+            </button> */}
         </div>
     );
 };
@@ -102,7 +102,7 @@ export const NotificationContainer = () => {
 
     return (
         <div
-            className="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"
+            className="fixed bottom-10 z-50 flex flex-col gap-2 pointer-events-none"
             style={{ zIndex: 9999 }}
         >
             {notifications.map((notification) => (
@@ -124,7 +124,7 @@ export const showNotification = (
     duration: number = 2000
 ) => {
     const id = `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+
     const notification: NotificationProps = {
         id,
         type,
@@ -137,14 +137,14 @@ export const showNotification = (
 };
 
 // 便捷函数
-export const showSuccess = (message: string, duration?: number) => 
+export const showSuccess = (message: string, duration?: number) =>
     showNotification('success', message, duration);
 
-export const showError = (message: string, duration?: number) => 
+export const showError = (message: string, duration?: number) =>
     showNotification('error', message, duration);
 
-export const showInfo = (message: string, duration?: number) => 
+export const showInfo = (message: string, duration?: number) =>
     showNotification('info', message, duration);
 
-export const showWarning = (message: string, duration?: number) => 
+export const showWarning = (message: string, duration?: number) =>
     showNotification('warning', message, duration);
