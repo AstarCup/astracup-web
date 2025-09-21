@@ -886,7 +886,7 @@ export default function MapSelectionPage() {
                                             options={MOD_OPTIONS.map(mod => ({ value: mod, label: mod }))}
                                             value={selectedMods}
                                             onChange={setSelectedMods}
-                                            minWidth="200%"
+                                            minWidth="100%"
                                         />
                                     </div>
                                     <div className="flex-1">
