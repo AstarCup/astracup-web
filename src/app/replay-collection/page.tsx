@@ -5,10 +5,15 @@ import { hasReplayAccess } from './edgeconfig';
 import MapoolTable from '../components/MapoolTable';
 import { showError, showSuccess } from '../components/Notification';
 
-// 假设有全局 user 信息
-// import { useUser } from '../hooks/useUser';
+interface User {
+    id: number;
+    username: string;
+    avatar_url: string;
+}
 
-export default function ReplayCollectionPage({ user }: { user: { id: string; username: string } }) {
+export default function ReplayCollectionPage() {
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
     const [paddingMaps, setPaddingMaps] = useState<any[]>([]);
     const [selectedSeason, setSelectedSeason] = useState('s1');
     const [selectedCategory, setSelectedCategory] = useState('qualification');
@@ -46,20 +51,71 @@ export default function ReplayCollectionPage({ user }: { user: { id: string; use
         }
     };
 
-    useEffect(() => {
-        const checkAccessAndLoadData = async () => {
-            console.log('Checking access for user:', user);
+    const checkUserAuth = async () => {
+        try {
+            console.log('Starting auth check...');
 
-            // 权限校验
-            if (!user) {
-                console.log('No user found');
-                showError('请先登录');
+            // Check if user is logged in
+            console.log('Fetching session...');
+            const sessionResponse = await fetch('/api/session/get');
+            console.log('Session response status:', sessionResponse.status);
+
+            if (!sessionResponse.ok) {
+                console.log('Session check failed, redirecting to register');
+                showError('未登录。正在跳转到登录页面...');
+                setTimeout(() => window.location.href = '/register', 3000); // 3秒后跳转
                 return;
             }
 
-            const hasAccess = await hasReplayAccess(user.id);
-            console.log('User access check result:', hasAccess);
+            const sessionData = await sessionResponse.json();
+            console.log('Session data:', sessionData);
 
+            if (!sessionData.success || !sessionData.session) {
+                console.log('No user in session, redirecting to register');
+                showError('未找到用户会话。正在跳转到登录页面...');
+                setTimeout(() => window.location.href = '/register', 3000); // 3秒后跳转
+                return;
+            }
+
+            const currentUser = sessionData.session;
+            console.log('Current user details:', {
+                id: currentUser.osuId,
+                username: currentUser.username,
+                idType: typeof currentUser.osuId
+            });
+
+            // 为了兼容现有的User接口，我们需要将osuId转换为id
+            const userForState = {
+                id: parseInt(currentUser.osuId),
+                username: currentUser.username,
+                avatar_url: currentUser.avatar_url
+            };
+
+            setUser(userForState);
+            console.log('Current user set:', userForState);
+
+        } catch (error) {
+            console.error('Auth check failed:', error);
+            showError(`验证用户权限时出错: ${error instanceof Error ? error.message : '未知错误'}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        checkUserAuth();
+    }, []);
+
+    // 当用户加载完成后，检查权限并加载数据
+    useEffect(() => {
+        const checkAccessAndLoadData = async () => {
+            if (!user) return;
+
+            console.log('Checking access for user:', user);
+            
+            const hasAccess = await hasReplayAccess(user.id.toString());
+            console.log('User access check result:', hasAccess);
+            
             if (!hasAccess) {
                 showError('无权限访问回放收集系统');
                 return;
@@ -68,16 +124,16 @@ export default function ReplayCollectionPage({ user }: { user: { id: string; use
             // 获取赛季配置
             await loadSeasonConfig();
         };
-        checkAccessAndLoadData();
-    }, [user]); // 只依赖user，避免无限循环
+
+        if (user) {
+            checkAccessAndLoadData();
+        }
+    }, [user]); // 当用户改变时执行
 
     // 单独的useEffect来加载地图数据
     useEffect(() => {
         const loadMapData = async () => {
-            if (!user || !(await hasReplayAccess(user.id))) {
-                console.log('No access or user not found');
-                return; // 没有权限不加载数据
-            }
+            if (!user) return;
 
             console.log('Loading map data for:', { selectedSeason, selectedCategory, userId: user.id });
 
@@ -85,10 +141,10 @@ export default function ReplayCollectionPage({ user }: { user: { id: string; use
             try {
                 const url = `/api/map-selections?season=${selectedSeason}&category=${selectedCategory}&padding=true&osuId=${user.id}`;
                 console.log('Fetching from URL:', url);
-
+                
                 const response = await fetch(url);
                 console.log('Response status:', response.status);
-
+                
                 if (response.ok) {
                     const data = await response.json();
                     console.log('Received data:', data);
@@ -113,6 +169,10 @@ export default function ReplayCollectionPage({ user }: { user: { id: string; use
 
     // 上传回放文件
     const handleReplayUpload = async (map: any, file: File) => {
+        if (!user) {
+            showError('请先登录');
+            return;
+        }
         if (!file.name.endsWith('.osr')) {
             showError('请上传.osr格式的回放文件');
             return;
@@ -126,7 +186,7 @@ export default function ReplayCollectionPage({ user }: { user: { id: string; use
             formData.append('file', file);
             formData.append('filename', filename);
             formData.append('mapId', map.id);
-            formData.append('userId', user.id);
+            formData.append('userId', user.id.toString());
             const res = await fetch('/api/upload-replay', {
                 method: 'POST',
                 body: formData
@@ -151,38 +211,47 @@ export default function ReplayCollectionPage({ user }: { user: { id: string; use
     return (
         <div className="max-w-4xl mx-auto p-6">
             <h2 className="text-2xl font-bold mb-4">回放文件收集系统</h2>
-            <div className="mb-4 flex gap-4">
-                <select value={selectedSeason} onChange={e => setSelectedSeason(e.target.value)} className="border rounded px-2 py-1">
-                    {availableSeasons.map(season => (
-                        <option key={season.value} value={season.value}>{season.label}</option>
-                    ))}
-                </select>
-                <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="border rounded px-2 py-1">
-                    {availableCategories.map(category => (
-                        <option key={category.value} value={category.value}>{category.label}</option>
-                    ))}
-                </select>
-            </div>
-            <MapoolTable data={paddingMaps} title="Padding状态图池" />
-            <div className="mt-6 space-y-6">
-                {paddingMaps.map(map => (
-                    <div key={map.id} className="border rounded p-4 mb-2 bg-gray-50">
-                        <div className="font-bold mb-2">{map.title} [{map.version}]</div>
-                        <div className="mb-2">Mod: {map.selectedMods}{map.modPosition}</div>
-                        <div className="mb-2">上传回放文件（.osr）：
-                            <input type="file" accept=".osr" disabled={uploading} onChange={e => {
-                                if (e.target.files && e.target.files[0]) {
-                                    handleReplayUpload(map, e.target.files[0]);
-                                }
-                            }} />
-                        </div>
-                        <div className="mb-2">已上传用户：
-                            {(uploadedUsers[map.id] || []).length === 0 ? '暂无' : uploadedUsers[map.id].join(', ')}
-                            {uploadedUsers[map.id]?.includes(user.id) && <span className="ml-2 text-green-600">(你已上传)</span>}
-                        </div>
+            
+            {isLoading ? (
+                <div className="text-center py-8">
+                    <div className="text-lg">正在加载...</div>
+                </div>
+            ) : (
+                <>
+                    <div className="mb-4 flex gap-4">
+                        <select value={selectedSeason} onChange={e => setSelectedSeason(e.target.value)} className="border rounded px-2 py-1">
+                            {availableSeasons.map(season => (
+                                <option key={season.value} value={season.value}>{season.label}</option>
+                            ))}
+                        </select>
+                        <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="border rounded px-2 py-1">
+                            {availableCategories.map(category => (
+                                <option key={category.value} value={category.value}>{category.label}</option>
+                            ))}
+                        </select>
                     </div>
-                ))}
-            </div>
+                    <MapoolTable data={paddingMaps} title="Padding状态图池" />
+                    <div className="mt-6 space-y-6">
+                        {paddingMaps.map(map => (
+                            <div key={map.id} className="border rounded p-4 mb-2 bg-gray-50">
+                                <div className="font-bold mb-2">{map.title} [{map.version}]</div>
+                                <div className="mb-2">Mod: {map.selectedMods}{map.modPosition}</div>
+                                <div className="mb-2">上传回放文件（.osr）：
+                                    <input type="file" accept=".osr" disabled={uploading || !user} onChange={e => {
+                                        if (e.target.files && e.target.files[0]) {
+                                            handleReplayUpload(map, e.target.files[0]);
+                                        }
+                                    }} />
+                                </div>
+                                <div className="mb-2">已上传用户：
+                                    {(uploadedUsers[map.id] || []).length === 0 ? '暂无' : uploadedUsers[map.id].join(', ')}
+                                    {user && uploadedUsers[map.id]?.includes(user.id.toString()) && <span className="ml-2 text-green-600">(你已上传)</span>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            )}
         </div>
     );
 }
