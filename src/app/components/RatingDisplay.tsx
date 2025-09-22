@@ -106,10 +106,6 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId, onRe
                                 <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded shadow-lg p-3 z-20 min-w-[180px] max-w-xs break-words animate-fadein">
                                     <div className="font-semibold mb-1">{rating.username}</div>
                                     <div className="text-gray-300 mb-1">osu!ID: {rating.userId}</div>
-                                    <div className="flex items-center mb-1">
-                                        {renderStars(rating.rating, 'text-base')}
-                                        <span className="ml-2 text-yellow-400 font-bold">{rating.rating}</span>
-                                    </div>
                                     {rating.comment && (
                                         <div className="mt-1 border-t border-gray-700 pt-2 text-gray-100">
                                             {rating.comment}

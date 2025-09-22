@@ -5,6 +5,7 @@ import {
     getUserRating,
     addOrUpdateRating,
     deleteRating,
+    deleteRatingById,
     getRatingStats
 } from '@/lib/map-ratings';
 import { verifyMapSelectionAuth } from '../map-selections/route';
@@ -175,12 +176,20 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id'); // 记录ID
         const mapSelectionId = searchParams.get('mapSelectionId');
         const userId = searchParams.get('userId');
 
-        if (!mapSelectionId || !userId) {
+        if (!id && (!mapSelectionId || !userId)) {
             return NextResponse.json(
-                { error: '缺少必要参数：mapSelectionId, userId' },
+                { error: '缺少必要参数：id 或 (mapSelectionId, userId)' },
+                { status: 400 }
+            );
+        }
+
+        if (!userId) {
+            return NextResponse.json(
+                { error: '缺少用户ID' },
                 { status: 400 }
             );
         }
@@ -197,8 +206,14 @@ export async function DELETE(request: NextRequest) {
         // 初始化数据库
         // 数据库已初始化，跳过此步骤
 
-        // 删除评分
-        const success = await deleteRating(parseInt(mapSelectionId), userId);
+        let success = false;
+        if (id) {
+            // 按记录ID删除
+            success = await deleteRatingById(parseInt(id));
+        } else {
+            // 按用户和选图删除（向后兼容）
+            success = await deleteRating(parseInt(mapSelectionId!), userId);
+        }
 
         if (!success) {
             return NextResponse.json(

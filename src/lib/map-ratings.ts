@@ -211,6 +211,25 @@ export const mapRatingsStorage = {
         }
     },
 
+    // 按记录ID删除评分
+    async deleteRatingById(id: number): Promise<boolean> {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(
+                'DELETE FROM map_ratings WHERE id = ?',
+                [id]
+            );
+
+            connection.release();
+            const deleteResult = result as mysql.ResultSetHeader;
+            return deleteResult.affectedRows > 0;
+        } catch (error) {
+            console.error('Error deleting rating by id:', error);
+            return false;
+        }
+    },
+
     // 获取评分统计
     async getRatingStats(mapSelectionId: number): Promise<RatingStats> {
         try {
@@ -295,6 +314,7 @@ export const getRatingsForMap = mapRatingsStorage.getRatingsForMap;
 export const getUserRating = mapRatingsStorage.getUserRating;
 export const addOrUpdateRating = mapRatingsStorage.addOrUpdateRating;
 export const deleteRating = mapRatingsStorage.deleteRating;
+export const deleteRatingById = mapRatingsStorage.deleteRatingById;
 export const getRatingStats = mapRatingsStorage.getRatingStats;
 export const getUserRatings = mapRatingsStorage.getUserRatings;
 

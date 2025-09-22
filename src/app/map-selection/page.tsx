@@ -1513,6 +1513,7 @@ export default function MapSelectionPage() {
                                                                 mapSelectionId={selection.id}
                                                                 userId={user?.id.toString() || null}
                                                                 onCommentUpdate={fetchSelections}
+                                                                showRating={false}
                                                             />
                                                         );
                                                     })()}
