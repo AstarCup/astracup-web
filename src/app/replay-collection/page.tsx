@@ -22,15 +22,18 @@ export default function ReplayCollectionPage() {
     const [availableSeasons, setAvailableSeasons] = useState([
         { value: 's1', label: '第一赛季' }
     ]);
-    const [availableCategories, setAvailableCategories] = useState<Array<{ value: string, label: string }>>([
+    const availableCategories = [
         { value: 'qualification', label: '资格赛' },
-        { value: 'ro32', label: '32强赛' },
-        { value: 'ro16', label: '16强赛' },
-        { value: 'quarterfinals', label: '四分之一决赛' },
-        { value: 'semifinals', label: '半决赛' },
-        { value: 'finals', label: '决赛' },
-        { value: 'grandfinals', label: '总决赛' }
-    ]);
+        { value: 'group', label: '小组赛' },
+        { value: 'quarterfinal', label: '四分之一决赛' },
+        { value: 'semifinal', label: '半决赛' },
+        { value: 'final', label: '决赛' }
+    ];
+    const formatLength = (seconds: number): string => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    };
     const loadSeasonConfig = async () => {
         try {
             const response = await fetch('/api/season-config');
@@ -148,7 +151,27 @@ export default function ReplayCollectionPage() {
                 if (response.ok) {
                     const data = await response.json();
                     console.log('Received data:', data);
-                    setPaddingMaps(data.selections || []);
+
+                    // 转换数据格式以匹配MapoolTable期望的格式
+                    const formattedData = (data.selections || []).map((map: any) => ({
+                        SID: map.beatmapsetId, // beatmapset ID for cover image
+                        BID: map.beatmapId, // beatmap ID
+                        Slot: `${map.selectedMods}${map.modPosition}`, // MOD and position
+                        MapInfo: `${map.artist} - ${map.title} [${map.version}]`, // song info
+                        _Creator: map.creator, // creator
+                        SR: map.starRating.toFixed(2), // star rating
+                        CS: map.cs.toFixed(1), // circle size
+                        AR: map.ar.toFixed(1), // approach rate
+                        OD: map.od.toFixed(1), // overall difficulty
+                        BPM: map.bpm, // BPM
+                        HitLength: formatLength(map.totalLength), // length
+                        Notes: map.comment || '-', // notes/comments
+                        _CS: map.cs.toFixed(1), // original CS for tooltip
+                        _AR: map.ar.toFixed(1), // original AR for tooltip
+                        _OD: map.od.toFixed(1), // original OD for tooltip
+                    }));
+
+                    setPaddingMaps(formattedData);
                 } else {
                     const errorData = await response.json();
                     console.error('API Error:', errorData);
