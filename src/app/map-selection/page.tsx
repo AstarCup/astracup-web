@@ -113,6 +113,7 @@ export default function MapSelectionPage() {
     const [modPosition, setModPosition] = useState(1);
     const [comment, setComment] = useState('');
     const [approved, setApproved] = useState(false);
+    const [padding, setPadding] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [beatmapPreview, setBeatmapPreview] = useState<BeatmapInfo | null>(null);
     const [availableBeatmaps, setAvailableBeatmaps] = useState<BeatmapInfo[]>([]);
@@ -1227,7 +1228,7 @@ export default function MapSelectionPage() {
                                 )}
 
                                 {/* Approval checkbox */}
-                                <div className="flex items-center">
+                                <div className="flex items-center gap-6">
                                     <label className="flex items-center text-gray-800">
                                         <input
                                             type="checkbox"
@@ -1236,6 +1237,15 @@ export default function MapSelectionPage() {
                                             className="mr-2 h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                                         />
                                         过审 (Approved)
+                                    </label>
+                                    <label className="flex items-center text-gray-800">
+                                        <input
+                                            type="checkbox"
+                                            checked={padding}
+                                            onChange={(e) => setPadding(e.target.checked)}
+                                            className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                        />
+                                        padding (测试图池)
                                     </label>
                                 </div>
 
@@ -1248,6 +1258,7 @@ export default function MapSelectionPage() {
                                             setSelectedMods('NM');
                                             setModPosition(1);
                                             setApproved(false);
+                                            setPadding(false);
                                             setBeatmapPreview(null);
                                             setAvailableBeatmaps([]);
                                             setDuplicateWarning({ show: false, beatmapId: 0, existingSelections: [] });
@@ -1460,8 +1471,6 @@ export default function MapSelectionPage() {
                                                             <CommentComponent
                                                                 mapSelectionId={selection.id}
                                                                 userId={user?.id.toString() || null}
-                                                                initialComment={userRating?.comment || ''}
-                                                                initialRating={userRating?.rating || 0}
                                                                 onCommentUpdate={fetchSelections}
                                                             />
                                                         );
