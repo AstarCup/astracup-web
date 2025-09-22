@@ -93,6 +93,8 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
             const response = await fetch(`/api/map-ratings?id=${id}&userId=${userId}`, { method: 'DELETE' });
             if (response.ok) {
                 showSuccess('评论已删除');
+                setCommentInput(''); // 清空输入框（如果有的话）
+                setIsSubmitting(true); // 触发重新获取评论
                 if (onCommentUpdate) onCommentUpdate();
             } else {
                 const errorData = await response.json();
@@ -102,6 +104,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
             showError('删除失败');
         } finally {
             setDeletingCommentId(null);
+            setIsSubmitting(false); // 确保isSubmitting被重置
         }
     };
 
