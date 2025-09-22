@@ -1525,10 +1525,10 @@ export default function MapSelectionPage() {
                                         <div className="flex items-center justify-between mb-3">
                                             <div className="flex items-center gap-3 flex-1">
                                                 <span className={`${getModColorClass(selection.selectedMods)} text-white px-2 py-1 rounded text-sm font-bold`}>
-                                                    {selection.selectedMods === 'LZ' && selection.customModName ?
+                                                    {selection.selectedMods === 'LZ' && selection.customModName && selection.customModName.trim() !== '' ?
                                                         `LZ${selection.modPosition}-${selection.customModName}` :
                                                         selection.selectedMods === 'DT' && selection.customDTRate && selection.customDTRate !== 1.5 ?
-                                                            `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}` :
+                                                            `DT${selection.modPosition}-${selection.customDTRate.toFixed(1)}倍` :
                                                             `${selection.selectedMods}${selection.modPosition}`
                                                     }
                                                 </span>
