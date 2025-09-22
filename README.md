@@ -6,6 +6,7 @@ config your .env
 
 ```
 EDGE_CONFIG=
+BLOB_READ_WRITE_TOKEN=
 MYSQL_DATABASE=
 MYSQL_PASSWORD=
 MYSQL_USER=
@@ -21,12 +22,21 @@ config your edge config
 ```json
 {
   "rankConfig": {
-    "maxPpForRegistration": 7600,
-    "minPpForRegistration": 1000,
+    "maxPpForRegistration": 8100,
+    "minPpForRegistration": 2000,
     "rankRestrictionEnabled": true
   },
   "targetDate": "2025-09-15T00:00:00",
-  "nowSeason": "s1"
+  "nowSeason": "s1",
+  "mapSelectionTeam": [
+    "6781503"
+  ],
+  "replayAccessUsers": [
+    "6781503"
+  ],
+  "admin": [
+    "6781503"
+  ]
 }
 ```
 
