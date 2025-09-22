@@ -454,11 +454,19 @@ export const mapSelectionStorage = {
                 return false;
             }
 
-            params.push(id, selectedBy);
+            // 对于padding字段，任何有权限的用户都可以修改；其他字段只有创建者可以修改
+            let whereClause = 'WHERE id = ?';
+            let queryParams = [...params, id];
+
+            if (!updates.padding || Object.keys(updates).length > 1) {
+                // 如果不是只更新padding，或者有其他字段需要更新，则需要验证创建者身份
+                whereClause += ' AND selectedBy = ?';
+                queryParams.push(selectedBy);
+            }
 
             const [result] = await connection.execute(
-                `UPDATE map_selections SET ${setClause.join(', ')} WHERE id = ? AND selectedBy = ?`,
-                params
+                `UPDATE map_selections SET ${setClause.join(', ')} ${whereClause}`,
+                queryParams
             );
 
             connection.release();
