@@ -50,8 +50,8 @@ export default function ReplayCollectionPage() {
         }
     };
 
-    // 获取用户名列表 - 现在直接返回用户名
-    const getUsernamesList = async (usernames: string[]): Promise<string> => {
+    // 获取用户名列表 - 直接返回用户名
+    const getUsernamesList = (usernames: string[]): string => {
         if (usernames.length === 0) return '暂无';
         return usernames.join(', ');
     };
