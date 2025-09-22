@@ -1,6 +1,7 @@
 // 选图系统数据库管理
 import mysql from 'mysql2/promise';
 import { getUserById } from './osu-api';
+import { get } from '@vercel/edge-config';
 
 // 数据库连接配置（复用现有配置）
 const dbConfig = {
@@ -375,14 +376,20 @@ export const mapSelectionStorage = {
     },
 
     // 删除选图
-    async deleteMapSelection(id: number, selectedBy: string): Promise<boolean> {
+    async deleteMapSelection(id: number, selectedBy?: string): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
 
-            const [result] = await connection.execute(
-                'DELETE FROM map_selections WHERE id = ? AND selectedBy = ?',
-                [id, selectedBy]
-            );
+            let query = 'DELETE FROM map_selections WHERE id = ?';
+            let params: any[] = [id];
+
+            // 如果提供了selectedBy，则添加用户权限检查
+            if (selectedBy) {
+                query += ' AND selectedBy = ?';
+                params.push(selectedBy);
+            }
+
+            const [result] = await connection.execute(query, params);
 
             connection.release();
             const deleteResult = result as mysql.ResultSetHeader;
@@ -459,6 +466,51 @@ export const mapSelectionStorage = {
             console.error('Error updating map selection:', error);
             return false;
         }
+    }
+};
+
+// 管理员权限验证函数
+export const verifyAdminAuth = async (osuId: string): Promise<boolean> => {
+    try {
+        let adminList: string[] = [];
+
+        // 优先尝试从Edge Config获取管理员列表
+        if (process.env.EDGE_CONFIG) {
+            const adminConfig = await get('admin');
+            if (adminConfig && Array.isArray(adminConfig)) {
+                adminList = adminConfig.filter((id): id is string =>
+                    typeof id === 'string' && id.trim() !== ''
+                );
+            }
+        }
+
+        // 如果Edge Config没有数据，尝试从环境变量获取
+        if (adminList.length === 0 && process.env.ADMIN_IDS) {
+            adminList = process.env.ADMIN_IDS
+                .split(',')
+                .map(id => id.trim())
+                .filter(id => id !== '');
+        }
+
+        // 如果都没有数据，使用默认测试ID（开发环境）
+        if (adminList.length === 0 && process.env.NODE_ENV === 'development') {
+            adminList = ['2']; // peppy的ID作为示例
+        }
+
+        // 检查osu ID是否在管理员列表中
+        const userIdStr = osuId.toString();
+        const userIdNum = parseInt(osuId);
+
+        return adminList.some(adminId => {
+            const adminIdStr = adminId.toString();
+            const adminIdNum = parseInt(adminId);
+
+            // 比较字符串和数字形式
+            return adminIdStr === userIdStr || adminIdNum === userIdNum;
+        });
+    } catch (error) {
+        console.error('Error verifying admin auth:', error);
+        return false;
     }
 };
 

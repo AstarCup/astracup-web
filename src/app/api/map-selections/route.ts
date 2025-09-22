@@ -3,7 +3,8 @@ import {
     getMapSelections,
     addMapSelection,
     deleteMapSelection,
-    updateMapSelection
+    updateMapSelection,
+    verifyAdminAuth
 } from '@/lib/map-selection';
 import { getBeatmapInfo, getBeatmapsetInfo, parseBeatmapUrl } from '@/lib/osu-api';
 import { get } from '@vercel/edge-config';
@@ -290,17 +291,24 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // 验证权限
+        // 验证权限 - 管理员可以删除任何地图
+        const isAdmin = await verifyAdminAuth(selectedBy);
         const isAuthorized = await verifyMapSelectionAuth(selectedBy);
-        if (!isAuthorized) {
+
+        if (!isAdmin && !isAuthorized) {
             return NextResponse.json(
                 { error: '您没有权限访问选图系统' },
                 { status: 403 }
             );
         }
 
-        // 删除选图
-        const success = await deleteMapSelection(parseInt(id), selectedBy);
+        // 删除选图 - 管理员可以删除任何人的地图
+        let success = false;
+        if (isAdmin) {
+            success = await deleteMapSelection(parseInt(id));
+        } else {
+            success = await deleteMapSelection(parseInt(id), selectedBy);
+        }
 
         if (!success) {
             return NextResponse.json(

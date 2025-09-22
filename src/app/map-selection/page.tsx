@@ -90,6 +90,7 @@ export default function MapSelectionPage() {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthorized, setIsAuthorized] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     // Season configuration
     const [availableSeasons, setAvailableSeasons] = useState([
@@ -301,6 +302,30 @@ export default function MapSelectionPage() {
                 console.log('Authorization successful');
                 setIsAuthorized(true);
 
+                // 检查管理员权限
+                try {
+                    const adminResponse = await fetch('/api/admin-check', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            osuId: currentUser.osuId.toString()
+                        })
+                    });
+
+                    if (adminResponse.ok) {
+                        const adminData = await adminResponse.json();
+                        setIsAdmin(adminData.isAdmin || false);
+                        console.log('Admin check result:', adminData.isAdmin);
+                    } else {
+                        setIsAdmin(false);
+                    }
+                } catch (adminError) {
+                    console.error('Admin check failed:', adminError);
+                    setIsAdmin(false);
+                }
+
                 // 获取赛季配置
                 await loadSeasonConfig();
             } else {
@@ -387,8 +412,13 @@ export default function MapSelectionPage() {
 
 
     const fetchSelections = async () => {
+        if (!user?.id) {
+            console.warn('fetchSelections called without user ID');
+            return;
+        }
+
         try {
-            const response = await fetch(`/api/map-selections?season=${season}&category=${category}&osuId=${user?.id}`);
+            const response = await fetch(`/api/map-selections?season=${season}&category=${category}&osuId=${user.id}`);
             if (response.ok) {
                 const data = await response.json();
                 setSelections(data.selections || []);
@@ -412,6 +442,10 @@ export default function MapSelectionPage() {
     const parseBeatmapUrl = async () => {
         if (!urlInput.trim()) {
             showError('请输入beatmap链接');
+            return;
+        }
+        if (!user?.id) {
+            showError('请先登录');
             return;
         }
 
@@ -624,7 +658,12 @@ export default function MapSelectionPage() {
         }
 
         try {
-            const response = await fetch(`/api/map-selections?id=${id}&selectedBy=${user?.id}`, {
+            // 管理员可以删除任何地图，普通用户只能删除自己的地图
+            const url = isAdmin
+                ? `/api/map-selections?id=${id}&selectedBy=${user?.id}`
+                : `/api/map-selections?id=${id}&selectedBy=${user?.id}`;
+
+            const response = await fetch(url, {
                 method: 'DELETE'
             });
 
@@ -703,6 +742,11 @@ export default function MapSelectionPage() {
 
     // 获取特定选图的评分数据
     const fetchMapRatings = async (mapSelectionId: number) => {
+        if (!mapSelectionId || mapSelectionId <= 0) {
+            console.warn('fetchMapRatings called with invalid mapSelectionId:', mapSelectionId);
+            return;
+        }
+
         try {
             const response = await fetch(`/api/map-ratings?mapSelectionId=${mapSelectionId}`);
             if (response.ok) {
@@ -723,6 +767,10 @@ export default function MapSelectionPage() {
     const handleRating = async (mapSelectionId: number, rating: number) => {
         if (!user?.id) {
             showError('请先登录');
+            return;
+        }
+        if (!mapSelectionId || mapSelectionId <= 0) {
+            showError('无效的选图ID');
             return;
         }
 
@@ -1489,6 +1537,7 @@ export default function MapSelectionPage() {
                                                     currentUserId={user?.id.toString() || null}
                                                     onRefresh={() => fetchMapRatings(selection.id)}
                                                     compact={true}
+                                                    isAdmin={isAdmin}
                                                 />
                                             </div>
                                         </div>                                        {/* 主要内容区域 */}
@@ -1611,10 +1660,11 @@ export default function MapSelectionPage() {
                                                     >
                                                         查看详情
                                                     </a>
-                                                    {selection.selectedBy === user?.id.toString() && (
+                                                    {(selection.selectedBy === user?.id.toString() || isAdmin) && (
                                                         <button
                                                             onClick={() => deleteSelection(selection.id)}
                                                             className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm"
+                                                            title={isAdmin && selection.selectedBy !== user?.id.toString() ? "管理员删除" : "删除选图"}
                                                         >
                                                             删除
                                                         </button>

@@ -20,9 +20,10 @@ interface RatingDisplayProps {
     currentUserId: string | null;
     onRefresh?: () => void;
     compact?: boolean; // 新增：紧凑模式，用于右上角显示
+    isAdmin?: boolean; // 新增：管理员权限
 }
 
-export default function RatingDisplay({ ratings, selectedBy, currentUserId, onRefresh, compact = false }: RatingDisplayProps) {
+export default function RatingDisplay({ ratings, selectedBy, currentUserId, onRefresh, compact = false, isAdmin = false }: RatingDisplayProps) {
     const [hoveredUser, setHoveredUser] = useState<string | null>(null);
     const [lastUpdated, setLastUpdated] = useState(Date.now());
 
@@ -52,11 +53,15 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId, onRe
 
     // 删除评论
     const handleDeleteComment = async (id: number) => {
-        if (!window.confirm('确定要删除这条评论吗？')) return;
         if (!currentUserId) {
             alert('请先登录');
             return;
         }
+        if (!id) {
+            alert('无效的评论ID');
+            return;
+        }
+        if (!window.confirm('确定要删除这条评论吗？')) return;
         try {
             const response = await fetch(`/api/map-ratings?id=${id}&userId=${currentUserId}`, { method: 'DELETE' });
             if (response.ok) {
@@ -127,11 +132,11 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId, onRe
                                                 {rating.comment}
                                             </span>
                                         )}
-                                        {/* 删除按钮，仅自己评论可见 */}
-                                        {currentUserId === rating.userId && (
+                                        {/* 删除按钮，仅自己评论或管理员可见 */}
+                                        {(currentUserId === rating.userId || isAdmin) && (
                                             <button
                                                 className="ml-1 text-red-500 hover:text-red-700 text-xs font-bold"
-                                                title="删除评论"
+                                                title={isAdmin && currentUserId !== rating.userId ? "管理员删除评论" : "删除评论"}
                                                 onClick={() => handleDeleteComment(rating.id)}
                                             >×</button>
                                         )}

@@ -9,6 +9,7 @@ import {
     getRatingStats
 } from '@/lib/map-ratings';
 import { verifyMapSelectionAuth } from '../map-selections/route';
+import { verifyAdminAuth } from '@/lib/map-selection';
 
 // 验证用户权限的辅助函数
 async function verifyUserAuth(osuId: string): Promise<{ authorized: boolean; username?: string }> {
@@ -194,9 +195,11 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // 验证用户权限
+        // 验证用户权限 - 管理员可以删除任何评论
+        const isAdmin = await verifyAdminAuth(userId);
         const authResult = await verifyUserAuth(userId);
-        if (!authResult.authorized) {
+
+        if (!isAdmin && !authResult.authorized) {
             return NextResponse.json(
                 { error: '您没有权限删除评分' },
                 { status: 403 }
@@ -208,8 +211,12 @@ export async function DELETE(request: NextRequest) {
 
         let success = false;
         if (id) {
-            // 按记录ID删除
-            success = await deleteRatingById(parseInt(id), userId);
+            // 按记录ID删除 - 管理员可以删除任何人的评论
+            if (isAdmin) {
+                success = await deleteRatingById(parseInt(id));
+            } else {
+                success = await deleteRatingById(parseInt(id), userId);
+            }
         } else {
             // 按用户和选图删除（向后兼容）
             success = await deleteRating(parseInt(mapSelectionId!), userId);

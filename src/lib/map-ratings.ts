@@ -210,25 +210,27 @@ export const mapRatingsStorage = {
     },
 
     // 按记录ID删除评分（需要用户权限验证）
-    async deleteRatingById(id: number, userId: string): Promise<boolean> {
+    async deleteRatingById(id: number, userId?: string): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
 
-            // 首先检查这条记录是否属于当前用户
-            const [checkResult] = await connection.execute(
-                'SELECT userId FROM map_ratings WHERE id = ?',
-                [id]
-            );
+            // 如果提供了userId，则检查这条记录是否属于当前用户
+            if (userId) {
+                const [checkResult] = await connection.execute(
+                    'SELECT userId FROM map_ratings WHERE id = ?',
+                    [id]
+                );
 
-            const checkRows = checkResult as any[];
-            if (checkRows.length === 0) {
-                connection.release();
-                return false; // 记录不存在
-            }
+                const checkRows = checkResult as any[];
+                if (checkRows.length === 0) {
+                    connection.release();
+                    return false; // 记录不存在
+                }
 
-            if (checkRows[0].userId !== userId) {
-                connection.release();
-                return false; // 没有权限删除别人的评论
+                if (checkRows[0].userId !== userId) {
+                    connection.release();
+                    return false; // 没有权限删除别人的评论
+                }
             }
 
             // 删除记录

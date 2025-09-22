@@ -22,6 +22,8 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
     // 获取评论列表
     useEffect(() => {
         const fetchComments = async () => {
+            if (!mapSelectionId) return; // 防止在mapSelectionId未定义时发送请求
+
             setIsLoading(true);
             try {
                 const res = await fetch(`/api/map-ratings?mapSelectionId=${mapSelectionId}`);
@@ -44,7 +46,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
             }
         };
         fetchComments();
-    }, [mapSelectionId, isSubmitting, userId]);
+    }, [mapSelectionId, isSubmitting]); // 移除userId依赖，因为GET请求不需要它
 
     // 添加评论
     const handleCommentSubmit = async () => {
@@ -54,6 +56,10 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
         }
         if (!commentInput.trim()) {
             showError('请输入评论内容');
+            return;
+        }
+        if (!mapSelectionId) {
+            showError('无效的选图ID');
             return;
         }
         setIsSubmitting(true);
