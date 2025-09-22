@@ -14,6 +14,33 @@ export default function ReplayCollectionPage({ user }: { user: { id: string; use
     const [selectedCategory, setSelectedCategory] = useState('qualification');
     const [uploading, setUploading] = useState(false);
     const [uploadedUsers, setUploadedUsers] = useState<{ [key: string]: string[] }>({}); // { mapId: [userId, ...] }
+    const [availableSeasons, setAvailableSeasons] = useState([
+        { value: 's1', label: '第一赛季' }
+    ]);
+    const [availableCategories, setAvailableCategories] = useState<Array<{ value: string, label: string }>>([
+        { value: 'qualification', label: '资格赛' },
+        { value: 'ro32', label: '32强赛' },
+        { value: 'ro16', label: '16强赛' },
+        { value: 'quarterfinals', label: '四分之一决赛' },
+        { value: 'semifinals', label: '半决赛' },
+        { value: 'finals', label: '决赛' },
+        { value: 'grandfinals', label: '总决赛' }
+    ]);
+    const loadSeasonConfig = async () => {
+        try {
+            const response = await fetch('/api/season-config');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    setAvailableSeasons(data.availableSeasons);
+                    setSelectedSeason(data.defaultSeason);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load season config:', error);
+            // 使用默认配置
+        }
+    };
 
     useEffect(() => {
         const checkAccessAndLoadData = async () => {
@@ -22,6 +49,10 @@ export default function ReplayCollectionPage({ user }: { user: { id: string; use
                 showError('无权限访问回放收集系统');
                 return;
             }
+
+            // 获取赛季配置
+            await loadSeasonConfig();
+
             // 获取padding状态的图池
             fetch(`/api/map-selections?season=${selectedSeason}&category=${selectedCategory}&padding=true&osuId=${user.id}`)
                 .then(res => res.json())
@@ -72,13 +103,14 @@ export default function ReplayCollectionPage({ user }: { user: { id: string; use
             <h2 className="text-2xl font-bold mb-4">回放文件收集系统</h2>
             <div className="mb-4 flex gap-4">
                 <select value={selectedSeason} onChange={e => setSelectedSeason(e.target.value)} className="border rounded px-2 py-1">
-                    <option value="s1">第一赛季</option>
-                    {/* 可扩展更多赛季 */}
+                    {availableSeasons.map(season => (
+                        <option key={season.value} value={season.value}>{season.label}</option>
+                    ))}
                 </select>
                 <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="border rounded px-2 py-1">
-                    <option value="qualification">资格赛</option>
-                    <option value="ro32">32强赛</option>
-                    {/* 可扩展更多类型 */}
+                    {availableCategories.map(category => (
+                        <option key={category.value} value={category.value}>{category.label}</option>
+                    ))}
                 </select>
             </div>
             <MapoolTable data={paddingMaps} title="Padding状态图池" />
