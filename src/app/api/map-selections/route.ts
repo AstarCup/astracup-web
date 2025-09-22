@@ -4,7 +4,8 @@ import {
     addMapSelection,
     deleteMapSelection,
     updateMapSelection,
-    verifyAdminAuth
+    verifyAdminAuth,
+    getPool
 } from '@/lib/map-selection';
 import { getBeatmapInfo, getBeatmapsetInfo, parseBeatmapUrl } from '@/lib/osu-api';
 import { get } from '@vercel/edge-config';
@@ -414,15 +415,6 @@ export async function PUT(request: NextRequest) {
             );
         }
 
-        // 验证权限
-        const isAuthorized = await verifyMapSelectionAuth(selectedBy);
-        if (!isAuthorized) {
-            return NextResponse.json(
-                { error: '您没有权限访问选图系统' },
-                { status: 403 }
-            );
-        }
-
         // 准备更新数据
         const updates: { selectedMods?: string; comment?: string; approved?: boolean; padding?: boolean } = {};
         if (selectedMods !== undefined) updates.selectedMods = selectedMods;
@@ -434,6 +426,46 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json(
                 { error: '没有提供要更新的字段' },
                 { status: 400 }
+            );
+        }
+
+        // 权限检查逻辑：
+        // 1. 如果只更新padding字段，允许选图者本人或选图团队成员
+        // 2. 如果更新其他字段，只允许选图团队成员
+        let isAuthorized = false;
+
+        if (Object.keys(updates).length === 1 && updates.padding !== undefined) {
+            // 只更新padding字段：检查是否为选图者本人或选图团队成员
+            const isMapSelector = await verifyMapSelectionAuth(selectedBy);
+
+            // 检查是否为选图者本人（需要查询数据库）
+            let isOwner = false;
+            try {
+                const connection = await getPool().getConnection();
+                const [rows] = await connection.execute(
+                    'SELECT selectedBy FROM map_selections WHERE id = ?',
+                    [id]
+                );
+                connection.release();
+
+                if (rows && Array.isArray(rows) && rows.length > 0) {
+                    const selection = rows[0] as any;
+                    isOwner = selection.selectedBy === selectedBy;
+                }
+            } catch (error) {
+                console.error('Error checking selection ownership:', error);
+            }
+
+            isAuthorized = isMapSelector || isOwner;
+        } else {
+            // 更新其他字段：只允许选图团队成员
+            isAuthorized = await verifyMapSelectionAuth(selectedBy);
+        }
+
+        if (!isAuthorized) {
+            return NextResponse.json(
+                { error: '您没有权限更新此选图' },
+                { status: 403 }
             );
         }
 

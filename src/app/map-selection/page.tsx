@@ -1423,7 +1423,7 @@ export default function MapSelectionPage() {
                                             onChange={(e) => setApproved(e.target.checked)}
                                             className="mr-2 h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                                         />
-                                        过审 (Approved)
+                                        过审
                                     </label>
                                     <label className="flex items-center text-gray-800">
                                         <input
@@ -1432,7 +1432,7 @@ export default function MapSelectionPage() {
                                             onChange={(e) => setPadding(e.target.checked)}
                                             className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                         />
-                                        padding (测试图池)
+                                        提交测图
                                     </label>
                                 </div>
 
@@ -1657,15 +1657,17 @@ export default function MapSelectionPage() {
                                                         />
                                                         过审
                                                     </label>
-                                                    <label className="flex items-center text-gray-800 text-sm">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selection.padding || false}
-                                                            onChange={(e) => updatePaddingStatus(selection.id, e.target.checked)}
-                                                            className="mr-2 h-4 w-4 text-orange-600 border-gray-300 focus:ring-orange-500"
-                                                        />
-                                                        Padding
-                                                    </label>
+                                                    {(selection.selectedBy === user?.id.toString() || isAdmin) && (
+                                                        <label className="flex items-center text-gray-800 text-sm">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selection.padding || false}
+                                                                onChange={(e) => updatePaddingStatus(selection.id, e.target.checked)}
+                                                                className="mr-2 h-4 w-4 text-orange-600 border-gray-300 focus:ring-orange-500"
+                                                            />
+                                                            Padding
+                                                        </label>
+                                                    )}
                                                 </div>
 
                                                 {/* 操作按钮 */}
