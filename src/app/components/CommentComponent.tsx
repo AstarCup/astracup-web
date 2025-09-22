@@ -18,6 +18,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [showCommentBox, setShowCommentBox] = useState(false); // 新增：控制评论框显示
+    const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null); // 新增：正在删除的评论ID
 
     // 获取评论列表
     useEffect(() => {
@@ -87,7 +88,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
     // 删除评论
     const handleDeleteComment = async (id: number) => {
         if (!window.confirm('确定要删除这条评论吗？')) return;
-        setIsSubmitting(true);
+        setDeletingCommentId(id);
         try {
             const response = await fetch(`/api/map-ratings?id=${id}&userId=${userId}`, { method: 'DELETE' });
             if (response.ok) {
@@ -100,7 +101,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
         } catch (e) {
             showError('删除失败');
         } finally {
-            setIsSubmitting(false);
+            setDeletingCommentId(null);
         }
     };
 
@@ -149,10 +150,13 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                                         <p className="text-xs text-gray-800 break-words line-clamp-2">{c.comment}</p>
                                         {userId === c.userId && (
                                             <button
-                                                className="absolute top-1 right-1 text-red-500 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                                                title="删除评论"
+                                                className="absolute top-1 right-1 text-red-500 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                                                title={deletingCommentId === c.id ? "删除中..." : "删除评论"}
                                                 onClick={() => handleDeleteComment(c.id)}
-                                            >×</button>
+                                                disabled={deletingCommentId === c.id}
+                                            >
+                                                {deletingCommentId === c.id ? "..." : "×"}
+                                            </button>
                                         )}
                                     </div>
                                     {/* Hover弹窗 */}

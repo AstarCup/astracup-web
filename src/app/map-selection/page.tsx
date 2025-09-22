@@ -756,6 +756,23 @@ export default function MapSelectionPage() {
                         ...prev,
                         [mapSelectionId]: data.ratings
                     }));
+
+                    // 同时更新当前用户的评分
+                    if (user?.id) {
+                        const userRating = data.ratings.find((rating: any) => rating.userId === user.id.toString());
+                        if (userRating) {
+                            setUserRatings(prev => ({
+                                ...prev,
+                                [mapSelectionId]: userRating.rating
+                            }));
+                        } else {
+                            // 如果用户还没有评分，设置为0
+                            setUserRatings(prev => ({
+                                ...prev,
+                                [mapSelectionId]: 0
+                            }));
+                        }
+                    }
                 }
             }
         } catch (error) {
