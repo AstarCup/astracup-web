@@ -63,7 +63,8 @@ export async function GET(request: NextRequest) {
         const category = searchParams.get('category') || undefined;
         const osuId = searchParams.get('osuId');
         const approved = searchParams.get('approved'); // 新增approved参数
-        const padding = searchParams.get('padding') === 'true';
+        const paddingParam = searchParams.get('padding');
+        const padding = paddingParam === null ? undefined : paddingParam === 'true';
 
         // 如果只是获取已过审的图，则不需要权限验证（公开访问）
         if (approved === 'true') {

@@ -23,7 +23,7 @@ export default function ReplayCollectionPage({ user }: { user: { id: string; use
                 return;
             }
             // 获取padding状态的图池
-            fetch(`/api/map-selections?season=${selectedSeason}&category=${selectedCategory}&padding=true`)
+            fetch(`/api/map-selections?season=${selectedSeason}&category=${selectedCategory}&padding=true&osuId=${user.id}`)
                 .then(res => res.json())
                 .then(data => setPaddingMaps(data.selections || []));
         };
