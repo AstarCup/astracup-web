@@ -112,10 +112,10 @@ export default function ReplayCollectionPage() {
             if (!user) return;
 
             console.log('Checking access for user:', user);
-            
+
             const hasAccess = await hasReplayAccess(user.id.toString());
             console.log('User access check result:', hasAccess);
-            
+
             if (!hasAccess) {
                 showError('无权限访问回放收集系统');
                 return;
@@ -141,10 +141,10 @@ export default function ReplayCollectionPage() {
             try {
                 const url = `/api/map-selections?season=${selectedSeason}&category=${selectedCategory}&padding=true&osuId=${user.id}`;
                 console.log('Fetching from URL:', url);
-                
+
                 const response = await fetch(url);
                 console.log('Response status:', response.status);
-                
+
                 if (response.ok) {
                     const data = await response.json();
                     console.log('Received data:', data);
@@ -211,7 +211,7 @@ export default function ReplayCollectionPage() {
     return (
         <div className="max-w-4xl mx-auto p-6">
             <h2 className="text-2xl font-bold mb-4">回放文件收集系统</h2>
-            
+
             {isLoading ? (
                 <div className="text-center py-8">
                     <div className="text-lg">正在加载...</div>
