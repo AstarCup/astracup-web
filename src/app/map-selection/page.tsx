@@ -1409,6 +1409,9 @@ export default function MapSelectionPage() {
                                                             <p><strong>注释:</strong> {selection.comment}</p>
                                                         )}
                                                         <p><strong>选择时间:</strong> {new Date(selection.selectedAt).toLocaleString()}</p>
+
+
+                                                        <p><strong>提名者:</strong></p>
                                                         <div className="flex items-center space-x-2">
                                                             {selection.selectedByAvatar ? (
                                                                 <img
@@ -1423,101 +1426,96 @@ export default function MapSelectionPage() {
                                                                     }}
                                                                 />
                                                             ) : null}
-
-                                                            <p><strong>提名者:</strong> <div className={`w-6 h-6 bg-blue-300 rounded-full flex items-center justify-center ${selection.selectedByAvatar ? 'hidden' : ''}`}>
-                                                                <span className="text-xs text-blue-800 font-medium">
-                                                                    {selection.selectedByUsername?.charAt(0).toUpperCase() || 'N'}
-                                                                </span>
-                                                            </div>{selection.selectedByUsername} ({selection.selectedBy})</p>
+                                                            {selection.selectedByUsername} ({selection.selectedBy})
                                                         </div>
-                                                        <p><div className="flex-1">
-                                                            <RatingDisplay
-                                                                ratings={mapRatings[selection.id] || []}
-                                                                selectedBy={selection.selectedBy}
-                                                                currentUserId={user?.id.toString() || null}
-                                                                onRefresh={() => fetchMapRatings(selection.id)}
-                                                            />
-                                                        </div></p>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <RatingDisplay
+                                                            ratings={mapRatings[selection.id] || []}
+                                                            selectedBy={selection.selectedBy}
+                                                            currentUserId={user?.id.toString() || null}
+                                                            onRefresh={() => fetchMapRatings(selection.id)}
+                                                        />
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div>
 
 
 
-                                            <div className="flex flex-col gap-2 ml-4">
+                                        <div className="flex flex-col gap-2 ml-4">
 
-                                                {/* 过审状态勾选框 */}
-                                                <div className="flex items-center">
-                                                    <label className="flex items-center text-gray-800 text-sm">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selection.approved}
-                                                            onChange={(e) => updateApprovalStatus(selection.id, e.target.checked)}
-                                                            className="mr-2 h-5 w-5 text-green-600 border-gray-300 focus:ring-green-500"
-                                                        />
-                                                        过审状态
-                                                    </label>
-                                                </div>
-
-                                                {/* Padding状态勾选框 */}
-                                                <div className="flex items-center">
-                                                    <label className="flex items-center text-gray-800 text-sm">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selection.padding || false}
-                                                            onChange={(e) => updatePaddingStatus(selection.id, e.target.checked)}
-                                                            className="mr-2 h-5 w-5 text-orange-600 border-gray-300 focus:ring-orange-500"
-                                                        />
-                                                        Padding状态
-                                                    </label>
-                                                </div>
-                                                {/* 操作按钮 */}
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => copyBeatmapId(selection.beatmapId)}
-                                                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 text-sm font-medium transition-colors"
-                                                        title={`复制 Beatmap ID: ${selection.beatmapId}`}
-                                                    >
-                                                        复制BID
-                                                    </button>
-                                                    <a
-                                                        href={selection.url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-sm"
-                                                    >
-                                                        查看详情
-                                                    </a>
-                                                    {selection.selectedBy === user?.id.toString() && (
-                                                        <button
-                                                            onClick={() => deleteSelection(selection.id)}
-                                                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm"
-                                                        >
-                                                            删除
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <CurrentRating
-                                                        rating={userRatings[selection.id] || 0}
-                                                        onRatingChange={(rating) => handleRating(selection.id, rating)}
-                                                        isSubmitting={isRatingSubmitting}
-                                                        userId={user?.id.toString() || null}
+                                            {/* 过审状态勾选框 */}
+                                            <div className="flex items-center">
+                                                <label className="flex items-center text-gray-800 text-sm">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selection.approved}
+                                                        onChange={(e) => updateApprovalStatus(selection.id, e.target.checked)}
+                                                        className="mr-2 h-5 w-5 text-green-600 border-gray-300 focus:ring-green-500"
                                                     />
-                                                    {(() => {
-                                                        const userRating = mapRatings[selection.id]?.find(
-                                                            (rating: any) => rating.userId === user?.id.toString()
-                                                        );
-                                                        return (
-                                                            <CommentComponent
-                                                                mapSelectionId={selection.id}
-                                                                userId={user?.id.toString() || null}
-                                                                onCommentUpdate={fetchSelections}
-                                                                showRating={false}
-                                                            />
-                                                        );
-                                                    })()}
-                                                </div>
+                                                    过审状态
+                                                </label>
+                                            </div>
+
+                                            {/* Padding状态勾选框 */}
+                                            <div className="flex items-center">
+                                                <label className="flex items-center text-gray-800 text-sm">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selection.padding || false}
+                                                        onChange={(e) => updatePaddingStatus(selection.id, e.target.checked)}
+                                                        className="mr-2 h-5 w-5 text-orange-600 border-gray-300 focus:ring-orange-500"
+                                                    />
+                                                    Padding状态
+                                                </label>
+                                            </div>
+                                            {/* 操作按钮 */}
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => copyBeatmapId(selection.beatmapId)}
+                                                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 text-sm font-medium transition-colors"
+                                                    title={`复制 Beatmap ID: ${selection.beatmapId}`}
+                                                >
+                                                    复制BID
+                                                </button>
+                                                <a
+                                                    href={selection.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-sm"
+                                                >
+                                                    查看详情
+                                                </a>
+                                                {selection.selectedBy === user?.id.toString() && (
+                                                    <button
+                                                        onClick={() => deleteSelection(selection.id)}
+                                                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm"
+                                                    >
+                                                        删除
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <CurrentRating
+                                                    rating={userRatings[selection.id] || 0}
+                                                    onRatingChange={(rating) => handleRating(selection.id, rating)}
+                                                    isSubmitting={isRatingSubmitting}
+                                                    userId={user?.id.toString() || null}
+                                                />
+                                                {(() => {
+                                                    const userRating = mapRatings[selection.id]?.find(
+                                                        (rating: any) => rating.userId === user?.id.toString()
+                                                    );
+                                                    return (
+                                                        <CommentComponent
+                                                            mapSelectionId={selection.id}
+                                                            userId={user?.id.toString() || null}
+                                                            onCommentUpdate={fetchSelections}
+                                                            showRating={false}
+                                                        />
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                     </div>
@@ -1526,7 +1524,7 @@ export default function MapSelectionPage() {
                         )}
                     </div>
                 </div>
-            </div>
+            </div >
         </>
     );
 }
