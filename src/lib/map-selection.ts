@@ -458,8 +458,8 @@ export const mapSelectionStorage = {
             let whereClause = 'WHERE id = ?';
             let queryParams = [...params, id];
 
-            if (!updates.padding || Object.keys(updates).length > 1) {
-                // 如果不是只更新padding，或者有其他字段需要更新，则需要验证创建者身份
+            if (Object.keys(updates).length > 1 || !updates.padding) {
+                // 如果更新多个字段，或者不更新padding字段，则需要验证创建者身份
                 whereClause += ' AND selectedBy = ?';
                 queryParams.push(selectedBy);
             }
