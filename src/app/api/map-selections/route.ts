@@ -445,24 +445,24 @@ export async function PUT(request: NextRequest) {
                 const [rows] = await connection.execute(
                     'SELECT selectedBy FROM map_selections WHERE id = ?',
                     [id]
-                );
-                connection.release();
+                ) as [any[], any];
 
-                if (rows && Array.isArray(rows) && rows.length > 0) {
-                    const selection = rows[0] as any;
+                if (rows && rows.length > 0) {
+                    const selection = rows[0];
                     isOwner = selection.selectedBy === selectedBy;
+                    console.log('Ownership check:', { selectionSelectedBy: selection.selectedBy, requestSelectedBy: selectedBy, isOwner });
                 }
+                connection.release();
             } catch (error) {
                 console.error('Error checking selection ownership:', error);
             }
 
             isAuthorized = isMapSelector || isOwner;
+            console.log('Padding update authorization:', { isMapSelector, isOwner, isAuthorized });
         } else {
             // 更新其他字段：只允许选图团队成员
             isAuthorized = await verifyMapSelectionAuth(selectedBy);
-        }
-
-        if (!isAuthorized) {
+        } if (!isAuthorized) {
             return NextResponse.json(
                 { error: '您没有权限更新此选图' },
                 { status: 403 }

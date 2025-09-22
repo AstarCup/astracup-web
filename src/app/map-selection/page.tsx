@@ -1657,17 +1657,15 @@ export default function MapSelectionPage() {
                                                         />
                                                         过审
                                                     </label>
-                                                    {(selection.selectedBy === user?.id.toString() || isAdmin) && (
-                                                        <label className="flex items-center text-gray-800 text-sm">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={selection.padding || false}
-                                                                onChange={(e) => updatePaddingStatus(selection.id, e.target.checked)}
-                                                                className="mr-2 h-4 w-4 text-orange-600 border-gray-300 focus:ring-orange-500"
-                                                            />
-                                                            Padding
-                                                        </label>
-                                                    )}
+                                                    <label className="flex items-center text-gray-800 text-sm">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selection.padding || false}
+                                                            onChange={(e) => updatePaddingStatus(selection.id, e.target.checked)}
+                                                            className="mr-2 h-4 w-4 text-orange-600 border-gray-300 focus:ring-orange-500"
+                                                        />
+                                                        Padding
+                                                    </label>
                                                 </div>
 
                                                 {/* 操作按钮 */}
