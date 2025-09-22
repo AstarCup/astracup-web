@@ -55,6 +55,51 @@ export async function verifyMapSelectionAuth(osuId: string): Promise<boolean> {
     }
 }
 
+// 验证回放收集权限的辅助函数
+export async function verifyReplayAuth(osuId: string): Promise<boolean> {
+    try {
+        let replayAccessUsers: string[] = [];
+
+        // 优先尝试从Edge Config获取
+        if (process.env.EDGE_CONFIG) {
+            const replayConfig = await get('replayAccessUsers');
+            if (replayConfig && Array.isArray(replayConfig)) {
+                replayAccessUsers = replayConfig.filter((id): id is string =>
+                    typeof id === 'string' && id.trim() !== ''
+                );
+            }
+        }
+
+        // 如果Edge Config没有数据，尝试从环境变量获取
+        if (replayAccessUsers.length === 0 && process.env.REPLAY_ACCESS_USER_IDS) {
+            replayAccessUsers = process.env.REPLAY_ACCESS_USER_IDS
+                .split(',')
+                .map(id => id.trim())
+                .filter(id => id !== '');
+        }
+
+        // 如果都没有数据，使用默认测试ID
+        if (replayAccessUsers.length === 0) {
+            replayAccessUsers = ['2']; // 示例ID
+        }
+
+        // 检查osu ID是否在授权列表中 - 支持数字和字符串比较
+        const userIdStr = osuId.toString();
+        const userIdNum = parseInt(osuId);
+
+        return replayAccessUsers.some(userId => {
+            const userIdStr2 = userId.toString();
+            const userIdNum2 = parseInt(userId);
+
+            // 比较字符串和数字形式
+            return userIdStr2 === userIdStr || userIdNum2 === userIdNum;
+        });
+    } catch (error) {
+        console.error('Error verifying replay auth:', error);
+        return false;
+    }
+}
+
 // GET - 获取选图列表
 export async function GET(request: NextRequest) {
     try {
@@ -92,8 +137,18 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // 验证权限
-        const isAuthorized = await verifyMapSelectionAuth(osuId);
+        // 验证权限 - 如果是获取padding数据，允许有replay access或map selection access的用户
+        let isAuthorized = false;
+        if (padding) {
+            // 对于padding数据，同时检查replay access和map selection access
+            const hasReplayAccess = await verifyReplayAuth(osuId);
+            const hasMapSelectionAccess = await verifyMapSelectionAuth(osuId);
+            isAuthorized = hasReplayAccess || hasMapSelectionAccess;
+        } else {
+            // 对于非padding数据，只需要map selection access
+            isAuthorized = await verifyMapSelectionAuth(osuId);
+        }
+
         if (!isAuthorized) {
             return NextResponse.json(
                 { error: '您没有权限访问选图系统' },
