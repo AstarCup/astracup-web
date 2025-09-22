@@ -209,7 +209,7 @@ export async function DELETE(request: NextRequest) {
         let success = false;
         if (id) {
             // 按记录ID删除
-            success = await deleteRatingById(parseInt(id));
+            success = await deleteRatingById(parseInt(id), userId);
         } else {
             // 按用户和选图删除（向后兼容）
             success = await deleteRating(parseInt(mapSelectionId!), userId);
