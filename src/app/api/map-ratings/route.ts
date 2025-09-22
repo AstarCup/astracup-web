@@ -14,31 +14,24 @@ import { verifyAdminAuth } from '@/lib/map-selection';
 // 验证用户权限的辅助函数
 async function verifyUserAuth(osuId: string): Promise<{ authorized: boolean; username?: string }> {
     try {
-        // 验证用户是否有选图权限
-        const isAuthorized = await verifyMapSelectionAuth(osuId);
+        // 对于评论功能，允许所有用户（只要有有效的session）
+        // 这里我们简化验证，只检查是否有有效的session
+        try {
+            const cookieStore = await cookies();
+            const sessionCookie = cookieStore.get('astra_session');
 
-        if (isAuthorized) {
-            // 直接从cookie获取session信息
-            try {
-                const cookieStore = await cookies();
-                const sessionCookie = cookieStore.get('astra_session');
-
-                if (sessionCookie?.value) {
-                    const session = JSON.parse(sessionCookie.value);
-                    return {
-                        authorized: true,
-                        username: session.username || `User_${osuId}`
-                    };
-                }
-            } catch (sessionError) {
-                console.error('Error getting session for username:', sessionError);
-                // 如果获取session失败，使用默认用户名
+            if (sessionCookie?.value) {
+                const session = JSON.parse(sessionCookie.value);
+                return {
+                    authorized: true,
+                    username: session.username || `User_${osuId}`
+                };
             }
-
-            // 直接返回授权通过，使用默认用户名
-            return { authorized: true, username: `User_${osuId}` };
+        } catch (sessionError) {
+            console.error('Error getting session for username:', sessionError);
         }
 
+        // 如果没有有效的session，则拒绝
         return { authorized: false };
     } catch (error) {
         console.error('Error verifying user auth:', error);
@@ -137,10 +130,9 @@ export async function POST(request: NextRequest) {
         } catch (sessionError) {
             console.error('Error getting session for avatar:', sessionError);
             // 如果获取session失败，使用默认头像
-        }
-
-        // 初始化数据库
-        // 数据库已初始化，跳过此步骤
+        }        // 初始化数据库
+        const { initMapRatingsDatabase } = await import('@/lib/map-ratings');
+        await initMapRatingsDatabase();
 
         // 添加或更新评分
         const success = await addRating(

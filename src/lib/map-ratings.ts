@@ -172,13 +172,16 @@ export const mapRatingsStorage = {
         avatar_url: string = ''
     ): Promise<boolean> {
         try {
+            console.log('Adding rating:', { mapSelectionId, userId, username, rating, comment, avatar_url });
             const connection = await getPool().getConnection();
+            console.log('Database connection established');
 
             // 总是添加新评分 - 允许同一用户对同一谱面发表多个评论
             const [result] = await connection.execute(
                 'INSERT INTO map_ratings (mapSelectionId, userId, username, rating, comment, avatar_url) VALUES (?, ?, ?, ?, ?, ?)',
                 [mapSelectionId, userId, username, rating, comment, avatar_url]
             );
+            console.log('Insert result:', result);
 
             connection.release();
             const insertResult = result as mysql.ResultSetHeader;
