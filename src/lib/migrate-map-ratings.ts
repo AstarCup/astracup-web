@@ -72,6 +72,32 @@ export const migrateMapRatingsTable = async (): Promise<void> => {
             console.log('Error checking/adding avatar_url column:', (alterError as Error).message);
         }
 
+        // 删除旧的唯一约束（如果存在），允许同一用户对同一谱面发表多个评论
+        try {
+            await connection.execute(`
+                ALTER TABLE map_ratings DROP INDEX um
+            `);
+            console.log('Removed unique constraint "um" from map_ratings table');
+        } catch (error: any) {
+            // 如果约束不存在，忽略错误
+            if (error.code !== 'ER_CANT_DROP_FIELD_OR_KEY') {
+                console.log('Error removing unique constraint "um":', error.message);
+            }
+        }
+
+        // 删除可能存在的其他唯一约束
+        try {
+            await connection.execute(`
+                ALTER TABLE map_ratings DROP INDEX unique_user_rating
+            `);
+            console.log('Removed unique constraint "unique_user_rating" from map_ratings table');
+        } catch (error: any) {
+            // 如果约束不存在，忽略错误
+            if (error.code !== 'ER_CANT_DROP_FIELD_OR_KEY') {
+                console.log('Error removing unique constraint "unique_user_rating":', error.message);
+            }
+        }
+
         connection.release();
         console.log('Map ratings table migration completed successfully');
     } catch (error) {

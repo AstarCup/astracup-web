@@ -41,12 +41,37 @@ export const initMapRatingsDatabase = async (): Promise<void> => {
                 avatar_url VARCHAR(500) NOT NULL DEFAULT '',
                 createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                UNIQUE KEY um (mapSelectionId, userId),
                 INDEX im (mapSelectionId),
                 INDEX iu (userId),
                 INDEX ir (rating)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
+
+        // 删除旧的唯一约束（如果存在），允许同一用户对同一谱面发表多个评论
+        try {
+            await connection.execute(`
+                ALTER TABLE map_ratings DROP INDEX um
+            `);
+            console.log('Removed unique constraint from map_ratings table');
+        } catch (error: any) {
+            // 如果约束不存在，忽略错误
+            if (error.code !== 'ER_CANT_DROP_FIELD_OR_KEY') {
+                console.log('Error removing unique constraint:', error.message);
+            }
+        }
+
+        // 删除可能存在的其他唯一约束
+        try {
+            await connection.execute(`
+                ALTER TABLE map_ratings DROP INDEX unique_user_rating
+            `);
+            console.log('Removed unique_user_rating constraint from map_ratings table');
+        } catch (error: any) {
+            // 如果约束不存在，忽略错误
+            if (error.code !== 'ER_CANT_DROP_FIELD_OR_KEY') {
+                console.log('Error removing unique_user_rating constraint:', error.message);
+            }
+        }
 
         // 检查并添加avatar_url字段（如果不存在）
         try {
