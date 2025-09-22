@@ -31,10 +31,14 @@ export default function ReplayCollectionPage({ user }: { user: { id: string; use
             const response = await fetch('/api/season-config');
             if (response.ok) {
                 const data = await response.json();
+                console.log('Season config loaded:', data);
                 if (data.success) {
                     setAvailableSeasons(data.availableSeasons);
                     setSelectedSeason(data.defaultSeason);
+                    console.log('Set selectedSeason to:', data.defaultSeason);
                 }
+            } else {
+                console.error('Failed to load season config, status:', response.status);
             }
         } catch (error) {
             console.error('Failed to load season config:', error);
@@ -44,22 +48,68 @@ export default function ReplayCollectionPage({ user }: { user: { id: string; use
 
     useEffect(() => {
         const checkAccessAndLoadData = async () => {
+            console.log('Checking access for user:', user);
+
             // 权限校验
-            if (!user || !(await hasReplayAccess(user.id))) {
+            if (!user) {
+                console.log('No user found');
+                showError('请先登录');
+                return;
+            }
+
+            const hasAccess = await hasReplayAccess(user.id);
+            console.log('User access check result:', hasAccess);
+
+            if (!hasAccess) {
                 showError('无权限访问回放收集系统');
                 return;
             }
 
             // 获取赛季配置
             await loadSeasonConfig();
-
-            // 获取padding状态的图池
-            fetch(`/api/map-selections?season=${selectedSeason}&category=${selectedCategory}&padding=true&osuId=${user.id}`)
-                .then(res => res.json())
-                .then(data => setPaddingMaps(data.selections || []));
         };
         checkAccessAndLoadData();
-    }, [user, selectedSeason, selectedCategory]);
+    }, [user]); // 只依赖user，避免无限循环
+
+    // 单独的useEffect来加载地图数据
+    useEffect(() => {
+        const loadMapData = async () => {
+            if (!user || !(await hasReplayAccess(user.id))) {
+                console.log('No access or user not found');
+                return; // 没有权限不加载数据
+            }
+
+            console.log('Loading map data for:', { selectedSeason, selectedCategory, userId: user.id });
+
+            // 获取padding状态的图池
+            try {
+                const url = `/api/map-selections?season=${selectedSeason}&category=${selectedCategory}&padding=true&osuId=${user.id}`;
+                console.log('Fetching from URL:', url);
+
+                const response = await fetch(url);
+                console.log('Response status:', response.status);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Received data:', data);
+                    setPaddingMaps(data.selections || []);
+                } else {
+                    const errorData = await response.json();
+                    console.error('API Error:', errorData);
+                    showError(errorData.error || '获取图池数据失败');
+                    setPaddingMaps([]); // 清空数据
+                }
+            } catch (error) {
+                console.error('Failed to load map data:', error);
+                showError('加载图池数据时出错');
+                setPaddingMaps([]); // 清空数据
+            }
+        };
+
+        if (user) {
+            loadMapData();
+        }
+    }, [user, selectedSeason, selectedCategory]); // 当用户或选择改变时重新加载
 
     // 上传回放文件
     const handleReplayUpload = async (map: any, file: File) => {
