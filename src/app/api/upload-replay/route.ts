@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { put, del } from '@vercel/blob';
 import { verifyReplayAuth } from '../map-selections/route';
 
 export async function POST(request: NextRequest) {
@@ -28,5 +28,32 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, url: blob.url });
     } catch (e) {
         return NextResponse.json({ error: '上传失败' }, { status: 500 });
+    }
+}
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const { filename, userId } = await request.json();
+
+        if (!filename || !userId) {
+            return NextResponse.json({ error: '参数缺失' }, { status: 400 });
+        }
+
+        // 权限校验 - 使用统一的权限验证函数
+        const hasAccess = await verifyReplayAuth(userId.toString());
+        if (!hasAccess) {
+            return NextResponse.json({ error: '无权限' }, { status: 403 });
+        }
+
+        // 从 Vercel Blob 删除文件
+        // 使用文件名直接删除
+        await del([filename], {
+            token: process.env.BLOB_READ_WRITE_TOKEN
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (e) {
+        console.error('删除文件失败:', e);
+        return NextResponse.json({ error: '删除失败' }, { status: 500 });
     }
 }

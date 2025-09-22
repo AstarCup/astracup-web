@@ -152,8 +152,20 @@ export default function ReplayCollectionPage() {
                     const data = await response.json();
                     console.log('Received data:', data);
 
-                    // 转换数据格式以匹配MapoolTable期望的格式
+                    // 转换数据格式以匹配MapoolTable期望的格式，同时保留原始数据用于卡片展示
                     const formattedData = (data.selections || []).map((map: any) => ({
+                        // 原始数据字段
+                        id: map.id,
+                        artist: map.artist,
+                        title: map.title,
+                        version: map.version,
+                        selectedMods: map.selectedMods,
+                        modPosition: map.modPosition,
+                        starRating: map.starRating,
+                        totalLength: map.totalLength,
+                        bpm: map.bpm,
+                        creator: map.creator,
+                        // MapoolTable需要的格式化字段
                         SID: map.beatmapsetId, // beatmapset ID for cover image
                         BID: map.beatmapId, // beatmap ID
                         Slot: `${map.selectedMods}${map.modPosition}`, // MOD and position
@@ -232,6 +244,48 @@ export default function ReplayCollectionPage() {
         }
     };
 
+    // 删除回放文件
+    const handleReplayDelete = async (map: any) => {
+        if (!user) {
+            showError('请先登录');
+            return;
+        }
+
+        if (!confirm('确定要删除已上传的回放文件吗？')) {
+            return;
+        }
+
+        try {
+            // 构造文件名
+            const filename = `${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}_${user.id}.osr`;
+
+            const res = await fetch('/api/upload-replay', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    filename,
+                    userId: user.id.toString()
+                })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                showSuccess('删除成功');
+                // 更新已上传用户列表，移除当前用户
+                setUploadedUsers(prev => ({
+                    ...prev,
+                    [map.id]: (prev[map.id] || []).filter(id => id !== user.id.toString())
+                }));
+            } else {
+                showError(data.error || '删除失败');
+            }
+        } catch {
+            showError('删除失败');
+        }
+    };
+
     return (
         <div className="max-w-4xl mx-auto p-6">
             <h2 className="text-2xl font-bold mb-4">回放文件收集系统</h2>
@@ -255,24 +309,107 @@ export default function ReplayCollectionPage() {
                         </select>
                     </div>
                     <MapoolTable data={paddingMaps} title="Padding状态图池" />
-                    <div className="mt-6 space-y-6">
-                        {paddingMaps.map(map => (
-                            <div key={map.id} className="border rounded p-4 mb-2 bg-gray-50">
-                                <div className="font-bold mb-2">{map.title} [{map.version}]</div>
-                                <div className="mb-2">Mod: {map.selectedMods}{map.modPosition}</div>
-                                <div className="mb-2">上传回放文件（.osr）：
-                                    <input type="file" accept=".osr" disabled={uploading || !user} onChange={e => {
-                                        if (e.target.files && e.target.files[0]) {
-                                            handleReplayUpload(map, e.target.files[0]);
+                    <div className="mt-6">
+                        <h3 className="text-xl font-bold mb-4">回放文件上传</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {paddingMaps.map(map => (
+                                <div
+                                    key={map.id}
+                                    className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer relative"
+                                    onClick={() => {
+                                        if (!uploading && user) {
+                                            const input = document.createElement('input');
+                                            input.type = 'file';
+                                            input.accept = '.osr';
+                                            input.onchange = (e) => {
+                                                const target = e.target as HTMLInputElement;
+                                                if (target.files && target.files[0]) {
+                                                    handleReplayUpload(map, target.files[0]);
+                                                }
+                                            };
+                                            input.click();
                                         }
-                                    }} />
+                                    }}
+                                    onDragOver={(e) => {
+                                        e.preventDefault();
+                                        e.currentTarget.classList.add('bg-blue-50', 'border-blue-300');
+                                    }}
+                                    onDragLeave={(e) => {
+                                        e.preventDefault();
+                                        e.currentTarget.classList.remove('bg-blue-50', 'border-blue-300');
+                                    }}
+                                    onDrop={(e) => {
+                                        e.preventDefault();
+                                        e.currentTarget.classList.remove('bg-blue-50', 'border-blue-300');
+                                        if (!uploading && user) {
+                                            const files = e.dataTransfer.files;
+                                            if (files.length > 0 && files[0].name.endsWith('.osr')) {
+                                                handleReplayUpload(map, files[0]);
+                                            } else {
+                                                showError('请上传.osr格式的回放文件');
+                                            }
+                                        }
+                                    }}
+                                >
+                                    {/* 删除按钮 - 只有已上传时显示 */}
+                                    {user && uploadedUsers[map.id]?.includes(user.id.toString()) && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // 阻止事件冒泡
+                                                handleReplayDelete(map);
+                                            }}
+                                            className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors"
+                                            title="删除已上传的回放"
+                                        >
+                                            ×
+                                        </button>
+                                    )}
+                                    <div className="mb-3">
+                                        <h4 className="font-bold text-sm text-gray-800 truncate" title={`${map.artist} - ${map.title}`}>
+                                            {map.artist} - {map.title}
+                                        </h4>
+                                        <p className="text-xs text-gray-600 truncate" title={map.version}>
+                                            [{map.version}]
+                                        </p>
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="font-medium text-blue-600">
+                                                {map.selectedMods}{map.modPosition}
+                                            </span>
+                                            <span className="text-gray-500">
+                                                ★{map.starRating}
+                                            </span>
+                                        </div>
+                                        <div className="text-xs text-gray-500 mt-1">
+                                            {map.totalLength ? formatLength(map.totalLength) : '-'} | {map.bpm} BPM
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <div className="text-xs text-gray-600">
+                                            已上传用户: {(uploadedUsers[map.id] || []).length === 0 ? '暂无' : uploadedUsers[map.id].join(', ')}
+                                        </div>
+                                        {user && uploadedUsers[map.id]?.includes(user.id.toString()) && (
+                                            <div className="text-xs text-green-600 font-medium mt-1">✓ 你已上传</div>
+                                        )}
+                                    </div>
+
+                                    <div className="text-center">
+                                        <div className="text-xs text-gray-400">
+                                            {uploading ? '上传中...' : '点击上传或拖拽.osr文件'}
+                                        </div>
+                                    </div>
+
+                                    {uploading && (
+                                        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
+                                            <div className="text-sm text-blue-600">上传中...</div>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="mb-2">已上传用户：
-                                    {(uploadedUsers[map.id] || []).length === 0 ? '暂无' : uploadedUsers[map.id].join(', ')}
-                                    {user && uploadedUsers[map.id]?.includes(user.id.toString()) && <span className="ml-2 text-green-600">(你已上传)</span>}
-                                </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </>
             )}
