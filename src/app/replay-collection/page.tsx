@@ -19,7 +19,7 @@ export default function ReplayCollectionPage() {
     const [selectedCategory, setSelectedCategory] = useState('qualification');
     const [uploading, setUploading] = useState(false);
     const [uploadedUsers, setUploadedUsers] = useState<{ [key: string]: string[] }>({}); // { mapId: [username, ...] }
-        const [availableSeasons, setAvailableSeasons] = useState([
+    const [availableSeasons, setAvailableSeasons] = useState([
         { value: 's1', label: '第一赛季' }
     ]);
     const availableCategories = [
