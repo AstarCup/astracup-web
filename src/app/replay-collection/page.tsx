@@ -19,6 +19,8 @@ export default function ReplayCollectionPage() {
     const [selectedCategory, setSelectedCategory] = useState('qualification');
     const [uploading, setUploading] = useState(false);
     const [uploadedUsers, setUploadedUsers] = useState<{ [key: string]: string[] }>({}); // { mapId: [userId, ...] }
+    const [userMap, setUserMap] = useState<{ [key: string]: { username: string; avatar_url: string } }>({}); // { userId: { username, avatar_url } }
+    const [usernamesMap, setUsernamesMap] = useState<{ [key: string]: string }>({}); // { mapId: "username1, username2, ..." }
     const [availableSeasons, setAvailableSeasons] = useState([
         { value: 's1', label: '第一赛季' }
     ]);
@@ -33,6 +35,58 @@ export default function ReplayCollectionPage() {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = seconds % 60;
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    };
+
+    // 加载已上传用户状态
+    const loadUploadedUsers = async () => {
+        try {
+            const response = await fetch(`/api/uploaded-users?season=${selectedSeason}&category=${selectedCategory}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    setUploadedUsers(data.uploadedUsers);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load uploaded users:', error);
+        }
+    };
+
+    // 获取用户信息
+    const getUserInfo = async (userId: string) => {
+        if (userMap[userId]) {
+            return userMap[userId];
+        }
+
+        try {
+            const response = await fetch(`/api/osu-user?id=${userId}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.username) {
+                    const userInfo = { username: data.username, avatar_url: data.avatar_url };
+                    setUserMap(prev => ({ ...prev, [userId]: userInfo }));
+                    return userInfo;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to get user info:', error);
+        }
+
+        return { username: `User_${userId}`, avatar_url: '' };
+    };
+
+    // 获取用户名列表
+    const getUsernamesList = async (userIds: string[]): Promise<string> => {
+        if (userIds.length === 0) return '暂无';
+
+        const usernames = await Promise.all(
+            userIds.map(async (userId) => {
+                const userInfo = await getUserInfo(userId);
+                return userInfo.username;
+            })
+        );
+
+        return usernames.join(', ');
     };
     const loadSeasonConfig = async () => {
         try {
@@ -184,6 +238,8 @@ export default function ReplayCollectionPage() {
                     }));
 
                     setPaddingMaps(formattedData);
+                    // 加载已上传用户状态
+                    await loadUploadedUsers();
                 } else {
                     const errorData = await response.json();
                     console.error('API Error:', errorData);
@@ -201,6 +257,22 @@ export default function ReplayCollectionPage() {
             loadMapData();
         }
     }, [user, selectedSeason, selectedCategory]); // 当用户或选择改变时重新加载
+
+    // 更新用户名映射
+    useEffect(() => {
+        const updateUsernames = async () => {
+            const newUsernamesMap: { [key: string]: string } = {};
+
+            for (const [mapId, userIds] of Object.entries(uploadedUsers)) {
+                const usernames = await getUsernamesList(userIds);
+                newUsernamesMap[mapId] = usernames;
+            }
+
+            setUsernamesMap(newUsernamesMap);
+        };
+
+        updateUsernames();
+    }, [uploadedUsers, userMap]); // 当uploadedUsers或userMap改变时更新
 
     // 上传回放文件
     const handleReplayUpload = async (map: any, file: File) => {
@@ -230,9 +302,10 @@ export default function ReplayCollectionPage() {
             if (data.success) {
                 showSuccess('上传成功');
                 // 刷新已上传用户
+                const mapKey = `${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`;
                 setUploadedUsers(prev => ({
                     ...prev,
-                    [map.id]: [...(prev[map.id] || []), user.id]
+                    [mapKey]: [...(prev[mapKey] || []), user.id.toString()]
                 }));
             } else {
                 showError(data.error || '上传失败');
@@ -274,9 +347,10 @@ export default function ReplayCollectionPage() {
             if (data.success) {
                 showSuccess('删除成功');
                 // 更新已上传用户列表，移除当前用户
+                const mapKey = `${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`;
                 setUploadedUsers(prev => ({
                     ...prev,
-                    [map.id]: (prev[map.id] || []).filter(id => id !== user.id.toString())
+                    [mapKey]: (prev[mapKey] || []).filter(id => id !== user.id.toString())
                 }));
             } else {
                 showError(data.error || '删除失败');
@@ -352,7 +426,7 @@ export default function ReplayCollectionPage() {
                                     }}
                                 >
                                     {/* 删除按钮 - 只有已上传时显示 */}
-                                    {user && uploadedUsers[map.id]?.includes(user.id.toString()) && (
+                                    {user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`]?.includes(user.id.toString()) && (
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation(); // 阻止事件冒泡
@@ -389,9 +463,9 @@ export default function ReplayCollectionPage() {
 
                                     <div className="mb-3">
                                         <div className="text-xs text-gray-600">
-                                            已上传用户: {(uploadedUsers[map.id] || []).length === 0 ? '暂无' : uploadedUsers[map.id].join(', ')}
+                                            已上传用户: {usernamesMap[`${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`] || '暂无'}
                                         </div>
-                                        {user && uploadedUsers[map.id]?.includes(user.id.toString()) && (
+                                        {user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`]?.includes(user.id.toString()) && (
                                             <div className="text-xs text-green-600 font-medium mt-1">✓ 你已上传</div>
                                         )}
                                     </div>
