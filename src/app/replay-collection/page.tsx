@@ -1,5 +1,7 @@
+"use client";
+
 import { useState, useEffect } from 'react';
-import { hasReplayAccess, replayAccessUsers } from './edgeconfig';
+import { hasReplayAccess } from './edgeconfig';
 import MapoolTable from '../components/MapoolTable';
 import { showError, showSuccess } from '../components/Notification';
 
@@ -14,15 +16,18 @@ export default function ReplayCollectionPage({ user }: { user: { id: string; use
     const [uploadedUsers, setUploadedUsers] = useState<{ [key: string]: string[] }>({}); // { mapId: [userId, ...] }
 
     useEffect(() => {
-        // 权限校验
-        if (!user || !hasReplayAccess(user.id)) {
-            showError('无权限访问回放收集系统');
-            return;
-        }
-        // 获取padding状态的图池
-        fetch(`/api/map-selections?season=${selectedSeason}&category=${selectedCategory}&padding=true`)
-            .then(res => res.json())
-            .then(data => setPaddingMaps(data.selections || []));
+        const checkAccessAndLoadData = async () => {
+            // 权限校验
+            if (!user || !(await hasReplayAccess(user.id))) {
+                showError('无权限访问回放收集系统');
+                return;
+            }
+            // 获取padding状态的图池
+            fetch(`/api/map-selections?season=${selectedSeason}&category=${selectedCategory}&padding=true`)
+                .then(res => res.json())
+                .then(data => setPaddingMaps(data.selections || []));
+        };
+        checkAccessAndLoadData();
     }, [user, selectedSeason, selectedCategory]);
 
     // 上传回放文件
@@ -35,7 +40,7 @@ export default function ReplayCollectionPage({ user }: { user: { id: string; use
         try {
             // 构造文件名
             const filename = `${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}_${user.id}.osr`;
-            // 上传到vercel blob（伪代码，需后端API支持）
+            // 上传到vercel blob
             const formData = new FormData();
             formData.append('file', file);
             formData.append('filename', filename);
