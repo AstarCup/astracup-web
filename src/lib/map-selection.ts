@@ -471,6 +471,12 @@ export const mapSelectionStorage = {
 
             connection.release();
             const updateResult = result as mysql.ResultSetHeader;
+            console.log('Database update result:', {
+                sql: `UPDATE map_selections SET ${setClause.join(', ')} ${whereClause}`,
+                params: queryParams,
+                affectedRows: updateResult.affectedRows,
+                changedRows: updateResult.changedRows
+            });
             return updateResult.affectedRows > 0;
         } catch (error) {
             console.error('Error updating map selection:', error);
