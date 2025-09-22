@@ -308,6 +308,8 @@ export const mapSelectionStorage = {
                 hp: parseFloat(row.hp) || 0,
                 selectedMods: row.selectedMods,
                 modPosition: row.modPosition || 1,
+                customDTRate: row.customDTRate ? parseFloat(row.customDTRate) : undefined,
+                customModName: row.customModName || undefined,
                 comment: row.comment || '',
                 selectedBy: row.selectedBy,
                 selectedByUsername: row.selectedByUsername || `User_${row.selectedBy}`, // 使用存储的用户名
