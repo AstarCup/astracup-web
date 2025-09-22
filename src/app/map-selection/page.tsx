@@ -59,6 +59,7 @@ interface MapSelection {
     url: string;
     coverUrl: string;
     approved: boolean;
+    padding?: boolean;
     // 新增字段
     customModName?: string;
     customDASettings?: {
@@ -663,6 +664,33 @@ export default function MapSelectionPage() {
         } catch (error) {
             console.error('Failed to update approval status:', error);
             showError('更新过审状态时出错');
+        }
+    };
+
+    const updatePaddingStatus = async (id: number, padding: boolean) => {
+        try {
+            const response = await fetch('/api/map-selections', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: id,
+                    padding: padding,
+                    selectedBy: user?.id.toString()
+                })
+            });
+
+            if (response.ok) {
+                showSuccess(`选图${padding ? '设为Padding' : '取消Padding'}成功`);
+                fetchSelections();
+            } else {
+                const errorData = await response.json();
+                showError(errorData.error || '更新Padding状态失败');
+            }
+        } catch (error) {
+            console.error('Failed to update padding status:', error);
+            showError('更新Padding状态时出错');
         }
     };
 
@@ -1428,6 +1456,19 @@ export default function MapSelectionPage() {
                                                             className="mr-2 h-5 w-5 text-green-600 border-gray-300 focus:ring-green-500"
                                                         />
                                                         过审状态
+                                                    </label>
+                                                </div>
+
+                                                {/* Padding状态勾选框 */}
+                                                <div className="flex items-center">
+                                                    <label className="flex items-center text-gray-800 text-sm">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selection.padding || false}
+                                                            onChange={(e) => updatePaddingStatus(selection.id, e.target.checked)}
+                                                            className="mr-2 h-5 w-5 text-orange-600 border-gray-300 focus:ring-orange-500"
+                                                        />
+                                                        Padding状态
                                                     </label>
                                                 </div>
                                                 {/* 操作按钮 */}

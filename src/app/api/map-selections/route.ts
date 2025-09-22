@@ -62,6 +62,7 @@ export async function GET(request: NextRequest) {
         const category = searchParams.get('category') || undefined;
         const osuId = searchParams.get('osuId');
         const approved = searchParams.get('approved'); // 新增approved参数
+        const padding = searchParams.get('padding') === 'true';
 
         // 如果只是获取已过审的图，则不需要权限验证（公开访问）
         if (approved === 'true') {
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
             // 数据库已初始化，跳过此步骤
 
             // 获取选图列表
-            const selections = await getMapSelections(season, category);
+            const selections = await getMapSelections(season, category, padding);
 
             // 只返回已过审的图
             const approvedSelections = selections.filter(selection => selection.approved);
@@ -102,7 +103,7 @@ export async function GET(request: NextRequest) {
         // 数据库已初始化，跳过此步骤
 
         // 获取选图列表
-        const selections = await getMapSelections(season, category);
+        const selections = await getMapSelections(season, category, padding);
 
         return NextResponse.json({
             success: true,
@@ -330,6 +331,7 @@ export async function PUT(request: NextRequest) {
             selectedMods,
             comment,
             approved,
+            padding,
             selectedBy
         } = await request.json();
 
@@ -350,10 +352,11 @@ export async function PUT(request: NextRequest) {
         }
 
         // 准备更新数据
-        const updates: { selectedMods?: string; comment?: string; approved?: boolean } = {};
+        const updates: { selectedMods?: string; comment?: string; approved?: boolean; padding?: boolean } = {};
         if (selectedMods !== undefined) updates.selectedMods = selectedMods;
         if (comment !== undefined) updates.comment = comment;
         if (approved !== undefined) updates.approved = approved;
+        if (padding !== undefined) updates.padding = padding;
 
         if (Object.keys(updates).length === 0) {
             return NextResponse.json(

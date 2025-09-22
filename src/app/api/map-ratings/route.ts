@@ -97,15 +97,15 @@ export async function POST(request: NextRequest) {
             userId
         } = await request.json();
 
-        if (!mapSelectionId || !rating || !userId) {
+        if (!mapSelectionId || !userId) {
             return NextResponse.json(
-                { error: '缺少必要参数：mapSelectionId, rating, userId' },
+                { error: '缺少必要参数：mapSelectionId, userId' },
                 { status: 400 }
             );
         }
 
-        // 验证评分范围
-        if (rating < 1 || rating > 5) {
+        // 如果提供了rating，验证范围
+        if (rating !== undefined && rating !== null && (rating < 1 || rating > 5)) {
             return NextResponse.json(
                 { error: '评分必须在1-5之间' },
                 { status: 400 }
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
             parseInt(mapSelectionId),
             userId,
             authResult.username || `User_${userId}`,
-            rating,
+            rating || null,
             comment,
             avatarUrl
         );

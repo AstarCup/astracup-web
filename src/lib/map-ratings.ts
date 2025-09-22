@@ -142,7 +142,7 @@ export const mapRatingsStorage = {
         mapSelectionId: number,
         userId: string,
         username: string,
-        rating: number,
+        rating: number | null,
         comment: string,
         avatar_url: string = ''
     ): Promise<boolean> {
@@ -154,16 +154,28 @@ export const mapRatingsStorage = {
 
             if (existingRating) {
                 // 更新现有评分
-                const [result] = await connection.execute(
-                    'UPDATE map_ratings SET rating = ?, comment = ?, username = ?, avatar_url = ? WHERE id = ?',
-                    [rating, comment, username, avatar_url, existingRating.id]
-                );
+                let result: any;
+                if (rating !== null) {
+                    [result] = await connection.execute(
+                        'UPDATE map_ratings SET rating = ?, comment = ?, username = ?, avatar_url = ? WHERE id = ?',
+                        [rating, comment, username, avatar_url, existingRating.id]
+                    );
+                } else {
+                    [result] = await connection.execute(
+                        'UPDATE map_ratings SET comment = ?, username = ?, avatar_url = ? WHERE id = ?',
+                        [comment, username, avatar_url, existingRating.id]
+                    );
+                }
 
                 connection.release();
                 const updateResult = result as mysql.ResultSetHeader;
                 return updateResult.affectedRows > 0;
             } else {
-                // 添加新评分
+                // 添加新评分 - 需要rating
+                if (rating === null) {
+                    connection.release();
+                    return false; // 需要rating来创建新记录
+                }
                 const [result] = await connection.execute(
                     'INSERT INTO map_ratings (mapSelectionId, userId, username, rating, comment, avatar_url) VALUES (?, ?, ?, ?, ?, ?)',
                     [mapSelectionId, userId, username, rating, comment, avatar_url]

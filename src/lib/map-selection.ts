@@ -54,6 +54,7 @@ export interface MapSelection {
     url: string;                // beatmap URL
     coverUrl: string;           // 封面URL
     approved: boolean;          // 是否过审
+    padding?: boolean;          // 是否为padding状态
 }
 
 // 初始化选图数据库表
@@ -159,6 +160,20 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
             }
         }
 
+        // 检查并添加padding字段
+        try {
+            await connection.execute(`SELECT padding FROM map_selections LIMIT 1`);
+        } catch (error: any) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding padding field...');
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN padding BOOLEAN DEFAULT FALSE AFTER approved
+                `);
+                console.log('Successfully added padding field');
+            }
+        }
+
         // 检查并添加coverUrl字段
         try {
             await connection.execute(`SELECT coverUrl FROM map_selections LIMIT 1`);
@@ -254,7 +269,7 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
 // 选图数据库操作类
 export const mapSelectionStorage = {
     // 获取所有选图
-    async getMapSelections(season: string = 's1', category?: string): Promise<MapSelection[]> {
+    async getMapSelections(season: string = 's1', category?: string, padding?: boolean): Promise<MapSelection[]> {
         try {
             const connection = await getPool().getConnection();
             let query = 'SELECT * FROM map_selections WHERE season = ?';
@@ -263,6 +278,11 @@ export const mapSelectionStorage = {
             if (category) {
                 query += ' AND category = ?';
                 params.push(category);
+            }
+
+            if (padding !== undefined) {
+                query += ' AND padding = ?';
+                params.push(padding);
             }
 
             query += ' ORDER BY selectedAt DESC';
@@ -296,7 +316,8 @@ export const mapSelectionStorage = {
                 category: row.category,
                 url: row.url,
                 coverUrl: row.coverUrl || '',
-                approved: Boolean(row.approved)
+                approved: Boolean(row.approved),
+                padding: Boolean(row.padding)
             }));
         } catch (error) {
             console.error('Error getting map selections:', error);
@@ -392,7 +413,7 @@ export const mapSelectionStorage = {
     },
 
     // 更新选图信息
-    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved'>>, selectedBy: string): Promise<boolean> {
+    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved' | 'padding'>>, selectedBy: string): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
 
@@ -412,6 +433,11 @@ export const mapSelectionStorage = {
             if (updates.approved !== undefined) {
                 setClause.push('approved = ?');
                 params.push(updates.approved);
+            }
+
+            if (updates.padding !== undefined) {
+                setClause.push('padding = ?');
+                params.push(updates.padding);
             }
 
             if (setClause.length === 0) {
