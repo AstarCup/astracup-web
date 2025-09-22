@@ -24,12 +24,6 @@ export default function CurrentRating({ rating, onRatingChange, isSubmitting, us
                 ))}
                 <span className="text-sm text-gray-500 ml-2">{rating > 0 && `${rating}分`}</span>
             </div>
-            {/* 总评分显示 */}
-            <div className="flex items-center justify-center">
-                <span className="text-base text-gray-800 font-bold">
-                    总评分：{rating}分
-                </span>
-            </div>
         </div>
     );
 }

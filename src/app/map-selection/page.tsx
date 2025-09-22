@@ -1461,7 +1461,7 @@ export default function MapSelectionPage() {
                                             {/* 右侧：操作和评分 */}
                                             <div className="flex-shrink-0 space-y-3">
                                                 {/* 状态勾选框 */}
-                                                <div className="space-y-2">
+                                                <div className="flex gap-4">
                                                     <label className="flex items-center text-gray-800 text-sm">
                                                         <input
                                                             type="checkbox"
@@ -1483,7 +1483,7 @@ export default function MapSelectionPage() {
                                                 </div>
 
                                                 {/* 操作按钮 */}
-                                                <div className="flex flex-col gap-2">
+                                                <div className="flex gap-2">
                                                     <button
                                                         onClick={() => copyBeatmapId(selection.beatmapId)}
                                                         className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 text-sm font-medium transition-colors"
