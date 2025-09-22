@@ -89,12 +89,13 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
         if (!window.confirm('确定要删除这条评论吗？')) return;
         setIsSubmitting(true);
         try {
-            const response = await fetch(`/api/map-ratings?id=${id}`, { method: 'DELETE' });
+            const response = await fetch(`/api/map-ratings?id=${id}&userId=${userId}`, { method: 'DELETE' });
             if (response.ok) {
                 showSuccess('评论已删除');
                 if (onCommentUpdate) onCommentUpdate();
             } else {
-                showError('删除失败');
+                const errorData = await response.json();
+                showError(errorData.error || '删除失败');
             }
         } catch (e) {
             showError('删除失败');
