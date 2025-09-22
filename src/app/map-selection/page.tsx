@@ -749,7 +749,7 @@ export default function MapSelectionPage() {
                 showSuccess('评分成功');
                 // 刷新评分数据
                 fetchMapRatings(mapSelectionId);
-                fetchSelections(); // 刷新数据以获取最新的评分统计
+                // 不刷新selections，避免影响评论显示
             } else {
                 const errorData = await response.json();
                 showError(errorData.error || '评分失败');
@@ -1345,31 +1345,41 @@ export default function MapSelectionPage() {
                                 {filteredSelections.map((selection) => (
                                     <div key={selection.id} className="bg-gray-200 rounded-lg p-4">
                                         {/* 标题和标签行 */}
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <span className={`${getModColorClass(selection.selectedMods)} text-white px-2 py-1 rounded text-sm font-bold`}>
-                                                {selection.selectedMods === 'LZ' && selection.customModName ?
-                                                    `LZ${selection.modPosition}-${selection.customModName}` :
-                                                    selection.selectedMods === 'DT' && selection.customDTRate && selection.customDTRate !== 1.5 ?
-                                                        `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}` :
-                                                        `${selection.selectedMods}${selection.modPosition}`
-                                                }
-                                            </span>
-                                            {selection.customDASettings && (
-                                                <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs">
-                                                    DA自定义
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-3 flex-1">
+                                                <span className={`${getModColorClass(selection.selectedMods)} text-white px-2 py-1 rounded text-sm font-bold`}>
+                                                    {selection.selectedMods === 'LZ' && selection.customModName ?
+                                                        `LZ${selection.modPosition}-${selection.customModName}` :
+                                                        selection.selectedMods === 'DT' && selection.customDTRate && selection.customDTRate !== 1.5 ?
+                                                            `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}` :
+                                                            `${selection.selectedMods}${selection.modPosition}`
+                                                    }
                                                 </span>
-                                            )}
-                                            {selection.approved && (
-                                                <span className="bg-green-500 text-white px-2 py-1 rounded text-sm font-bold">
-                                                    ✓ 过审
-                                                </span>
-                                            )}
-                                            <h4 className="text-gray-800 font-bold flex-1">
-                                                {selection.title} - {selection.artist}
-                                            </h4>
-                                        </div>
-
-                                        {/* 主要内容区域 */}
+                                                {selection.customDASettings && (
+                                                    <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs">
+                                                        DA自定义
+                                                    </span>
+                                                )}
+                                                {selection.approved && (
+                                                    <span className="bg-green-500 text-white px-2 py-1 rounded text-sm font-bold">
+                                                        ✓ 过审
+                                                    </span>
+                                                )}
+                                                <h4 className="text-gray-800 font-bold">
+                                                    {selection.title} - {selection.artist}
+                                                </h4>
+                                            </div>
+                                            {/* 右上角总评分 */}
+                                            <div className="flex-shrink-0">
+                                                <RatingDisplay
+                                                    ratings={mapRatings[selection.id] || []}
+                                                    selectedBy={selection.selectedBy}
+                                                    currentUserId={user?.id.toString() || null}
+                                                    onRefresh={() => fetchMapRatings(selection.id)}
+                                                    compact={true}
+                                                />
+                                            </div>
+                                        </div>                                        {/* 主要内容区域 */}
                                         <div className="flex gap-4">
                                             {/* 左侧：封面和信息 */}
                                             <div className="flex gap-4 flex-1">
@@ -1511,24 +1521,14 @@ export default function MapSelectionPage() {
                                             </div>
                                         </div>
 
-                                        {/* 底部：评论和评分显示 */}
+                                        {/* 底部：评论区 */}
                                         <div className="mt-4 pt-3 border-t border-gray-300">
-                                            <div className="space-y-3">
-                                                {/* 评分显示 */}
-                                                <RatingDisplay
-                                                    ratings={mapRatings[selection.id] || []}
-                                                    selectedBy={selection.selectedBy}
-                                                    currentUserId={user?.id.toString() || null}
-                                                    onRefresh={() => fetchMapRatings(selection.id)}
-                                                />
-
-                                                {/* 评论组件 */}
-                                                <CommentComponent
-                                                    mapSelectionId={selection.id}
-                                                    userId={user?.id.toString() || null}
-                                                    onCommentUpdate={fetchSelections}
-                                                />
-                                            </div>
+                                            <CommentComponent
+                                                mapSelectionId={selection.id}
+                                                userId={user?.id.toString() || null}
+                                                onCommentUpdate={fetchSelections}
+                                                compactMode={true}
+                                            />
                                         </div>
                                     </div>
                                 ))}
