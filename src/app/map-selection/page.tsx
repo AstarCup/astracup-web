@@ -1150,10 +1150,14 @@ export default function MapSelectionPage() {
                                                     <ul className="mt-1 list-disc list-inside space-y-1">
                                                         {duplicateWarning.existingSelections.map((selection, index) => (
                                                             <li key={index}>
-                                                                {selection.selectedMods === 'LZ' && selection.customModName ?
-                                                                    `LZ${selection.modPosition}-${selection.customModName}` :
-                                                                    selection.selectedMods === 'DT' && selection.customDTRate && selection.customDTRate !== 1.5 ?
-                                                                        `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}` :
+                                                                {selection.selectedMods === 'LZ' ?
+                                                                    (selection.customModName && selection.customModName.trim() !== '' ?
+                                                                        `LZ${selection.modPosition}-${selection.customModName}` :
+                                                                        `LZ${selection.modPosition}-标准`) :
+                                                                    selection.selectedMods === 'DT' ?
+                                                                        ((selection.customDTRate && selection.customDTRate !== 1.5) ?
+                                                                            `DT${selection.modPosition}-${selection.customDTRate.toFixed(1)}倍` :
+                                                                            `DT${selection.modPosition}`) :
                                                                         `${selection.selectedMods}${selection.modPosition}`
                                                                 } - {selection.title} [{selection.version}]
                                                             </li>
@@ -1530,7 +1534,9 @@ export default function MapSelectionPage() {
                                                             `LZ${selection.modPosition}-${selection.customModName}` :
                                                             `LZ${selection.modPosition}`) :
                                                         selection.selectedMods === 'DT' ?
-                                                            `DT${selection.modPosition}-${(selection.customDTRate || 1.5).toFixed(1)}倍` :
+                                                            ((selection.customDTRate && selection.customDTRate !== 1.5) ?
+                                                                `DT${selection.modPosition}-${selection.customDTRate.toFixed(1)}倍` :
+                                                                `DT${selection.modPosition}`) :
                                                             `${selection.selectedMods}${selection.modPosition}`
                                                     }
                                                 </span>
