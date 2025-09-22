@@ -1,156 +1,183 @@
 'use client';
 
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { showSuccess, showError } from './Notification';
 
 interface CommentComponentProps {
     mapSelectionId: number;
     userId: string | null;
-    initialComment: string;
-    initialRating: number; // 用户之前的评分（如果有）
-    onCommentUpdate: () => void;
+    onCommentUpdate?: () => void;
 }
 
-export default function CommentComponent({
-    mapSelectionId,
-    userId,
-    initialComment,
-    initialRating,
-    onCommentUpdate
-}: CommentComponentProps) {
-    const [showCommentForm, setShowCommentForm] = useState(false);
-    const [commentInput, setCommentInput] = useState(initialComment);
-    const [ratingInput, setRatingInput] = useState(initialRating);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+export default function CommentComponent({ mapSelectionId, userId, onCommentUpdate }: CommentComponentProps) {
 
+    const [comments, setComments] = useState<Array<{ id: number; userId: string; username: string; comment: string; createdAt: string }>>([]);
+    const [commentInput, setCommentInput] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [score, setScore] = useState<number>(0);
+
+    // 获取评论列表
+    useEffect(() => {
+        const fetchComments = async () => {
+            setIsLoading(true);
+            try {
+                const res = await fetch(`/api/map-ratings?mapSelectionId=${mapSelectionId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    // 只保留评论部分
+                    setComments((data.ratings || []).map((r: any) => ({
+                        id: r.id,
+                        userId: r.userId,
+                        username: r.username,
+                        comment: r.comment,
+                        createdAt: r.createdAt
+                    })).filter((r: any) => r.comment));
+                    // 获取分数（如果有）
+                    const myScore = (data.ratings || []).find((r: any) => r.userId === userId)?.rating || 0;
+                    setScore(myScore);
+                }
+            } catch (e) {
+                setComments([]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchComments();
+    }, [mapSelectionId, isSubmitting, userId]);
+
+    // 添加评论
     const handleCommentSubmit = async () => {
         if (!userId) {
             showError('请先登录');
             return;
         }
-
-        if (ratingInput === 0) {
-            showError('请选择评分');
-            return;
-        }
-
         if (!commentInput.trim()) {
             showError('请输入评论内容');
             return;
         }
-
         setIsSubmitting(true);
         try {
             const response = await fetch('/api/map-ratings', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    mapSelectionId,
-                    rating: ratingInput,
-                    comment: commentInput.trim(),
-                    userId
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mapSelectionId, comment: commentInput.trim(), userId })
             });
-
             if (response.ok) {
-                setShowCommentForm(false);
                 showSuccess('评论提交成功');
-                onCommentUpdate();
-                // 调用刷新回调（如果存在）
-                if (typeof (window as any).refreshRatings === 'function') {
-                    (window as any).refreshRatings();
-                }
+                setCommentInput('');
+                if (onCommentUpdate) onCommentUpdate();
             } else {
                 const errorData = await response.json();
                 showError(errorData.error || '评论提交失败');
             }
         } catch (error) {
-            console.error('Error submitting comment:', error);
             showError('评论提交失败');
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    if (!showCommentForm) {
-        return (
-            <div className="text-center">
-                {initialComment ? (
-                    <div>
-                        <p className="text-gray-800 text-sm mb-2">{initialComment}</p>
-                        <button
-                            onClick={() => setShowCommentForm(true)}
-                            className="text-blue-500 hover:text-blue-600 text-sm"
-                        >
-                            编辑评论
-                        </button>
-                    </div>
-                ) : (
-                    <button
-                        onClick={() => setShowCommentForm(true)}
-                        className="text-blue-500 hover:text-blue-600 text-sm"
-                    >
-                        添加评论
-                    </button>
-                )}
-            </div>
-        );
-    }
+    // 删除评论
+    const handleDeleteComment = async (id: number) => {
+        if (!window.confirm('确定要删除这条评论吗？')) return;
+        setIsSubmitting(true);
+        try {
+            const response = await fetch(`/api/map-ratings?id=${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                showSuccess('评论已删除');
+                if (onCommentUpdate) onCommentUpdate();
+            } else {
+                showError('删除失败');
+            }
+        } catch (e) {
+            showError('删除失败');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <div className="space-y-3">
-            {/* 评分选择器 */}
-            <div className="flex items-center justify-center space-x-2">
-                <span className="text-sm text-gray-600">评分：</span>
-                <div className="flex space-x-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                            key={star}
-                            type="button"
-                            onClick={() => setRatingInput(star)}
-                            className={`w-8 h-8 text-lg ${star <= ratingInput
-                                    ? 'text-yellow-400'
-                                    : 'text-gray-300'
-                                } hover:text-yellow-400 transition-colors`}
-                        >
-                            ★
-                        </button>
-                    ))}
-                </div>
-                <span className="text-sm text-gray-500 ml-2">
-                    {ratingInput > 0 && `${ratingInput} 星`}
-                </span>
+            {/* 打分器 */}
+            <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm text-gray-600">我的评分：</span>
+                {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                        key={star}
+                        type="button"
+                        onClick={async () => {
+                            if (!userId) {
+                                showError('请先登录');
+                                return;
+                            }
+                            setScore(star);
+                            setIsSubmitting(true);
+                            try {
+                                const response = await fetch('/api/map-ratings', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ mapSelectionId, rating: star, userId })
+                                });
+                                if (response.ok) {
+                                    showSuccess('评分成功');
+                                    if (onCommentUpdate) onCommentUpdate();
+                                } else {
+                                    showError('评分失败');
+                                }
+                            } catch (e) {
+                                showError('评分失败');
+                            } finally {
+                                setIsSubmitting(false);
+                            }
+                        }}
+                        className={`w-6 h-6 text-lg ${star <= score ? 'text-yellow-400' : 'text-gray-300'} hover:text-yellow-400 transition-colors`}
+                    >★</button>
+                ))}
+                <span className="text-sm text-gray-500 ml-2">{score > 0 && `${score}分`}</span>
             </div>
-
-            {/* 评论输入框 */}
-            <textarea
-                value={commentInput}
-                onChange={(e) => setCommentInput(e.target.value)}
-                placeholder="写下你的评论..."
-                className="w-full p-2 border border-gray-300 rounded text-sm text-gray-800"
-                rows={3}
-            />
-
-            <div className="flex space-x-2 justify-center">
+            {/* 评论列表 */}
+            <div>
+                {isLoading ? (
+                    <div className="text-gray-400 text-sm">加载中...</div>
+                ) : comments.length === 0 ? (
+                    <div className="text-gray-400 text-sm">暂无评论</div>
+                ) : (
+                    <ul className="space-y-2">
+                        {comments.map((c) => (
+                            <li key={c.id} className="flex items-center justify-between bg-gray-100 rounded px-2 py-1">
+                                <div>
+                                    <span className="font-bold text-gray-700 mr-2">{c.username}</span>
+                                    <span className="text-xs text-gray-500">{new Date(c.createdAt).toLocaleString()}</span>
+                                    <span className="ml-2 text-gray-800">{c.comment}</span>
+                                </div>
+                                {userId === c.userId && (
+                                    <button
+                                        className="ml-2 text-red-500 hover:text-red-700 text-lg"
+                                        title="删除评论"
+                                        onClick={() => handleDeleteComment(c.id)}
+                                    >×</button>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+            {/* 添加评论 */}
+            <div className="flex flex-col gap-2">
+                <textarea
+                    value={commentInput}
+                    onChange={(e) => setCommentInput(e.target.value)}
+                    placeholder="写下你的评论..."
+                    className="w-full p-2 border border-gray-300 rounded text-sm text-gray-800"
+                    rows={2}
+                />
                 <button
                     onClick={handleCommentSubmit}
                     disabled={isSubmitting}
-                    className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm"
-                >
-                    {isSubmitting ? '提交中...' : '提交评论'}
-                </button>
-                <button
-                    onClick={() => {
-                        setShowCommentForm(false);
-                        setCommentInput(initialComment);
-                        setRatingInput(initialRating);
-                    }}
-                    className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
-                >
-                    取消
-                </button>
+                    className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm self-end"
+                >{isSubmitting ? '提交中...' : '添加评论'}</button>
             </div>
         </div>
     );

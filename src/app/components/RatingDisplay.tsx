@@ -44,77 +44,79 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId, onRe
     // 获取所有评分
     const allRatings = ratings;
 
+    // 删除评论
+    const handleDeleteComment = async (id: number) => {
+        if (!window.confirm('确定要删除这条评论吗？')) return;
+        try {
+            const response = await fetch(`/api/map-ratings?id=${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                if (onRefresh) onRefresh();
+            }
+        } catch (e) { }
+    };
+
     return (
         <div className="space-y-3">
             <h4 className="font-semibold text-gray-800 mb-2 text-sm">所有评分</h4>
-
             {allRatings.length > 0 ? (
-                <div className="space-y-2">
+                <div className="flex flex-wrap gap-3">
                     {allRatings.map((rating) => (
                         <div
                             key={rating.id}
-                            className="flex items-center justify-between p-2 bg-gray-100 rounded hover:bg-gray-200 transition-colors group"
+                            className="relative group flex flex-col items-center w-16"
                             onMouseEnter={() => setHoveredUser(rating.userId)}
                             onMouseLeave={() => setHoveredUser(null)}
                         >
-                            <div className="flex items-center space-x-2">
-                                {/* 用户头像 */}
-                                <div className="w-6 h-6 rounded-full relative">
-                                    <img
-                                        src={rating.avatar_url}
-                                        alt={rating.username}
-                                        className="w-6 h-6 rounded-full object-cover"
-                                        onError={(e) => {
-                                            // 如果头像加载失败，显示首字母
-                                            e.currentTarget.style.display = 'none';
-                                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                                            if (fallback) fallback.style.display = 'flex';
-                                        }}
-                                    />
-                                    <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center absolute inset-0" style={{ display: 'none' }}>
-                                        <span className="text-xs text-gray-600">
-                                            {rating.username?.charAt(0).toUpperCase() || 'U'}
-                                        </span>
+                            {/* 头像 */}
+                            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-300 bg-gray-200 flex items-center justify-center">
+                                <img
+                                    src={rating.avatar_url}
+                                    alt={rating.username}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                        if (fallback) fallback.style.display = 'flex';
+                                    }}
+                                />
+                                <div className="w-full h-full bg-gray-300 rounded-full flex items-center justify-center absolute inset-0" style={{ display: 'none' }}>
+                                    <span className="text-base text-gray-600">
+                                        {rating.username?.charAt(0).toUpperCase() || 'U'}
+                                    </span>
+                                </div>
+                            </div>
+                            {/* 简短评论 */}
+                            <div className="flex items-center justify-center w-full">
+                                {rating.comment && (
+                                    <span className="mt-1 text-xs text-gray-700 text-center max-w-[56px] truncate">
+                                        {rating.comment}
+                                    </span>
+                                )}
+                                {/* 删除按钮，仅自己评论可见 */}
+                                {currentUserId === rating.userId && (
+                                    <button
+                                        className="ml-1 text-red-500 hover:text-red-700 text-xs font-bold"
+                                        title="删除评论"
+                                        onClick={() => handleDeleteComment(rating.id)}
+                                    >×</button>
+                                )}
+                            </div>
+                            {/* Hover弹窗 */}
+                            {hoveredUser === rating.userId && (
+                                <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded shadow-lg p-3 z-20 min-w-[180px] max-w-xs break-words animate-fadein">
+                                    <div className="font-semibold mb-1">{rating.username}</div>
+                                    <div className="text-gray-300 mb-1">osu!ID: {rating.userId}</div>
+                                    <div className="flex items-center mb-1">
+                                        {renderStars(rating.rating, 'text-base')}
+                                        <span className="ml-2 text-yellow-400 font-bold">{rating.rating}</span>
                                     </div>
-
-                                    {/* Hover提示 */}
-                                    {hoveredUser === rating.userId && (
-                                        <div className="absolute top-full left-0 mt-1 bg-gray-800 text-white text-xs rounded p-2 z-10 min-w-[120px]">
-                                            <div className="font-medium">{rating.username}</div>
-                                            <div className="text-gray-300">osu!ID: {rating.userId}</div>
-                                            <div className="flex items-center mt-1">
-                                                {renderStars(rating.rating, 'text-sm')}
-                                                <span className="ml-1 text-yellow-400">{rating.rating}</span>
-                                            </div>
-                                            {rating.comment && (
-                                                <div className="mt-1 border-t border-gray-600 pt-1">
-                                                    {rating.comment}
-                                                </div>
-                                            )}
+                                    {rating.comment && (
+                                        <div className="mt-1 border-t border-gray-700 pt-2 text-gray-100">
+                                            {rating.comment}
                                         </div>
                                     )}
                                 </div>
-
-                                <div className="flex flex-col">
-                                    <span className="text-sm text-gray-700">
-                                        {rating.username}
-                                        {rating.userId === selectedBy && (
-                                            <span className="ml-1 text-blue-500 text-xs">(提名者)</span>
-                                        )}
-                                    </span>
-                                    {rating.comment && (
-                                        <span className="text-xs text-gray-500 mt-1">
-                                            {rating.comment}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                                {renderStars(rating.rating, 'text-sm')}
-                                <span className="text-xs text-gray-600">
-                                    {rating.rating}
-                                </span>
-                            </div>
+                            )}
                         </div>
                     ))}
                 </div>

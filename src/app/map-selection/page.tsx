@@ -1384,12 +1384,12 @@ export default function MapSelectionPage() {
                                                                     }}
                                                                 />
                                                             ) : null}
-                                                            <div className={`w-6 h-6 bg-blue-300 rounded-full flex items-center justify-center ${selection.selectedByAvatar ? 'hidden' : ''}`}>
+
+                                                            <p><strong>提名者:</strong> <div className={`w-6 h-6 bg-blue-300 rounded-full flex items-center justify-center ${selection.selectedByAvatar ? 'hidden' : ''}`}>
                                                                 <span className="text-xs text-blue-800 font-medium">
                                                                     {selection.selectedByUsername?.charAt(0).toUpperCase() || 'N'}
                                                                 </span>
-                                                            </div>
-                                                            <p><strong>提名者:</strong> {selection.selectedByUsername} ({selection.selectedBy})</p>
+                                                            </div>{selection.selectedByUsername} ({selection.selectedBy})</p>
                                                         </div>
                                                         <p><div className="flex-1">
                                                             <RatingDisplay
