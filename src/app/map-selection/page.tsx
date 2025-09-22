@@ -1344,178 +1344,190 @@ export default function MapSelectionPage() {
                             <div className="space-y-4">
                                 {filteredSelections.map((selection) => (
                                     <div key={selection.id} className="bg-gray-200 rounded-lg p-4">
-                                        <div className="flex justify-between items-start">
+                                        {/* 标题和标签行 */}
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <span className={`${getModColorClass(selection.selectedMods)} text-white px-2 py-1 rounded text-sm font-bold`}>
+                                                {selection.selectedMods === 'LZ' && selection.customModName ?
+                                                    `LZ${selection.modPosition}-${selection.customModName}` :
+                                                    selection.selectedMods === 'DT' && selection.customDTRate && selection.customDTRate !== 1.5 ?
+                                                        `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}` :
+                                                        `${selection.selectedMods}${selection.modPosition}`
+                                                }
+                                            </span>
+                                            {selection.customDASettings && (
+                                                <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs">
+                                                    DA自定义
+                                                </span>
+                                            )}
+                                            {selection.approved && (
+                                                <span className="bg-green-500 text-white px-2 py-1 rounded text-sm font-bold">
+                                                    ✓ 过审
+                                                </span>
+                                            )}
+                                            <h4 className="text-gray-800 font-bold flex-1">
+                                                {selection.title} - {selection.artist}
+                                            </h4>
+                                        </div>
+
+                                        {/* 主要内容区域 */}
+                                        <div className="flex gap-4">
+                                            {/* 左侧：封面和信息 */}
                                             <div className="flex gap-4 flex-1">
-                                                {/* Cover image */}
+                                                {/* 封面图 */}
                                                 {selection.coverUrl && (
                                                     <div className="flex-shrink-0">
                                                         <img
                                                             src={selection.coverUrl}
                                                             alt={`${selection.title} cover`}
-                                                            className="w-20 h-20 rounded-lg object-cover"
+                                                            className="w-16 h-16 rounded-lg object-cover"
                                                             onError={(e) => {
                                                                 e.currentTarget.style.display = 'none';
                                                             }}
                                                         />
                                                     </div>
                                                 )}
-                                                {/* Content */}
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-3 mb-2">
-                                                        <span className={`${getModColorClass(selection.selectedMods)} text-white px-2 py-1 rounded text-sm font-bold`}>
-                                                            {selection.selectedMods === 'LZ' && selection.customModName ?
-                                                                `LZ${selection.modPosition}-${selection.customModName}` :
-                                                                selection.selectedMods === 'DT' && selection.customDTRate && selection.customDTRate !== 1.5 ?
-                                                                    `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}` :
-                                                                    `${selection.selectedMods}${selection.modPosition}`
-                                                            }
-                                                        </span>
-                                                        {selection.customDASettings && (
-                                                            <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs">
-                                                                DA自定义
-                                                            </span>
-                                                        )}
-                                                        {selection.approved && (
-                                                            <span className="bg-green-500 text-white px-2 py-1 rounded text-sm font-bold">
-                                                                ✓ 过审
-                                                            </span>
-                                                        )}
-                                                        <h4 className="text-gray-800 font-bold">
-                                                            {selection.title} - {selection.artist}
-                                                        </h4>
+
+                                                {/* 信息区域 */}
+                                                <div className="flex-1 space-y-2">
+                                                    {/* 第一行：难度和作图者 */}
+                                                    <div className="flex gap-4 text-sm">
+                                                        <span><strong>难度:</strong> {selection.version}</span>
+                                                        <span><strong>作图者:</strong> {selection.creator}</span>
                                                     </div>
-                                                    <div className="text-gray-700 space-y-1">
-                                                        <p><strong>难度:</strong> {selection.version}</p>
-                                                        <p><strong>作图者:</strong> {selection.creator}</p>
-                                                        <p><strong>星级:</strong> {selection.starRating.toFixed(2)}★</p>
-                                                        <p><strong>BPM:</strong> {selection.bpm}</p>
-                                                        <p><strong>时长:</strong> {formatLength(selection.totalLength)}</p>
-                                                        <p><strong>AR:</strong> {selection.ar.toFixed(1)} | <strong>CS:</strong> {selection.cs.toFixed(1)} | <strong>OD:</strong> {selection.od.toFixed(1)} | <strong>HP:</strong> {selection.hp.toFixed(1)}</p>
 
-                                                        {/* 显示自定义DA设置 */}
-                                                        {selection.customDASettings && (
-                                                            <div className="bg-orange-50 border border-orange-200 rounded p-2 mt-2">
-                                                                <p className="text-orange-800 font-semibold text-sm">DA自定义属性:</p>
-                                                                <p className="text-sm">
-                                                                    {selection.customDASettings.cs !== null && <span>CS: {selection.customDASettings.cs} </span>}
-                                                                    {selection.customDASettings.ar !== null && <span>AR: {selection.customDASettings.ar} </span>}
-                                                                    {selection.customDASettings.od !== null && <span>OD: {selection.customDASettings.od} </span>}
-                                                                    {selection.customDASettings.hp !== null && <span>HP: {selection.customDASettings.hp} </span>}
-                                                                </p>
-                                                            </div>
-                                                        )}
+                                                    {/* 第二行：BPM和时长 */}
+                                                    <div className="flex gap-4 text-sm">
+                                                        <span><strong>BPM:</strong> {selection.bpm}</span>
+                                                        <span><strong>时长:</strong> {formatLength(selection.totalLength)}</span>
+                                                    </div>
 
-                                                        {selection.comment && (
-                                                            <p><strong>注释:</strong> {selection.comment}</p>
-                                                        )}
-                                                        <p><strong>选择时间:</strong> {new Date(selection.selectedAt).toLocaleString()}</p>
+                                                    {/* 第三行：星级和ARCSODHP */}
+                                                    <div className="flex gap-4 text-sm">
+                                                        <span><strong>星级:</strong> {selection.starRating.toFixed(2)}★</span>
+                                                        <span><strong>AR:</strong> {selection.ar.toFixed(1)} | <strong>CS:</strong> {selection.cs.toFixed(1)} | <strong>OD:</strong> {selection.od.toFixed(1)} | <strong>HP:</strong> {selection.hp.toFixed(1)}</span>
+                                                    </div>
 
-
-                                                        <p><strong>提名者:</strong></p>
-                                                        <div className="flex items-center space-x-2">
-                                                            {selection.selectedByAvatar ? (
-                                                                <img
-                                                                    src={selection.selectedByAvatar}
-                                                                    alt={`${selection.selectedByUsername} avatar`}
-                                                                    className="w-6 h-6 rounded-full object-cover"
-                                                                    onError={(e) => {
-                                                                        e.currentTarget.style.display = 'none';
-                                                                        // 回退到显示首字母
-                                                                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                                                                        if (fallback) fallback.style.display = 'flex';
-                                                                    }}
-                                                                />
-                                                            ) : null}
-                                                            {selection.selectedByUsername} ({selection.selectedBy})
+                                                    {/* 自定义DA设置 */}
+                                                    {selection.customDASettings && (
+                                                        <div className="bg-orange-50 border border-orange-200 rounded p-2">
+                                                            <p className="text-orange-800 font-semibold text-xs">DA自定义属性:</p>
+                                                            <p className="text-xs">
+                                                                {selection.customDASettings.cs !== null && <span>CS: {selection.customDASettings.cs} </span>}
+                                                                {selection.customDASettings.ar !== null && <span>AR: {selection.customDASettings.ar} </span>}
+                                                                {selection.customDASettings.od !== null && <span>OD: {selection.customDASettings.od} </span>}
+                                                                {selection.customDASettings.hp !== null && <span>HP: {selection.customDASettings.hp} </span>}
+                                                            </p>
                                                         </div>
+                                                    )}
+
+                                                    {/* 注释 */}
+                                                    {selection.comment && (
+                                                        <p className="text-sm"><strong>注释:</strong> {selection.comment}</p>
+                                                    )}
+
+                                                    {/* 提名者信息 */}
+                                                    <div className="flex items-center space-x-2 text-sm">
+                                                        <strong>提名者:</strong>
+                                                        {selection.selectedByAvatar ? (
+                                                            <img
+                                                                src={selection.selectedByAvatar}
+                                                                alt={`${selection.selectedByUsername} avatar`}
+                                                                className="w-5 h-5 rounded-full object-cover"
+                                                                onError={(e) => {
+                                                                    e.currentTarget.style.display = 'none';
+                                                                    const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                                                    if (fallback) fallback.style.display = 'flex';
+                                                                }}
+                                                            />
+                                                        ) : null}
+                                                        <span>{selection.selectedByUsername} ({selection.selectedBy})</span>
                                                     </div>
-                                                    <div className="flex-1">
-                                                        <RatingDisplay
-                                                            ratings={mapRatings[selection.id] || []}
-                                                            selectedBy={selection.selectedBy}
-                                                            currentUserId={user?.id.toString() || null}
-                                                            onRefresh={() => fetchMapRatings(selection.id)}
+
+                                                    {/* 选择时间 */}
+                                                    <p className="text-xs text-gray-600"><strong>选择时间:</strong> {new Date(selection.selectedAt).toLocaleString()}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* 右侧：操作和评分 */}
+                                            <div className="flex-shrink-0 space-y-3">
+                                                {/* 状态勾选框 */}
+                                                <div className="space-y-2">
+                                                    <label className="flex items-center text-gray-800 text-sm">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selection.approved}
+                                                            onChange={(e) => updateApprovalStatus(selection.id, e.target.checked)}
+                                                            className="mr-2 h-4 w-4 text-green-600 border-gray-300 focus:ring-green-500"
                                                         />
-                                                    </div>
+                                                        过审
+                                                    </label>
+                                                    <label className="flex items-center text-gray-800 text-sm">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selection.padding || false}
+                                                            onChange={(e) => updatePaddingStatus(selection.id, e.target.checked)}
+                                                            className="mr-2 h-4 w-4 text-orange-600 border-gray-300 focus:ring-orange-500"
+                                                        />
+                                                        Padding
+                                                    </label>
+                                                </div>
+
+                                                {/* 操作按钮 */}
+                                                <div className="flex flex-col gap-2">
+                                                    <button
+                                                        onClick={() => copyBeatmapId(selection.beatmapId)}
+                                                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 text-sm font-medium transition-colors"
+                                                        title={`复制 Beatmap ID: ${selection.beatmapId}`}
+                                                    >
+                                                        复制BID
+                                                    </button>
+                                                    <a
+                                                        href={selection.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-sm text-center"
+                                                    >
+                                                        查看详情
+                                                    </a>
+                                                    {selection.selectedBy === user?.id.toString() && (
+                                                        <button
+                                                            onClick={() => deleteSelection(selection.id)}
+                                                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm"
+                                                        >
+                                                            删除
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {/* 评分组件 */}
+                                                <div>
+                                                    <CurrentRating
+                                                        rating={userRatings[selection.id] || 0}
+                                                        onRatingChange={(rating) => handleRating(selection.id, rating)}
+                                                        isSubmitting={isRatingSubmitting}
+                                                        userId={user?.id.toString() || null}
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
 
-
-
-                                        <div className="flex flex-col gap-2 ml-4">
-
-                                            {/* 过审状态勾选框 */}
-                                            <div className="flex items-center">
-                                                <label className="flex items-center text-gray-800 text-sm">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selection.approved}
-                                                        onChange={(e) => updateApprovalStatus(selection.id, e.target.checked)}
-                                                        className="mr-2 h-5 w-5 text-green-600 border-gray-300 focus:ring-green-500"
-                                                    />
-                                                    过审状态
-                                                </label>
-                                            </div>
-
-                                            {/* Padding状态勾选框 */}
-                                            <div className="flex items-center">
-                                                <label className="flex items-center text-gray-800 text-sm">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selection.padding || false}
-                                                        onChange={(e) => updatePaddingStatus(selection.id, e.target.checked)}
-                                                        className="mr-2 h-5 w-5 text-orange-600 border-gray-300 focus:ring-orange-500"
-                                                    />
-                                                    Padding状态
-                                                </label>
-                                            </div>
-                                            {/* 操作按钮 */}
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => copyBeatmapId(selection.beatmapId)}
-                                                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 text-sm font-medium transition-colors"
-                                                    title={`复制 Beatmap ID: ${selection.beatmapId}`}
-                                                >
-                                                    复制BID
-                                                </button>
-                                                <a
-                                                    href={selection.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-sm"
-                                                >
-                                                    查看详情
-                                                </a>
-                                                {selection.selectedBy === user?.id.toString() && (
-                                                    <button
-                                                        onClick={() => deleteSelection(selection.id)}
-                                                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm"
-                                                    >
-                                                        删除
-                                                    </button>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <CurrentRating
-                                                    rating={userRatings[selection.id] || 0}
-                                                    onRatingChange={(rating) => handleRating(selection.id, rating)}
-                                                    isSubmitting={isRatingSubmitting}
-                                                    userId={user?.id.toString() || null}
+                                        {/* 底部：评论和评分显示 */}
+                                        <div className="mt-4 pt-3 border-t border-gray-300">
+                                            <div className="space-y-3">
+                                                {/* 评分显示 */}
+                                                <RatingDisplay
+                                                    ratings={mapRatings[selection.id] || []}
+                                                    selectedBy={selection.selectedBy}
+                                                    currentUserId={user?.id.toString() || null}
+                                                    onRefresh={() => fetchMapRatings(selection.id)}
                                                 />
-                                                {(() => {
-                                                    const userRating = mapRatings[selection.id]?.find(
-                                                        (rating: any) => rating.userId === user?.id.toString()
-                                                    );
-                                                    return (
-                                                        <CommentComponent
-                                                            mapSelectionId={selection.id}
-                                                            userId={user?.id.toString() || null}
-                                                            onCommentUpdate={fetchSelections}
-                                                            showRating={false}
-                                                        />
-                                                    );
-                                                })()}
+
+                                                {/* 评论组件 */}
+                                                <CommentComponent
+                                                    mapSelectionId={selection.id}
+                                                    userId={user?.id.toString() || null}
+                                                    onCommentUpdate={fetchSelections}
+                                                />
                                             </div>
                                         </div>
                                     </div>

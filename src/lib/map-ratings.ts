@@ -9,7 +9,7 @@ export interface MapRating {
     userId: string;             // 评分用户的osu ID
     username: string;           // 评分用户的用户名
     avatar_url: string;         // 用户头像URL
-    rating: number;             // 评分 (1-5)
+    rating: number | null;      // 评分 (1-5)，可为空（只评论）
     comment: string;            // 评论内容
     createdAt: string;          // 创建时间
     updatedAt: string;          // 更新时间
@@ -36,15 +36,15 @@ export const initMapRatingsDatabase = async (): Promise<void> => {
                 mapSelectionId INT NOT NULL,
                 userId VARCHAR(255) NOT NULL,
                 username VARCHAR(255) NOT NULL,
-                rating TINYINT NOT NULL,
+                rating TINYINT NULL,
                 comment TEXT,
+                avatar_url VARCHAR(500) NOT NULL DEFAULT '',
                 createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 UNIQUE KEY um (mapSelectionId, userId),
                 INDEX im (mapSelectionId),
                 INDEX iu (userId),
-                INDEX ir (rating),
-                CHECK (rating >= 1 AND rating <= 5)
+                INDEX ir (rating)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
 
@@ -171,11 +171,7 @@ export const mapRatingsStorage = {
                 const updateResult = result as mysql.ResultSetHeader;
                 return updateResult.affectedRows > 0;
             } else {
-                // 添加新评分 - 需要rating
-                if (rating === null) {
-                    connection.release();
-                    return false; // 需要rating来创建新记录
-                }
+                // 添加新评分 - rating可以为null（只评论）
                 const [result] = await connection.execute(
                     'INSERT INTO map_ratings (mapSelectionId, userId, username, rating, comment, avatar_url) VALUES (?, ?, ?, ?, ?, ?)',
                     [mapSelectionId, userId, username, rating, comment, avatar_url]

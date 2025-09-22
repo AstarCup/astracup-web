@@ -8,16 +8,14 @@ interface CommentComponentProps {
     mapSelectionId: number;
     userId: string | null;
     onCommentUpdate?: () => void;
-    showRating?: boolean; // 是否显示评分功能
 }
 
-export default function CommentComponent({ mapSelectionId, userId, onCommentUpdate, showRating = false }: CommentComponentProps) {
+export default function CommentComponent({ mapSelectionId, userId, onCommentUpdate }: CommentComponentProps) {
 
     const [comments, setComments] = useState<Array<{ id: number; userId: string; username: string; comment: string; createdAt: string }>>([]);
     const [commentInput, setCommentInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [score, setScore] = useState<number>(0);
 
     // 获取评论列表
     useEffect(() => {
@@ -35,9 +33,6 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                         comment: r.comment,
                         createdAt: r.createdAt
                     })).filter((r: any) => r.comment));
-                    // 获取分数（如果有）
-                    const myScore = (data.ratings || []).find((r: any) => r.userId === userId)?.rating || 0;
-                    setScore(myScore);
                 }
             } catch (e) {
                 setComments([]);
@@ -101,45 +96,6 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
 
     return (
         <div className="space-y-3">
-            {/* 打分器 - 可选显示 */}
-            {showRating && (
-                <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm text-gray-600">我的评分：</span>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                            key={star}
-                            type="button"
-                            onClick={async () => {
-                                if (!userId) {
-                                    showError('请先登录');
-                                    return;
-                                }
-                                setScore(star);
-                                setIsSubmitting(true);
-                                try {
-                                    const response = await fetch('/api/map-ratings', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ mapSelectionId, rating: star, userId })
-                                    });
-                                    if (response.ok) {
-                                        showSuccess('评分成功');
-                                        if (onCommentUpdate) onCommentUpdate();
-                                    } else {
-                                        showError('评分失败');
-                                    }
-                                } catch (e) {
-                                    showError('评分失败');
-                                } finally {
-                                    setIsSubmitting(false);
-                                }
-                            }}
-                            className={`w-6 h-6 text-lg ${star <= score ? 'text-yellow-400' : 'text-gray-300'} hover:text-yellow-400 transition-colors`}
-                        >★</button>
-                    ))}
-                    <span className="text-sm text-gray-500 ml-2">{score > 0 && `${score}分`}</span>
-                </div>
-            )}
             {/* 评论列表 - 显示为头像网格 */}
             <div>
                 <h4 className="font-semibold text-gray-800 mb-2 text-sm">评论</h4>
