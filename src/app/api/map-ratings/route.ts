@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import {
     getRatingsForMap,
     getUserRating,
-    addOrUpdateRating,
+    addRating,
     deleteRating,
     deleteRatingById,
     getRatingStats
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
         // 数据库已初始化，跳过此步骤
 
         // 添加或更新评分
-        const success = await addOrUpdateRating(
+        const success = await addRating(
             parseInt(mapSelectionId),
             userId,
             authResult.username || `User_${userId}`,

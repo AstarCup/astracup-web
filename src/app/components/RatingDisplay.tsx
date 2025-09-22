@@ -62,8 +62,15 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId, onRe
             if (response.ok) {
                 if (onRefresh) onRefresh();
             } else {
-                const errorData = await response.json();
-                alert(`删除失败: ${errorData.error || '未知错误'}`);
+                let errorMessage = '未知错误';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || `HTTP ${response.status}`;
+                } catch (parseError) {
+                    errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                }
+                console.error('删除评论失败:', errorMessage);
+                alert(`删除失败: ${errorMessage}`);
             }
         } catch (e) {
             console.error('删除评论失败:', e);

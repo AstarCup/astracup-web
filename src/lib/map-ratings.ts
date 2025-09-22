@@ -137,8 +137,8 @@ export const mapRatingsStorage = {
         }
     },
 
-    // 添加或更新评分
-    async addOrUpdateRating(
+    // 添加新评分（允许同一用户对同一谱面发表多个评论）
+    async addRating(
         mapSelectionId: number,
         userId: string,
         username: string,
@@ -149,40 +149,17 @@ export const mapRatingsStorage = {
         try {
             const connection = await getPool().getConnection();
 
-            // 检查是否已存在评分
-            const existingRating = await mapRatingsStorage.getUserRating(mapSelectionId, userId);
+            // 总是添加新评分 - 允许同一用户对同一谱面发表多个评论
+            const [result] = await connection.execute(
+                'INSERT INTO map_ratings (mapSelectionId, userId, username, rating, comment, avatar_url) VALUES (?, ?, ?, ?, ?, ?)',
+                [mapSelectionId, userId, username, rating, comment, avatar_url]
+            );
 
-            if (existingRating) {
-                // 更新现有评分
-                let result: any;
-                if (rating !== null) {
-                    [result] = await connection.execute(
-                        'UPDATE map_ratings SET rating = ?, comment = ?, username = ?, avatar_url = ? WHERE id = ?',
-                        [rating, comment, username, avatar_url, existingRating.id]
-                    );
-                } else {
-                    [result] = await connection.execute(
-                        'UPDATE map_ratings SET comment = ?, username = ?, avatar_url = ? WHERE id = ?',
-                        [comment, username, avatar_url, existingRating.id]
-                    );
-                }
-
-                connection.release();
-                const updateResult = result as mysql.ResultSetHeader;
-                return updateResult.affectedRows > 0;
-            } else {
-                // 添加新评分 - rating可以为null（只评论）
-                const [result] = await connection.execute(
-                    'INSERT INTO map_ratings (mapSelectionId, userId, username, rating, comment, avatar_url) VALUES (?, ?, ?, ?, ?, ?)',
-                    [mapSelectionId, userId, username, rating, comment, avatar_url]
-                );
-
-                connection.release();
-                const insertResult = result as mysql.ResultSetHeader;
-                return insertResult.affectedRows > 0;
-            }
+            connection.release();
+            const insertResult = result as mysql.ResultSetHeader;
+            return insertResult.affectedRows > 0;
         } catch (error) {
-            console.error('Error adding/updating rating:', error);
+            console.error('Error adding rating:', error);
             console.error('Error details:', JSON.stringify(error, null, 2));
             return false;
         }
@@ -326,7 +303,7 @@ export const mapRatingsStorage = {
 // 导出函数
 export const getRatingsForMap = mapRatingsStorage.getRatingsForMap;
 export const getUserRating = mapRatingsStorage.getUserRating;
-export const addOrUpdateRating = mapRatingsStorage.addOrUpdateRating;
+export const addRating = mapRatingsStorage.addRating;
 export const deleteRating = mapRatingsStorage.deleteRating;
 export const deleteRatingById = mapRatingsStorage.deleteRatingById;
 export const getRatingStats = mapRatingsStorage.getRatingStats;
