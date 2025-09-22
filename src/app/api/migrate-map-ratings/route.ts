@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import initDatabase from '@/lib/mysql-registrations';
-import initMapSelectionDatabase from '@/lib/map-selection';
+import { migrateMapRatingsTable } from '@/lib/migrate-map-ratings';
 
 export async function GET(request: NextRequest) {
     try {
-        await initDatabase();
-        await initMapSelectionDatabase();
+        await migrateMapRatingsTable();
         return NextResponse.json({
             success: true,
-            message: 'Database initialized successfully'
+            message: 'Map ratings table migrated successfully'
         });
     } catch (error) {
-        console.error('Error initializing database:', error);
+        console.error('Error migrating map ratings table:', error);
         return NextResponse.json(
             {
                 success: false,
-                error: 'Failed to initialize database',
+                error: 'Failed to migrate map ratings table',
                 details: error instanceof Error ? error.message : 'Unknown error'
             },
             { status: 500 }

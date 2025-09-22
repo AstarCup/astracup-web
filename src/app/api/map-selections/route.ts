@@ -4,14 +4,14 @@ import {
     addMapSelection,
     deleteMapSelection,
     updateMapSelection,
-    initMapSelectionDatabase
+    verifyAdminAuth
 } from '@/lib/map-selection';
 import { getBeatmapInfo, getBeatmapsetInfo, parseBeatmapUrl } from '@/lib/osu-api';
 import { get } from '@vercel/edge-config';
 import { cookies } from 'next/headers';
 
 // 验证选图权限的辅助函数
-async function verifyMapSelectionAuth(osuId: string): Promise<boolean> {
+export async function verifyMapSelectionAuth(osuId: string): Promise<boolean> {
     try {
         let mapSelectionTeam: string[] = [];
 
@@ -63,14 +63,15 @@ export async function GET(request: NextRequest) {
         const category = searchParams.get('category') || undefined;
         const osuId = searchParams.get('osuId');
         const approved = searchParams.get('approved'); // 新增approved参数
+        const padding = searchParams.get('padding') === 'true';
 
         // 如果只是获取已过审的图，则不需要权限验证（公开访问）
         if (approved === 'true') {
             // 初始化数据库（如果需要）
-            await initMapSelectionDatabase();
+            // 数据库已初始化，跳过此步骤
 
             // 获取选图列表
-            const selections = await getMapSelections(season, category);
+            const selections = await getMapSelections(season, category, padding);
 
             // 只返回已过审的图
             const approvedSelections = selections.filter(selection => selection.approved);
@@ -100,10 +101,10 @@ export async function GET(request: NextRequest) {
         }
 
         // 初始化数据库（如果需要）
-        await initMapSelectionDatabase();
+        // 数据库已初始化，跳过此步骤
 
         // 获取选图列表
-        const selections = await getMapSelections(season, category);
+        const selections = await getMapSelections(season, category, padding);
 
         return NextResponse.json({
             success: true,
@@ -127,9 +128,13 @@ export async function POST(request: NextRequest) {
             url,
             selectedMods,
             modPosition = 1,
+            customDTRate,
+            customModName,
             comment,
             approved = false,
             selectedBy,
+            selectedByUsername,
+            selectedByAvatar,
             season = 's1',
             category = 'qualification',
             moddedStats
@@ -152,7 +157,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 初始化数据库
-        await initMapSelectionDatabase();
+        // 数据库已初始化，跳过此步骤
 
         // 获取用户的access token
         let accessToken: string | undefined;
@@ -237,8 +242,12 @@ export async function POST(request: NextRequest) {
             hp: finalStats.hp,
             selectedMods: selectedMods || 'NM',
             modPosition: modPosition || 1,
+            customDTRate: customDTRate || undefined,
+            customModName: customModName || undefined,
             comment: comment || '',
             selectedBy,
+            selectedByUsername: selectedByUsername, // 传递用户名
+            selectedByAvatar: selectedByAvatar,     // 传递头像
             season,
             category,
             url: beatmapInfo.url,
@@ -282,17 +291,24 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // 验证权限
+        // 验证权限 - 管理员可以删除任何地图
+        const isAdmin = await verifyAdminAuth(selectedBy);
         const isAuthorized = await verifyMapSelectionAuth(selectedBy);
-        if (!isAuthorized) {
+
+        if (!isAdmin && !isAuthorized) {
             return NextResponse.json(
                 { error: '您没有权限访问选图系统' },
                 { status: 403 }
             );
         }
 
-        // 删除选图
-        const success = await deleteMapSelection(parseInt(id), selectedBy);
+        // 删除选图 - 管理员可以删除任何人的地图
+        let success = false;
+        if (isAdmin) {
+            success = await deleteMapSelection(parseInt(id));
+        } else {
+            success = await deleteMapSelection(parseInt(id), selectedBy);
+        }
 
         if (!success) {
             return NextResponse.json(
@@ -323,6 +339,7 @@ export async function PUT(request: NextRequest) {
             selectedMods,
             comment,
             approved,
+            padding,
             selectedBy
         } = await request.json();
 
@@ -343,10 +360,11 @@ export async function PUT(request: NextRequest) {
         }
 
         // 准备更新数据
-        const updates: { selectedMods?: string; comment?: string; approved?: boolean } = {};
+        const updates: { selectedMods?: string; comment?: string; approved?: boolean; padding?: boolean } = {};
         if (selectedMods !== undefined) updates.selectedMods = selectedMods;
         if (comment !== undefined) updates.comment = comment;
         if (approved !== undefined) updates.approved = approved;
+        if (padding !== undefined) updates.padding = padding;
 
         if (Object.keys(updates).length === 0) {
             return NextResponse.json(

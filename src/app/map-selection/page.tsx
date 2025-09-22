@@ -4,6 +4,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { showSuccess, showError, showInfo } from '../components/Notification';
 import Dropdown, { DropdownOption } from '../components/Dropdown';
+import RatingDisplay from '../components/RatingDisplay';
+import CommentComponent from '../components/CommentComponent';
+import CurrentRating from '../components/CurrentRating';
 
 interface User {
     id: number;
@@ -48,12 +51,15 @@ interface MapSelection {
     modPosition: number;
     comment: string;
     selectedBy: string;
+    selectedByUsername?: string; // 新增：提名者的用户名
+    selectedByAvatar?: string;   // 新增：提名者的头像URL
     selectedAt: string;
     season: string;
     category: string;
     url: string;
     coverUrl: string;
     approved: boolean;
+    padding?: boolean;
     // 新增字段
     customModName?: string;
     customDASettings?: {
@@ -84,6 +90,7 @@ export default function MapSelectionPage() {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthorized, setIsAuthorized] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     // Season configuration
     const [availableSeasons, setAvailableSeasons] = useState([
@@ -95,6 +102,12 @@ export default function MapSelectionPage() {
     const [season, setSeason] = useState('s1');
     const [category, setCategory] = useState('qualification');
     const [modFilter, setModFilter] = useState<string>('all'); // 新增：mod筛选状态
+    const [searchQuery, setSearchQuery] = useState<string>(''); // 新增：搜索查询状态
+
+    // Rating states
+    const [userRatings, setUserRatings] = useState<{ [key: number]: number }>({});
+    const [mapRatings, setMapRatings] = useState<{ [key: number]: any[] }>({});
+    const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
 
     // Add selection form
     const [showAddForm, setShowAddForm] = useState(false);
@@ -103,10 +116,22 @@ export default function MapSelectionPage() {
     const [modPosition, setModPosition] = useState(1);
     const [comment, setComment] = useState('');
     const [approved, setApproved] = useState(false);
+    const [padding, setPadding] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [beatmapPreview, setBeatmapPreview] = useState<BeatmapInfo | null>(null);
     const [availableBeatmaps, setAvailableBeatmaps] = useState<BeatmapInfo[]>([]);
     const [moddedStats, setModdedStats] = useState<any>(null);
+
+    // 重复检查状态
+    const [duplicateWarning, setDuplicateWarning] = useState<{
+        show: boolean;
+        beatmapId: number;
+        existingSelections: any[];
+    }>({
+        show: false,
+        beatmapId: 0,
+        existingSelections: []
+    });
 
     // Lazer特有mod相关状态
     const [customModName, setCustomModName] = useState('');
@@ -277,6 +302,30 @@ export default function MapSelectionPage() {
                 console.log('Authorization successful');
                 setIsAuthorized(true);
 
+                // 检查管理员权限
+                try {
+                    const adminResponse = await fetch('/api/admin-check', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            osuId: currentUser.osuId.toString()
+                        })
+                    });
+
+                    if (adminResponse.ok) {
+                        const adminData = await adminResponse.json();
+                        setIsAdmin(adminData.isAdmin || false);
+                        console.log('Admin check result:', adminData.isAdmin);
+                    } else {
+                        setIsAdmin(false);
+                    }
+                } catch (adminError) {
+                    console.error('Admin check failed:', adminError);
+                    setIsAdmin(false);
+                }
+
                 // 获取赛季配置
                 await loadSeasonConfig();
             } else {
@@ -363,11 +412,23 @@ export default function MapSelectionPage() {
 
 
     const fetchSelections = async () => {
+        if (!user?.id) {
+            console.warn('fetchSelections called without user ID');
+            return;
+        }
+
         try {
-            const response = await fetch(`/api/map-selections?season=${season}&category=${category}&osuId=${user?.id}`);
+            const response = await fetch(`/api/map-selections?season=${season}&category=${category}&osuId=${user.id}`);
             if (response.ok) {
                 const data = await response.json();
                 setSelections(data.selections || []);
+
+                // 获取所有选图的评分数据
+                if (data.selections && data.selections.length > 0) {
+                    for (const selection of data.selections) {
+                        fetchMapRatings(selection.id);
+                    }
+                }
             } else {
                 const errorData = await response.json();
                 showError(errorData.error || '获取选图列表失败');
@@ -383,11 +444,16 @@ export default function MapSelectionPage() {
             showError('请输入beatmap链接');
             return;
         }
+        if (!user?.id) {
+            showError('请先登录');
+            return;
+        }
 
         setIsSubmitting(true);
         // Clear error (using global notifications now)
         setBeatmapPreview(null);
         setAvailableBeatmaps([]);
+        setDuplicateWarning({ show: false, beatmapId: 0, existingSelections: [] });
 
         try {
             const response = await fetch('/api/parse-beatmap', {
@@ -403,14 +469,21 @@ export default function MapSelectionPage() {
 
             if (response.ok) {
                 const data = await response.json();
+                let selectedBeatmap: BeatmapInfo;
+
                 if (data.data.type === 'single') {
+                    selectedBeatmap = data.data.beatmap;
                     setBeatmapPreview(data.data.beatmap);
                     setAvailableBeatmaps([]);
                 } else {
                     // 多个beatmap，让用户选择
                     setAvailableBeatmaps(data.data.beatmaps);
-                    setBeatmapPreview(data.data.beatmaps[0]); // 默认选择第一个
+                    selectedBeatmap = data.data.beatmaps[0]; // 默认选择第一个
+                    setBeatmapPreview(data.data.beatmaps[0]);
                 }
+
+                // 检查是否与现有选图重复
+                await checkForDuplicates(selectedBeatmap.id);
             } else {
                 const errorData = await response.json();
                 showError(errorData.error || '解析beatmap链接失败');
@@ -420,6 +493,27 @@ export default function MapSelectionPage() {
             showError('解析链接时出错');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    // 检查beatmap是否与现有选图重复
+    const checkForDuplicates = async (beatmapId: number) => {
+        try {
+            const response = await fetch(`/api/map-selections?season=${season}&category=${category}&osuId=${user?.id.toString()}`);
+            if (response.ok) {
+                const data = await response.json();
+                const existingSelections = data.selections.filter((selection: any) => selection.beatmapId === beatmapId);
+
+                if (existingSelections.length > 0) {
+                    setDuplicateWarning({
+                        show: true,
+                        beatmapId,
+                        existingSelections
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Failed to check for duplicates:', error);
         }
     };
 
@@ -511,6 +605,8 @@ export default function MapSelectionPage() {
                     comment,
                     approved,
                     selectedBy: user?.id.toString(),
+                    selectedByUsername: user?.username, // 传递用户名
+                    selectedByAvatar: user?.avatar_url, // 传递头像
                     season,
                     category,
                     // 包含计算后的mod参数
@@ -562,7 +658,12 @@ export default function MapSelectionPage() {
         }
 
         try {
-            const response = await fetch(`/api/map-selections?id=${id}&selectedBy=${user?.id}`, {
+            // 管理员可以删除任何地图，普通用户只能删除自己的地图
+            const url = isAdmin
+                ? `/api/map-selections?id=${id}&selectedBy=${user?.id}`
+                : `/api/map-selections?id=${id}&selectedBy=${user?.id}`;
+
+            const response = await fetch(url, {
                 method: 'DELETE'
             });
 
@@ -606,10 +707,147 @@ export default function MapSelectionPage() {
         }
     };
 
+    const updatePaddingStatus = async (id: number, padding: boolean) => {
+        try {
+            const response = await fetch('/api/map-selections', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: id,
+                    padding: padding,
+                    selectedBy: user?.id.toString()
+                })
+            });
+
+            if (response.ok) {
+                showSuccess(`选图${padding ? '设为Padding' : '取消Padding'}成功`);
+                fetchSelections();
+            } else {
+                const errorData = await response.json();
+                showError(errorData.error || '更新Padding状态失败');
+            }
+        } catch (error) {
+            console.error('Failed to update padding status:', error);
+            showError('更新Padding状态时出错');
+        }
+    };
+
     const formatLength = (seconds: number): string => {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = seconds % 60;
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    };
+
+    // 获取特定选图的评分数据
+    const fetchMapRatings = async (mapSelectionId: number) => {
+        if (!mapSelectionId || mapSelectionId <= 0) {
+            console.warn('fetchMapRatings called with invalid mapSelectionId:', mapSelectionId);
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/map-ratings?mapSelectionId=${mapSelectionId}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    setMapRatings(prev => ({
+                        ...prev,
+                        [mapSelectionId]: data.ratings
+                    }));
+
+                    // 同时更新当前用户的评分
+                    if (user?.id) {
+                        const userRating = data.ratings.find((rating: any) => rating.userId === user.id.toString());
+                        if (userRating) {
+                            setUserRatings(prev => ({
+                                ...prev,
+                                [mapSelectionId]: userRating.rating
+                            }));
+                        } else {
+                            // 如果用户还没有评分，设置为0
+                            setUserRatings(prev => ({
+                                ...prev,
+                                [mapSelectionId]: 0
+                            }));
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching map ratings:', error);
+        }
+    };
+
+    // 处理评分
+    const handleRating = async (mapSelectionId: number, rating: number) => {
+        if (!user?.id) {
+            showError('请先登录');
+            return;
+        }
+        if (!mapSelectionId || mapSelectionId <= 0) {
+            showError('无效的选图ID');
+            return;
+        }
+
+        setIsRatingSubmitting(true);
+        try {
+            const response = await fetch('/api/map-ratings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    mapSelectionId,
+                    rating,
+                    comment: '', // 先提交评分，评论可以后续添加
+                    userId: user.id.toString()
+                })
+            });
+
+            if (response.ok) {
+                // 更新本地评分状态
+                setUserRatings(prev => ({
+                    ...prev,
+                    [mapSelectionId]: rating
+                }));
+                showSuccess('评分成功');
+                // 刷新评分数据
+                fetchMapRatings(mapSelectionId);
+                // 不刷新selections，避免影响评论显示
+            } else {
+                const errorData = await response.json();
+                showError(errorData.error || '评分失败');
+            }
+        } catch (error) {
+            console.error('Error submitting rating:', error);
+            showError('评分失败');
+        } finally {
+            setIsRatingSubmitting(false);
+        }
+    };
+
+    // 获取mod对应的颜色类名
+    const getModColorClass = (mod: string) => {
+        switch (mod.toUpperCase()) {
+            case 'NM':
+                return 'bg-blue-500';
+            case 'HD':
+                return 'bg-yellow-500';
+            case 'HR':
+                return 'bg-red-500';
+            case 'DT':
+                return 'bg-purple-500';
+            case 'TB':
+                return 'bg-black';
+            case 'FM':
+                return 'bg-green-500';
+            case 'LZ':
+                return 'bg-pink-500';
+            default:
+                return 'bg-gray-500';
+        }
     };
 
     // 复制beatmap ID到剪贴板
@@ -630,16 +868,105 @@ export default function MapSelectionPage() {
         }
     };
 
-    // 计算筛选后的选图列表
-    const filteredSelections = selections.filter(selection => {
-        if (modFilter === 'all') return true;
+    // 解析搜索查询，支持多种搜索方式
+    const parseSearchQuery = (query: string): { type: 'text' | 'bid' | 'sid' | 'mod' | 'number' | 'stat', value: string; statType?: 'ar' | 'cs' | 'od' | 'hp' } => {
+        const trimmedQuery = query.trim();
+        if (!trimmedQuery) return { type: 'text', value: '' };
 
-        // 处理LZ特有mod的情况
-        if (selection.selectedMods === 'LZ' && selection.customModName) {
-            return modFilter === 'LZ';
+        // 检查是否是osu URL
+        const osuUrlRegex = /osu\.ppy\.sh\/beatmaps?\/(\d+)/;
+        const urlMatch = trimmedQuery.match(osuUrlRegex);
+        if (urlMatch) {
+            return { type: 'bid', value: urlMatch[1] };
         }
 
-        return selection.selectedMods === modFilter;
+        // 检查是否是四维搜索 (ar, cs, od, hp + 数值)
+        const statRegex = /^(ar|cs|od|hp)(\d+(?:\.\d+)?)$/i;
+        const statMatch = trimmedQuery.match(statRegex);
+        if (statMatch) {
+            const [, statType, statValue] = statMatch;
+            return {
+                type: 'stat',
+                value: statValue,
+                statType: statType.toLowerCase() as 'ar' | 'cs' | 'od' | 'hp'
+            };
+        }
+
+        // 检查是否是纯数字（可能是sid或bid）
+        const numberRegex = /^\d+$/;
+        if (numberRegex.test(trimmedQuery)) {
+            // 纯数字同时搜索sid和bid
+            return { type: 'number', value: trimmedQuery };
+        }
+
+        // 检查是否是mod名（NM, HD, HR, DT, TB, FM, LZ等）
+        const modRegex = /^(NM|HD|HR|DT|TB|FM|LZ)$/i;
+        if (modRegex.test(trimmedQuery)) {
+            return { type: 'mod', value: trimmedQuery.toUpperCase() };
+        }
+
+        // 默认当作文本搜索
+        return { type: 'text', value: trimmedQuery };
+    };
+
+    // 检查选图是否匹配搜索条件
+    const matchesSearch = (selection: MapSelection, searchType: string, searchValue: string, statType?: 'ar' | 'cs' | 'od' | 'hp'): boolean => {
+        if (!searchValue) return true;
+
+        switch (searchType) {
+            case 'bid':
+                return selection.beatmapId.toString() === searchValue;
+            case 'sid':
+                return selection.beatmapsetId.toString() === searchValue;
+            case 'number':
+                // 纯数字同时搜索sid和bid
+                return selection.beatmapId.toString() === searchValue || selection.beatmapsetId.toString() === searchValue;
+            case 'stat':
+                // 四维数值搜索
+                if (!statType) return false;
+                const targetValue = parseFloat(searchValue);
+                switch (statType) {
+                    case 'ar':
+                        return Math.abs(selection.ar - targetValue) < 0.01; // 允许小数点精度误差
+                    case 'cs':
+                        return Math.abs(selection.cs - targetValue) < 0.01;
+                    case 'od':
+                        return Math.abs(selection.od - targetValue) < 0.01;
+                    case 'hp':
+                        return Math.abs(selection.hp - targetValue) < 0.01;
+                    default:
+                        return false;
+                }
+            case 'mod':
+                if (selection.selectedMods === searchValue) return true;
+                // 处理LZ特有mod的情况
+                if (searchValue === 'LZ' && selection.selectedMods === 'LZ' && selection.customModName) return true;
+                return false;
+            case 'text':
+            default:
+                // 文本搜索：歌曲名、艺术家、谱师，不区分大小写
+                const lowerValue = searchValue.toLowerCase();
+                return (
+                    selection.title.toLowerCase().includes(lowerValue) ||
+                    selection.artist.toLowerCase().includes(lowerValue) ||
+                    selection.creator.toLowerCase().includes(lowerValue) ||
+                    selection.version.toLowerCase().includes(lowerValue)
+                );
+        }
+    };
+
+    // 计算筛选后的选图列表
+    const filteredSelections = selections.filter(selection => {
+        // Mod筛选
+        const modMatch = modFilter === 'all' ||
+            (selection.selectedMods === 'LZ' && selection.customModName && modFilter === 'LZ') ||
+            selection.selectedMods === modFilter;
+
+        // 搜索筛选
+        const searchParsed = parseSearchQuery(searchQuery);
+        const searchMatch = matchesSearch(selection, searchParsed.type, searchParsed.value, searchParsed.statType);
+
+        return modMatch && searchMatch;
     });
 
     // 获取当前选图中存在的所有mod类型
@@ -805,6 +1132,58 @@ export default function MapSelectionPage() {
                                     </div>
                                 </div>
 
+                                {/* 重复警告 */}
+                                {duplicateWarning.show && (
+                                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                        <div className="flex items-start">
+                                            <div className="flex-shrink-0">
+                                                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <div className="ml-3 flex-1">
+                                                <h3 className="text-sm font-medium text-yellow-800">
+                                                    发现重复图谱
+                                                </h3>
+                                                <div className="mt-2 text-sm text-yellow-700">
+                                                    <p>此图谱已被选择 {duplicateWarning.existingSelections.length} 次，请谨慎操作：</p>
+                                                    <ul className="mt-1 list-disc list-inside space-y-1">
+                                                        {duplicateWarning.existingSelections.map((selection, index) => (
+                                                            <li key={index}>
+                                                                {selection.selectedMods === 'LZ' && selection.customModName ?
+                                                                    `LZ${selection.modPosition}-${selection.customModName}` :
+                                                                    selection.selectedMods === 'DT' && selection.customDTRate && selection.customDTRate !== 1.5 ?
+                                                                        `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}` :
+                                                                        `${selection.selectedMods}${selection.modPosition}`
+                                                                } - {selection.title} [{selection.version}]
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                                <div className="mt-3 flex space-x-3">
+                                                    <button
+                                                        onClick={() => setDuplicateWarning({ show: false, beatmapId: 0, existingSelections: [] })}
+                                                        className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1 text-sm rounded"
+                                                    >
+                                                        我知道了，继续添加
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setDuplicateWarning({ show: false, beatmapId: 0, existingSelections: [] });
+                                                            setUrlInput('');
+                                                            setBeatmapPreview(null);
+                                                            setAvailableBeatmaps([]);
+                                                        }}
+                                                        className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1 text-sm rounded"
+                                                    >
+                                                        取消
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Beatmap preview */}
                                 {beatmapPreview && (
                                     <div className="bg-gray-200 rounded-lg p-4">
@@ -825,6 +1204,8 @@ export default function MapSelectionPage() {
                                                         const selectedBeatmap = availableBeatmaps.find(b => b.id === selectedId);
                                                         if (selectedBeatmap) {
                                                             setBeatmapPreview(selectedBeatmap);
+                                                            // 检查新选择的难度是否重复
+                                                            checkForDuplicates(selectedBeatmap.id);
                                                         }
                                                     }}
                                                     minWidth="100%"
@@ -1030,7 +1411,7 @@ export default function MapSelectionPage() {
                                 )}
 
                                 {/* Approval checkbox */}
-                                <div className="flex items-center">
+                                <div className="flex items-center gap-6">
                                     <label className="flex items-center text-gray-800">
                                         <input
                                             type="checkbox"
@@ -1039,6 +1420,15 @@ export default function MapSelectionPage() {
                                             className="mr-2 h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                                         />
                                         过审 (Approved)
+                                    </label>
+                                    <label className="flex items-center text-gray-800">
+                                        <input
+                                            type="checkbox"
+                                            checked={padding}
+                                            onChange={(e) => setPadding(e.target.checked)}
+                                            className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                        />
+                                        padding (测试图池)
                                     </label>
                                 </div>
 
@@ -1051,8 +1441,10 @@ export default function MapSelectionPage() {
                                             setSelectedMods('NM');
                                             setModPosition(1);
                                             setApproved(false);
+                                            setPadding(false);
                                             setBeatmapPreview(null);
                                             setAvailableBeatmaps([]);
+                                            setDuplicateWarning({ show: false, beatmapId: 0, existingSelections: [] });
                                             // Clear error (using global notifications now)
                                             setCustomModName('');
                                             setCustomCS('');
@@ -1084,15 +1476,37 @@ export default function MapSelectionPage() {
                                 已选歌曲 ({filteredSelections.length}/{selections.length})
                             </h3>
 
-                            {/* Mod 筛选器 */}
-                            <Dropdown
-                                label="按Mod筛选:"
-                                options={getModFilterOptions()}
-                                value={modFilter}
-                                onChange={setModFilter}
-                                showClearButton={modFilter !== 'all'}
-                                clearButtonText="清除"
-                            />
+                            <div className="flex gap-4 items-center">
+                                {/* 搜索框 */}
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="搜索歌曲名、艺术家、谱师、mod名、四维(ar8/cs4/od9/hp8)或输入osu链接/BID"
+                                        className="bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded text-sm min-w-[300px]"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => setSearchQuery('')}
+                                            className="text-gray-500 hover:text-gray-700 text-sm"
+                                            title="清除搜索"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Mod 筛选器 */}
+                                <Dropdown
+                                    label="按Mod筛选:"
+                                    options={getModFilterOptions()}
+                                    value={modFilter}
+                                    onChange={setModFilter}
+                                    showClearButton={modFilter !== 'all'}
+                                    clearButtonText="清除"
+                                />
+                            </div>
                         </div>
 
                         {filteredSelections.length === 0 ? (
@@ -1107,88 +1521,145 @@ export default function MapSelectionPage() {
                             <div className="space-y-4">
                                 {filteredSelections.map((selection) => (
                                     <div key={selection.id} className="bg-gray-200 rounded-lg p-4">
-                                        <div className="flex justify-between items-start">
+                                        {/* 标题和标签行 */}
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-3 flex-1">
+                                                <span className={`${getModColorClass(selection.selectedMods)} text-white px-2 py-1 rounded text-sm font-bold`}>
+                                                    {selection.selectedMods === 'LZ' && selection.customModName ?
+                                                        `LZ${selection.modPosition}-${selection.customModName}` :
+                                                        selection.selectedMods === 'DT' && selection.customDTRate && selection.customDTRate !== 1.5 ?
+                                                            `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}` :
+                                                            `${selection.selectedMods}${selection.modPosition}`
+                                                    }
+                                                </span>
+                                                {selection.customDASettings && (
+                                                    <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs">
+                                                        DA自定义
+                                                    </span>
+                                                )}
+                                                {selection.approved && (
+                                                    <span className="bg-green-500 text-white px-2 py-1 rounded text-sm font-bold">
+                                                        ✓ 过审
+                                                    </span>
+                                                )}
+                                                <h4 className="text-gray-800 font-bold">
+                                                    {selection.title} - {selection.artist}
+                                                </h4>
+                                            </div>
+                                            {/* 右上角总评分 */}
+                                            <div className="flex-shrink-0">
+                                                <RatingDisplay
+                                                    ratings={mapRatings[selection.id] || []}
+                                                    selectedBy={selection.selectedBy}
+                                                    currentUserId={user?.id.toString() || null}
+                                                    onRefresh={() => fetchMapRatings(selection.id)}
+                                                    compact={true}
+                                                    isAdmin={isAdmin}
+                                                />
+                                            </div>
+                                        </div>                                        {/* 主要内容区域 */}
+                                        <div className="flex gap-4">
+                                            {/* 左侧：封面和信息 */}
                                             <div className="flex gap-4 flex-1">
-                                                {/* Cover image */}
+                                                {/* 封面图 */}
                                                 {selection.coverUrl && (
                                                     <div className="flex-shrink-0">
                                                         <img
                                                             src={selection.coverUrl}
                                                             alt={`${selection.title} cover`}
-                                                            className="w-20 h-20 rounded-lg object-cover"
+                                                            className="w-16 h-16 rounded-lg object-cover"
                                                             onError={(e) => {
                                                                 e.currentTarget.style.display = 'none';
                                                             }}
                                                         />
                                                     </div>
                                                 )}
-                                                {/* Content */}
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-3 mb-2">
-                                                        <span className="bg-blue-500 text-white px-2 py-1 rounded text-sm font-bold">
-                                                            {selection.selectedMods === 'LZ' && selection.customModName ?
-                                                                `${selection.customModName}${selection.modPosition}` :
-                                                                `${selection.selectedMods}${selection.modPosition}`
-                                                            }
-                                                            {selection.selectedMods === 'DT' && selection.customDTRate && selection.customDTRate !== 1.5 && (
-                                                                <span className="text-xs ml-1">({selection.customDTRate}x)</span>
-                                                            )}
-                                                        </span>
-                                                        {selection.customDASettings && (
-                                                            <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs">
-                                                                DA自定义
-                                                            </span>
-                                                        )}
-                                                        {selection.approved && (
-                                                            <span className="bg-green-500 text-white px-2 py-1 rounded text-sm font-bold">
-                                                                ✓ 过审
-                                                            </span>
-                                                        )}
-                                                        <h4 className="text-gray-800 font-bold">
-                                                            {selection.title} - {selection.artist}
-                                                        </h4>
-                                                    </div>
-                                                    <div className="text-gray-700 space-y-1">
-                                                        <p><strong>难度:</strong> {selection.version}</p>
-                                                        <p><strong>作图者:</strong> {selection.creator}</p>
-                                                        <p><strong>星级:</strong> {selection.starRating.toFixed(2)}★</p>
-                                                        <p><strong>BPM:</strong> {selection.bpm}</p>
-                                                        <p><strong>时长:</strong> {formatLength(selection.totalLength)}</p>
-                                                        <p><strong>AR:</strong> {selection.ar.toFixed(1)} | <strong>CS:</strong> {selection.cs.toFixed(1)} | <strong>OD:</strong> {selection.od.toFixed(1)} | <strong>HP:</strong> {selection.hp.toFixed(1)}</p>
 
-                                                        {/* 显示自定义DA设置 */}
-                                                        {selection.customDASettings && (
-                                                            <div className="bg-orange-50 border border-orange-200 rounded p-2 mt-2">
-                                                                <p className="text-orange-800 font-semibold text-sm">DA自定义属性:</p>
-                                                                <p className="text-sm">
-                                                                    {selection.customDASettings.cs !== null && <span>CS: {selection.customDASettings.cs} </span>}
-                                                                    {selection.customDASettings.ar !== null && <span>AR: {selection.customDASettings.ar} </span>}
-                                                                    {selection.customDASettings.od !== null && <span>OD: {selection.customDASettings.od} </span>}
-                                                                    {selection.customDASettings.hp !== null && <span>HP: {selection.customDASettings.hp} </span>}
-                                                                </p>
-                                                            </div>
-                                                        )}
-
-                                                        {selection.comment && (
-                                                            <p><strong>注释:</strong> {selection.comment}</p>
-                                                        )}
-                                                        <p><strong>选择时间:</strong> {new Date(selection.selectedAt).toLocaleString()}</p>
+                                                {/* 信息区域 */}
+                                                <div className="flex-1 space-y-2">
+                                                    {/* 第一行：难度和作图者 */}
+                                                    <div className="flex gap-4 text-sm">
+                                                        <span><strong>难度:</strong> {selection.version}</span>
+                                                        <span><strong>作图者:</strong> {selection.creator}</span>
                                                     </div>
+
+                                                    {/* 第二行：BPM和时长 */}
+                                                    <div className="flex gap-4 text-sm">
+                                                        <span><strong>BPM:</strong> {selection.bpm}</span>
+                                                        <span><strong>时长:</strong> {formatLength(selection.totalLength)}</span>
+                                                    </div>
+
+                                                    {/* 第三行：星级和ARCSODHP */}
+                                                    <div className="flex gap-4 text-sm">
+                                                        <span><strong>星级:</strong> {selection.starRating.toFixed(2)}★</span>
+                                                        <span><strong>AR:</strong> {selection.ar.toFixed(1)} | <strong>CS:</strong> {selection.cs.toFixed(1)} | <strong>OD:</strong> {selection.od.toFixed(1)} | <strong>HP:</strong> {selection.hp.toFixed(1)}</span>
+                                                    </div>
+
+                                                    {/* 自定义DA设置 */}
+                                                    {selection.customDASettings && (
+                                                        <div className="bg-orange-50 border border-orange-200 rounded p-2">
+                                                            <p className="text-orange-800 font-semibold text-xs">DA自定义属性:</p>
+                                                            <p className="text-xs">
+                                                                {selection.customDASettings.cs !== null && <span>CS: {selection.customDASettings.cs} </span>}
+                                                                {selection.customDASettings.ar !== null && <span>AR: {selection.customDASettings.ar} </span>}
+                                                                {selection.customDASettings.od !== null && <span>OD: {selection.customDASettings.od} </span>}
+                                                                {selection.customDASettings.hp !== null && <span>HP: {selection.customDASettings.hp} </span>}
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* 注释 */}
+                                                    {selection.comment && (
+                                                        <p className="text-sm"><strong>注释:</strong> {selection.comment}</p>
+                                                    )}
+
+                                                    {/* 提名者信息 */}
+                                                    <div className="flex items-center space-x-2 text-sm">
+                                                        <strong>提名者:</strong>
+                                                        {selection.selectedByAvatar ? (
+                                                            <img
+                                                                src={selection.selectedByAvatar}
+                                                                alt={`${selection.selectedByUsername} avatar`}
+                                                                className="w-5 h-5 rounded-full object-cover"
+                                                                onError={(e) => {
+                                                                    e.currentTarget.style.display = 'none';
+                                                                    const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                                                    if (fallback) fallback.style.display = 'flex';
+                                                                }}
+                                                            />
+                                                        ) : null}
+                                                        <span>{selection.selectedByUsername} ({selection.selectedBy})</span>
+                                                    </div>
+
+                                                    {/* 选择时间 */}
+                                                    <p className="text-xs text-gray-600"><strong>选择时间:</strong> {new Date(selection.selectedAt).toLocaleString()}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col gap-2 ml-4">
-                                                {/* 过审状态勾选框 */}
-                                                <div className="flex items-center">
+
+                                            {/* 右侧：操作和评分 */}
+                                            <div className="flex-shrink-0 space-y-3">
+                                                {/* 状态勾选框 */}
+                                                <div className="flex gap-4">
                                                     <label className="flex items-center text-gray-800 text-sm">
                                                         <input
                                                             type="checkbox"
                                                             checked={selection.approved}
                                                             onChange={(e) => updateApprovalStatus(selection.id, e.target.checked)}
-                                                            className="mr-2 h-5 w-5 text-green-600 border-gray-300 focus:ring-green-500"
+                                                            className="mr-2 h-4 w-4 text-green-600 border-gray-300 focus:ring-green-500"
                                                         />
-                                                        过审状态
+                                                        过审
+                                                    </label>
+                                                    <label className="flex items-center text-gray-800 text-sm">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selection.padding || false}
+                                                            onChange={(e) => updatePaddingStatus(selection.id, e.target.checked)}
+                                                            className="mr-2 h-4 w-4 text-orange-600 border-gray-300 focus:ring-orange-500"
+                                                        />
+                                                        Padding
                                                     </label>
                                                 </div>
+
                                                 {/* 操作按钮 */}
                                                 <div className="flex gap-2">
                                                     <button
@@ -1202,20 +1673,41 @@ export default function MapSelectionPage() {
                                                         href={selection.url}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-sm"
+                                                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-sm text-center"
                                                     >
                                                         查看详情
                                                     </a>
-                                                    {selection.selectedBy === user?.id.toString() && (
+                                                    {(selection.selectedBy === user?.id.toString() || isAdmin) && (
                                                         <button
                                                             onClick={() => deleteSelection(selection.id)}
                                                             className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm"
+                                                            title={isAdmin && selection.selectedBy !== user?.id.toString() ? "管理员删除" : "删除选图"}
                                                         >
                                                             删除
                                                         </button>
                                                     )}
                                                 </div>
+
+                                                {/* 评分组件 */}
+                                                <div>
+                                                    <CurrentRating
+                                                        rating={userRatings[selection.id] || 0}
+                                                        onRatingChange={(rating) => handleRating(selection.id, rating)}
+                                                        isSubmitting={isRatingSubmitting}
+                                                        userId={user?.id.toString() || null}
+                                                    />
+                                                </div>
                                             </div>
+                                        </div>
+
+                                        {/* 底部：评论区 */}
+                                        <div className="mt-4 pt-3 border-t border-gray-300">
+                                            <CommentComponent
+                                                mapSelectionId={selection.id}
+                                                userId={user?.id.toString() || null}
+                                                onCommentUpdate={fetchSelections}
+                                                compactMode={true}
+                                            />
                                         </div>
                                     </div>
                                 ))}
@@ -1223,7 +1715,7 @@ export default function MapSelectionPage() {
                         )}
                     </div>
                 </div>
-            </div>
+            </div >
         </>
     );
 }

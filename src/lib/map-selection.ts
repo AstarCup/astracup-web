@@ -1,5 +1,7 @@
 // 选图系统数据库管理
 import mysql from 'mysql2/promise';
+import { getUserById } from './osu-api';
+import { get } from '@vercel/edge-config';
 
 // 数据库连接配置（复用现有配置）
 const dbConfig = {
@@ -13,7 +15,7 @@ const dbConfig = {
 // 创建数据库连接池
 let pool: mysql.Pool | null = null;
 
-const getPool = (): mysql.Pool => {
+export const getPool = (): mysql.Pool => {
     if (!pool) {
         pool = mysql.createPool({
             ...dbConfig,
@@ -41,14 +43,19 @@ export interface MapSelection {
     hp: number;                 // Health Points (HP Drain Rate)
     selectedMods: string;       // 选择的mod，如 "NM", "HD", "HR" 等
     modPosition: number;        // mod位数，如 nm1的1, hd2的2
+    customDTRate?: number;      // 自定义DT倍率（可选）
+    customModName?: string;     // 自定义mod名称（用于LZ mod）
     comment: string;            // 注释信息
     selectedBy: string;         // 选图者的osu ID
+    selectedByUsername: string; // 选图者的用户名
+    selectedByAvatar: string;   // 选图者的头像URL
     selectedAt: string;         // 选图时间
     season: string;             // 赛季标识，如 "s1", "s2"
     category: string;           // 类别，如 "qualification", "ro32", "ro16" 等
     url: string;                // beatmap URL
     coverUrl: string;           // 封面URL
     approved: boolean;          // 是否过审
+    padding?: boolean;          // 是否为padding状态
 }
 
 // 初始化选图数据库表
@@ -154,6 +161,20 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
             }
         }
 
+        // 检查并添加padding字段
+        try {
+            await connection.execute(`SELECT padding FROM map_selections LIMIT 1`);
+        } catch (error: any) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding padding field...');
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN padding BOOLEAN DEFAULT FALSE AFTER approved
+                `);
+                console.log('Successfully added padding field');
+            }
+        }
+
         // 检查并添加coverUrl字段
         try {
             await connection.execute(`SELECT coverUrl FROM map_selections LIMIT 1`);
@@ -182,6 +203,62 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
             }
         }
 
+        // 检查并添加selectedByUsername字段
+        try {
+            await connection.execute(`SELECT selectedByUsername FROM map_selections LIMIT 1`);
+        } catch (error: any) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding selectedByUsername field...');
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN selectedByUsername VARCHAR(255) AFTER selectedBy
+                `);
+                console.log('Successfully added selectedByUsername field');
+            }
+        }
+
+        // 检查并添加selectedByAvatar字段
+        try {
+            await connection.execute(`SELECT selectedByAvatar FROM map_selections LIMIT 1`);
+        } catch (error: any) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding selectedByAvatar field...');
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN selectedByAvatar VARCHAR(500) AFTER selectedByUsername
+                `);
+                console.log('Successfully added selectedByAvatar field');
+            }
+        }
+
+        // 检查并添加customDTRate字段
+        try {
+            await connection.execute(`SELECT customDTRate FROM map_selections LIMIT 1`);
+        } catch (error: any) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding customDTRate field...');
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN customDTRate DECIMAL(4,2) DEFAULT NULL AFTER selectedByAvatar
+                `);
+                console.log('Successfully added customDTRate field');
+            }
+        }
+
+        // 检查并添加customModName字段
+        try {
+            await connection.execute(`SELECT customModName FROM map_selections LIMIT 1`);
+        } catch (error: any) {
+            if (error.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding customModName field...');
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN customModName VARCHAR(50) DEFAULT NULL AFTER customDTRate
+                `);
+                console.log('Successfully added customModName field');
+            }
+        }
+
         connection.release();
         console.log('Map selection database initialized successfully');
     } catch (error) {
@@ -193,7 +270,7 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
 // 选图数据库操作类
 export const mapSelectionStorage = {
     // 获取所有选图
-    async getMapSelections(season: string = 's1', category?: string): Promise<MapSelection[]> {
+    async getMapSelections(season: string = 's1', category?: string, padding?: boolean): Promise<MapSelection[]> {
         try {
             const connection = await getPool().getConnection();
             let query = 'SELECT * FROM map_selections WHERE season = ?';
@@ -202,6 +279,11 @@ export const mapSelectionStorage = {
             if (category) {
                 query += ' AND category = ?';
                 params.push(category);
+            }
+
+            if (padding !== undefined) {
+                query += ' AND padding = ?';
+                params.push(padding);
             }
 
             query += ' ORDER BY selectedAt DESC';
@@ -228,12 +310,15 @@ export const mapSelectionStorage = {
                 modPosition: row.modPosition || 1,
                 comment: row.comment || '',
                 selectedBy: row.selectedBy,
+                selectedByUsername: row.selectedByUsername || `User_${row.selectedBy}`, // 使用存储的用户名
+                selectedByAvatar: row.selectedByAvatar || '', // 使用存储的头像URL
                 selectedAt: row.selectedAt,
                 season: row.season,
                 category: row.category,
                 url: row.url,
                 coverUrl: row.coverUrl || '',
-                approved: Boolean(row.approved)
+                approved: Boolean(row.approved),
+                padding: Boolean(row.padding)
             }));
         } catch (error) {
             console.error('Error getting map selections:', error);
@@ -242,16 +327,16 @@ export const mapSelectionStorage = {
     },
 
     // 添加选图
-    async addMapSelection(selection: Omit<MapSelection, 'id' | 'selectedAt'>): Promise<boolean> {
+    async addMapSelection(selection: Omit<MapSelection, 'id' | 'selectedAt'> & { selectedByUsername?: string; selectedByAvatar?: string }): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
 
             const [result] = await connection.execute(`
                 INSERT INTO map_selections (
                     beatmapId, beatmapsetId, title, artist, version, creator,
-                    starRating, bpm, totalLength, ar, cs, od, hp, selectedMods, modPosition, comment,
-                    selectedBy, selectedAt, season, category, url, coverUrl, approved
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)
+                    starRating, bpm, totalLength, ar, cs, od, hp, selectedMods, modPosition, customDTRate, customModName, comment,
+                    selectedBy, selectedByUsername, selectedByAvatar, selectedAt, season, category, url, coverUrl, approved
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)
             `, [
                 selection.beatmapId,
                 selection.beatmapsetId,
@@ -268,8 +353,12 @@ export const mapSelectionStorage = {
                 selection.hp,
                 selection.selectedMods,
                 selection.modPosition,
+                selection.customDTRate || null,
+                selection.customModName || null,
                 selection.comment,
                 selection.selectedBy,
+                selection.selectedByUsername || null, // 存储用户名
+                selection.selectedByAvatar || null,   // 存储头像
                 selection.season,
                 selection.category,
                 selection.url,
@@ -287,14 +376,20 @@ export const mapSelectionStorage = {
     },
 
     // 删除选图
-    async deleteMapSelection(id: number, selectedBy: string): Promise<boolean> {
+    async deleteMapSelection(id: number, selectedBy?: string): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
 
-            const [result] = await connection.execute(
-                'DELETE FROM map_selections WHERE id = ? AND selectedBy = ?',
-                [id, selectedBy]
-            );
+            let query = 'DELETE FROM map_selections WHERE id = ?';
+            let params: any[] = [id];
+
+            // 如果提供了selectedBy，则添加用户权限检查
+            if (selectedBy) {
+                query += ' AND selectedBy = ?';
+                params.push(selectedBy);
+            }
+
+            const [result] = await connection.execute(query, params);
 
             connection.release();
             const deleteResult = result as mysql.ResultSetHeader;
@@ -325,7 +420,7 @@ export const mapSelectionStorage = {
     },
 
     // 更新选图信息
-    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved'>>, selectedBy: string): Promise<boolean> {
+    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved' | 'padding'>>, selectedBy: string): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
 
@@ -347,6 +442,11 @@ export const mapSelectionStorage = {
                 params.push(updates.approved);
             }
 
+            if (updates.padding !== undefined) {
+                setClause.push('padding = ?');
+                params.push(updates.padding);
+            }
+
             if (setClause.length === 0) {
                 connection.release();
                 return false;
@@ -366,6 +466,51 @@ export const mapSelectionStorage = {
             console.error('Error updating map selection:', error);
             return false;
         }
+    }
+};
+
+// 管理员权限验证函数
+export const verifyAdminAuth = async (osuId: string): Promise<boolean> => {
+    try {
+        let adminList: string[] = [];
+
+        // 优先尝试从Edge Config获取管理员列表
+        if (process.env.EDGE_CONFIG) {
+            const adminConfig = await get('admin');
+            if (adminConfig && Array.isArray(adminConfig)) {
+                adminList = adminConfig.filter((id): id is string =>
+                    typeof id === 'string' && id.trim() !== ''
+                );
+            }
+        }
+
+        // 如果Edge Config没有数据，尝试从环境变量获取
+        if (adminList.length === 0 && process.env.ADMIN_IDS) {
+            adminList = process.env.ADMIN_IDS
+                .split(',')
+                .map(id => id.trim())
+                .filter(id => id !== '');
+        }
+
+        // 如果都没有数据，使用默认测试ID（开发环境）
+        if (adminList.length === 0 && process.env.NODE_ENV === 'development') {
+            adminList = ['2']; // peppy的ID作为示例
+        }
+
+        // 检查osu ID是否在管理员列表中
+        const userIdStr = osuId.toString();
+        const userIdNum = parseInt(osuId);
+
+        return adminList.some(adminId => {
+            const adminIdStr = adminId.toString();
+            const adminIdNum = parseInt(adminId);
+
+            // 比较字符串和数字形式
+            return adminIdStr === userIdStr || adminIdNum === userIdNum;
+        });
+    } catch (error) {
+        console.error('Error verifying admin auth:', error);
+        return false;
     }
 };
 
