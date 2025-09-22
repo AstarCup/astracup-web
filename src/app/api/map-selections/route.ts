@@ -58,17 +58,22 @@ export async function verifyMapSelectionAuth(osuId: string): Promise<boolean> {
 // 验证回放收集权限的辅助函数
 export async function verifyReplayAuth(osuId: string): Promise<boolean> {
     try {
+        console.log('verifyReplayAuth called with osuId:', osuId);
         let replayAccessUsers: string[] = [];
 
         // 优先尝试从Edge Config获取
         if (process.env.EDGE_CONFIG) {
+            console.log('Fetching from Edge Config...');
             const replayConfig = await get('replayAccessUsers');
+            console.log('Edge Config replayConfig:', replayConfig);
             if (replayConfig && Array.isArray(replayConfig)) {
                 replayAccessUsers = replayConfig.filter((id): id is string =>
                     typeof id === 'string' && id.trim() !== ''
                 );
             }
         }
+
+        console.log('Final replayAccessUsers:', replayAccessUsers);
 
         // 如果Edge Config没有数据，尝试从环境变量获取
         if (replayAccessUsers.length === 0 && process.env.REPLAY_ACCESS_USER_IDS) {
@@ -87,13 +92,16 @@ export async function verifyReplayAuth(osuId: string): Promise<boolean> {
         const userIdStr = osuId.toString();
         const userIdNum = parseInt(osuId);
 
-        return replayAccessUsers.some(userId => {
+        const result = replayAccessUsers.some(userId => {
             const userIdStr2 = userId.toString();
             const userIdNum2 = parseInt(userId);
 
             // 比较字符串和数字形式
             return userIdStr2 === userIdStr || userIdNum2 === userIdNum;
         });
+
+        console.log('verifyReplayAuth result for', osuId, ':', result);
+        return result;
     } catch (error) {
         console.error('Error verifying replay auth:', error);
         return false;

@@ -1,27 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
-
-async function getReplayAccessUsers(): Promise<string[]> {
-    try {
-        const edgeConfigUrl = process.env.EDGE_CONFIG;
-        if (!edgeConfigUrl) {
-            console.warn('EDGE_CONFIG environment variable not set');
-            return [];
-        }
-
-        const response = await fetch(edgeConfigUrl);
-        if (!response.ok) {
-            console.warn('Failed to fetch EDGE_CONFIG');
-            return [];
-        }
-
-        const config = await response.json();
-        return config.replayAccessUsers || [];
-    } catch (error) {
-        console.warn('Error fetching replay access users:', error);
-        return [];
-    }
-}
+import { verifyReplayAuth } from '../map-selections/route';
 
 export async function POST(request: NextRequest) {
     const formData = await request.formData();
@@ -33,9 +12,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: '参数缺失' }, { status: 400 });
     }
 
-    // 权限校验 - 从EDGE_CONFIG获取用户列表
-    const accessUsers = await getReplayAccessUsers();
-    if (!accessUsers.includes(userId.toString())) {
+    // 权限校验 - 使用统一的权限验证函数
+    const hasAccess = await verifyReplayAuth(userId.toString());
+    if (!hasAccess) {
         return NextResponse.json({ error: '无权限' }, { status: 403 });
     }
 

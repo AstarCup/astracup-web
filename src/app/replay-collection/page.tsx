@@ -214,7 +214,8 @@ export default function ReplayCollectionPage() {
                 method: 'POST',
                 body: formData
             });
-            if (res.ok) {
+            const data = await res.json();
+            if (data.success) {
                 showSuccess('上传成功');
                 // 刷新已上传用户
                 setUploadedUsers(prev => ({
@@ -222,7 +223,7 @@ export default function ReplayCollectionPage() {
                     [map.id]: [...(prev[map.id] || []), user.id]
                 }));
             } else {
-                showError('上传失败');
+                showError(data.error || '上传失败');
             }
         } catch {
             showError('上传失败');
