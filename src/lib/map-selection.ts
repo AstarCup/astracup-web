@@ -308,6 +308,8 @@ export const mapSelectionStorage = {
                 hp: parseFloat(row.hp) || 0,
                 selectedMods: row.selectedMods,
                 modPosition: row.modPosition || 1,
+                customDTRate: row.customDTRate ? parseFloat(row.customDTRate) : undefined,
+                customModName: row.customModName || undefined,
                 comment: row.comment || '',
                 selectedBy: row.selectedBy,
                 selectedByUsername: row.selectedByUsername || `User_${row.selectedBy}`, // 使用存储的用户名
@@ -452,15 +454,32 @@ export const mapSelectionStorage = {
                 return false;
             }
 
-            params.push(id, selectedBy);
+            // 对于padding字段，任何有权限的用户都可以修改；其他字段只有创建者可以修改
+            let whereClause = 'WHERE id = ?';
+            let queryParams = [...params, id];
+
+            // 检查是否只更新padding字段
+            const isOnlyPaddingUpdate = Object.keys(updates).length === 1 && updates.padding !== undefined;
+
+            if (!isOnlyPaddingUpdate) {
+                // 如果不是只更新padding字段，则需要验证创建者身份
+                whereClause += ' AND selectedBy = ?';
+                queryParams.push(selectedBy);
+            }
 
             const [result] = await connection.execute(
-                `UPDATE map_selections SET ${setClause.join(', ')} WHERE id = ? AND selectedBy = ?`,
-                params
+                `UPDATE map_selections SET ${setClause.join(', ')} ${whereClause}`,
+                queryParams
             );
 
             connection.release();
             const updateResult = result as mysql.ResultSetHeader;
+            console.log('Database update result:', {
+                sql: `UPDATE map_selections SET ${setClause.join(', ')} ${whereClause}`,
+                params: queryParams,
+                affectedRows: updateResult.affectedRows,
+                changedRows: updateResult.changedRows
+            });
             return updateResult.affectedRows > 0;
         } catch (error) {
             console.error('Error updating map selection:', error);

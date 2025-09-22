@@ -4,7 +4,8 @@ import {
     addMapSelection,
     deleteMapSelection,
     updateMapSelection,
-    verifyAdminAuth
+    verifyAdminAuth,
+    getPool
 } from '@/lib/map-selection';
 import { getBeatmapInfo, getBeatmapsetInfo, parseBeatmapUrl } from '@/lib/osu-api';
 import { get } from '@vercel/edge-config';
@@ -55,6 +56,59 @@ export async function verifyMapSelectionAuth(osuId: string): Promise<boolean> {
     }
 }
 
+// 验证回放收集权限的辅助函数
+export async function verifyReplayAuth(osuId: string): Promise<boolean> {
+    try {
+        console.log('verifyReplayAuth called with osuId:', osuId);
+        let replayAccessUsers: string[] = [];
+
+        // 优先尝试从Edge Config获取
+        if (process.env.EDGE_CONFIG) {
+            console.log('Fetching from Edge Config...');
+            const replayConfig = await get('replayAccessUsers');
+            console.log('Edge Config replayConfig:', replayConfig);
+            if (replayConfig && Array.isArray(replayConfig)) {
+                replayAccessUsers = replayConfig.filter((id): id is string =>
+                    typeof id === 'string' && id.trim() !== ''
+                );
+            }
+        }
+
+        console.log('Final replayAccessUsers:', replayAccessUsers);
+
+        // 如果Edge Config没有数据，尝试从环境变量获取
+        if (replayAccessUsers.length === 0 && process.env.REPLAY_ACCESS_USER_IDS) {
+            replayAccessUsers = process.env.REPLAY_ACCESS_USER_IDS
+                .split(',')
+                .map(id => id.trim())
+                .filter(id => id !== '');
+        }
+
+        // 如果都没有数据，使用默认测试ID
+        if (replayAccessUsers.length === 0) {
+            replayAccessUsers = ['2']; // 示例ID
+        }
+
+        // 检查osu ID是否在授权列表中 - 支持数字和字符串比较
+        const userIdStr = osuId.toString();
+        const userIdNum = parseInt(osuId);
+
+        const result = replayAccessUsers.some(userId => {
+            const userIdStr2 = userId.toString();
+            const userIdNum2 = parseInt(userId);
+
+            // 比较字符串和数字形式
+            return userIdStr2 === userIdStr || userIdNum2 === userIdNum;
+        });
+
+        console.log('verifyReplayAuth result for', osuId, ':', result);
+        return result;
+    } catch (error) {
+        console.error('Error verifying replay auth:', error);
+        return false;
+    }
+}
+
 // GET - 获取选图列表
 export async function GET(request: NextRequest) {
     try {
@@ -63,7 +117,8 @@ export async function GET(request: NextRequest) {
         const category = searchParams.get('category') || undefined;
         const osuId = searchParams.get('osuId');
         const approved = searchParams.get('approved'); // 新增approved参数
-        const padding = searchParams.get('padding') === 'true';
+        const paddingParam = searchParams.get('padding');
+        const padding = paddingParam === null ? undefined : paddingParam === 'true';
 
         // 如果只是获取已过审的图，则不需要权限验证（公开访问）
         if (approved === 'true') {
@@ -91,8 +146,18 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // 验证权限
-        const isAuthorized = await verifyMapSelectionAuth(osuId);
+        // 验证权限 - 如果是获取padding数据，允许有replay access或map selection access的用户
+        let isAuthorized = false;
+        if (padding) {
+            // 对于padding数据，同时检查replay access和map selection access
+            const hasReplayAccess = await verifyReplayAuth(osuId);
+            const hasMapSelectionAccess = await verifyMapSelectionAuth(osuId);
+            isAuthorized = hasReplayAccess || hasMapSelectionAccess;
+        } else {
+            // 对于非padding数据，只需要map selection access
+            isAuthorized = await verifyMapSelectionAuth(osuId);
+        }
+
         if (!isAuthorized) {
             return NextResponse.json(
                 { error: '您没有权限访问选图系统' },
@@ -350,15 +415,6 @@ export async function PUT(request: NextRequest) {
             );
         }
 
-        // 验证权限
-        const isAuthorized = await verifyMapSelectionAuth(selectedBy);
-        if (!isAuthorized) {
-            return NextResponse.json(
-                { error: '您没有权限访问选图系统' },
-                { status: 403 }
-            );
-        }
-
         // 准备更新数据
         const updates: { selectedMods?: string; comment?: string; approved?: boolean; padding?: boolean } = {};
         if (selectedMods !== undefined) updates.selectedMods = selectedMods;
@@ -373,8 +429,50 @@ export async function PUT(request: NextRequest) {
             );
         }
 
+        // 权限检查逻辑：
+        // 1. 如果只更新padding字段，允许选图者本人或选图团队成员
+        // 2. 如果更新其他字段，只允许选图团队成员
+        let isAuthorized = false;
+
+        if (Object.keys(updates).length === 1 && updates.padding !== undefined) {
+            // 只更新padding字段：检查是否为选图者本人或选图团队成员
+            const isMapSelector = await verifyMapSelectionAuth(selectedBy);
+
+            // 检查是否为选图者本人（需要查询数据库）
+            let isOwner = false;
+            try {
+                const connection = await getPool().getConnection();
+                const [rows] = await connection.execute(
+                    'SELECT selectedBy FROM map_selections WHERE id = ?',
+                    [id]
+                ) as [any[], any];
+
+                if (rows && rows.length > 0) {
+                    const selection = rows[0];
+                    isOwner = selection.selectedBy === selectedBy;
+                    console.log('Ownership check:', { selectionSelectedBy: selection.selectedBy, requestSelectedBy: selectedBy, isOwner });
+                }
+                connection.release();
+            } catch (error) {
+                console.error('Error checking selection ownership:', error);
+            }
+
+            isAuthorized = isMapSelector || isOwner;
+            console.log('Padding update authorization:', { isMapSelector, isOwner, isAuthorized });
+        } else {
+            // 更新其他字段：只允许选图团队成员
+            isAuthorized = await verifyMapSelectionAuth(selectedBy);
+        } if (!isAuthorized) {
+            return NextResponse.json(
+                { error: '您没有权限更新此选图' },
+                { status: 403 }
+            );
+        }
+
         // 更新选图
+        console.log('Calling updateMapSelection with:', { id: parseInt(id), updates, selectedBy });
         const success = await updateMapSelection(parseInt(id), updates, selectedBy);
+        console.log('updateMapSelection result:', success);
 
         if (!success) {
             return NextResponse.json(
