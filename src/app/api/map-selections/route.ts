@@ -470,7 +470,9 @@ export async function PUT(request: NextRequest) {
         }
 
         // 更新选图
+        console.log('Calling updateMapSelection with:', { id: parseInt(id), updates, selectedBy });
         const success = await updateMapSelection(parseInt(id), updates, selectedBy);
+        console.log('updateMapSelection result:', success);
 
         if (!success) {
             return NextResponse.json(
