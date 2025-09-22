@@ -13,7 +13,7 @@ interface CommentComponentProps {
 
 export default function CommentComponent({ mapSelectionId, userId, onCommentUpdate, compactMode = false }: CommentComponentProps) {
 
-    const [comments, setComments] = useState<Array<{ id: number; userId: string; username: string; comment: string; createdAt: string }>>([]);
+    const [comments, setComments] = useState<Array<{ id: number; userId: string; username: string; avatar_url: string; comment: string; createdAt: string }>>([]);
     const [commentInput, setCommentInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +32,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                         id: r.id,
                         userId: r.userId,
                         username: r.username,
+                        avatar_url: r.avatar_url,
                         comment: r.comment,
                         createdAt: r.createdAt
                     })).filter((r: any) => r.comment));
@@ -117,25 +118,41 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                     ) : (
                         <div className="flex flex-wrap gap-2">
                             {comments.map((c) => (
-                                <div key={c.id} className="inline-flex items-center gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200 max-w-xs">
+                                <div key={c.id} className="relative group inline-flex items-center gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200 max-w-xs hover:bg-gray-100 transition-colors">
                                     {/* 头像 */}
-                                    <div className="w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600 border border-gray-400 flex-shrink-0">
-                                        {c.username?.charAt(0).toUpperCase() || 'U'}
+                                    <div className="w-5 h-5 rounded-full overflow-hidden border border-gray-300 flex-shrink-0">
+                                        <img
+                                            src={c.avatar_url}
+                                            alt={c.username}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                                if (fallback) fallback.style.display = 'flex';
+                                            }}
+                                        />
+                                        <div className="w-full h-full bg-gray-300 rounded-full flex items-center justify-center absolute inset-0" style={{ display: 'none' }}>
+                                            <span className="text-xs text-gray-600">
+                                                {c.username?.charAt(0).toUpperCase() || 'U'}
+                                            </span>
+                                        </div>
                                     </div>
                                     {/* 评论内容 */}
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-1 mb-1">
-                                            <span className="font-medium text-xs text-gray-700 truncate">{c.username}</span>
-                                            {userId === c.userId && (
-                                                <button
-                                                    className="text-red-500 hover:text-red-600 text-xs flex-shrink-0"
-                                                    title="删除评论"
-                                                    onClick={() => handleDeleteComment(c.id)}
-                                                >×</button>
-                                            )}
-                                        </div>
                                         <p className="text-xs text-gray-800 break-words line-clamp-2">{c.comment}</p>
-                                        <span className="text-xs text-gray-500">{new Date(c.createdAt).toLocaleString()}</span>
+                                        {userId === c.userId && (
+                                            <button
+                                                className="absolute top-1 right-1 text-red-500 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                                title="删除评论"
+                                                onClick={() => handleDeleteComment(c.id)}
+                                            >×</button>
+                                        )}
+                                    </div>
+                                    {/* Hover弹窗 */}
+                                    <div className="absolute top-full left-0 mt-1 bg-gray-900 text-white text-xs rounded shadow-lg p-2 z-20 min-w-[150px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                        <div className="font-semibold mb-1">{c.username}</div>
+                                        <div className="text-gray-300 text-xs mb-1">{new Date(c.createdAt).toLocaleString()}</div>
+                                        <div className="text-gray-100">{c.comment}</div>
                                     </div>
                                 </div>
                             ))}
