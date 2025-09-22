@@ -101,6 +101,7 @@ export default function MapSelectionPage() {
     const [season, setSeason] = useState('s1');
     const [category, setCategory] = useState('qualification');
     const [modFilter, setModFilter] = useState<string>('all'); // 新增：mod筛选状态
+    const [searchQuery, setSearchQuery] = useState<string>(''); // 新增：搜索查询状态
 
     // Rating states
     const [userRatings, setUserRatings] = useState<{ [key: number]: number }>({});
@@ -802,16 +803,105 @@ export default function MapSelectionPage() {
         }
     };
 
-    // 计算筛选后的选图列表
-    const filteredSelections = selections.filter(selection => {
-        if (modFilter === 'all') return true;
+    // 解析搜索查询，支持多种搜索方式
+    const parseSearchQuery = (query: string): { type: 'text' | 'bid' | 'sid' | 'mod' | 'number' | 'stat', value: string; statType?: 'ar' | 'cs' | 'od' | 'hp' } => {
+        const trimmedQuery = query.trim();
+        if (!trimmedQuery) return { type: 'text', value: '' };
 
-        // 处理LZ特有mod的情况
-        if (selection.selectedMods === 'LZ' && selection.customModName) {
-            return modFilter === 'LZ';
+        // 检查是否是osu URL
+        const osuUrlRegex = /osu\.ppy\.sh\/beatmaps?\/(\d+)/;
+        const urlMatch = trimmedQuery.match(osuUrlRegex);
+        if (urlMatch) {
+            return { type: 'bid', value: urlMatch[1] };
         }
 
-        return selection.selectedMods === modFilter;
+        // 检查是否是四维搜索 (ar, cs, od, hp + 数值)
+        const statRegex = /^(ar|cs|od|hp)(\d+(?:\.\d+)?)$/i;
+        const statMatch = trimmedQuery.match(statRegex);
+        if (statMatch) {
+            const [, statType, statValue] = statMatch;
+            return {
+                type: 'stat',
+                value: statValue,
+                statType: statType.toLowerCase() as 'ar' | 'cs' | 'od' | 'hp'
+            };
+        }
+
+        // 检查是否是纯数字（可能是sid或bid）
+        const numberRegex = /^\d+$/;
+        if (numberRegex.test(trimmedQuery)) {
+            // 纯数字同时搜索sid和bid
+            return { type: 'number', value: trimmedQuery };
+        }
+
+        // 检查是否是mod名（NM, HD, HR, DT, TB, FM, LZ等）
+        const modRegex = /^(NM|HD|HR|DT|TB|FM|LZ)$/i;
+        if (modRegex.test(trimmedQuery)) {
+            return { type: 'mod', value: trimmedQuery.toUpperCase() };
+        }
+
+        // 默认当作文本搜索
+        return { type: 'text', value: trimmedQuery };
+    };
+
+    // 检查选图是否匹配搜索条件
+    const matchesSearch = (selection: MapSelection, searchType: string, searchValue: string, statType?: 'ar' | 'cs' | 'od' | 'hp'): boolean => {
+        if (!searchValue) return true;
+
+        switch (searchType) {
+            case 'bid':
+                return selection.beatmapId.toString() === searchValue;
+            case 'sid':
+                return selection.beatmapsetId.toString() === searchValue;
+            case 'number':
+                // 纯数字同时搜索sid和bid
+                return selection.beatmapId.toString() === searchValue || selection.beatmapsetId.toString() === searchValue;
+            case 'stat':
+                // 四维数值搜索
+                if (!statType) return false;
+                const targetValue = parseFloat(searchValue);
+                switch (statType) {
+                    case 'ar':
+                        return Math.abs(selection.ar - targetValue) < 0.01; // 允许小数点精度误差
+                    case 'cs':
+                        return Math.abs(selection.cs - targetValue) < 0.01;
+                    case 'od':
+                        return Math.abs(selection.od - targetValue) < 0.01;
+                    case 'hp':
+                        return Math.abs(selection.hp - targetValue) < 0.01;
+                    default:
+                        return false;
+                }
+            case 'mod':
+                if (selection.selectedMods === searchValue) return true;
+                // 处理LZ特有mod的情况
+                if (searchValue === 'LZ' && selection.selectedMods === 'LZ' && selection.customModName) return true;
+                return false;
+            case 'text':
+            default:
+                // 文本搜索：歌曲名、艺术家、谱师，不区分大小写
+                const lowerValue = searchValue.toLowerCase();
+                return (
+                    selection.title.toLowerCase().includes(lowerValue) ||
+                    selection.artist.toLowerCase().includes(lowerValue) ||
+                    selection.creator.toLowerCase().includes(lowerValue) ||
+                    selection.version.toLowerCase().includes(lowerValue)
+                );
+        }
+    };
+
+    // 计算筛选后的选图列表
+    const filteredSelections = selections.filter(selection => {
+        // Mod筛选
+        const modMatch = modFilter === 'all' ||
+            (selection.selectedMods === 'LZ' && selection.customModName && modFilter === 'LZ') ||
+            selection.selectedMods === modFilter;
+
+        // 搜索筛选
+        const searchParsed = parseSearchQuery(searchQuery);
+        const searchMatch = matchesSearch(selection, searchParsed.type, searchParsed.value, searchParsed.statType);
+
+        return modMatch && searchMatch;
     });
 
     // 获取当前选图中存在的所有mod类型
@@ -1321,15 +1411,37 @@ export default function MapSelectionPage() {
                                 已选歌曲 ({filteredSelections.length}/{selections.length})
                             </h3>
 
-                            {/* Mod 筛选器 */}
-                            <Dropdown
-                                label="按Mod筛选:"
-                                options={getModFilterOptions()}
-                                value={modFilter}
-                                onChange={setModFilter}
-                                showClearButton={modFilter !== 'all'}
-                                clearButtonText="清除"
-                            />
+                            <div className="flex gap-4 items-center">
+                                {/* 搜索框 */}
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="搜索歌曲名、艺术家、谱师、mod名、四维(ar8/cs4/od9/hp8)或输入osu链接/BID"
+                                        className="bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded text-sm min-w-[300px]"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => setSearchQuery('')}
+                                            className="text-gray-500 hover:text-gray-700 text-sm"
+                                            title="清除搜索"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Mod 筛选器 */}
+                                <Dropdown
+                                    label="按Mod筛选:"
+                                    options={getModFilterOptions()}
+                                    value={modFilter}
+                                    onChange={setModFilter}
+                                    showClearButton={modFilter !== 'all'}
+                                    clearButtonText="清除"
+                                />
+                            </div>
                         </div>
 
                         {filteredSelections.length === 0 ? (

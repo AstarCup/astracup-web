@@ -53,12 +53,22 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId, onRe
     // 删除评论
     const handleDeleteComment = async (id: number) => {
         if (!window.confirm('确定要删除这条评论吗？')) return;
+        if (!currentUserId) {
+            alert('请先登录');
+            return;
+        }
         try {
-            const response = await fetch(`/api/map-ratings?id=${id}`, { method: 'DELETE' });
+            const response = await fetch(`/api/map-ratings?id=${id}&userId=${currentUserId}`, { method: 'DELETE' });
             if (response.ok) {
                 if (onRefresh) onRefresh();
+            } else {
+                const errorData = await response.json();
+                alert(`删除失败: ${errorData.error || '未知错误'}`);
             }
-        } catch (e) { }
+        } catch (e) {
+            console.error('删除评论失败:', e);
+            alert('删除评论失败，请稍后重试');
+        }
     };
 
     return (
