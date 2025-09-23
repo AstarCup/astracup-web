@@ -1239,7 +1239,7 @@ export default function MapSelectionPage() {
                     {/* Control panel */}
                     <div className="bg-gray-100 rounded-lg p-6 mb-6">
                         <div className="flex flex-wrap gap-4 items-center justify-between">
-                            <div className="flex gap-3 items-center">
+                            <div className="flex gap-4 items-center">
                                 <Dropdown
                                     label="赛季"
                                     options={availableSeasons}
@@ -1255,22 +1255,24 @@ export default function MapSelectionPage() {
                                     minWidth="8rem"
                                 />
                             </div>
-                            {/* 批量过审按钮 */}
-                            <button
-                                onClick={() => setShowBulkApprovalModal(true)}
-                                disabled={tempApprovedSelections.size === 0}
-                                className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded font-medium"
-                                title={` (${tempApprovedSelections.size} 个待过审)`}
-                            >
-                                过审发布 ({tempApprovedSelections.size})
-                            </button>
+                            <div className="flex gap-4">
 
-                            <button
-                                onClick={() => setShowAddForm(true)}
-                                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-medium"
-                            >
-                                添加歌曲
-                            </button>
+                                <button
+                                    onClick={() => setShowBulkApprovalModal(true)}
+                                    disabled={tempApprovedSelections.size === 0}
+                                    className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded font-medium"
+                                    title={` (${tempApprovedSelections.size} 个待过审)`}
+                                >
+                                    过审发布 ({tempApprovedSelections.size})
+                                </button>
+
+                                <button
+                                    onClick={() => setShowAddForm(true)}
+                                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-medium"
+                                >
+                                    添加歌曲
+                                </button>
+                            </div>
                         </div>
                     </div>
 
