@@ -86,6 +86,76 @@ const CATEGORY_OPTIONS = [
 ];
 
 export default function MapSelectionPage() {
+    // 图池配置数据
+    const poolData = [
+        {
+            pool: 'QUA',
+            difficulty: '6.2星',
+            boBan: '',
+            nmCount: 4,
+            hdCount: 2,
+            hrCount: 2,
+            dtCount: 2,
+            lzCount: 0,
+            tbCount: 0
+        },
+        {
+            pool: 'RO16',
+            difficulty: '5.9星',
+            boBan: '9/1',
+            nmCount: 5,
+            hdCount: 3,
+            hrCount: 2,
+            dtCount: 2,
+            lzCount: 1,
+            tbCount: 1
+        },
+        {
+            pool: 'QF',
+            difficulty: '6.2星',
+            boBan: '11/1',
+            nmCount: 5,
+            hdCount: 3,
+            hrCount: 2,
+            dtCount: 3,
+            lzCount: 1,
+            tbCount: 1
+        },
+        {
+            pool: 'SF',
+            difficulty: '6.5星',
+            boBan: '11/1',
+            nmCount: 5,
+            hdCount: 3,
+            hrCount: 3,
+            dtCount: 3,
+            lzCount: 1,
+            tbCount: 1
+        },
+        {
+            pool: 'F',
+            difficulty: '6.7星',
+            boBan: '11/2',
+            nmCount: 6,
+            hdCount: 3,
+            hrCount: 3,
+            dtCount: 3,
+            lzCount: 1,
+            tbCount: 1
+        },
+        {
+            pool: 'GF',
+            difficulty: '7.0星',
+            boBan: '13/2',
+            nmCount: 6,
+            hdCount: 3,
+            hrCount: 3,
+            dtCount: 4,
+            lzCount: 2,
+            tbCount: 1
+        }
+    ];
+
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -1014,9 +1084,9 @@ export default function MapSelectionPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-white">
+            <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <div className="text-gray-800 text-xl mb-4">正在验证权限...</div>
+                    <div className="text-white text-xl mb-4">正在验证权限...</div>
                 </div>
             </div>
         );
@@ -1024,7 +1094,7 @@ export default function MapSelectionPage() {
 
     if (!isAuthorized) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-white">
+            <div className="min-h-screen flex items-center justify-center">
                 <div className="bg-red-500/20 border border-red-500 rounded-lg p-6 max-w-2xl">
                     <h2 className="text-gray-800 text-xl font-bold mb-4">访问被拒绝</h2>
                     <p className="text-gray-800 mb-4">您没有访问此页面的权限。</p>
@@ -1041,14 +1111,48 @@ export default function MapSelectionPage() {
 
     return (
         <>
-            <div className="min-h-screen bg-white p-6">
+            <div className="min-h-screen p-6">
                 <div className="max-w-6xl mx-auto">
                     {/* Header */}
+                    <div className='bg-gray-100 rounded-lg p-6 mb-6'>
+                        <p>该选图系统仅限选图组使用，请勿往外发截图、消息。</p>
+                        <p>选图可打分，分高优先使用，评论区请文明发言。</p>
+                        <table className="table-auto mt-2 text-sm">
+                            <thead>
+                                <tr>
+                                    <th className="px-2 py-1 border">图池</th>
+                                    <th className="px-2 py-1 border">难度</th>
+                                    <th className="px-2 py-1 border">BO/Ban</th>
+                                    <th className="px-2 py-1 border">NM数量</th>
+                                    <th className="px-2 py-1 border">HD数量</th>
+                                    <th className="px-2 py-1 border">HR数量</th>
+                                    <th className="px-2 py-1 border">DT数量</th>
+                                    <th className="px-2 py-1 border">LZ数量</th>
+                                    <th className="px-2 py-1 border">TB数量</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {poolData.map((pool, index) => (
+                                    <tr key={pool.pool}>
+                                        <td className="px-2 py-1 border">{pool.pool}</td>
+                                        <td className="px-2 py-1 border">{pool.difficulty}</td>
+                                        <td className="px-2 py-1 border">{pool.boBan}</td>
+                                        <td className="px-2 py-1 border">{pool.nmCount}</td>
+                                        <td className="px-2 py-1 border">{pool.hdCount}</td>
+                                        <td className="px-2 py-1 border">{pool.hrCount}</td>
+                                        <td className="px-2 py-1 border">{pool.dtCount}</td>
+                                        <td className="px-2 py-1 border">{pool.lzCount}</td>
+                                        <td className="px-2 py-1 border">{pool.tbCount}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                     <div className="flex justify-between items-center mb-8">
-                        <h1 className="text-3xl font-bold text-gray-800">选图系统</h1>
+                        <h1 className="text-3xl font-bold text-white">选图系统</h1>
                         <div className="flex items-center space-x-4">
                             {user && (
-                                <div className="flex items-center space-x-2 text-gray-800">
+                                <div className="flex items-center space-x-2 text-white">
                                     <img
                                         src={user.avatar_url}
                                         alt={user.username}
