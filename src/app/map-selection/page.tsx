@@ -1527,7 +1527,7 @@ export default function MapSelectionPage() {
                                             onChange={(e) => setApproved(e.target.checked)}
                                             className="mr-2 h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                                         />
-                                        过审 (Approved)
+                                        过审
                                     </label>
                                     <label className="flex items-center text-gray-800">
                                         <input
@@ -1536,7 +1536,7 @@ export default function MapSelectionPage() {
                                             onChange={(e) => setPadding(e.target.checked)}
                                             className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                         />
-                                        padding (测试图池)
+                                        提交测图
                                     </label>
                                 </div>
 

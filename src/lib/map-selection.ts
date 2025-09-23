@@ -458,8 +458,11 @@ export const mapSelectionStorage = {
             let whereClause = 'WHERE id = ?';
             let queryParams = [...params, id];
 
-            if (!updates.padding || Object.keys(updates).length > 1) {
-                // 如果不是只更新padding，或者有其他字段需要更新，则需要验证创建者身份
+            // 检查是否只更新padding字段
+            const isOnlyPaddingUpdate = Object.keys(updates).length === 1 && updates.padding !== undefined;
+
+            if (!isOnlyPaddingUpdate) {
+                // 如果不是只更新padding字段，则需要验证创建者身份
                 whereClause += ' AND selectedBy = ?';
                 queryParams.push(selectedBy);
             }
@@ -471,6 +474,12 @@ export const mapSelectionStorage = {
 
             connection.release();
             const updateResult = result as mysql.ResultSetHeader;
+            console.log('Database update result:', {
+                sql: `UPDATE map_selections SET ${setClause.join(', ')} ${whereClause}`,
+                params: queryParams,
+                affectedRows: updateResult.affectedRows,
+                changedRows: updateResult.changedRows
+            });
             return updateResult.affectedRows > 0;
         } catch (error) {
             console.error('Error updating map selection:', error);
