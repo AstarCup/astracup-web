@@ -216,6 +216,11 @@ export default function MapSelectionPage() {
     // DT自定义倍率
     const [customDTRate, setCustomDTRate] = useState<number | ''>(1.5);
 
+    // 批量过审相关状态
+    const [tempApprovedSelections, setTempApprovedSelections] = useState<Set<number>>(new Set());
+    const [showBulkApprovalModal, setShowBulkApprovalModal] = useState(false);
+    const [isBulkApproving, setIsBulkApproving] = useState(false);
+
     // Remove auto-parsing, use Enter key instead
 
     // Check user login status and permissions
@@ -1080,6 +1085,66 @@ export default function MapSelectionPage() {
         return options;
     };
 
+    // 批量过审处理函数
+    const handleBulkApproval = async () => {
+        if (tempApprovedSelections.size === 0) {
+            showError('没有选中的选图');
+            return;
+        }
+
+        setIsBulkApproving(true);
+        let successCount = 0;
+        let errorCount = 0;
+
+        try {
+            // 逐个过审选中的选图
+            for (const selectionId of tempApprovedSelections) {
+                try {
+                    const response = await fetch('/api/map-selections', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            id: selectionId,
+                            approved: true,
+                            selectedBy: user?.id.toString()
+                        })
+                    });
+
+                    if (response.ok) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                        const errorData = await response.json();
+                        console.error(`Failed to approve selection ${selectionId}:`, errorData.error);
+                    }
+                } catch (error) {
+                    errorCount++;
+                    console.error(`Error approving selection ${selectionId}:`, error);
+                }
+            }
+
+            // 显示结果
+            if (successCount > 0) {
+                showSuccess(`批量过审完成：${successCount} 个成功${errorCount > 0 ? `，${errorCount} 个失败` : ''}`);
+            } else {
+                showError('批量过审失败，请重试');
+            }
+
+            // 清除临时状态并刷新数据
+            setTempApprovedSelections(new Set());
+            setShowBulkApprovalModal(false);
+            fetchSelections();
+
+        } catch (error) {
+            console.error('Bulk approval error:', error);
+            showError('批量过审过程中发生错误');
+        } finally {
+            setIsBulkApproving(false);
+        }
+    };
+
 
 
     if (isLoading) {
@@ -1147,6 +1212,7 @@ export default function MapSelectionPage() {
                                 ))}
                             </tbody>
                         </table>
+                        <p>选图完可点击padding提交给测图组测试返回replay。点击过审会直接公开该图池，请小心。</p>
                     </div>
                     <div className="flex justify-between items-center mb-8">
                         <h1 className="text-3xl font-bold text-white">选图系统</h1>
@@ -1189,6 +1255,16 @@ export default function MapSelectionPage() {
                                     minWidth="8rem"
                                 />
                             </div>
+                            {/* 批量过审按钮 */}
+                            <button
+                                onClick={() => setShowBulkApprovalModal(true)}
+                                disabled={tempApprovedSelections.size === 0}
+                                className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded font-medium"
+                                title={` (${tempApprovedSelections.size} 个待过审)`}
+                            >
+                                过审发布 ({tempApprovedSelections.size})
+                            </button>
+
                             <button
                                 onClick={() => setShowAddForm(true)}
                                 className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-medium"
@@ -1585,6 +1661,7 @@ export default function MapSelectionPage() {
                             </h3>
 
                             <div className="flex gap-4 items-center">
+
                                 {/* 搜索框 */}
                                 <div className="flex items-center gap-2">
                                     <input
@@ -1755,11 +1832,19 @@ export default function MapSelectionPage() {
                                                     <label className="flex items-center text-gray-800 text-sm">
                                                         <input
                                                             type="checkbox"
-                                                            checked={selection.approved}
-                                                            onChange={(e) => updateApprovalStatus(selection.id, e.target.checked)}
+                                                            checked={tempApprovedSelections.has(selection.id) || selection.approved}
+                                                            onChange={(e) => {
+                                                                const newTempApproved = new Set(tempApprovedSelections);
+                                                                if (e.target.checked) {
+                                                                    newTempApproved.add(selection.id);
+                                                                } else {
+                                                                    newTempApproved.delete(selection.id);
+                                                                }
+                                                                setTempApprovedSelections(newTempApproved);
+                                                            }}
                                                             className="mr-2 h-4 w-4 text-green-600 border-gray-300 focus:ring-green-500"
                                                         />
-                                                        过审
+                                                        过审 {tempApprovedSelections.has(selection.id) && !selection.approved && <span className="text-orange-500">(待确认)</span>}
                                                     </label>
                                                     <label className="flex items-center text-gray-800 text-sm">
                                                         <input
@@ -1828,6 +1913,74 @@ export default function MapSelectionPage() {
                     </div>
                 </div>
             </div >
+
+            {/* 批量过审弹窗 */}
+            {showBulkApprovalModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+                        <h3 className="text-xl font-bold text-gray-800 mb-4">批量过审确认</h3>
+                        <p className="text-gray-600 mb-4">
+                            以下 {tempApprovedSelections.size} 个选图将被过审并公开，请确认：
+                        </p>
+
+                        <div className="overflow-x-auto">
+                            <table className="table-auto w-full text-sm border-collapse border border-gray-300">
+                                <thead>
+                                    <tr className="bg-gray-100">
+                                        <th className="border border-gray-300 px-3 py-2 text-left">Mod</th>
+                                        <th className="border border-gray-300 px-3 py-2 text-left">歌曲</th>
+                                        <th className="border border-gray-300 px-3 py-2 text-left">艺术家</th>
+                                        <th className="border border-gray-300 px-3 py-2 text-left">难度</th>
+                                        <th className="border border-gray-300 px-3 py-2 text-left">提名者</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredSelections
+                                        .filter(selection => tempApprovedSelections.has(selection.id) && !selection.approved)
+                                        .map(selection => (
+                                            <tr key={selection.id} className="hover:bg-gray-50">
+                                                <td className="border border-gray-300 px-3 py-2">
+                                                    <span className={`${getModColorClass(selection.selectedMods)} text-white px-2 py-1 rounded text-sm font-bold`}>
+                                                        {selection.selectedMods === 'LZ' ?
+                                                            (selection.customModName && selection.customModName.trim() !== '' ?
+                                                                `LZ${selection.modPosition}-${selection.customModName}` :
+                                                                `LZ${selection.modPosition}`) :
+                                                            selection.selectedMods === 'DT' ?
+                                                                ((selection.customDTRate && selection.customDTRate !== 1.5) ?
+                                                                    `DT${selection.modPosition}-${selection.customDTRate.toFixed(1)}倍` :
+                                                                    `DT${selection.modPosition}`) :
+                                                                `${selection.selectedMods}${selection.modPosition}`
+                                                        }
+                                                    </span>
+                                                </td>
+                                                <td className="border border-gray-300 px-3 py-2">{selection.title}</td>
+                                                <td className="border border-gray-300 px-3 py-2">{selection.artist}</td>
+                                                <td className="border border-gray-300 px-3 py-2">{selection.version}</td>
+                                                <td className="border border-gray-300 px-3 py-2">{selection.selectedByUsername}</td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="flex gap-4 justify-end mt-6">
+                            <button
+                                onClick={() => setShowBulkApprovalModal(false)}
+                                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+                            >
+                                取消
+                            </button>
+                            <button
+                                onClick={handleBulkApproval}
+                                disabled={isBulkApproving}
+                                className="bg-green-500 hover:bg-green-600 disabled:bg-gray-500 text-white px-4 py-2 rounded"
+                            >
+                                {isBulkApproving ? '过审中...' : `确认过审 (${tempApprovedSelections.size} 个)`}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
