@@ -1239,7 +1239,7 @@ export default function MapSelectionPage() {
                     {/* Control panel */}
                     <div className="bg-gray-100 rounded-lg p-6 mb-6">
                         <div className="flex flex-wrap gap-4 items-center justify-between">
-                            <div className="flex gap-4 items-center">
+                            <div className="flex gap-3 items-center">
                                 <Dropdown
                                     label="赛季"
                                     options={availableSeasons}
