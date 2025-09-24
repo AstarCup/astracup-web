@@ -39,6 +39,20 @@ export default function ReplayCollectionPage() {
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
+    // 根据mod名返回对应的颜色class
+    const getModColor = (mod: string): string => {
+        switch (mod) {
+            case 'NM': return 'text-gray-600';
+            case 'HD': return 'text-yellow-600';
+            case 'HR': return 'text-red-600';
+            case 'DT': return 'text-purple-600';
+            case 'EZ': return 'text-green-600';
+            case 'LZ': return 'text-gray-600';
+            case 'TB': return 'text-black-600';
+            default: return 'text-blue-600';
+        }
+    };
+
     // 加载已上传用户状态
     const loadUploadedUsers = async () => {
         try {
@@ -422,7 +436,7 @@ export default function ReplayCollectionPage() {
 
                                     <div className="mb-3">
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="font-medium text-blue-600">
+                                            <span className={`font-medium ${getModColor(map.selectedMods)}`}>
                                                 {map.selectedMods}{map.modPosition}
                                             </span>
                                             <span className="text-gray-500">
