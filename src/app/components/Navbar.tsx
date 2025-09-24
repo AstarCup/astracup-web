@@ -28,7 +28,47 @@ export default function Navbar() {
         isAdmin: false
     });
     const [versionInfo, setVersionInfo] = useState<string>('');
+    const [iconCache, setIconCache] = useState<Map<string, boolean>>(new Map());
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // 预加载图标函数
+    const preloadIcons = async () => {
+        const allIcons = [
+            // 主导航图标
+            '/icons/home.svg',
+            '/icons/news.svg',
+            '/icons/tournament.svg',
+            '/icons/guide-sm.svg',
+            '/icons/table-fill.svg',
+            '/icons/mapool-sm.svg',
+            '/icons/register.svg',
+            '/icons/others.svg',
+            '/icons/contacts.svg',
+            '/icons/photos.svg',
+            '/icons/admin-fill.svg',
+            '/icons/upload.svg',
+            '/icons/debug.svg'
+        ];
+
+        const newCache = new Map(iconCache);
+
+        for (const iconPath of allIcons) {
+            if (!newCache.has(iconPath)) {
+                try {
+                    // 预加载图标
+                    const response = await fetch(iconPath);
+                    if (response.ok) {
+                        newCache.set(iconPath, true);
+                    }
+                } catch (error) {
+                    console.warn(`Failed to preload icon: ${iconPath}`, error);
+                    newCache.set(iconPath, false);
+                }
+            }
+        }
+
+        setIconCache(newCache);
+    };
 
     useEffect(() => {
         const handleDocumentClick = (event: MouseEvent) => {
@@ -101,6 +141,11 @@ export default function Navbar() {
         };
 
         fetchUserData();
+    }, []);
+
+    // 预加载图标
+    useEffect(() => {
+        preloadIcons();
     }, []);
 
     const handleLogout = async () => {
@@ -230,7 +275,15 @@ export default function Navbar() {
                                         >
                                             <span className={`flex items-center gap-2 px-2 py-1 transition-colors duration-200 ${shouldShowGroup(group.name) ? 'bg-white text-gray-800' : 'text-[#FFFFFF]'}`}>
                                                 {group.svg ? (
-                                                    <Image src={group.svg} alt={group.name} width={24} height={24} className={`flex-shrink-0 transition-all duration-200 ${shouldShowGroup(group.name) ? 'filter brightness-0 saturate-0 opacity-80' : ''}`} />
+                                                    <Image
+                                                        src={group.svg}
+                                                        alt={group.name}
+                                                        width={24}
+                                                        height={24}
+                                                        className={`flex-shrink-0 transition-all duration-200 ${shouldShowGroup(group.name) ? 'filter brightness-0 saturate-0 opacity-80' : ''}`}
+                                                        loading="eager"
+                                                        priority={true}
+                                                    />
                                                 ) : (
                                                     <span className="w-4 h-4 bg-transparent flex-shrink-0"></span>
                                                 )}
@@ -258,7 +311,15 @@ export default function Navbar() {
                                                                 }}
                                                             >
                                                                 {link.svg ? (
-                                                                    <Image src={link.svg} alt={link.name} width={48} height={48} className="flex-shrink-0 filter brightness-0 saturate-0 opacity-80 transition-all duration-200" />
+                                                                    <Image
+                                                                        src={link.svg}
+                                                                        alt={link.name}
+                                                                        width={48}
+                                                                        height={48}
+                                                                        className="flex-shrink-0 filter brightness-0 saturate-0 opacity-80 transition-all duration-200"
+                                                                        loading="eager"
+                                                                        priority={true}
+                                                                    />
                                                                 ) : (
                                                                     <span className="w-4 h-4 bg-transparent flex-shrink-0"></span>
                                                                 )}
@@ -394,7 +455,15 @@ export default function Navbar() {
                                         {/* Group Title */}
                                         <div className="bg-white text-gray text-2xl px-4 py-2 mb-3 inline-flex items-center gap-3">
                                             {group.svg ? (
-                                                <Image src={group.svg} alt={group.name} width={24} height={24} className="flex-shrink-0 filter brightness-0" />
+                                                <Image
+                                                    src={group.svg}
+                                                    alt={group.name}
+                                                    width={24}
+                                                    height={24}
+                                                    className="flex-shrink-0 filter brightness-0"
+                                                    loading="eager"
+                                                    priority={true}
+                                                />
                                             ) : (
                                                 <span className="w-4 h-4 bg-transparent flex-shrink-0"></span>
                                             )}
@@ -413,7 +482,15 @@ export default function Navbar() {
                                                         }}
                                                     >
                                                         {link.svg ? (
-                                                            <Image src={link.svg} alt={link.name} width={32} height={32} className="flex-shrink-0 filter brightness-0 saturate-0 opacity-80 transition-all duration-200" />
+                                                            <Image
+                                                                src={link.svg}
+                                                                alt={link.name}
+                                                                width={32}
+                                                                height={32}
+                                                                className="flex-shrink-0 filter brightness-0 saturate-0 opacity-80 transition-all duration-200"
+                                                                loading="eager"
+                                                                priority={true}
+                                                            />
                                                         ) : (
                                                             <span className="w-4 h-4 bg-transparent flex-shrink-0"></span>
                                                         )}
