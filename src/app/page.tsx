@@ -17,8 +17,15 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const handleLogout = () => {
-    setUser(null);
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      setUser(null);
+      // 可以添加页面刷新或重定向
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to logout:', error);
+    }
   };
 
   useEffect(() => {
