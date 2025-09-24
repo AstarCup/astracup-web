@@ -366,17 +366,17 @@ export default function Navbar() {
                                                     <div className="mt-3 pt-3 border-t border-gray-600">
                                                         <div className="flex flex-wrap gap-1">
                                                             {permissions.isAdmin && (
-                                                                <span className="px-2 py-1 bg-red-600 text-white text-xs rounded-full font-medium">
+                                                                <span className="px-2 py-1 text-gray-800 bg-white text-xl border-b-4 border-red-600">
                                                                     管理员
                                                                 </span>
                                                             )}
                                                             {permissions.isMapSelector && (
-                                                                <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full font-medium">
+                                                                <span className="px-2 py-1 text-gray-800 bg-white text-xl border-b-4 border-blue-600">
                                                                     选图组
                                                                 </span>
                                                             )}
                                                             {permissions.isReplayTester && (
-                                                                <span className="px-2 py-1 bg-green-600 text-white text-xs rounded-full font-medium">
+                                                                <span className="px-2 py-1 text-gray-800 bg-white text-xl border-b-4 border-green-600">
                                                                     测图组
                                                                 </span>
                                                             )}
