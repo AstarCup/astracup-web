@@ -2,29 +2,336 @@
 import Image from "next/image";
 import { useState } from "react";
 import { showSuccess, showError, showInfo } from '../components/Notification';
+import ContextMenu from './ContextMenu';
+import BulkDownloadManager from './BulkDownloadManager';
+import JSZip from 'jszip';
+
+interface DownloadItem {
+    sid: string;
+    bid: string;
+    artist: string;
+    title: string;
+    status: 'pending' | 'downloading' | 'completed' | 'failed';
+    progress: number;
+    error?: string;
+}
 
 interface MapoolTableProps {
     data: any[];
     title: string;
     downloadUrl?: string;
     onRowClick?: (row: any, index: number) => void;
-    onRowDoubleClick?: (row: any, index: number) => void;
+    onRowRightClick?: (row: any, index: number) => void;
+    showUploadJump?: boolean; // 是否显示跳转到上传区域的选项
 }
 
-export default function MapoolTable({ data, title, downloadUrl, onRowClick, onRowDoubleClick }: MapoolTableProps) {
+export default function MapoolTable({ data, title, downloadUrl, onRowRightClick, showUploadJump = false }: MapoolTableProps) {
     const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+    const [contextMenu, setContextMenu] = useState<{
+        visible: boolean;
+        position: { x: number; y: number };
+        row: any;
+        index: number;
+    } | null>(null);
+
+    // 批量下载状态
+    const [bulkDownloadItems, setBulkDownloadItems] = useState<DownloadItem[]>([]);
+    const [showBulkDownloadManager, setShowBulkDownloadManager] = useState(false);
+    const [isBulkDownloading, setIsBulkDownloading] = useState(false);
+
+    // 准备批量下载
+    const prepareBulkDownload = () => {
+        const items: DownloadItem[] = data.map(row => ({
+            sid: row.SID,
+            bid: row.BID,
+            artist: row.artist || 'Unknown Artist',
+            title: row.title || row.MapInfo || 'Unknown Title',
+            status: 'pending',
+            progress: 0
+        }));
+
+        setBulkDownloadItems(items);
+        setShowBulkDownloadManager(true);
+    };
+
+    // 开始批量下载
+    const startBulkDownload = async () => {
+        if (bulkDownloadItems.length === 0) return;
+
+        setIsBulkDownloading(true);
+        const zip = new JSZip();
+        let successCount = 0;
+        let failCount = 0;
+
+        try {
+            // 先测试第一个下载，确保API工作正常
+            console.log('Testing API with first beatmap...');
+            const testResult = await testSingleDownload(bulkDownloadItems[0].sid);
+            if (!testResult.success) {
+                showError(`API测试失败，无法开始批量下载: ${testResult.error}`);
+                setIsBulkDownloading(false);
+                return;
+            }
+            console.log('API test passed, proceeding with bulk download...');
+
+            // 逐个下载谱面，添加延迟避免并发过多
+            for (let i = 0; i < bulkDownloadItems.length; i++) {
+                const item = bulkDownloadItems[i];
+
+                try {
+                    // 更新当前项目状态为下载中
+                    setBulkDownloadItems(prev => prev.map((prevItem, idx) =>
+                        idx === i ? { ...prevItem, status: 'downloading', progress: 10 } : prevItem
+                    ));
+
+                    console.log(`Downloading beatmap ${i + 1}/${bulkDownloadItems.length}:`, item.sid, item.bid);
+
+                    const response = await fetch(`/api/download-beatmap?sid=${item.sid}`, {
+                        method: 'GET',
+                        headers: {
+                            'Cache-Control': 'no-cache',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        // 尝试读取错误信息
+                        let errorText = '';
+                        try {
+                            const errorData = await response.json();
+                            errorText = errorData.error || `HTTP ${response.status}`;
+                        } catch {
+                            errorText = `HTTP ${response.status}: ${response.statusText}`;
+                        }
+                        throw new Error(errorText);
+                    }
+
+                    const blob = await response.blob();
+                    console.log(`Downloaded ${item.sid}, size: ${blob.size} bytes`);
+
+                    // 检查文件大小，如果太小可能是错误
+                    if (blob.size < 1000) { // 小于1KB可能是错误
+                        throw new Error(`文件大小异常: ${blob.size} bytes`);
+                    }
+
+                    // 获取文件名
+                    const contentDisposition = response.headers.get('content-disposition');
+                    let filename = `beatmap_${item.sid}.osz`;
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        if (filenameMatch && filenameMatch[1]) {
+                            filename = filenameMatch[1].replace(/['"]/g, '');
+                        }
+                    }
+
+                    // 添加到ZIP
+                    zip.file(filename, blob);
+
+                    // 更新状态为完成
+                    setBulkDownloadItems(prev => prev.map((prevItem, idx) =>
+                        idx === i ? { ...prevItem, status: 'completed', progress: 100 } : prevItem
+                    ));
+
+                    successCount++;
+
+                    // 添加小延迟避免请求过于频繁
+                    if (i < bulkDownloadItems.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 500)); // 500ms延迟
+                    }
+
+                } catch (error) {
+                    const errorMessage = error instanceof Error ? error.message : '未知错误';
+                    console.error(`Failed to download ${item.sid}:`, errorMessage);
+
+                    // 更新状态为失败
+                    setBulkDownloadItems(prev => prev.map((prevItem, idx) =>
+                        idx === i ? { ...prevItem, status: 'failed', error: errorMessage, progress: 0 } : prevItem
+                    ));
+
+                    failCount++;
+                }
+            }
+
+            // 生成ZIP文件并下载
+            if (successCount > 0) {
+                console.log('Generating ZIP file...');
+
+                try {
+                    const zipBlob = await zip.generateAsync({
+                        type: 'blob',
+                        compression: 'DEFLATE',
+                        compressionOptions: { level: 6 }
+                    });
+
+                    console.log('ZIP file generated, size:', zipBlob.size, 'bytes');
+
+                    if (zipBlob.size === 0) {
+                        throw new Error('生成的ZIP文件为空');
+                    }
+
+                    // 创建下载链接
+                    const url = window.URL.createObjectURL(zipBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `beatmaps_${Date.now()}.zip`;
+                    a.style.display = 'none';
+
+                    // 确保元素被添加到DOM中
+                    document.body.appendChild(a);
+
+                    // 触发下载
+                    try {
+                        a.click();
+                        console.log('Download triggered successfully');
+                    } catch (clickError) {
+                        console.error('Failed to trigger download:', clickError);
+                        // 备用方案：直接打开URL
+                        window.open(url, '_blank');
+                    }
+
+                    // 清理
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+
+                    // 更新所有完成的项目状态
+                    setBulkDownloadItems(prev => prev.map(item =>
+                        item.status === 'completed' || item.status === 'downloading' ? { ...item, status: 'completed' as const, progress: 100 } : item
+                    ));
+
+                    showSuccess(`批量下载完成！成功: ${successCount}, 失败: ${failCount}\nZIP文件大小: ${(zipBlob.size / 1024 / 1024).toFixed(2)} MB`);
+
+                } catch (zipError) {
+                    console.error('ZIP generation failed:', zipError);
+                    showError(`ZIP文件生成失败: ${zipError instanceof Error ? zipError.message : '未知错误'}`);
+                    return;
+                }
+
+            } else {
+                showError('所有谱面下载都失败了，请检查网络连接');
+            }
+
+        } catch (error) {
+            console.error('Bulk download process error:', error);
+            showError('批量下载过程中出现严重错误');
+        } finally {
+            setIsBulkDownloading(false);
+        }
+    };
+
+    // 测试单个下载
+    const testSingleDownload = async (sid: string) => {
+        try {
+            console.log('Testing single download for SID:', sid);
+            const response = await fetch(`/api/download-beatmap?sid=${sid}`, {
+                method: 'GET',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                },
+            });
+
+            console.log('Test response:', {
+                ok: response.ok,
+                status: response.status,
+                statusText: response.statusText,
+                contentLength: response.headers.get('content-length'),
+                contentType: response.headers.get('content-type'),
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                console.log('Test blob size:', blob.size, 'bytes');
+                return { success: true, size: blob.size };
+            } else {
+                const errorText = await response.text();
+                console.error('Test failed:', errorText);
+                return { success: false, error: errorText };
+            }
+        } catch (error) {
+            console.error('Test error:', error);
+            return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        }
+    };
+
+    // 取消批量下载
+    const cancelBulkDownload = () => {
+        setIsBulkDownloading(false);
+        setBulkDownloadItems([]);
+        setShowBulkDownloadManager(false);
+        showInfo('批量下载已取消');
+    };
+
+    // 生成右击菜单项
+    const getContextMenuItems = (row: any, index: number) => {
+        const items = [
+            {
+                label: '跳转到 osu! 谱面',
+                icon: '🔗',
+                onClick: () => {
+                    window.open(`https://osu.ppy.sh/beatmaps/${row.BID}`, '_blank');
+                }
+            },
+            {
+                label: '下载谱面 (Sayobot)',
+                icon: '⬇️',
+                onClick: () => {
+                    const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`;
+                    console.log('直接跳转到Sayobot下载:', {
+                        sid: row.SID,
+                        bid: row.BID,
+                        url: downloadUrl
+                    });
+
+                    // 直接跳转到Sayobot下载链接，让浏览器处理下载
+                    window.open(downloadUrl, '_blank');
+                    showSuccess('已打开谱面下载链接');
+                }
+            },
+            {
+                label: '复制谱面ID (BID)',
+                icon: '📋',
+                onClick: () => {
+                    navigator.clipboard.writeText(row.BID);
+                    showInfo('BID 已复制到剪贴板');
+                }
+            }
+        ];
+
+        // 如果是测图页面，添加跳转到上传区域的选项
+        if (showUploadJump && onRowRightClick) {
+            items.push({
+                label: '跳转到上传卡片',
+                icon: '📤',
+                onClick: () => {
+                    onRowRightClick(row, index);
+                }
+            });
+        }
+
+        return items;
+    };
+
     return (
         <div className="mb-20">
             <div className="flex justify-between items-start mb-0">
                 <h1 className="text-xl font-bold text-white">{title}</h1>
-                {/* {downloadUrl && (
-                    <a
-                        href={downloadUrl}
-                        className="px-5 py-3 bg-[#E93B66] text-white hover:bg-[#95E1D3] transition font-bold"
+                <div className="flex space-x-3">
+                    {/* 批量下载按钮 */}
+                    <button
+                        onClick={prepareBulkDownload}
+                        disabled={data.length === 0}
+                        className="px-5 py-3 bg-[#95E1D3] text-white hover:bg-[#E93B66] transition font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="下载当前表格中的所有谱面"
                     >
-                        图包下载 MAPPAK DOWNLOAD
-                    </a>
-                )} */}
+                        📦 批量下载 ({data.length})
+                    </button>
+                    {/* {downloadUrl && (
+                        <a
+                            href={downloadUrl}
+                            className="px-5 py-3 bg-[#E93B66] text-white hover:bg-[#95E1D3] transition font-bold"
+                        >
+                            图包下载 MAPPAK DOWNLOAD
+                        </a>
+                    )} */}
+                </div>
             </div>
             <div className="overflow-x-auto relative">
                 <table className="table-fixed min-w-[1800px]">
@@ -73,8 +380,16 @@ export default function MapoolTable({ data, title, downloadUrl, onRowClick, onRo
                             return (
                                 <tr
                                     key={idx}
-                                    className={`${bgClass} ${onRowDoubleClick ? 'cursor-pointer hover:bg-gray-100' : ''}`}
-                                    onDoubleClick={() => onRowDoubleClick?.(row, idx)}
+                                    className={`${bgClass} cursor-pointer hover:bg-gray-100`}
+                                    onContextMenu={(e) => {
+                                        e.preventDefault(); // 阻止默认右键菜单
+                                        setContextMenu({
+                                            visible: true,
+                                            position: { x: e.clientX, y: e.clientY },
+                                            row,
+                                            index: idx
+                                        });
+                                    }}
                                 >
                                     <td className="text-center"><a className={slotClass}>{row.Slot}</a></td>
                                     <td
@@ -135,6 +450,25 @@ export default function MapoolTable({ data, title, downloadUrl, onRowClick, onRo
                     </tbody>
                 </table>
             </div>
+
+            {/* 右击菜单 */}
+            {contextMenu?.visible && (
+                <ContextMenu
+                    items={getContextMenuItems(contextMenu.row, contextMenu.index)}
+                    position={contextMenu.position}
+                    onClose={() => setContextMenu(null)}
+                />
+            )}
+
+            {/* 批量下载管理器 */}
+            <BulkDownloadManager
+                isOpen={showBulkDownloadManager}
+                onClose={() => setShowBulkDownloadManager(false)}
+                items={bulkDownloadItems}
+                onStartDownload={startBulkDownload}
+                onCancelDownload={cancelBulkDownload}
+                isDownloading={isBulkDownloading}
+            />
         </div>
     );
 }

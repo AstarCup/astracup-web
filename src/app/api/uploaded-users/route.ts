@@ -22,17 +22,17 @@ export async function GET(request: NextRequest) {
         const uploadedUsers: { [key: string]: string[] } = {};
 
         blobs.forEach(blob => {
-            // 文件名格式: season/category/modPosition_userId_username.osr
+            // 文件名格式: season/category/modPosition_bid_userId_username.osr
             const filename = blob.pathname;
             console.log('Processing blob:', filename);
             const parts = filename.split('/');
             if (parts.length >= 3) {
-                const filePart = parts[2]; // modPosition_userId_username.osr
+                const filePart = parts[2]; // modPosition_bid_userId_username.osr
                 const modAndUser = filePart.split('_');
-                if (modAndUser.length >= 3) {
-                    const userId = modAndUser[1];
-                    const username = modAndUser[2].replace('.osr', '');
-                    const mapKey = `${season}/${category}/${modAndUser[0]}`;
+                if (modAndUser.length >= 4) {
+                    const bid = modAndUser[1]; // beatmap ID
+                    const username = modAndUser[3].replace('.osr', '');
+                    const mapKey = `${season}/${category}/${bid}`;
 
                     if (!uploadedUsers[mapKey]) {
                         uploadedUsers[mapKey] = [];

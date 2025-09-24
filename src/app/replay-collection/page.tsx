@@ -26,6 +26,7 @@ export default function ReplayCollectionPage() {
     const [uploadedUsers, setUploadedUsers] = useState<{ [key: string]: string[] }>({}); // { mapId: [username, ...] }
     const [highlightedMapId, setHighlightedMapId] = useState<number | null>(null);
     const [selectedModFilter, setSelectedModFilter] = useState<string>('all');
+    const [downloadingAll, setDownloadingAll] = useState(false);
     const [availableSeasons, setAvailableSeasons] = useState([
         { value: 's1', label: '第一赛季' }
     ]);
@@ -77,8 +78,8 @@ export default function ReplayCollectionPage() {
         return usernames.join(', ');
     };
 
-    // 处理表格行双击 - 跳转到对应卡片并高亮
-    const handleTableRowDoubleClick = (row: any, index: number) => {
+    // 处理表格行右击 - 跳转到对应卡片并高亮
+    const handleTableRowRightClick = (row: any, index: number) => {
         // 设置高亮状态
         setHighlightedMapId(row.id);
 
@@ -309,9 +310,9 @@ export default function ReplayCollectionPage() {
         }
         setUploading(true);
         try {
-            // 构造文件名 - 格式: modPosition_userId_username.osr
+            // 构造文件名 - 格式: modPosition_bid_userId_username.osr
             const safeUsername = user.username.replace(/[^a-zA-Z0-9_-]/g, '_'); // 替换特殊字符
-            const filename = `${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}_${user.id}_${safeUsername}.osr`;
+            const filename = `${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}_${map.BID}_${user.id}_${safeUsername}.osr`;
             // 上传到vercel blob
             const formData = new FormData();
             formData.append('file', file);
@@ -327,7 +328,7 @@ export default function ReplayCollectionPage() {
             if (data.success) {
                 showSuccess('上传成功');
                 // 刷新已上传用户
-                const mapKey = `${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`;
+                const mapKey = `${selectedSeason}/${selectedCategory}/${map.BID}`;
                 setUploadedUsers(prev => ({
                     ...prev,
                     [mapKey]: [...(prev[mapKey] || []), user.username]
@@ -356,7 +357,7 @@ export default function ReplayCollectionPage() {
         try {
             // 构造文件名 - 需要找到对应的文件名
             const safeUsername = user.username.replace(/[^a-zA-Z0-9_-]/g, '_');
-            const filename = `${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}_${user.id}_${safeUsername}.osr`;
+            const filename = `${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}_${map.BID}_${user.id}_${safeUsername}.osr`;
 
             const res = await fetch('/api/upload-replay', {
                 method: 'DELETE',
@@ -373,7 +374,7 @@ export default function ReplayCollectionPage() {
             if (data.success) {
                 showSuccess('删除成功');
                 // 更新已上传用户列表，移除当前用户
-                const mapKey = `${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`;
+                const mapKey = `${selectedSeason}/${selectedCategory}/${map.BID}`;
                 setUploadedUsers(prev => ({
                     ...prev,
                     [mapKey]: (prev[mapKey] || []).filter(username => username !== user.username)
@@ -383,6 +384,42 @@ export default function ReplayCollectionPage() {
             }
         } catch {
             showError('删除失败');
+        }
+    };
+
+    // 下载全部回放文件
+    const handleDownloadAllReplays = async () => {
+        if (!user) {
+            showError('请先登录');
+            return;
+        }
+
+        setDownloadingAll(true);
+        try {
+            const response = await fetch(`/api/download-all-replays?season=${selectedSeason}&category=${selectedCategory}`);
+
+            if (response.ok) {
+                // 创建下载链接
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${selectedSeason}_${selectedCategory}_replays.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                showSuccess('下载成功');
+            } else {
+                const errorData = await response.json();
+                showError(errorData.error || '下载失败');
+            }
+        } catch (error) {
+            console.error('Download all replays failed:', error);
+            showError('下载失败');
+        } finally {
+            setDownloadingAll(false);
         }
     };
 
@@ -419,7 +456,7 @@ export default function ReplayCollectionPage() {
                             minWidth="6rem"
                         />
                     </div>
-                    <MapoolTable data={getFilteredMaps()} title="Padding状态图池" onRowDoubleClick={handleTableRowDoubleClick} />
+                    <MapoolTable data={getFilteredMaps()} title="Padding状态图池" onRowRightClick={handleTableRowRightClick} showUploadJump={true} />
                     <div className="mt-6" id="upload-section">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-bold">回放文件上传</h3>
@@ -477,13 +514,13 @@ export default function ReplayCollectionPage() {
                                     }}
                                 >
                                     {/* 删除按钮 - 只有已上传时显示 */}
-                                    {user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`]?.includes(user.username) && (
+                                    {user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) && (
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation(); // 阻止事件冒泡
                                                 handleReplayDelete(map);
                                             }}
-                                            className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors"
+                                            className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors z-30"
                                             title="删除已上传的回放"
                                         >
                                             ×
@@ -495,21 +532,6 @@ export default function ReplayCollectionPage() {
 
                                     {/* 内容层 */}
                                     <div className="relative z-10">
-                                        {/* 删除按钮 - 只有已上传时显示 */}
-                                        {user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`]?.includes(user.username) && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation(); // 阻止事件冒泡
-                                                    handleReplayDelete(map);
-                                                }}
-                                                className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors z-20"
-                                                title="删除已上传的回放"
-                                            >
-                                                ×
-                                            </button>
-                                        )}
-
-                                        {/* 顶部区域：mod位 + 歌曲信息 */}
                                         <div className="mb-3 flex items-start justify-between">
                                             {/* 左边：mod位信息（加粗） */}
                                             <div className="flex-shrink-0">
@@ -544,9 +566,9 @@ export default function ReplayCollectionPage() {
                                         {/* 底部区域：上传状态 */}
                                         <div className="mb-3">
                                             <div className="text-xs text-gray-700 px-2 py-1">
-                                                已上传用户: {getUsernamesList(uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`] || [])}
+                                                已上传用户: {getUsernamesList(uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`] || [])}
                                             </div>
-                                            {user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`]?.includes(user.username) && (
+                                            {user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) && (
                                                 <div className="text-xs text-green-600 font-medium mt-1 px-2 py-1">✓ 你已上传</div>
                                             )}
                                         </div>
@@ -568,6 +590,35 @@ export default function ReplayCollectionPage() {
                                 </div>
                             ))}
                         </div>
+                    </div>
+
+                    {/* 下载全部回放功能 */}
+                    <div className="mt-8 border-t pt-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold">下载全部回放</h3>
+                            <button
+                                onClick={handleDownloadAllReplays}
+                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center gap-2"
+                                disabled={downloadingAll}
+                            >
+                                {downloadingAll ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        下载中...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        下载全部回放
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                            下载当前赛季和类别的所有已上传回放文件，文件将按mod位分类整理。
+                        </p>
                     </div>
                 </>
             )}

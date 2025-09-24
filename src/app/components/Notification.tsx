@@ -12,7 +12,7 @@ interface NotificationItemProps extends NotificationProps {
     onRemove: (id: string) => void;
 }
 
-const NotificationItem = ({ id, type, message, duration = 2000, onRemove }: NotificationItemProps) => {
+const NotificationItem = ({ id, type, message, duration = 5000, onRemove }: NotificationItemProps) => {
     const [isExiting, setIsExiting] = useState(false);
 
     useEffect(() => {
