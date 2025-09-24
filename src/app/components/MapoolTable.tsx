@@ -388,7 +388,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                         className="px-4 py-3 bg-[#7B68EE] text-white hover:bg-[#95E1D3] transition font-bold disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                         title="打开批量下载管理器"
                     >
-                        📦 批量下载 ({data.length})
+                        批量下载 ({data.length})
                     </button>
                     {/* {downloadUrl && (
                         <a
