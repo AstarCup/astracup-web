@@ -3,14 +3,25 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const sid = searchParams.get('sid');
+    const source = searchParams.get('source') || 'sayobot'; // 'sayobot' or 'osu'
 
     if (!sid) {
         return NextResponse.json({ error: 'Missing sid parameter' }, { status: 400 });
     }
 
     try {
-        const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${sid}`;
-        console.log('Proxying download request:', { sid, downloadUrl });
+        let downloadUrl: string;
+        let sourceName: string;
+
+        if (source === 'osu') {
+            downloadUrl = `https://osu.ppy.sh/beatmapsets/${sid}/download`;
+            sourceName = 'osu官方';
+        } else {
+            downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${sid}`;
+            sourceName = 'Sayobot';
+        }
+
+        console.log(`Proxying download request from ${sourceName}:`, { sid, downloadUrl, source });
 
         // 从环境变量获取 Referer，如果没有则使用默认值
         const referer = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.rino.ink/';
@@ -18,7 +29,7 @@ export async function GET(request: NextRequest) {
         const userAgent = request.headers.get('user-agent') ||
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
-        console.log('Request headers:', { referer, userAgent });
+        console.log('Request headers:', { referer, userAgent, source });
 
         const response = await fetch(downloadUrl, {
             headers: {
@@ -32,7 +43,7 @@ export async function GET(request: NextRequest) {
             },
         });
 
-        console.log('Sayobot response:', {
+        console.log(`${sourceName} response:`, {
             status: response.status,
             statusText: response.statusText,
             headers: Object.fromEntries(response.headers.entries()),

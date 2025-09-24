@@ -16,7 +16,7 @@ interface BulkDownloadManagerProps {
     isOpen: boolean;
     onClose: () => void;
     items: DownloadItem[];
-    onStartDownload: () => void;
+    onStartDownload: (source: 'sayobot' | 'osu') => void;
     onCancelDownload: () => void;
     isDownloading?: boolean;
 }
@@ -30,6 +30,7 @@ export default function BulkDownloadManager({
     isDownloading = false
 }: BulkDownloadManagerProps) {
     const [overallProgress, setOverallProgress] = useState(0);
+    const [downloadSource, setDownloadSource] = useState<'sayobot' | 'osu'>('sayobot');
 
     const completedCount = items.filter(item => item.status === 'completed').length;
     const failedCount = items.filter(item => item.status === 'failed').length;
@@ -99,8 +100,8 @@ export default function BulkDownloadManager({
                                 <div className="w-16 bg-gray-200 rounded-full h-1">
                                     <div
                                         className={`h-1 rounded-full transition-all duration-300 ${item.status === 'completed' ? 'bg-green-500' :
-                                                item.status === 'failed' ? 'bg-red-500' :
-                                                    'bg-[#E93B66]'
+                                            item.status === 'failed' ? 'bg-red-500' :
+                                                'bg-[#E93B66]'
                                             }`}
                                         style={{ width: `${item.progress}%` }}
                                     ></div>
@@ -116,21 +117,37 @@ export default function BulkDownloadManager({
                 </div>
 
                 {/* 操作按钮 */}
-                <div className="flex justify-end space-x-3">
-                    <button
-                        onClick={onCancelDownload}
-                        disabled={!isDownloading}
-                        className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        取消下载
-                    </button>
-                    <button
-                        onClick={onStartDownload}
-                        disabled={isDownloading || totalCount === 0}
-                        className="px-4 py-2 bg-[#E93B66] text-white rounded-lg hover:bg-[#95E1D3] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {isDownloading ? '下载中...' : '开始下载'}
-                    </button>
+                <div className="flex justify-between items-center">
+                    {/* 下载源选择器 */}
+                    <div className="flex items-center space-x-2">
+                        <label className="text-sm text-gray-600">下载源:</label>
+                        <select
+                            value={downloadSource}
+                            onChange={(e) => setDownloadSource(e.target.value as 'sayobot' | 'osu')}
+                            className="px-2 py-1 bg-gray-100 text-gray-800 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            disabled={isDownloading}
+                        >
+                            <option value="sayobot">Sayobot</option>
+                            <option value="osu">osu官方</option>
+                        </select>
+                    </div>
+                    {/* 按钮区域 */}
+                    <div className="flex space-x-3">
+                        <button
+                            onClick={onCancelDownload}
+                            disabled={!isDownloading}
+                            className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            取消下载
+                        </button>
+                        <button
+                            onClick={() => onStartDownload(downloadSource)}
+                            disabled={isDownloading || totalCount === 0}
+                            className="px-4 py-2 bg-[#E93B66] text-white rounded-lg hover:bg-[#95E1D3] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isDownloading ? '下载中...' : `开始下载 (${downloadSource === 'sayobot' ? 'Sayobot' : 'osu官方'})`}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

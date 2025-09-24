@@ -39,7 +39,58 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
     const [showBulkDownloadManager, setShowBulkDownloadManager] = useState(false);
     const [isBulkDownloading, setIsBulkDownloading] = useState(false);
 
-    // 准备批量下载
+    // Sayobot批量下载 - 直接打开多个Sayobot下载链接
+    const startSayobotBulkDownload = () => {
+        if (data.length === 0) return;
+
+        showInfo(`正在打开 ${data.length} 个Sayobot下载链接...`);
+
+        // 逐个打开Sayobot下载链接，添加小延迟避免浏览器阻止
+        data.forEach((row, index) => {
+            setTimeout(() => {
+                const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`;
+                window.open(downloadUrl, '_blank');
+            }, index * 200); // 每个链接间隔200ms
+        });
+
+        showSuccess('已打开所有Sayobot下载链接，请在弹出的标签页中下载');
+    };
+
+    // osu官方批量下载 - 下载10个后暂停1分钟
+    const startOsuOfficialBulkDownload = async () => {
+        if (data.length === 0) return;
+
+        setIsBulkDownloading(true);
+        showInfo('开始osu官方批量下载，每下载10个谱面暂停1分钟...');
+
+        const batchSize = 10;
+        let processed = 0;
+
+        for (let i = 0; i < data.length; i += batchSize) {
+            const batch = data.slice(i, i + batchSize);
+            console.log(`Processing batch ${Math.floor(i / batchSize) + 1}, items ${i + 1}-${Math.min(i + batchSize, data.length)}`);
+
+            // 打开当前批次的下载链接
+            batch.forEach((row, batchIndex) => {
+                setTimeout(() => {
+                    const downloadUrl = `https://osu.ppy.sh/beatmapsets/${row.SID}/download`;
+                    window.open(downloadUrl, '_blank');
+                    processed++;
+                }, batchIndex * 200); // 批次内每个链接间隔200ms
+            });
+
+            // 如果不是最后一批，等待1分钟
+            if (i + batchSize < data.length) {
+                showInfo(`已下载 ${processed} 个谱面，暂停1分钟后继续...`);
+                await new Promise(resolve => setTimeout(resolve, 60000)); // 1分钟 = 60000ms
+            }
+        }
+
+        setIsBulkDownloading(false);
+        showSuccess(`osu官方批量下载完成！共打开 ${data.length} 个下载链接`);
+    };
+
+    // 准备批量下载 (原有的API批量下载)
     const prepareBulkDownload = () => {
         const items: DownloadItem[] = data.map(row => ({
             sid: row.SID,
@@ -55,7 +106,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
     };
 
     // 开始批量下载
-    const startBulkDownload = async () => {
+    const startBulkDownload = async (source: 'sayobot' | 'osu') => {
         if (bulkDownloadItems.length === 0) return;
 
         setIsBulkDownloading(true);
@@ -66,7 +117,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
         try {
             // 先测试第一个下载，确保API工作正常
             console.log('Testing API with first beatmap...');
-            const testResult = await testSingleDownload(bulkDownloadItems[0].sid);
+            const testResult = await testSingleDownload(bulkDownloadItems[0].sid, source);
             if (!testResult.success) {
                 showError(`API测试失败，无法开始批量下载: ${testResult.error}`);
                 setIsBulkDownloading(false);
@@ -86,7 +137,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
 
                     console.log(`Downloading beatmap ${i + 1}/${bulkDownloadItems.length}:`, item.sid, item.bid);
 
-                    const response = await fetch(`/api/download-beatmap?sid=${item.sid}`, {
+                    const response = await fetch(`/api/download-beatmap?sid=${item.sid}&source=${source}`, {
                         method: 'GET',
                         headers: {
                             'Cache-Control': 'no-cache',
@@ -218,10 +269,10 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
     };
 
     // 测试单个下载
-    const testSingleDownload = async (sid: string) => {
+    const testSingleDownload = async (sid: string, source: 'sayobot' | 'osu') => {
         try {
-            console.log('Testing single download for SID:', sid);
-            const response = await fetch(`/api/download-beatmap?sid=${sid}`, {
+            console.log('Testing single download for SID:', sid, 'source:', source);
+            const response = await fetch(`/api/download-beatmap?sid=${sid}&source=${source}`, {
                 method: 'GET',
                 headers: {
                     'Cache-Control': 'no-cache',
@@ -264,14 +315,14 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
         const items = [
             {
                 label: '跳转到 osu! 谱面',
-                icon: '🔗',
+                icon: '',
                 onClick: () => {
                     window.open(`https://osu.ppy.sh/beatmaps/${row.BID}`, '_blank');
                 }
             },
             {
                 label: '下载谱面 (Sayobot)',
-                icon: '⬇️',
+                icon: '',
                 onClick: () => {
                     const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`;
                     console.log('直接跳转到Sayobot下载:', {
@@ -286,8 +337,24 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                 }
             },
             {
+                label: 'osu官方下载',
+                icon: '',
+                onClick: () => {
+                    const downloadUrl = `https://osu.ppy.sh/beatmapsets/${row.SID}/download`;
+                    console.log('跳转到osu官方下载:', {
+                        sid: row.SID,
+                        bid: row.BID,
+                        url: downloadUrl
+                    });
+
+                    // 跳转到osu官方下载链接
+                    window.open(downloadUrl, '_blank');
+                    showSuccess('已打开osu官方下载链接');
+                }
+            },
+            {
                 label: '复制谱面ID (BID)',
-                icon: '📋',
+                icon: '',
                 onClick: () => {
                     navigator.clipboard.writeText(row.BID);
                     showInfo('BID 已复制到剪贴板');
@@ -299,7 +366,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
         if (showUploadJump && onRowRightClick) {
             items.push({
                 label: '跳转到上传卡片',
-                icon: '📤',
+                icon: '',
                 onClick: () => {
                     onRowRightClick(row, index);
                 }
@@ -318,8 +385,8 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                     <button
                         onClick={prepareBulkDownload}
                         disabled={data.length === 0}
-                        className="px-5 py-3 bg-[#95E1D3] text-white hover:bg-[#E93B66] transition font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="下载当前表格中的所有谱面"
+                        className="px-4 py-3 bg-[#7B68EE] text-white hover:bg-[#95E1D3] transition font-bold disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                        title="打开批量下载管理器"
                     >
                         📦 批量下载 ({data.length})
                     </button>
