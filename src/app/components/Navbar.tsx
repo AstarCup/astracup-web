@@ -146,43 +146,43 @@ export default function Navbar() {
     const navGroups = [
         {
             name: '主页与新闻',
-            svg: '',
+            svg: '/icons/home.svg',
             links: [
-                { name: 'HOME', href: '/', tip: '主页', svg: '' },
-                { name: 'NEWS', href: '/news', tip: '新闻', svg: '' },
+                { name: 'HOME', href: '/', tip: '主页', svg: '/icons/home.svg' },
+                { name: 'NEWS', href: '/news', tip: '新闻', svg: '/icons/news.svg' },
             ]
         },
         {
             name: '赛事信息',
-            svg: '',
+            svg: '/icons/tournament.svg',
             links: [
-                { name: 'GUIDE', href: `/guide`, tip: '赛事规则', svg: '' },
-                { name: 'SCHEDULE', href: `/schedule`, tip: '赛程安排', svg: '' },
-                { name: 'MAPPOOL', href: `/mapool`, tip: '图池', svg: '' },
-                { name: 'REGISTRATIONS', href: '/registrations', tip: '所有报名玩家', svg: '' },
+                { name: 'GUIDE', href: `/guide`, tip: '赛事规则', svg: '/icons/guide-sm.svg' },
+                { name: 'SCHEDULE', href: `/schedule`, tip: '赛程安排', svg: '/icons/table-fill.svg' },
+                { name: 'MAPPOOL', href: `/mapool`, tip: '图池', svg: '/icons/mapool-sm.svg' },
+                { name: 'REGISTRATIONS', href: '/registrations', tip: '所有报名玩家', svg: '/icons/register.svg' },
             ]
         },
         {
             name: '其他',
-            svg: '',
+            svg: '/icons/others.svg',
             links: [
-                { name: 'CONTACT', href: '/contact', tip: '联系我们', svg: '' },
-                { name: 'PHOTOS', href: `/photos`, tip: '历届荣誉展示', svg: '' }
+                { name: 'CONTACT', href: '/contact', tip: '联系我们', svg: '/icons/contacts.svg' },
+                { name: 'PHOTOS', href: `/photos`, tip: '历届荣誉展示', svg: '/icons/photos.svg' }
             ]
         },
         // 管理菜单 - 根据权限动态显示
         ...(permissions.isMapSelector || permissions.isReplayTester || permissions.isAdmin ? [{
             name: '管理',
-            svg: '',
+            svg: '/icons/admin.svg',
             links: [
                 ...(permissions.isMapSelector || permissions.isAdmin ? [
-                    { name: 'MAP SELECTION', href: '/map-selection', tip: '地图选择管理', svg: '' }
+                    { name: 'MAP SELECTION', href: '/map-selection', tip: '图池管理', svg: '/icons/table-fill.svg' }
                 ] : []),
                 ...(permissions.isReplayTester || permissions.isAdmin ? [
-                    { name: 'UPLOAD REPLAY', href: '/replay-collection', tip: '上传和收集Replay', svg: '' }
+                    { name: 'UPLOAD REPLAY', href: '/replay-collection', tip: '测图上传', svg: '/icons/upload.svg' }
                 ] : []),
                 ...(permissions.isAdmin ? [
-                    { name: 'DEBUG', href: '/debug', tip: '系统调试和测试', svg: '' }
+                    { name: 'DEBUG', href: '/debug', tip: '系统调试', svg: '/icons/debug.svg' }
                 ] : [])
             ].filter(Boolean)
         }] : [])
@@ -230,10 +230,7 @@ export default function Navbar() {
                                         >
                                             <span className={`flex items-center gap-2 px-2 py-1 transition-colors duration-200 ${shouldShowGroup(group.name) ? 'bg-white text-gray-800' : 'text-[#FFFFFF]'}`}>
                                                 {group.svg ? (
-                                                    <span
-                                                        className="w-4 h-4 flex-shrink-0"
-                                                        dangerouslySetInnerHTML={{ __html: group.svg }}
-                                                    />
+                                                    <Image src={group.svg} alt={group.name} width={24} height={24} className={`flex-shrink-0 transition-all duration-200 ${shouldShowGroup(group.name) ? 'filter brightness-0 saturate-0 opacity-80' : ''}`} />
                                                 ) : (
                                                     <span className="w-4 h-4 bg-transparent flex-shrink-0"></span>
                                                 )}
@@ -261,10 +258,7 @@ export default function Navbar() {
                                                                 }}
                                                             >
                                                                 {link.svg ? (
-                                                                    <span
-                                                                        className="w-4 h-4 flex-shrink-0"
-                                                                        dangerouslySetInnerHTML={{ __html: link.svg }}
-                                                                    />
+                                                                    <Image src={link.svg} alt={link.name} width={48} height={48} className="flex-shrink-0 filter brightness-0 saturate-0 opacity-80 transition-all duration-200" />
                                                                 ) : (
                                                                     <span className="w-4 h-4 bg-transparent flex-shrink-0"></span>
                                                                 )}
