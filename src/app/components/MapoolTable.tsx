@@ -13,7 +13,7 @@ interface MapoolTableProps {
     showUploadJump?: boolean; // 是否显示跳转到上传区域的选项
 }
 
-export default function MapoolTable({ data, title, downloadUrl, onRowClick, onRowRightClick, showUploadJump = false }: MapoolTableProps) {
+export default function MapoolTable({ data, title, downloadUrl, onRowRightClick, showUploadJump = false }: MapoolTableProps) {
     const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
     const [contextMenu, setContextMenu] = useState<{
         visible: boolean;
@@ -37,15 +37,32 @@ export default function MapoolTable({ data, title, downloadUrl, onRowClick, onRo
                 icon: '⬇️',
                 onClick: async () => {
                     try {
-                        const response = await fetch(`https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`, {
+                        const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`;
+                        console.log('开始下载谱面:', {
+                            sid: row.SID,
+                            bid: row.BID,
+                            url: downloadUrl,
+                            userAgent: navigator.userAgent
+                        });
+
+                        const response = await fetch(downloadUrl, {
                             headers: {
                                 'Referer': 'https://www.rino.ink/',
                                 'User-Agent': navigator.userAgent
                             }
                         });
 
+                        console.log('下载响应状态:', {
+                            status: response.status,
+                            statusText: response.statusText,
+                            ok: response.ok,
+                            headers: Object.fromEntries(response.headers.entries())
+                        });
+
                         if (response.ok) {
                             const blob = await response.blob();
+                            console.log('Blob大小:', blob.size, 'bytes');
+
                             const url = window.URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
@@ -56,11 +73,27 @@ export default function MapoolTable({ data, title, downloadUrl, onRowClick, onRo
                             window.URL.revokeObjectURL(url);
                             showSuccess('谱面下载开始');
                         } else {
-                            showError('下载失败，请稍后重试');
+                            const errorDetails = `下载失败 (状态码: ${response.status} ${response.statusText})`;
+                            console.error('下载失败详情:', {
+                                status: response.status,
+                                statusText: response.statusText,
+                                url: downloadUrl,
+                                sid: row.SID,
+                                bid: row.BID
+                            });
+                            showError(`${errorDetails}\n谱面ID: ${row.SID}, BID: ${row.BID}`);
                         }
                     } catch (error) {
-                        console.error('Download error:', error);
-                        showError('下载过程中出现错误');
+                        const errorMessage = error instanceof Error ? error.message : '未知错误';
+                        const errorDetails = `下载过程中出现错误: ${errorMessage}`;
+                        console.error('下载错误详情:', {
+                            error: error,
+                            message: errorMessage,
+                            sid: row.SID,
+                            bid: row.BID,
+                            stack: error instanceof Error ? error.stack : undefined
+                        });
+                        showError(`${errorDetails}\n谱面ID: ${row.SID}, BID: ${row.BID}\n请检查网络连接或稍后重试`);
                     }
                 }
             },
