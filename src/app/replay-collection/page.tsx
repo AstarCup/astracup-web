@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { hasReplayAccess } from './edgeconfig';
 import MapoolTable from '../components/MapoolTable';
 import { showError, showSuccess } from '../components/Notification';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { getUserPermissions } from '@/lib/permissions';
 
 interface User {
     id: number;
@@ -140,7 +140,10 @@ export default function ReplayCollectionPage() {
 
             console.log('Checking access for user:', user);
 
-            const hasAccess = await hasReplayAccess(user.id.toString());
+            const permissions = await getUserPermissions(user.id.toString());
+            console.log('User permissions:', permissions);
+
+            const hasAccess = permissions.isReplayTester || permissions.isAdmin;
             console.log('User access check result:', hasAccess);
 
             if (!hasAccess) {

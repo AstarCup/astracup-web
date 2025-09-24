@@ -40,3 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 test-osu-api.js
+
+# version file
+public/version.json
