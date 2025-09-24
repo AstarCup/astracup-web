@@ -550,7 +550,20 @@ select:disabled {
   animation: iconPulse 2s infinite;
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.8s ease-out forwards;
-  animation-delay: 0.2s;
+@keyframes highlightPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+.highlight-pulse {
+  animation: highlightPulse 1.5s ease-in-out 3;
 }
