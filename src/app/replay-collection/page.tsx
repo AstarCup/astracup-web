@@ -77,8 +77,8 @@ export default function ReplayCollectionPage() {
         return usernames.join(', ');
     };
 
-    // 处理表格行点击 - 跳转到对应卡片并高亮
-    const handleTableRowClick = (row: any, index: number) => {
+    // 处理表格行双击 - 跳转到对应卡片并高亮
+    const handleTableRowDoubleClick = (row: any, index: number) => {
         // 设置高亮状态
         setHighlightedMapId(row.id);
 
@@ -88,10 +88,10 @@ export default function ReplayCollectionPage() {
             uploadSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        // 3秒后取消高亮
+        // 7秒后取消高亮
         setTimeout(() => {
             setHighlightedMapId(null);
-        }, 3000);
+        }, 7000);
     };
 
     // 根据mod筛选地图
@@ -419,7 +419,7 @@ export default function ReplayCollectionPage() {
                             minWidth="6rem"
                         />
                     </div>
-                    <MapoolTable data={getFilteredMaps()} title="Padding状态图池" onRowClick={handleTableRowClick} />
+                    <MapoolTable data={getFilteredMaps()} title="Padding状态图池" onRowDoubleClick={handleTableRowDoubleClick} />
                     <div className="mt-6" id="upload-section">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-bold">回放文件上传</h3>
