@@ -7,7 +7,6 @@ import { useState, useRef, useEffect } from 'react';
 import localFont from "next/font/local";
 import UserProfile from './UserProfile';
 import { UserSession } from '@/lib/session';
-import { getUserPermissions } from '@/lib/permissions';
 
 const audiowide = localFont({
     src: "./font/Audiowide-Regular.ttf",
@@ -53,20 +52,20 @@ export default function Navbar() {
     useEffect(() => {
         const getVersionInfo = async () => {
             try {
-                // 尝试获取git commit sha
+                // 获取版本信息
                 const response = await fetch('/api/version');
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.commitSha) {
-                        setVersionInfo(data.commitSha.substring(0, 7)); // 只显示前7位
+                    if (data.version) {
+                        setVersionInfo(data.version);
                         return;
                     }
                 }
             } catch (error) {
-                console.warn('Failed to fetch git commit sha:', error);
+                console.warn('Failed to fetch version info:', error);
             }
 
-            // 如果获取不到，使用时间格式
+            // 如果获取不到，使用本地时间格式作为fallback
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -89,12 +88,12 @@ export default function Navbar() {
                 if (sessionData.success) {
                     setUser(sessionData.session);
 
-                    // 直接从permissions库获取用户权限
-                    if (sessionData.session?.osuId) {
-                        console.log('Fetching permissions for osuId:', sessionData.session.osuId);
-                        const userPermissions = await getUserPermissions(sessionData.session.osuId.toString());
-                        console.log('User permissions:', userPermissions);
-                        setPermissions(userPermissions);
+                    // 获取用户权限
+                    const permissionsResponse = await fetch('/api/user-permissions');
+                    const permissionsData = await permissionsResponse.json();
+                    if (permissionsData.success) {
+                        console.log('User permissions:', permissionsData.permissions);
+                        setPermissions(permissionsData.permissions);
                     }
                 }
             } catch (error) {

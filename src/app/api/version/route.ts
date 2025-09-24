@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
-import { execSync } from 'child_process';
 
 export async function GET() {
-    try {
-        // 尝试获取git commit sha
-        const commitSha = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
-        return NextResponse.json({ commitSha });
-    } catch (error) {
-        // 如果获取不到git信息，返回null
-        console.warn('Failed to get git commit sha:', error);
-        return NextResponse.json({ commitSha: null });
-    }
+    // 由于服务器没有git命令，直接返回时间格式的版本信息
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+
+    const version = `${year}${month}${day}-${hours}${minutes}`;
+
+    return NextResponse.json({ commitSha: null, version });
 }
