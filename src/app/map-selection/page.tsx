@@ -7,6 +7,8 @@ import Dropdown, { DropdownOption } from '../components/Dropdown';
 import RatingDisplay from '../components/RatingDisplay';
 import CommentComponent from '../components/CommentComponent';
 import CurrentRating from '../components/CurrentRating';
+import { usePageTitle } from '@/lib/usePageTitle';
+import { getUserPermissions } from '@/lib/permissions';
 
 interface User {
     id: number;
@@ -86,6 +88,8 @@ const CATEGORY_OPTIONS = [
 ];
 
 export default function MapSelectionPage() {
+    usePageTitle('/map-selection');
+
     // 图池配置数据
     const poolData = [
         {
@@ -350,7 +354,7 @@ export default function MapSelectionPage() {
             setUser(userForState);
             console.log('Current user set:', userForState);
 
-            // Verify map selection permissions
+            // Verify map selection permissions using permissions library
             console.log('Checking map selection permissions for user ID:', currentUser.osuId);
 
             if (!currentUser.osuId) {
@@ -360,63 +364,28 @@ export default function MapSelectionPage() {
                 return;
             }
 
-            const authResponse = await fetch('/api/map-selection-auth', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    osuId: currentUser.osuId.toString()
-                })
-            });
+            try {
+                const permissions = await getUserPermissions(currentUser.osuId.toString());
+                console.log('User permissions:', permissions);
 
-            console.log('Auth response status:', authResponse.status);
-            const authError = await authResponse.json();
-            console.log('Auth response data:', authError);
+                if (permissions.isMapSelector || permissions.isAdmin) {
+                    console.log('Authorization successful');
+                    setIsAuthorized(true);
+                    setIsAdmin(permissions.isAdmin);
 
-            if (authResponse.ok) {
-                console.log('Authorization successful');
-                setIsAuthorized(true);
-
-                // 检查管理员权限
-                try {
-                    const adminResponse = await fetch('/api/admin-check', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            osuId: currentUser.osuId.toString()
-                        })
-                    });
-
-                    if (adminResponse.ok) {
-                        const adminData = await adminResponse.json();
-                        setIsAdmin(adminData.isAdmin || false);
-                        console.log('Admin check result:', adminData.isAdmin);
-                    } else {
-                        setIsAdmin(false);
-                    }
-                } catch (adminError) {
-                    console.error('Admin check failed:', adminError);
-                    setIsAdmin(false);
+                    // 获取赛季配置
+                    await loadSeasonConfig();
+                } else {
+                    console.log('Authorization failed - user does not have map selection permissions');
+                    showError('您没有选图权限。正在跳转到首页...');
+                    setTimeout(() => router.push('/'), 3000);
+                    return;
                 }
-
-                // 获取赛季配置
-                await loadSeasonConfig();
-            } else {
-                console.log('Authorization failed');
-                // 显示详细的调试信息
-                let errorMessage = authError.error || '您没有访问选图系统的权限';
-
-                if (authError.debug) {
-                    errorMessage += `\n\n调试信息:\n`;
-                    errorMessage += `您的ID: ${authError.debug.yourId} (${authError.debug.yourIdType})\n`;
-                    errorMessage += `授权ID列表: ${JSON.stringify(authError.debug.authorizedIds)}\n`;
-                    errorMessage += `比较详情:\n${JSON.stringify(authError.debug.comparisonDetails, null, 2)}`;
-                }
-
-                showError(errorMessage);
+            } catch (error) {
+                console.error('Error checking permissions:', error);
+                showError('权限检查失败。正在跳转到首页...');
+                setTimeout(() => router.push('/'), 3000);
+                return;
             }
 
         } catch (error) {

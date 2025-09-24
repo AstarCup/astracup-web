@@ -3,6 +3,7 @@
 import React from 'react';
 import StaffCard from '@/app/components/StaffCard';
 import staffData from '@/config/staff.json';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 interface StaffMember {
     name: string;
@@ -24,6 +25,8 @@ interface StaffData {
 }
 
 export default function Contact() {
+    usePageTitle('/contact');
+
     const staff = staffData as StaffData;
 
     const sections = [

@@ -8,8 +8,7 @@ import {
     deleteRatingById,
     getRatingStats
 } from '@/lib/map-ratings';
-import { verifyMapSelectionAuth } from '../map-selections/route';
-import { verifyAdminAuth } from '@/lib/map-selection';
+import { verifyMapSelectionAuth, verifyAdminAuth } from '@/lib/permissions';
 
 // 验证用户权限的辅助函数
 async function verifyUserAuth(osuId: string): Promise<{ authorized: boolean; username?: string }> {

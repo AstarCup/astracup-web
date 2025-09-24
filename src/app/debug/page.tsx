@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { isAdminUser, UserSession } from "@/lib/session";
 import { TournamentRegistration } from "@/lib/edge-registrations";
+import { usePageTitle } from '@/lib/usePageTitle';
+import { getUserPermissions } from '@/lib/permissions';
 
 export default function DebugPage() {
+    usePageTitle('/debug');
+
     const router = useRouter();
     const [envInfo, setEnvInfo] = useState<Record<string, string>>({});
     const [serverEnvInfo, setServerEnvInfo] = useState<Record<string, string>>({});
@@ -35,11 +38,13 @@ export default function DebugPage() {
             credentials: 'include' // 确保发送cookie
         })
             .then(response => response.json())
-            .then(data => {
+            .then(async data => {
                 // console.log('Debug session data:', data);
                 if (data.success && data.session) {
                     setUserSession(data.session);
-                    setIsAdmin(data.session.username === 'AeCw');
+                    // 使用permissions库检查管理员权限
+                    const permissions = await getUserPermissions(data.session.osuId.toString());
+                    setIsAdmin(permissions.isAdmin);
                 } else {
                     // 未登录，重定向到首页
                     router.push('/');

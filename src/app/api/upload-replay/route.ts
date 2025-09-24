@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put, del } from '@vercel/blob';
-import { verifyReplayAuth } from '../map-selections/route';
+import { verifyReplayAuth } from '@/lib/permissions';
 
 export async function POST(request: NextRequest) {
     const formData = await request.formData();

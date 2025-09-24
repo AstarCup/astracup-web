@@ -2,8 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { usePageTitle } from '@/lib/usePageTitle';
 
 export default function Login() {
+    usePageTitle('/register');
+
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");

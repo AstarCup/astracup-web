@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyReplayAuth } from '@/app/api/map-selections/route';
+import { verifyReplayAuth } from '@/lib/permissions';
 
 export async function POST(request: NextRequest) {
     try {
