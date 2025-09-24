@@ -470,7 +470,7 @@ export default function ReplayCollectionPage() {
                             {getFilteredMaps().map(map => (
                                 <div
                                     key={map.id}
-                                    className={`border rounded-lg p-4 shadow-sm hover:shadow-md hover:border-2 hover:border-[#E93B66] transition-shadow cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg' : ''
+                                    className={`border rounded-lg p-4 shadow-sm hover:shadow-md hover:scale-110 transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg' : ''
                                         }`}
                                     style={{
                                         backgroundImage: `url(https://assets.ppy.sh/beatmaps/${map.SID}/covers/cover.jpg)`,
