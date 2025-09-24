@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 import localFont from "next/font/local";
 import UserProfile from './UserProfile';
 import { UserSession } from '@/lib/session';
+import { getUserPermissions } from '@/lib/permissions';
 
 const audiowide = localFont({
     src: "./font/Audiowide-Regular.ttf",
@@ -65,11 +66,10 @@ export default function Navbar() {
                 if (sessionData.success) {
                     setUser(sessionData.session);
 
-                    // 获取用户权限
-                    const permissionsResponse = await fetch('/api/user-permissions');
-                    const permissionsData = await permissionsResponse.json();
-                    if (permissionsData.success) {
-                        setPermissions(permissionsData.permissions);
+                    // 直接从permissions库获取用户权限
+                    if (sessionData.session?.osuId) {
+                        const userPermissions = await getUserPermissions(sessionData.session.osuId.toString());
+                        setPermissions(userPermissions);
                     }
                 }
             } catch (error) {
@@ -113,9 +113,7 @@ export default function Navbar() {
         }
     };
 
-    const handleClickOutside = () => {
-        setClickedGroup(null);
-    };
+
 
     // Check if a group should be shown (either hovered or clicked)
     const shouldShowGroup = (groupName: string) => {
@@ -155,13 +153,13 @@ export default function Navbar() {
             svg: '',
             links: [
                 ...(permissions.isMapSelector || permissions.isAdmin ? [
-                    { name: '选图系统', href: '/map-selection', tip: '地图选择管理', svg: '' }
+                    { name: 'MAP SELECTION', href: '/map-selection', tip: '地图选择管理', svg: '' }
                 ] : []),
                 ...(permissions.isReplayTester || permissions.isAdmin ? [
-                    { name: '上传Replay', href: '/replay-collection', tip: '上传和收集Replay', svg: '' }
+                    { name: 'UPLOAD REPLAY', href: '/replay-collection', tip: '上传和收集Replay', svg: '' }
                 ] : []),
                 ...(permissions.isAdmin ? [
-                    { name: '调试页面', href: '/debug', tip: '系统调试和测试', svg: '' }
+                    { name: 'DEBUG', href: '/debug', tip: '系统调试和测试', svg: '' }
                 ] : [])
             ].filter(Boolean)
         }] : [])
@@ -298,48 +296,51 @@ export default function Navbar() {
                             </div>
                         </div>
 
-                        {/* Mobile User Profile */}
-                        <div className="xl:hidden flex items-center mr-2">
-                            {user ? (
-                                <img
-                                    src={user.avatar_url}
-                                    alt={user.username}
-                                    width={32}
-                                    height={32}
-                                    className="rounded-full outline outline-2 outline-[#E93B66]"
-                                    onError={(e) => {
-                                        e.currentTarget.src = '/default-avatar.png';
-                                    }}
-                                />
-                            ) : (
-                                <button
-                                    onClick={() => window.location.href = '/register'}
-                                    className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-3 py-1 rounded text-sm transition-colors duration-200"
-                                >
-                                    登录
-                                </button>
-                            )}
-                        </div>
+                        {/* Mobile Right Side */}
+                        <div className="xl:hidden flex items-center justify-end space-x-2">
+                            {/* Mobile User Profile */}
+                            <div className="flex items-center">
+                                {user ? (
+                                    <img
+                                        src={user.avatar_url}
+                                        alt={user.username}
+                                        width={32}
+                                        height={32}
+                                        className="rounded-full outline outline-2 outline-[#E93B66]"
+                                        onError={(e) => {
+                                            e.currentTarget.src = '/default-avatar.png';
+                                        }}
+                                    />
+                                ) : (
+                                    <button
+                                        onClick={() => window.location.href = '/register'}
+                                        className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-3 py-1 rounded text-sm transition-colors duration-200"
+                                    >
+                                        登录
+                                    </button>
+                                )}
+                            </div>
 
-                        {/* Mobile Menu Button */}
-                        <button
-                            className="xl:hidden flex flex-col items-left space-y-1 p-2"
-                            onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
-                            aria-expanded={isMobileMenuOpen}
-                            aria-label="Toggle mobile menu"
-                        >
-                            <span className={`block w-4 h-0.5 bg-[#3BE9D8] transition-transform ${isMobileMenuOpen ? 'rotate-45' : ''}`}></span>
-                            <span className={`block w-4 h-0.5 bg-[#3BE9D8] ${isMobileMenuOpen ? 'opacity-0' : ''}`}></span>
-                            <span className={`block w-4 h-0.5 bg-[#3BE9D8] transition-transform ${isMobileMenuOpen ? '-rotate-45' : ''}`}></span>
-                        </button>
+                            {/* Mobile Menu Button */}
+                            <button
+                                className="flex flex-col items-center space-y-1 p-2"
+                                onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
+                                aria-expanded={isMobileMenuOpen}
+                                aria-label="Toggle mobile menu"
+                            >
+                                <span className={`block w-4 h-0.5 bg-[#3BE9D8] transition-transform ${isMobileMenuOpen ? 'rotate-45' : ''}`}></span>
+                                <span className={`block w-4 h-0.5 bg-[#3BE9D8] ${isMobileMenuOpen ? 'opacity-0' : ''}`}></span>
+                                <span className={`block w-4 h-0.5 bg-[#3BE9D8] transition-transform ${isMobileMenuOpen ? '-rotate-45' : ''}`}></span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Mobile Menu Panel */}
                     <div
-                        className={`xl:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-180 py-4 opacity-99' : 'max-h-0 opacity-0'
+                        className={`xl:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-screen py-4 opacity-99' : 'max-h-0 opacity-0'
                             }`}
                     >
-                        <div className=" p-4">
+                        <div className="max-h-96 overflow-y-auto p-4">
                             <div className="grid grid-cols-2 gap-2">
                                 {navGroups.flatMap(group => group.links).map((link) => (
                                     <div key={link.href} className="border-b-4 border-[#E93B66] bg-white/100 hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-20 flex">
@@ -367,6 +368,33 @@ export default function Navbar() {
                                     </div>
                                 ))}
                             </div>
+                            {/* Mobile User Profile */}
+                            {user && (
+                                <div className="mt-4 pt-4 border-t border-gray-300">
+                                    <div className="flex items-center gap-3 p-3 bg-[#3d3d3d] rounded-md">
+                                        <img
+                                            src={user.avatar_url}
+                                            alt={user.username}
+                                            width={40}
+                                            height={40}
+                                            className="rounded-full outline outline-2 outline-[#E93B66]"
+                                            onError={(e) => {
+                                                e.currentTarget.src = '/default-avatar.png';
+                                            }}
+                                        />
+                                        <div className="flex-1">
+                                            <div className="text-white font-bold text-sm">{user.username}</div>
+                                            <div className="text-gray-300 text-xs">ID: {user.osuId}</div>
+                                        </div>
+                                        <button
+                                            onClick={handleLogout}
+                                            className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-3 py-1 rounded text-xs transition-colors duration-200"
+                                        >
+                                            登出
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
