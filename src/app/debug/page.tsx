@@ -55,27 +55,6 @@ export default function DebugPage() {
                 router.push('/');
             });
 
-        // 获取客户端环境变量信息
-        const clientInfo = {
-            OSU_CLIENT_ID: process.env.OSU_CLIENT_ID || "NOT_SET (Client)",
-            OSU_CLIENT_SECRET: process.env.OSU_CLIENT_SECRET ? "SET" : "NOT_SET (Client)",
-            OSU_REDIRECT_URI: process.env.OSU_REDIRECT_URI || "NOT_SET (Client)",
-            NODE_ENV: process.env.NODE_ENV || "NOT_SET (Client)",
-        };
-
-        setEnvInfo(clientInfo);
-
-        // 从服务器API获取环境变量信息
-        fetch('/api/debug/env')
-            .then(response => response.json())
-            .then(data => {
-                setServerEnvInfo(data.environment);
-                setLoading(false);
-            })
-            .catch(error => {
-                console.error('Failed to fetch server env:', error);
-                setLoading(false);
-            });
     }, [router]);
 
     // 获取注册用户列表
@@ -343,32 +322,7 @@ export default function DebugPage() {
             <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-6">调试面板 - 管理员权限</h1>
 
-                <div className="mb-6">
-                    <h2 className="text-xl font-semibold mb-3">环境变量状态</h2>
-                    <div className="bg-gray-100 p-4 rounded-md">
-                        <pre className="text-sm">
-                            {JSON.stringify(envInfo, null, 2)}
-                        </pre>
-                    </div>
-                </div>
 
-                {loading ? (
-                    <div className="mb-6">
-                        <h2 className="text-xl font-semibold mb-3">服务器环境变量</h2>
-                        <div className="bg-blue-50 p-4 rounded-md">
-                            <p className="text-sm">加载中...</p>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="mb-6">
-                        <h2 className="text-xl font-semibold mb-3">服务器环境变量</h2>
-                        <div className="bg-blue-50 p-4 rounded-md">
-                            <pre className="text-sm">
-                                {JSON.stringify(serverEnvInfo, null, 2)}
-                            </pre>
-                        </div>
-                    </div>
-                )}
 
                 <div className="mb-6">
                     <h2 className="text-xl font-semibold mb-3">数据库操作</h2>
@@ -422,28 +376,7 @@ export default function DebugPage() {
                             清空注册数据
                         </button>
 
-                        <button
-                            onClick={async () => {
-                                if (confirm('确定要升级数据库吗？这将在现有表结构上添加审核状态字段。')) {
-                                    try {
-                                        const response = await fetch('/api/debug/upgrade-database', {
-                                            method: 'POST'
-                                        });
-                                        const data = await response.json();
-                                        alert(`升级结果: ${JSON.stringify(data)}`);
-                                    } catch (error) {
-                                        alert('数据库升级失败: ' + error);
-                                    }
-                                }
-                            }}
-                            className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600"
-                        >
-                            升级数据库
-                        </button>
 
-                        <p className="text-sm text-green-700 mt-2">
-                            数据库管理操作（仅管理员可用）
-                        </p>
                     </div>
                 </div>
 
@@ -495,7 +428,7 @@ export default function DebugPage() {
                                                             地区: {player.country} (#{player.country_rank ? player.country_rank.toLocaleString() : '未排名'})
                                                         </p>
                                                         <p className={`text-xs ${player.approved ? 'text-green-600' : 'text-yellow-600'}`}>
-                                                            {player.approved ? '✓ 已审核通过' : '⏳ 待审核'}
+                                                            {player.approved ? '✓ 已审核通过' : '待审核'}
                                                         </p>
                                                     </div>
                                                 </div>

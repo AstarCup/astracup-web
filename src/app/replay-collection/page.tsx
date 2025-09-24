@@ -321,7 +321,7 @@ export default function ReplayCollectionPage() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-6">
+        <div className="max-w-9xl mx-auto p-6">
             <h2 className="text-2xl font-bold mb-4">回放文件收集系统</h2>
 
             {isLoading ? (
@@ -345,7 +345,7 @@ export default function ReplayCollectionPage() {
                     <MapoolTable data={paddingMaps} title="Padding状态图池" />
                     <div className="mt-6">
                         <h3 className="text-xl font-bold mb-4">回放文件上传</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                             {paddingMaps.map(map => (
                                 <div
                                     key={map.id}
