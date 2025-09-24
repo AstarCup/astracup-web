@@ -173,7 +173,7 @@ export default function Navbar() {
         // 管理菜单 - 根据权限动态显示
         ...(permissions.isMapSelector || permissions.isReplayTester || permissions.isAdmin ? [{
             name: '管理',
-            svg: '/icons/admin.svg',
+            svg: '/icons/admin-fill.svg',
             links: [
                 ...(permissions.isMapSelector || permissions.isAdmin ? [
                     { name: 'MAP SELECTION', href: '/map-selection', tip: '图池管理', svg: '/icons/table-fill.svg' }
