@@ -359,6 +359,14 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                     navigator.clipboard.writeText(row.BID);
                     showInfo('BID 已复制到剪贴板');
                 }
+            },
+            {
+                label: '从osu中打开',
+                icon: '',
+                onClick: () => {
+                    window.open(`osu://b/${row.BID}`, '_blank');
+                    showInfo('已在osu客户端中打开谱面');
+                }
             }
         ];
 
