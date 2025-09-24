@@ -47,7 +47,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
 
                         const response = await fetch(downloadUrl, {
                             headers: {
-                                'Referer': 'https://www.rino.ink/',
+                                'Referer': process.env.NEXT_PUBLIC_BASE_URL || 'https://www.rino.ink/',
                                 'User-Agent': navigator.userAgent
                             }
                         });
