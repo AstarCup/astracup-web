@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 import localFont from "next/font/local";
 import UserProfile from './UserProfile';
 import { UserSession } from '@/lib/session';
+import { getUserPermissions } from '@/lib/permissions';
 
 const audiowide = localFont({
     src: "./font/Audiowide-Regular.ttf",
@@ -88,12 +89,10 @@ export default function Navbar() {
                 if (sessionData.success) {
                     setUser(sessionData.session);
 
-                    // 获取用户权限
-                    const permissionsResponse = await fetch('/api/user-permissions');
-                    const permissionsData = await permissionsResponse.json();
-                    if (permissionsData.success) {
-                        console.log('User permissions:', permissionsData.permissions);
-                        setPermissions(permissionsData.permissions);
+                    // 直接从permissions库获取用户权限
+                    if (sessionData.session?.osuId) {
+                        const userPermissions = await getUserPermissions(sessionData.session.osuId.toString());
+                        setPermissions(userPermissions);
                     }
                 }
             } catch (error) {
