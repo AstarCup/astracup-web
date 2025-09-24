@@ -513,17 +513,17 @@ export default function ReplayCollectionPage() {
                                         <div className="mb-3 flex items-start justify-between">
                                             {/* 左边：mod位信息（加粗） */}
                                             <div className="flex-shrink-0">
-                                                <span className={`font-bold text-lg ${getModColor(map.selectedMods)} bg-white/90 px-2 py-1 rounded shadow-sm`}>
+                                                <span className={`font-bold text-lg ${getModColor(map.selectedMods)} px-2 py-1 shadow-sm`}>
                                                     {map.selectedMods}{map.modPosition}
                                                 </span>
                                             </div>
 
                                             {/* 右边：歌曲信息 */}
                                             <div className="flex-1 min-w-0 ml-3 text-right">
-                                                <h4 className="font-bold text-sm text-gray-800 truncate bg-white/90 px-2 py-1 rounded shadow-sm" title={`${map.artist} - ${map.title}`}>
+                                                <h4 className="font-bold text-sm text-gray-800 truncate px-2 py-1 shadow-sm" title={`${map.artist} - ${map.title}`}>
                                                     {map.artist} - {map.title}
                                                 </h4>
-                                                <p className="text-xs text-gray-600 truncate bg-white/90 px-2 py-1 rounded shadow-sm mt-1" title={map.version}>
+                                                <p className="text-xs text-gray-600 truncate px-2 py-1 shadow-sm mt-1" title={map.version}>
                                                     [{map.version}]
                                                 </p>
                                             </div>
@@ -532,28 +532,28 @@ export default function ReplayCollectionPage() {
                                         {/* 中间区域：星级和其他信息 */}
                                         <div className="mb-3">
                                             <div className="flex items-center justify-end text-sm mb-1">
-                                                <span className="text-gray-700 font-medium bg-white/90 px-2 py-1 rounded shadow-sm">
+                                                <span className="text-gray-700 font-medium px-2 py-1 shadow-sm">
                                                     ★{map.starRating}
                                                 </span>
                                             </div>
-                                            <div className="text-xs text-gray-600 bg-white/90 px-2 py-1 rounded shadow-sm">
+                                            <div className="text-xs text-gray-600 px-2 py-1 shadow-sm">
                                                 {map.totalLength ? formatLength(map.totalLength) : '-'} | {map.bpm} BPM
                                             </div>
                                         </div>
 
                                         {/* 底部区域：上传状态 */}
                                         <div className="mb-3">
-                                            <div className="text-xs text-gray-700 bg-white/90 px-2 py-1 rounded shadow-sm">
+                                            <div className="text-xs text-gray-700 px-2 py-1 shadow-sm">
                                                 已上传用户: {getUsernamesList(uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`] || [])}
                                             </div>
                                             {user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`]?.includes(user.username) && (
-                                                <div className="text-xs text-green-600 font-medium mt-1 bg-green-50 px-2 py-1 rounded shadow-sm">✓ 你已上传</div>
+                                                <div className="text-xs text-green-600 font-medium mt-1 px-2 py-1 shadow-sm">✓ 你已上传</div>
                                             )}
                                         </div>
 
                                         {/* 底部提示 */}
                                         <div className="text-center">
-                                            <div className="text-xs text-gray-600 bg-white/90 px-2 py-1 rounded shadow-sm inline-block">
+                                            <div className="text-xs text-gray-600 px-2 py-1 shadow-sm inline-block">
                                                 {uploading ? '上传中...' : '点击上传或拖拽.osr文件'}
                                             </div>
                                         </div>
@@ -561,7 +561,7 @@ export default function ReplayCollectionPage() {
                                         {/* 上传中遮罩 */}
                                         {uploading && (
                                             <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg z-30">
-                                                <div className="text-sm text-blue-600 bg-white px-3 py-2 rounded shadow-lg">上传中...</div>
+                                                <div className="text-sm text-blue-600 px-3 py-2 shadow-lg">上传中...</div>
                                             </div>
                                         )}
                                     </div>
