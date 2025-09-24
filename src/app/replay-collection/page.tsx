@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import MapoolTable from '../components/MapoolTable';
 import { showError, showSuccess } from '../components/Notification';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -399,12 +400,24 @@ export default function ReplayCollectionPage() {
                                         </button>
                                     )}
                                     <div className="mb-3">
-                                        <h4 className="font-bold text-sm text-gray-800 truncate" title={`${map.artist} - ${map.title}`}>
-                                            {map.artist} - {map.title}
-                                        </h4>
-                                        <p className="text-xs text-gray-600 truncate" title={map.version}>
-                                            [{map.version}]
-                                        </p>
+                                        <div className="flex items-center gap-3">
+                                            <Image
+                                                src={`https://assets.ppy.sh/beatmaps/${map.SID}/covers/cover.jpg`}
+                                                alt="Cover"
+                                                width={40}
+                                                height={30}
+                                                className="w-10 h-7.5 object-cover rounded"
+                                                unoptimized
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-bold text-sm text-gray-800 truncate" title={`${map.artist} - ${map.title}`}>
+                                                    {map.artist} - {map.title}
+                                                </h4>
+                                                <p className="text-xs text-gray-600 truncate" title={map.version}>
+                                                    [{map.version}]
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div className="mb-3">
