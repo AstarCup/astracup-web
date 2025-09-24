@@ -64,6 +64,16 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
         let failCount = 0;
 
         try {
+            // 先测试第一个下载，确保API工作正常
+            console.log('Testing API with first beatmap...');
+            const testResult = await testSingleDownload(bulkDownloadItems[0].sid);
+            if (!testResult.success) {
+                showError(`API测试失败，无法开始批量下载: ${testResult.error}`);
+                setIsBulkDownloading(false);
+                return;
+            }
+            console.log('API test passed, proceeding with bulk download...');
+
             // 逐个下载谱面，添加延迟避免并发过多
             for (let i = 0; i < bulkDownloadItems.length; i++) {
                 const item = bulkDownloadItems[i];
@@ -145,35 +155,56 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
             if (successCount > 0) {
                 console.log('Generating ZIP file...');
 
-                // 更新UI显示正在生成ZIP
-                setBulkDownloadItems(prev => prev.map(item =>
-                    item.status === 'completed' ? { ...item, status: 'downloading' as const, progress: 50 } : item
-                ));
+                try {
+                    const zipBlob = await zip.generateAsync({
+                        type: 'blob',
+                        compression: 'DEFLATE',
+                        compressionOptions: { level: 6 }
+                    });
 
-                const zipBlob = await zip.generateAsync({
-                    type: 'blob',
-                    compression: 'DEFLATE',
-                    compressionOptions: { level: 6 }
-                });
+                    console.log('ZIP file generated, size:', zipBlob.size, 'bytes');
 
-                console.log('ZIP file generated, size:', zipBlob.size, 'bytes');
+                    if (zipBlob.size === 0) {
+                        throw new Error('生成的ZIP文件为空');
+                    }
 
-                // 创建下载链接
-                const url = window.URL.createObjectURL(zipBlob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `beatmaps_${Date.now()}.zip`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
+                    // 创建下载链接
+                    const url = window.URL.createObjectURL(zipBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `beatmaps_${Date.now()}.zip`;
+                    a.style.display = 'none';
 
-                // 更新所有完成的项目状态
-                setBulkDownloadItems(prev => prev.map(item =>
-                    item.status === 'completed' || item.status === 'downloading' ? { ...item, status: 'completed' as const, progress: 100 } : item
-                ));
+                    // 确保元素被添加到DOM中
+                    document.body.appendChild(a);
 
-                showSuccess(`批量下载完成！成功: ${successCount}, 失败: ${failCount}`);
+                    // 触发下载
+                    try {
+                        a.click();
+                        console.log('Download triggered successfully');
+                    } catch (clickError) {
+                        console.error('Failed to trigger download:', clickError);
+                        // 备用方案：直接打开URL
+                        window.open(url, '_blank');
+                    }
+
+                    // 清理
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+
+                    // 更新所有完成的项目状态
+                    setBulkDownloadItems(prev => prev.map(item =>
+                        item.status === 'completed' || item.status === 'downloading' ? { ...item, status: 'completed' as const, progress: 100 } : item
+                    ));
+
+                    showSuccess(`批量下载完成！成功: ${successCount}, 失败: ${failCount}\nZIP文件大小: ${(zipBlob.size / 1024 / 1024).toFixed(2)} MB`);
+
+                } catch (zipError) {
+                    console.error('ZIP generation failed:', zipError);
+                    showError(`ZIP文件生成失败: ${zipError instanceof Error ? zipError.message : '未知错误'}`);
+                    return;
+                }
+
             } else {
                 showError('所有谱面下载都失败了，请检查网络连接');
             }
@@ -183,6 +214,40 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
             showError('批量下载过程中出现严重错误');
         } finally {
             setIsBulkDownloading(false);
+        }
+    };
+
+    // 测试单个下载
+    const testSingleDownload = async (sid: string) => {
+        try {
+            console.log('Testing single download for SID:', sid);
+            const response = await fetch(`/api/download-beatmap?sid=${sid}`, {
+                method: 'GET',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                },
+            });
+
+            console.log('Test response:', {
+                ok: response.ok,
+                status: response.status,
+                statusText: response.statusText,
+                contentLength: response.headers.get('content-length'),
+                contentType: response.headers.get('content-type'),
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                console.log('Test blob size:', blob.size, 'bytes');
+                return { success: true, size: blob.size };
+            } else {
+                const errorText = await response.text();
+                console.error('Test failed:', errorText);
+                return { success: false, error: errorText };
+            }
+        } catch (error) {
+            console.error('Test error:', error);
+            return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
         }
     };
 
@@ -207,39 +272,17 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
             {
                 label: '下载谱面 (Sayobot)',
                 icon: '⬇️',
-                onClick: async () => {
-                    try {
-                        const downloadUrl = `/api/download-beatmap?sid=${row.SID}`;
-                        console.log('开始下载谱面:', {
-                            sid: row.SID,
-                            bid: row.BID,
-                            url: downloadUrl
-                        });
+                onClick: () => {
+                    const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`;
+                    console.log('直接跳转到Sayobot下载:', {
+                        sid: row.SID,
+                        bid: row.BID,
+                        url: downloadUrl
+                    });
 
-                        // 创建一个隐藏的链接来触发下载
-                        const a = document.createElement('a');
-                        a.href = downloadUrl;
-                        a.download = `${row.artist} - ${row.title}.osz`;
-                        a.style.display = 'none';
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-
-                        console.log('下载请求已发送');
-                        showSuccess('谱面下载开始');
-
-                    } catch (error) {
-                        const errorMessage = error instanceof Error ? error.message : '未知错误';
-                        const errorDetails = `下载过程中出现错误: ${errorMessage}`;
-                        console.error('下载错误详情:', {
-                            error: error,
-                            message: errorMessage,
-                            sid: row.SID,
-                            bid: row.BID,
-                            stack: error instanceof Error ? error.stack : undefined
-                        });
-                        showError(`${errorDetails}\n谱面ID: ${row.SID}, BID: ${row.BID}\n请检查网络连接或稍后重试`);
-                    }
+                    // 直接跳转到Sayobot下载链接，让浏览器处理下载
+                    window.open(downloadUrl, '_blank');
+                    showSuccess('已打开谱面下载链接');
                 }
             },
             {
