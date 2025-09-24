@@ -25,6 +25,7 @@ export default function ReplayCollectionPage() {
     const [uploading, setUploading] = useState(false);
     const [uploadedUsers, setUploadedUsers] = useState<{ [key: string]: string[] }>({}); // { mapId: [username, ...] }
     const [highlightedMapId, setHighlightedMapId] = useState<number | null>(null);
+    const [hoveredMapId, setHoveredMapId] = useState<number | null>(null);
     const [selectedModFilter, setSelectedModFilter] = useState<string>('all');
     const [downloadingAll, setDownloadingAll] = useState(false);
     const [availableSeasons, setAvailableSeasons] = useState([
@@ -466,18 +467,22 @@ export default function ReplayCollectionPage() {
                                 </div>
                             )}
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4" onMouseLeave={() => setHoveredMapId(null)}>
                             {getFilteredMaps().map(map => (
                                 <div
                                     key={map.id}
-                                    className={`border rounded-lg p-4 shadow-sm hover:shadow-md hover:scale-110 transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg' : ''
+                                    className={`border rounded-lg p-4 shadow-sm hover:shadow-md hover:scale-110 transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''
                                         }`}
                                     style={{
                                         backgroundImage: `url(https://assets.ppy.sh/beatmaps/${map.SID}/covers/cover.jpg)`,
                                         backgroundSize: 'cover',
                                         backgroundPosition: 'center',
-                                        backgroundRepeat: 'no-repeat'
+                                        backgroundRepeat: 'no-repeat',
+                                        opacity: hoveredMapId && hoveredMapId !== map.id ? 0.9 : 1,
+                                        transition: 'opacity 0.2s ease-in-out'
                                     }}
+                                    onMouseEnter={() => setHoveredMapId(map.id)}
+                                    onMouseLeave={() => setHoveredMapId(null)}
                                     onClick={() => {
                                         if (!uploading && user) {
                                             const input = document.createElement('input');
