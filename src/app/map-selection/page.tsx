@@ -173,6 +173,7 @@ export default function MapSelectionPage() {
     const [category, setCategory] = useState('qualification');
     const [modFilter, setModFilter] = useState<string>('all'); // 新增：mod筛选状态
     const [searchQuery, setSearchQuery] = useState<string>(''); // 新增：搜索查询状态
+    const [sortByRating, setSortByRating] = useState<boolean>(false); // 新增：按评分排序状态
 
     // Rating states
     const [userRatings, setUserRatings] = useState<{ [key: number]: number }>({});
@@ -1031,18 +1032,41 @@ export default function MapSelectionPage() {
     };
 
     // 计算筛选后的选图列表
-    const filteredSelections = selections.filter(selection => {
-        // Mod筛选
-        const modMatch = modFilter === 'all' ||
-            (selection.selectedMods === 'LZ' && selection.customModName && modFilter === 'LZ') ||
-            selection.selectedMods === modFilter;
+    const filteredSelections = (() => {
+        let filtered = selections.filter(selection => {
+            // Mod筛选
+            const modMatch = modFilter === 'all' ||
+                (selection.selectedMods === 'LZ' && selection.customModName && modFilter === 'LZ') ||
+                selection.selectedMods === modFilter;
 
-        // 搜索筛选
-        const searchParsed = parseSearchQuery(searchQuery);
-        const searchMatch = matchesSearch(selection, searchParsed.type, searchParsed.value, searchParsed.statType);
+            // 搜索筛选
+            const searchParsed = parseSearchQuery(searchQuery);
+            const searchMatch = matchesSearch(selection, searchParsed.type, searchParsed.value, searchParsed.statType);
 
-        return modMatch && searchMatch;
-    });
+            return modMatch && searchMatch;
+        });
+
+        // 如果启用按评分排序
+        if (sortByRating) {
+            filtered = filtered.sort((a, b) => {
+                const ratingsA = mapRatings[a.id] || [];
+                const ratingsB = mapRatings[b.id] || [];
+
+                // 计算平均评分
+                const avgRatingA = ratingsA.length > 0
+                    ? ratingsA.reduce((sum, rating) => sum + rating.rating, 0) / ratingsA.length
+                    : 0;
+                const avgRatingB = ratingsB.length > 0
+                    ? ratingsB.reduce((sum, rating) => sum + rating.rating, 0) / ratingsB.length
+                    : 0;
+
+                // 按平均评分降序排序（高分在前）
+                return avgRatingB - avgRatingA;
+            });
+        }
+
+        return filtered;
+    })();
 
     // 获取当前选图中存在的所有mod类型
     const getAvailableModsFromSelections = () => {
@@ -1693,6 +1717,17 @@ export default function MapSelectionPage() {
                                     showClearButton={modFilter !== 'all'}
                                     clearButtonText="清除"
                                 />
+
+                                {/* 按评分排序开关 */}
+                                <label className="flex items-center gap-2 text-gray-800 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={sortByRating}
+                                        onChange={(e) => setSortByRating(e.target.checked)}
+                                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    />
+                                    按评分排序
+                                </label>
                             </div>
                         </div>
 
