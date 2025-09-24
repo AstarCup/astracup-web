@@ -23,9 +23,12 @@ interface MapoolTableProps {
     onRowClick?: (row: any, index: number) => void;
     onRowRightClick?: (row: any, index: number) => void;
     showUploadJump?: boolean; // 是否显示跳转到上传区域的选项
+    uploadedUsers?: { [key: string]: string[] }; // 上传用户数据 { mapId: [username, ...] }
+    season?: string; // 当前赛季
+    category?: string; // 当前类别
 }
 
-export default function MapoolTable({ data, title, downloadUrl, onRowRightClick, showUploadJump = false }: MapoolTableProps) {
+export default function MapoolTable({ data, title, downloadUrl, onRowRightClick, showUploadJump = false, uploadedUsers = {}, season, category }: MapoolTableProps) {
     const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
     const [contextMenu, setContextMenu] = useState<{
         visible: boolean;
@@ -452,10 +455,13 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                 bgClass = "text-grey-500";
                                 slotClass = "bg-black p-2 text-white text-center font-bold";
                             }
+                            // 检查是否有上传
+                            const hasUploads = season && category && uploadedUsers[`${season}/${category}/${row.BID}`]?.length > 0;
+
                             return (
                                 <tr
                                     key={idx}
-                                    className={`${bgClass} cursor-pointer hover:bg-gray-100`}
+                                    className={`${bgClass} cursor-pointer hover:bg-gray-100 ${hasUploads ? 'bg-green-50' : ''}`}
                                     onContextMenu={(e) => {
                                         e.preventDefault(); // 阻止默认右键菜单
                                         setContextMenu({

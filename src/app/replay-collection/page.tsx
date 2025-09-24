@@ -457,7 +457,7 @@ export default function ReplayCollectionPage() {
                             minWidth="6rem"
                         />
                     </div>
-                    <MapoolTable data={getFilteredMaps()} title="Padding状态图池" onRowRightClick={handleTableRowRightClick} showUploadJump={true} />
+                    <MapoolTable data={getFilteredMaps()} title="Padding状态图池" onRowRightClick={handleTableRowRightClick} showUploadJump={true} uploadedUsers={uploadedUsers} season={selectedSeason} category={selectedCategory} />
                     <div className="mt-6" id="upload-section">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-bold">回放文件上传</h3>
@@ -471,7 +471,7 @@ export default function ReplayCollectionPage() {
                             {getFilteredMaps().map(map => (
                                 <div
                                     key={map.id}
-                                    className={`border rounded-lg p-4 shadow-sm hover:shadow-md hover:scale-[1.03] transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''
+                                    className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''
                                         }`}
                                     style={{
                                         backgroundImage: `url(https://assets.ppy.sh/beatmaps/${map.SID}/covers/cover.jpg)`,
