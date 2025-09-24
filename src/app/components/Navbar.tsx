@@ -239,19 +239,19 @@ export default function Navbar() {
         <nav className={`${audiowide.className} antialiased`}>
             <div className="fixed top-0 left-0 w-full z-50 object-center font-bold">
 
-                <div className="absolute inset-0 backdrop-blur-lg" style={{
-                    zIndex: -3,
-                    maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)',
-                    WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)'
-                }}></div>
-
-
                 <div className="absolute inset-0" style={{
-                    zIndex: -1,
-                    background: 'linear-gradient(to bottom, rgba(233, 59, 102, 0.6) 0%, rgba(233, 59, 102, 0.3) 10%, rgba(233, 59, 102, 0.1) 30%, rgba(233, 59, 102, 0) 50%)'
+                    zIndex: -20,
+                    background: 'linear-gradient(to bottom, rgba(0,0,0, 0.6) 10%, rgba(0,0,0, 0.3) 50%, rgba(0,0,0, 0.1) 80%, rgba(233, 59, 102, 0) 100%)'
+                }}></div>
+                <div className="absolute inset-0 backdrop-blur-lg" style={{
+                    zIndex: -20,
+                    maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 10%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)',
+                    WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 10%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)'
                 }}></div>
 
-                <img src="/NavbarBackground.svg" alt="Background" className="absolute inset-0 object-cover bg-center opacity-90 bg-repeat-x" style={{ zIndex: -2 }} />
+
+
+                <img src="/NavbarBackground.svg" alt="Background" className="absolute inset-0 object-cover bg-center bg-repeat-x" style={{ zIndex: -2 }} />
 
 
                 <div className="max-w-7xl mx-auto px-2">
@@ -299,7 +299,7 @@ export default function Navbar() {
                                                     onMouseLeave={handleMouseLeave}
                                                 >
                                                     {group.links.map((link) => (
-                                                        <div key={link.href} className="border-b-4 border-[#E93B66] bg-white/100 hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-20 flex mb-2 last:mb-0">
+                                                        <div key={link.href} className="border-b-4 border-[#E93B66] bg-white hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-20 flex mb-2 last:mb-0">
                                                             <Link
                                                                 href={link.href}
                                                                 className={`flex-1 p-3 text-left text-sm font-medium flex items-center gap-2 relative text-gray-800 ${isActive(link.href) ? 'bg-[#3BE9D8] font-bold' : ''}`}
@@ -445,10 +445,10 @@ export default function Navbar() {
 
                     {/* Mobile Menu Panel */}
                     <div
-                        className={`xl:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-screen py-4 opacity-99' : 'max-h-0 opacity-0'
+                        className={`xl:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-screen py-0 opacity-100' : 'max-h-0 opacity-0'
                             }`}
                     >
-                        <div className="max-h-96 overflow-y-auto p-4">
+                        <div className="max-h-120 overflow-y-auto p-4 bg-black/50">
                             <div className="space-y-6">
                                 {navGroups.map((group) => (
                                     <div key={group.name}>
