@@ -98,11 +98,10 @@ export default function BulkDownloadManager({
                                 </div>
                                 <div className="w-16 bg-gray-200 rounded-full h-1">
                                     <div
-                                        className={`h-1 rounded-full transition-all duration-300 ${
-                                            item.status === 'completed' ? 'bg-green-500' :
-                                            item.status === 'failed' ? 'bg-red-500' :
-                                            'bg-[#E93B66]'
-                                        }`}
+                                        className={`h-1 rounded-full transition-all duration-300 ${item.status === 'completed' ? 'bg-green-500' :
+                                                item.status === 'failed' ? 'bg-red-500' :
+                                                    'bg-[#E93B66]'
+                                            }`}
                                         style={{ width: `${item.progress}%` }}
                                     ></div>
                                 </div>
