@@ -520,7 +520,7 @@ export default function ReplayCollectionPage() {
                                                 e.stopPropagation(); // 阻止事件冒泡
                                                 handleReplayDelete(map);
                                             }}
-                                            className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors"
+                                            className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors z-30"
                                             title="删除已上传的回放"
                                         >
                                             ×
@@ -532,21 +532,6 @@ export default function ReplayCollectionPage() {
 
                                     {/* 内容层 */}
                                     <div className="relative z-10">
-                                        {/* 删除按钮 - 只有已上传时显示 */}
-                                        {user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation(); // 阻止事件冒泡
-                                                    handleReplayDelete(map);
-                                                }}
-                                                className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors z-20"
-                                                title="删除已上传的回放"
-                                            >
-                                                ×
-                                            </button>
-                                        )}
-
-                                        {/* 顶部区域：mod位 + 歌曲信息 */}
                                         <div className="mb-3 flex items-start justify-between">
                                             {/* 左边：mod位信息（加粗） */}
                                             <div className="flex-shrink-0">
