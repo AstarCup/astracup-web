@@ -79,13 +79,13 @@ export default function ReplayCollectionPage() {
     const handleTableRowClick = (row: any, index: number) => {
         // 设置高亮状态
         setHighlightedMapId(row.id);
-        
+
         // 跳转到上传区域
         const uploadSection = document.getElementById('upload-section');
         if (uploadSection) {
             uploadSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-        
+
         // 3秒后取消高亮
         setTimeout(() => {
             setHighlightedMapId(null);
@@ -382,9 +382,8 @@ export default function ReplayCollectionPage() {
                             {paddingMaps.map(map => (
                                 <div
                                     key={map.id}
-                                    className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden ${
-                                        highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg' : ''
-                                    }`}
+                                    className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg' : ''
+                                        }`}
                                     style={{
                                         backgroundImage: `url(https://assets.ppy.sh/beatmaps/${map.SID}/covers/cover.jpg)`,
                                         backgroundSize: 'cover',
@@ -439,10 +438,10 @@ export default function ReplayCollectionPage() {
                                             ×
                                         </button>
                                     )}
-                                    
+
                                     {/* 白色渐变覆盖层 - 增加可读性 */}
                                     <div className="absolute inset-0 bg-gradient-to-tr from-white via-white/80 to-transparent"></div>
-                                    
+
                                     {/* 内容层 */}
                                     <div className="relative z-10">
                                         {/* 删除按钮 - 只有已上传时显示 */}
@@ -467,7 +466,7 @@ export default function ReplayCollectionPage() {
                                                     {map.selectedMods}{map.modPosition}
                                                 </span>
                                             </div>
-                                            
+
                                             {/* 右边：歌曲信息 */}
                                             <div className="flex-1 min-w-0 ml-3 text-right">
                                                 <h4 className="font-bold text-sm text-gray-800 truncate bg-white/90 px-2 py-1 rounded shadow-sm" title={`${map.artist} - ${map.title}`}>
