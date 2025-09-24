@@ -64,7 +64,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
         let failCount = 0;
 
         try {
-            // 逐个下载谱面
+            // 逐个下载谱面，添加延迟避免并发过多
             for (let i = 0; i < bulkDownloadItems.length; i++) {
                 const item = bulkDownloadItems[i];
 
@@ -76,14 +76,32 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
 
                     console.log(`Downloading beatmap ${i + 1}/${bulkDownloadItems.length}:`, item.sid, item.bid);
 
-                    const response = await fetch(`/api/download-beatmap?sid=${item.sid}`);
+                    const response = await fetch(`/api/download-beatmap?sid=${item.sid}`, {
+                        method: 'GET',
+                        headers: {
+                            'Cache-Control': 'no-cache',
+                        },
+                    });
 
                     if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        // 尝试读取错误信息
+                        let errorText = '';
+                        try {
+                            const errorData = await response.json();
+                            errorText = errorData.error || `HTTP ${response.status}`;
+                        } catch {
+                            errorText = `HTTP ${response.status}: ${response.statusText}`;
+                        }
+                        throw new Error(errorText);
                     }
 
                     const blob = await response.blob();
                     console.log(`Downloaded ${item.sid}, size: ${blob.size} bytes`);
+
+                    // 检查文件大小，如果太小可能是错误
+                    if (blob.size < 1000) { // 小于1KB可能是错误
+                        throw new Error(`文件大小异常: ${blob.size} bytes`);
+                    }
 
                     // 获取文件名
                     const contentDisposition = response.headers.get('content-disposition');
@@ -104,6 +122,11 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                     ));
 
                     successCount++;
+
+                    // 添加小延迟避免请求过于频繁
+                    if (i < bulkDownloadItems.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 500)); // 500ms延迟
+                    }
 
                 } catch (error) {
                     const errorMessage = error instanceof Error ? error.message : '未知错误';
