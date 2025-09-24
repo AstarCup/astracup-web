@@ -4,6 +4,7 @@ import { useState } from "react";
 import { showSuccess, showError, showInfo } from '../components/Notification';
 import ContextMenu from './ContextMenu';
 import BulkDownloadManager from './BulkDownloadManager';
+import JSZip from 'jszip';
 
 interface DownloadItem {
     sid: string;
@@ -58,67 +59,105 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
         if (bulkDownloadItems.length === 0) return;
 
         setIsBulkDownloading(true);
+        const zip = new JSZip();
+        let successCount = 0;
+        let failCount = 0;
 
         try {
-            // 更新所有项目状态为下载中
-            setBulkDownloadItems(prev => prev.map(item => ({ ...item, status: 'downloading', progress: 0 })));
+            // 逐个下载谱面
+            for (let i = 0; i < bulkDownloadItems.length; i++) {
+                const item = bulkDownloadItems[i];
 
-            const sids = bulkDownloadItems.map(item => item.sid);
+                try {
+                    // 更新当前项目状态为下载中
+                    setBulkDownloadItems(prev => prev.map((prevItem, idx) =>
+                        idx === i ? { ...prevItem, status: 'downloading', progress: 10 } : prevItem
+                    ));
 
-            console.log('Starting bulk download for', sids.length, 'beatmaps');
+                    console.log(`Downloading beatmap ${i + 1}/${bulkDownloadItems.length}:`, item.sid, item.bid);
 
-            const response = await fetch('/api/bulk-download', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ sids }),
-            });
+                    const response = await fetch(`/api/download-beatmap?sid=${item.sid}`);
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-                throw new Error(errorData.error || `HTTP ${response.status}`);
-            }
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
 
-            // 创建下载链接
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
+                    const blob = await response.blob();
+                    console.log(`Downloaded ${item.sid}, size: ${blob.size} bytes`);
 
-            // 获取文件名
-            const contentDisposition = response.headers.get('content-disposition');
-            let filename = `beatmaps_${Date.now()}.zip`;
-            if (contentDisposition) {
-                const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-                if (filenameMatch && filenameMatch[1]) {
-                    filename = filenameMatch[1].replace(/['"]/g, '');
+                    // 获取文件名
+                    const contentDisposition = response.headers.get('content-disposition');
+                    let filename = `beatmap_${item.sid}.osz`;
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        if (filenameMatch && filenameMatch[1]) {
+                            filename = filenameMatch[1].replace(/['"]/g, '');
+                        }
+                    }
+
+                    // 添加到ZIP
+                    zip.file(filename, blob);
+
+                    // 更新状态为完成
+                    setBulkDownloadItems(prev => prev.map((prevItem, idx) =>
+                        idx === i ? { ...prevItem, status: 'completed', progress: 100 } : prevItem
+                    ));
+
+                    successCount++;
+
+                } catch (error) {
+                    const errorMessage = error instanceof Error ? error.message : '未知错误';
+                    console.error(`Failed to download ${item.sid}:`, errorMessage);
+
+                    // 更新状态为失败
+                    setBulkDownloadItems(prev => prev.map((prevItem, idx) =>
+                        idx === i ? { ...prevItem, status: 'failed', error: errorMessage, progress: 0 } : prevItem
+                    ));
+
+                    failCount++;
                 }
             }
 
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
+            // 生成ZIP文件并下载
+            if (successCount > 0) {
+                console.log('Generating ZIP file...');
 
-            // 更新所有项目状态为完成
-            setBulkDownloadItems(prev => prev.map(item => ({ ...item, status: 'completed', progress: 100 })));
+                // 更新UI显示正在生成ZIP
+                setBulkDownloadItems(prev => prev.map(item =>
+                    item.status === 'completed' ? { ...item, status: 'downloading' as const, progress: 50 } : item
+                ));
 
-            showSuccess(`批量下载完成！共下载 ${sids.length} 个谱面`);
+                const zipBlob = await zip.generateAsync({
+                    type: 'blob',
+                    compression: 'DEFLATE',
+                    compressionOptions: { level: 6 }
+                });
+
+                console.log('ZIP file generated, size:', zipBlob.size, 'bytes');
+
+                // 创建下载链接
+                const url = window.URL.createObjectURL(zipBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `beatmaps_${Date.now()}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                // 更新所有完成的项目状态
+                setBulkDownloadItems(prev => prev.map(item =>
+                    item.status === 'completed' || item.status === 'downloading' ? { ...item, status: 'completed' as const, progress: 100 } : item
+                ));
+
+                showSuccess(`批量下载完成！成功: ${successCount}, 失败: ${failCount}`);
+            } else {
+                showError('所有谱面下载都失败了，请检查网络连接');
+            }
 
         } catch (error) {
-            console.error('Bulk download failed:', error);
-            const errorMessage = error instanceof Error ? error.message : '未知错误';
-
-            // 更新所有项目状态为失败
-            setBulkDownloadItems(prev => prev.map(item => ({
-                ...item,
-                status: 'failed',
-                error: errorMessage
-            })));
-
-            showError(`批量下载失败: ${errorMessage}`);
+            console.error('Bulk download process error:', error);
+            showError('批量下载过程中出现严重错误');
         } finally {
             setIsBulkDownloading(false);
         }
