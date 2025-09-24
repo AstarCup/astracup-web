@@ -72,6 +72,10 @@ export default function RootLayout({
 
   return (
     <html lang="zh">
+      <head>
+        <meta name="theme-color" content="#3d3d3d" />
+        <meta name="msapplication-TileColor" content="#3d3d3d" />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <NoiseBackground />
         <ParallaxBackground />
