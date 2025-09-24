@@ -471,14 +471,14 @@ export default function ReplayCollectionPage() {
                             {getFilteredMaps().map(map => (
                                 <div
                                     key={map.id}
-                                    className={`border rounded-lg p-4 shadow-sm hover:shadow-md hover:scale-110 transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''
+                                    className={`border rounded-lg p-4 shadow-sm hover:shadow-md hover:scale-[1.03] transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''
                                         }`}
                                     style={{
                                         backgroundImage: `url(https://assets.ppy.sh/beatmaps/${map.SID}/covers/cover.jpg)`,
                                         backgroundSize: 'cover',
                                         backgroundPosition: 'center',
                                         backgroundRepeat: 'no-repeat',
-                                        opacity: hoveredMapId && hoveredMapId !== map.id ? 0.9 : 1,
+                                        opacity: hoveredMapId && hoveredMapId !== map.id ? 0.76 : 1,
                                         transition: 'opacity 0.2s ease-in-out'
                                     }}
                                     onMouseEnter={() => setHoveredMapId(map.id)}
