@@ -400,10 +400,7 @@ export default function Navbar() {
                                             }}
                                         >
                                             {link.svg ? (
-                                                <span
-                                                    className="w-4 h-4 flex-shrink-0"
-                                                    dangerouslySetInnerHTML={{ __html: link.svg }}
-                                                />
+                                                <Image src={link.svg} alt={link.name} width={48} height={48} className="flex-shrink-0 filter brightness-0 saturate-0 opacity-80 transition-all duration-200" />
                                             ) : (
                                                 <span className="w-4 h-4 bg-transparent flex-shrink-0"></span>
                                             )}
