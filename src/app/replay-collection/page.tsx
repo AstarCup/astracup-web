@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import MapoolTable from '../components/MapoolTable';
+import Dropdown from '../components/Dropdown';
 import { showError, showSuccess } from '../components/Notification';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { getUserPermissions } from '@/lib/permissions';
@@ -24,6 +25,7 @@ export default function ReplayCollectionPage() {
     const [uploading, setUploading] = useState(false);
     const [uploadedUsers, setUploadedUsers] = useState<{ [key: string]: string[] }>({}); // { mapId: [username, ...] }
     const [highlightedMapId, setHighlightedMapId] = useState<number | null>(null);
+    const [selectedModFilter, setSelectedModFilter] = useState<string>('all');
     const [availableSeasons, setAvailableSeasons] = useState([
         { value: 's1', label: '第一赛季' }
     ]);
@@ -90,6 +92,37 @@ export default function ReplayCollectionPage() {
         setTimeout(() => {
             setHighlightedMapId(null);
         }, 3000);
+    };
+
+    // 根据mod筛选地图
+    const getFilteredMaps = () => {
+        if (selectedModFilter === 'all') {
+            return paddingMaps;
+        }
+        return paddingMaps.filter(map => map.selectedMods === selectedModFilter);
+    };
+
+    // 获取可用的mod选项（包含数量统计）
+    const getModFilterOptions = () => {
+        const modCounts: { [key: string]: number } = {};
+
+        // 统计每个mod的数量
+        paddingMaps.forEach(map => {
+            const mod = map.selectedMods;
+            modCounts[mod] = (modCounts[mod] || 0) + 1;
+        });
+
+        // 生成选项列表
+        const options = [
+            { value: 'all', label: '全部', count: paddingMaps.length }
+        ];
+
+        // 添加各个mod选项
+        Object.entries(modCounts).forEach(([mod, count]) => {
+            options.push({ value: mod, label: mod, count });
+        });
+
+        return options;
     };
     const loadSeasonConfig = async () => {
         try {
@@ -363,23 +396,41 @@ export default function ReplayCollectionPage() {
                 </div>
             ) : (
                 <>
-                    <div className="mb-4 flex gap-4">
-                        <select value={selectedSeason} onChange={e => setSelectedSeason(e.target.value)} className="border rounded px-2 py-1">
-                            {availableSeasons.map(season => (
-                                <option key={season.value} value={season.value}>{season.label}</option>
-                            ))}
-                        </select>
-                        <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="border rounded px-2 py-1">
-                            {availableCategories.map(category => (
-                                <option key={category.value} value={category.value}>{category.label}</option>
-                            ))}
-                        </select>
+                    <div className="mb-4 flex gap-4 flex-wrap">
+                        <Dropdown
+                            options={availableSeasons}
+                            value={selectedSeason}
+                            onChange={setSelectedSeason}
+                            placeholder="选择赛季"
+                            minWidth="8rem"
+                        />
+                        <Dropdown
+                            options={availableCategories}
+                            value={selectedCategory}
+                            onChange={setSelectedCategory}
+                            placeholder="选择阶段"
+                            minWidth="8rem"
+                        />
+                        <Dropdown
+                            options={getModFilterOptions()}
+                            value={selectedModFilter}
+                            onChange={setSelectedModFilter}
+                            placeholder="筛选MOD"
+                            minWidth="6rem"
+                        />
                     </div>
-                    <MapoolTable data={paddingMaps} title="Padding状态图池" onRowClick={handleTableRowClick} />
+                    <MapoolTable data={getFilteredMaps()} title="Padding状态图池" onRowClick={handleTableRowClick} />
                     <div className="mt-6" id="upload-section">
-                        <h3 className="text-xl font-bold mb-4">回放文件上传</h3>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold">回放文件上传</h3>
+                            {selectedModFilter !== 'all' && (
+                                <div className="text-sm text-gray-600">
+                                    已筛选: {getFilteredMaps().length} 张地图 ({selectedModFilter})
+                                </div>
+                            )}
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                            {paddingMaps.map(map => (
+                            {getFilteredMaps().map(map => (
                                 <div
                                     key={map.id}
                                     className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg' : ''
