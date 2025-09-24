@@ -35,8 +35,33 @@ export default function MapoolTable({ data, title, downloadUrl, onRowClick, onRo
             {
                 label: '下载谱面 (Sayobot)',
                 icon: '⬇️',
-                onClick: () => {
-                    window.open(`https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`, '_blank');
+                onClick: async () => {
+                    try {
+                        const response = await fetch(`https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`, {
+                            headers: {
+                                'Referer': 'https://www.rino.ink/',
+                                'User-Agent': navigator.userAgent
+                            }
+                        });
+
+                        if (response.ok) {
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `${row.artist} - ${row.title}.osz`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                            showSuccess('谱面下载开始');
+                        } else {
+                            showError('下载失败，请稍后重试');
+                        }
+                    } catch (error) {
+                        console.error('Download error:', error);
+                        showError('下载过程中出现错误');
+                    }
                 }
             },
             {
