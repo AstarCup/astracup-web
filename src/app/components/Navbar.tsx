@@ -27,6 +27,7 @@ export default function Navbar() {
         isReplayTester: false,
         isAdmin: false
     });
+    const [versionInfo, setVersionInfo] = useState<string>('');
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
@@ -48,12 +49,34 @@ export default function Navbar() {
         };
     }, [clickedGroup, showUserProfile]);
 
+    // 获取版本信息
     useEffect(() => {
-        return () => {
-            if (hoverTimeoutRef.current) {
-                clearTimeout(hoverTimeoutRef.current);
+        const getVersionInfo = async () => {
+            try {
+                // 尝试获取git commit sha
+                const response = await fetch('/api/version');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.commitSha) {
+                        setVersionInfo(data.commitSha.substring(0, 7)); // 只显示前7位
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.warn('Failed to fetch git commit sha:', error);
             }
+
+            // 如果获取不到，使用时间格式
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            setVersionInfo(`${year}${month}${day}-${hours}${minutes}`);
         };
+
+        getVersionInfo();
     }, []);
 
     // 获取用户session和权限
@@ -282,6 +305,36 @@ export default function Navbar() {
                                                 onMouseLeave={() => setTimeout(() => setShowUserProfile(false), 300)}
                                             >
                                                 <UserProfile user={user} onLogout={handleLogout} />
+
+                                                {/* 权限组标志 - 仅对非普通用户显示 */}
+                                                {(permissions.isMapSelector || permissions.isReplayTester || permissions.isAdmin) && (
+                                                    <div className="mt-3 pt-3 border-t border-gray-600">
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {permissions.isAdmin && (
+                                                                <span className="px-2 py-1 bg-red-600 text-white text-xs rounded-full font-medium">
+                                                                    管理员
+                                                                </span>
+                                                            )}
+                                                            {permissions.isMapSelector && (
+                                                                <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full font-medium">
+                                                                    选图组
+                                                                </span>
+                                                            )}
+                                                            {permissions.isReplayTester && (
+                                                                <span className="px-2 py-1 bg-green-600 text-white text-xs rounded-full font-medium">
+                                                                    测图组
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* 版本信息 */}
+                                                <div className="mt-3 pt-3 border-t border-gray-600 text-center">
+                                                    <div className="text-xs text-gray-400">
+                                                        版本: {versionInfo}
+                                                    </div>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
