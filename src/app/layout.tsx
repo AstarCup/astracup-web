@@ -5,6 +5,7 @@ import { Metadata } from "next";
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/footer';
 import NoiseBackground from './components/NoiseBackground';
+import ParallaxBackground from './components/ParallaxBackground';
 import { NotificationContainer } from './components/Notification';
 import Image from "next/image";
 
@@ -40,6 +41,7 @@ export default function RootLayout({
     <html lang="zh">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <NoiseBackground />
+        <ParallaxBackground />
         <Image
           src="/background-top.svg"
           alt="Background"

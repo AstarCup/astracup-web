@@ -61,7 +61,7 @@ export default function Footer() {
                     © {new Date().getFullYear()} Astara Cup. All rights reserved.
                 </span>
                 <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-                    1145141919810
+                    <p>Ciallo～ (∠・ω&lt; )⌒☆</p>
                 </span>
             </div>
 
