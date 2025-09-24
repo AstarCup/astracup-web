@@ -530,6 +530,32 @@ export default function Navbar() {
                                             登出
                                         </button>
                                     </div>
+                                    {/* 用户权限标志 */}
+                                    <div className="mt-3 pt-3 border-t border-gray-600">
+                                        <div className="flex flex-wrap gap-1">
+                                            {permissions.isAdmin && (
+                                                <span className="px-2 py-1 text-gray-800 bg-white text-xl border-b-4 border-red-600">
+                                                    管理员
+                                                </span>
+                                            )}
+                                            {permissions.isMapSelector && (
+                                                <span className="px-2 py-1 text-gray-800 bg-white text-xl border-b-4 border-blue-600">
+                                                    选图组
+                                                </span>
+                                            )}
+                                            {permissions.isReplayTester && (
+                                                <span className="px-2 py-1 text-gray-800 bg-white text-xl border-b-4 border-green-600">
+                                                    测图组
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {/* 版本号显示 */}
+                                    <div className="mt-3 pt-3 border-t border-gray-600 text-center">
+                                        <div className="text-xs text-gray-400">
+                                            版本: {versionInfo}
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>
