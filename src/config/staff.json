@@ -52,6 +52,14 @@
             "role": "图池选择",
             "description": "图池策划",
             "coverUrl": "https://assets.ppy.sh/user-profile-covers/5936405/35713bf448d1a17bc222ccb975bf6e41725fbe59fbd171b35c4eebd80bcbafe0.jpeg"
+        },
+        {
+            "name": "fuyukiS",
+            "osuId": "32657919",
+            "avatarUrl": "https://a.ppy.sh/32657919?1754031244.jpeg",
+            "role": "图池选择",
+            "description": "图池策划 直播 测图",
+            "coverUrl": "https://assets.ppy.sh/user-profile-covers/32657919/137702cc1a18fb1c3dc08798efd7bd70ab8c621bfcfa44d04652baf03059de2e.png"
         }
     ],
     "mapool_testers": [
@@ -69,10 +77,27 @@
             "avatarUrl": "https://a.ppy.sh/3046750",
             "role": "图池测试",
             "description": "测试比赛图池",
-            "coverUrl": "https://assets.ppy.sh/user-profile-covers/3046750/71b47e3de6e7ab7defcfcec0a331c25c1e2531b72e6806f4f85e60a8e470dfb5.jpeg"
+            "coverUrl": "https://assets.ppy.sh/user-profile-covers/3046750/69fab6d0c74537ad3b14c8f3fc83e68d643ebe37f1dd50a23786dc83f24077f5.jpeg"
+        },
+        {
+            "name": "fuyukiS",
+            "osuId": "32657919",
+            "avatarUrl": "https://a.ppy.sh/32657919?1754031244.jpeg",
+            "role": "图池选择",
+            "description": "图池策划 直播 测图",
+            "coverUrl": "https://assets.ppy.sh/user-profile-covers/32657919/137702cc1a18fb1c3dc08798efd7bd70ab8c621bfcfa44d04652baf03059de2e.png"
         }
     ],
-    "streamers": [],
+    "streamers": [
+        {
+            "name": "fuyukiS",
+            "osuId": "32657919",
+            "avatarUrl": "https://a.ppy.sh/32657919?1754031244.jpeg",
+            "role": "图池选择",
+            "description": "图池策划 直播 测图",
+            "coverUrl": "https://assets.ppy.sh/user-profile-covers/32657919/137702cc1a18fb1c3dc08798efd7bd70ab8c621bfcfa44d04652baf03059de2e.png"
+        }
+    ],
     "commentators": [
         {
             "name": "Yoizuki",
