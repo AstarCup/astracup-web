@@ -8,9 +8,10 @@ interface MapoolTableProps {
     title: string;
     downloadUrl?: string;
     onRowClick?: (row: any, index: number) => void;
+    onRowDoubleClick?: (row: any, index: number) => void;
 }
 
-export default function MapoolTable({ data, title, downloadUrl, onRowClick }: MapoolTableProps) {
+export default function MapoolTable({ data, title, downloadUrl, onRowClick, onRowDoubleClick }: MapoolTableProps) {
     const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
     return (
         <div className="mb-20">
@@ -72,8 +73,8 @@ export default function MapoolTable({ data, title, downloadUrl, onRowClick }: Ma
                             return (
                                 <tr
                                     key={idx}
-                                    className={`${bgClass} ${onRowClick ? 'cursor-pointer hover:bg-gray-100' : ''}`}
-                                    onClick={() => onRowClick?.(row, idx)}
+                                    className={`${bgClass} ${onRowDoubleClick ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                                    onDoubleClick={() => onRowDoubleClick?.(row, idx)}
                                 >
                                     <td className="text-center"><a className={slotClass}>{row.Slot}</a></td>
                                     <td
