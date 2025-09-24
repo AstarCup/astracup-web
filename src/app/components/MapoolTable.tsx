@@ -37,52 +37,25 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                 icon: '⬇️',
                 onClick: async () => {
                     try {
-                        const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`;
+                        const downloadUrl = `/api/download-beatmap?sid=${row.SID}`;
                         console.log('开始下载谱面:', {
                             sid: row.SID,
                             bid: row.BID,
-                            url: downloadUrl,
-                            userAgent: navigator.userAgent
+                            url: downloadUrl
                         });
 
-                        const response = await fetch(downloadUrl, {
-                            headers: {
-                                'Referer': process.env.NEXT_PUBLIC_BASE_URL || 'https://www.rino.ink/',
-                                'User-Agent': navigator.userAgent
-                            }
-                        });
+                        // 创建一个隐藏的链接来触发下载
+                        const a = document.createElement('a');
+                        a.href = downloadUrl;
+                        a.download = `${row.artist} - ${row.title}.osz`;
+                        a.style.display = 'none';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
 
-                        console.log('下载响应状态:', {
-                            status: response.status,
-                            statusText: response.statusText,
-                            ok: response.ok,
-                            headers: Object.fromEntries(response.headers.entries())
-                        });
+                        console.log('下载请求已发送');
+                        showSuccess('谱面下载开始');
 
-                        if (response.ok) {
-                            const blob = await response.blob();
-                            console.log('Blob大小:', blob.size, 'bytes');
-
-                            const url = window.URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `${row.artist} - ${row.title}.osz`;
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                            window.URL.revokeObjectURL(url);
-                            showSuccess('谱面下载开始');
-                        } else {
-                            const errorDetails = `下载失败 (状态码: ${response.status} ${response.statusText})`;
-                            console.error('下载失败详情:', {
-                                status: response.status,
-                                statusText: response.statusText,
-                                url: downloadUrl,
-                                sid: row.SID,
-                                bid: row.BID
-                            });
-                            showError(`${errorDetails}\n谱面ID: ${row.SID}, BID: ${row.BID}`);
-                        }
                     } catch (error) {
                         const errorMessage = error instanceof Error ? error.message : '未知错误';
                         const errorDetails = `下载过程中出现错误: ${errorMessage}`;
