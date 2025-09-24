@@ -388,30 +388,43 @@ export default function Navbar() {
                             }`}
                     >
                         <div className="max-h-96 overflow-y-auto p-4">
-                            <div className="grid grid-cols-2 gap-2">
-                                {navGroups.flatMap(group => group.links).map((link) => (
-                                    <div key={link.href} className="border-b-4 border-[#E93B66] bg-white/100 hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-20 flex">
-                                        <Link
-                                            href={link.href}
-                                            className={`flex-1 p-3 text-left text-sm font-medium flex items-center gap-2 relative ${isActive(link.href) ? 'bg-[#3BE9D8] font-bold' : 'text-gray-800 '}`}
-                                            onClick={() => {
-                                                setActiveLink(link.href);
-                                                setMobileMenuOpen(false);
-                                            }}
-                                        >
-                                            {link.svg ? (
-                                                <span
-                                                    className="w-4 h-4 flex-shrink-0"
-                                                    dangerouslySetInnerHTML={{ __html: link.svg }}
-                                                />
+                            <div className="space-y-6">
+                                {navGroups.map((group) => (
+                                    <div key={group.name}>
+                                        {/* Group Title */}
+                                        <div className="bg-white text-gray text-2xl px-4 py-2 mb-3 inline-flex items-center gap-3">
+                                            {group.svg ? (
+                                                <Image src={group.svg} alt={group.name} width={24} height={24} className="flex-shrink-0 filter brightness-0" />
                                             ) : (
                                                 <span className="w-4 h-4 bg-transparent flex-shrink-0"></span>
                                             )}
-                                            <div className="flex flex-col justify-center">
-                                                <div className="text-xs opacity-75 font-bold mb-1 leading-tight">{link.name}</div>
-                                                <div className="text-2xl font-bold leading-tight">{link.tip}</div>
-                                            </div>
-                                        </Link>
+                                            <span className="font-bold text-sm">{group.name}</span>
+                                        </div>
+                                        {/* Group Links Grid */}
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {group.links.map((link) => (
+                                                <div key={link.href} className="border-b-4 border-[#E93B66] bg-white/100 hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-16 flex overflow-hidden">
+                                                    <Link
+                                                        href={link.href}
+                                                        className={`flex-1 p-3 text-left text-sm font-medium flex items-center gap-2 relative ${isActive(link.href) ? 'bg-[#3BE9D8] font-bold' : 'text-gray-800'}`}
+                                                        onClick={() => {
+                                                            setActiveLink(link.href);
+                                                            setMobileMenuOpen(false);
+                                                        }}
+                                                    >
+                                                        {link.svg ? (
+                                                            <Image src={link.svg} alt={link.name} width={32} height={32} className="flex-shrink-0 filter brightness-0 saturate-0 opacity-80 transition-all duration-200" />
+                                                        ) : (
+                                                            <span className="w-4 h-4 bg-transparent flex-shrink-0"></span>
+                                                        )}
+                                                        <div className="flex flex-col justify-center">
+                                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight">{link.name}</div>
+                                                            <div className="text-lg font-bold leading-tight">{link.tip}</div>
+                                                        </div>
+                                                    </Link>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
