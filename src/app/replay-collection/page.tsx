@@ -561,7 +561,7 @@ export default function ReplayCollectionPage() {
                                         {/* 上传中遮罩 */}
                                         {uploading && (
                                             <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg z-30">
-                                                <div className="text-sm text-blue-600 px-3 py-2 shadow-lg">上传中...</div>
+                                                <div className="text-sm text-blue-600 bg-white px-3 py-2 rounded shadow-lg">上传中...</div>
                                             </div>
                                         )}
                                     </div>
