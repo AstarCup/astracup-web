@@ -279,7 +279,7 @@ export default function Navbar() {
                                         />
                                         {showUserProfile && (
                                             <div
-                                                className="absolute top-full right-0 mt-2 bg-white/95 backdrop-blur-sm rounded-md shadow-lg p-4 min-w-80 z-50"
+                                                className="absolute top-full right-0 mt-2 bg-[#3d3d3d] shadow-lg p-4 min-w-80 z-50"
                                                 onMouseEnter={() => setShowUserProfile(true)}
                                                 onMouseLeave={() => setShowUserProfile(false)}
                                             >
