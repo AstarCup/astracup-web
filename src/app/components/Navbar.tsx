@@ -258,6 +258,7 @@ export default function Navbar() {
                                                                     setActiveLink(link.href);
                                                                     setHoveredGroup(null);
                                                                     setClickedGroup(null);
+                                                                    setShowUserProfile(false); // 关闭头像菜单
                                                                 }}
                                                             >
                                                                 {link.svg ? (
@@ -292,7 +293,10 @@ export default function Navbar() {
                                             width={40}
                                             height={40}
                                             className="rounded-full outline outline-2 outline-[#E93B66] cursor-pointer hover:outline-[#3BE9D8] hover:scale-110 hover:shadow-lg hover:shadow-[#E93B66]/50 transition-all duration-200"
-                                            onClick={() => setShowUserProfile(!showUserProfile)}
+                                            onClick={() => {
+                                                setShowUserProfile(!showUserProfile);
+                                                setClickedGroup(null); // 关闭导航菜单
+                                            }}
                                             onError={(e) => {
                                                 e.currentTarget.src = '/default-avatar.png';
                                             }}

@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 
 export async function GET() {
-    // 由于服务器没有git命令，直接返回时间格式的版本信息
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
+    try {
+        // 读取构建时生成的版本文件
+        const versionFile = path.join(process.cwd(), 'public', 'version.json');
+        const versionData = fs.readFileSync(versionFile, 'utf8');
+        const { version } = JSON.parse(versionData);
 
-    const version = `${year}${month}${day}-${hours}${minutes}`;
-
-    return NextResponse.json({ commitSha: null, version });
+        return NextResponse.json({ version });
+    } catch (error) {
+        console.warn('Failed to read version file:', error);
+        // 如果读取失败，返回一个默认版本
+        return NextResponse.json({ version: 'unknown' });
+    }
 }
