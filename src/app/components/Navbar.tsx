@@ -91,7 +91,9 @@ export default function Navbar() {
 
                     // 直接从permissions库获取用户权限
                     if (sessionData.session?.osuId) {
+                        console.log('Fetching permissions for osuId:', sessionData.session.osuId);
                         const userPermissions = await getUserPermissions(sessionData.session.osuId.toString());
+                        console.log('User permissions:', userPermissions);
                         setPermissions(userPermissions);
                     }
                 }
@@ -290,10 +292,8 @@ export default function Navbar() {
                                             alt={user.username}
                                             width={40}
                                             height={40}
-                                            className="rounded-full outline outline-2 outline-[#E93B66] cursor-pointer hover:outline-[#3BE9D8] transition-all duration-200"
+                                            className="rounded-full outline outline-2 outline-[#E93B66] cursor-pointer hover:outline-[#3BE9D8] hover:scale-110 hover:shadow-lg hover:shadow-[#E93B66]/50 transition-all duration-200"
                                             onClick={() => setShowUserProfile(!showUserProfile)}
-                                            onMouseEnter={() => setShowUserProfile(true)}
-                                            onMouseLeave={() => setTimeout(() => setShowUserProfile(false), 300)}
                                             onError={(e) => {
                                                 e.currentTarget.src = '/default-avatar.png';
                                             }}
@@ -301,8 +301,6 @@ export default function Navbar() {
                                         {showUserProfile && (
                                             <div
                                                 className="absolute top-full right-0 mt-2 bg-[#3d3d3d] shadow-lg p-4 min-w-80 z-50"
-                                                onMouseEnter={() => setShowUserProfile(true)}
-                                                onMouseLeave={() => setTimeout(() => setShowUserProfile(false), 300)}
                                             >
                                                 <UserProfile user={user} onLogout={handleLogout} />
 
