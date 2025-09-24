@@ -13,10 +13,10 @@ export interface UserPermissions {
  */
 export async function getUserPermissions(osuId: string): Promise<UserPermissions> {
     try {
-        console.log('getUserPermissions called for osuId:', osuId);
+
         // 检查是否为管理员
         const isAdmin = await verifyAdminAuth(osuId);
-        console.log('isAdmin result:', isAdmin);
+
 
         // 检查是否为选图组成员
         let isMapSelector = false;
@@ -106,14 +106,12 @@ export async function verifyReplayAuth(osuId: string): Promise<boolean> {
  */
 export async function verifyAdminAuth(osuId: string): Promise<boolean> {
     try {
-        console.log('verifyAdminAuth called for osuId:', osuId);
+
         let adminList: string[] = [];
 
         // 优先尝试从Edge Config获取管理员列表
         if (process.env.EDGE_CONFIG) {
-            console.log('EDGE_CONFIG found, trying to get admin config');
             const adminConfig = await get('admin');
-            console.log('admin config from Edge Config:', adminConfig);
             if (adminConfig && Array.isArray(adminConfig)) {
                 adminList = adminConfig.filter((id): id is string =>
                     typeof id === 'string' && id.trim() !== ''
@@ -121,32 +119,9 @@ export async function verifyAdminAuth(osuId: string): Promise<boolean> {
             }
         }
 
-        console.log('adminList after Edge Config:', adminList);
 
-        // 如果Edge Config没有数据，尝试从环境变量获取
-        if (adminList.length === 0 && process.env.ADMIN_IDS) {
-            console.log('ADMIN_IDS env var found:', process.env.ADMIN_IDS);
-            adminList = process.env.ADMIN_IDS
-                .split(',')
-                .map(id => id.trim())
-                .filter(id => id !== '');
-        }
 
-        console.log('adminList after env var:', adminList);
 
-        // 如果都没有数据，使用默认测试ID（开发环境或测试环境）
-        if (adminList.length === 0) {
-            if (process.env.NODE_ENV === 'development') {
-                console.log('Using default admin ID for development');
-                adminList = ['2']; // peppy的ID作为示例
-            } else {
-                // 在生产环境中，如果没有配置，暂时允许所有用户作为管理员用于测试
-                console.log('No admin config found, allowing all users as admin for testing');
-                return true;
-            }
-        }
-
-        console.log('final adminList:', adminList);
 
         // 检查osu ID是否在管理员列表中
         const userIdStr = osuId.toString();
