@@ -23,6 +23,7 @@ export default function ReplayCollectionPage() {
     const [selectedCategory, setSelectedCategory] = useState('qualification');
     const [uploading, setUploading] = useState(false);
     const [uploadedUsers, setUploadedUsers] = useState<{ [key: string]: string[] }>({}); // { mapId: [username, ...] }
+    const [highlightedMapId, setHighlightedMapId] = useState<number | null>(null);
     const [availableSeasons, setAvailableSeasons] = useState([
         { value: 's1', label: '第一赛季' }
     ]);
@@ -72,6 +73,23 @@ export default function ReplayCollectionPage() {
     const getUsernamesList = (usernames: string[]): string => {
         if (usernames.length === 0) return '暂无';
         return usernames.join(', ');
+    };
+
+    // 处理表格行点击 - 跳转到对应卡片并高亮
+    const handleTableRowClick = (row: any, index: number) => {
+        // 设置高亮状态
+        setHighlightedMapId(row.id);
+        
+        // 跳转到上传区域
+        const uploadSection = document.getElementById('upload-section');
+        if (uploadSection) {
+            uploadSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        // 3秒后取消高亮
+        setTimeout(() => {
+            setHighlightedMapId(null);
+        }, 3000);
     };
     const loadSeasonConfig = async () => {
         try {
@@ -357,14 +375,22 @@ export default function ReplayCollectionPage() {
                             ))}
                         </select>
                     </div>
-                    <MapoolTable data={paddingMaps} title="Padding状态图池" />
-                    <div className="mt-6">
+                    <MapoolTable data={paddingMaps} title="Padding状态图池" onRowClick={handleTableRowClick} />
+                    <div className="mt-6" id="upload-section">
                         <h3 className="text-xl font-bold mb-4">回放文件上传</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                             {paddingMaps.map(map => (
                                 <div
                                     key={map.id}
-                                    className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer relative"
+                                    className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden ${
+                                        highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg' : ''
+                                    }`}
+                                    style={{
+                                        backgroundImage: `url(https://assets.ppy.sh/beatmaps/${map.SID}/covers/cover.jpg)`,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center',
+                                        backgroundRepeat: 'no-repeat'
+                                    }}
                                     onClick={() => {
                                         if (!uploading && user) {
                                             const input = document.createElement('input');
@@ -413,61 +439,82 @@ export default function ReplayCollectionPage() {
                                             ×
                                         </button>
                                     )}
-                                    <div className="mb-3">
-                                        <div className="flex items-center gap-3">
-                                            <Image
-                                                src={`https://assets.ppy.sh/beatmaps/${map.SID}/covers/cover.jpg`}
-                                                alt="Cover"
-                                                width={40}
-                                                height={30}
-                                                className="w-10 h-7.5 object-cover rounded"
-                                                unoptimized
-                                            />
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="font-bold text-sm text-gray-800 truncate" title={`${map.artist} - ${map.title}`}>
+                                    
+                                    {/* 白色渐变覆盖层 - 增加可读性 */}
+                                    <div className="absolute inset-0 bg-gradient-to-tr from-white via-white/80 to-transparent"></div>
+                                    
+                                    {/* 内容层 */}
+                                    <div className="relative z-10">
+                                        {/* 删除按钮 - 只有已上传时显示 */}
+                                        {user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`]?.includes(user.username) && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // 阻止事件冒泡
+                                                    handleReplayDelete(map);
+                                                }}
+                                                className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors z-20"
+                                                title="删除已上传的回放"
+                                            >
+                                                ×
+                                            </button>
+                                        )}
+
+                                        {/* 顶部区域：mod位 + 歌曲信息 */}
+                                        <div className="mb-3 flex items-start justify-between">
+                                            {/* 左边：mod位信息（加粗） */}
+                                            <div className="flex-shrink-0">
+                                                <span className={`font-bold text-lg ${getModColor(map.selectedMods)} bg-white/90 px-2 py-1 rounded shadow-sm`}>
+                                                    {map.selectedMods}{map.modPosition}
+                                                </span>
+                                            </div>
+                                            
+                                            {/* 右边：歌曲信息 */}
+                                            <div className="flex-1 min-w-0 ml-3 text-right">
+                                                <h4 className="font-bold text-sm text-gray-800 truncate bg-white/90 px-2 py-1 rounded shadow-sm" title={`${map.artist} - ${map.title}`}>
                                                     {map.artist} - {map.title}
                                                 </h4>
-                                                <p className="text-xs text-gray-600 truncate" title={map.version}>
+                                                <p className="text-xs text-gray-600 truncate bg-white/90 px-2 py-1 rounded shadow-sm mt-1" title={map.version}>
                                                     [{map.version}]
                                                 </p>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <div className="mb-3">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className={`font-medium ${getModColor(map.selectedMods)}`}>
-                                                {map.selectedMods}{map.modPosition}
-                                            </span>
-                                            <span className="text-gray-500">
-                                                ★{map.starRating}
-                                            </span>
+                                        {/* 中间区域：星级和其他信息 */}
+                                        <div className="mb-3">
+                                            <div className="flex items-center justify-end text-sm mb-1">
+                                                <span className="text-gray-700 font-medium bg-white/90 px-2 py-1 rounded shadow-sm">
+                                                    ★{map.starRating}
+                                                </span>
+                                            </div>
+                                            <div className="text-xs text-gray-600 bg-white/90 px-2 py-1 rounded shadow-sm">
+                                                {map.totalLength ? formatLength(map.totalLength) : '-'} | {map.bpm} BPM
+                                            </div>
                                         </div>
-                                        <div className="text-xs text-gray-500 mt-1">
-                                            {map.totalLength ? formatLength(map.totalLength) : '-'} | {map.bpm} BPM
-                                        </div>
-                                    </div>
 
-                                    <div className="mb-3">
-                                        <div className="text-xs text-gray-600">
-                                            已上传用户: {getUsernamesList(uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`] || [])}
+                                        {/* 底部区域：上传状态 */}
+                                        <div className="mb-3">
+                                            <div className="text-xs text-gray-700 bg-white/90 px-2 py-1 rounded shadow-sm">
+                                                已上传用户: {getUsernamesList(uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`] || [])}
+                                            </div>
+                                            {user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`]?.includes(user.username) && (
+                                                <div className="text-xs text-green-600 font-medium mt-1 bg-green-50 px-2 py-1 rounded shadow-sm">✓ 你已上传</div>
+                                            )}
                                         </div>
-                                        {user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}`]?.includes(user.username) && (
-                                            <div className="text-xs text-green-600 font-medium mt-1">✓ 你已上传</div>
+
+                                        {/* 底部提示 */}
+                                        <div className="text-center">
+                                            <div className="text-xs text-gray-600 bg-white/90 px-2 py-1 rounded shadow-sm inline-block">
+                                                {uploading ? '上传中...' : '点击上传或拖拽.osr文件'}
+                                            </div>
+                                        </div>
+
+                                        {/* 上传中遮罩 */}
+                                        {uploading && (
+                                            <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg z-30">
+                                                <div className="text-sm text-blue-600 bg-white px-3 py-2 rounded shadow-lg">上传中...</div>
+                                            </div>
                                         )}
                                     </div>
-
-                                    <div className="text-center">
-                                        <div className="text-xs text-gray-400">
-                                            {uploading ? '上传中...' : '点击上传或拖拽.osr文件'}
-                                        </div>
-                                    </div>
-
-                                    {uploading && (
-                                        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
-                                            <div className="text-sm text-blue-600">上传中...</div>
-                                        </div>
-                                    )}
                                 </div>
                             ))}
                         </div>
