@@ -3,6 +3,17 @@ import Image from "next/image";
 import { useState } from "react";
 import { showSuccess, showError, showInfo } from '../components/Notification';
 import ContextMenu from './ContextMenu';
+import BulkDownloadManager from './BulkDownloadManager';
+
+interface DownloadItem {
+    sid: string;
+    bid: string;
+    artist: string;
+    title: string;
+    status: 'pending' | 'downloading' | 'completed' | 'failed';
+    progress: number;
+    error?: string;
+}
 
 interface MapoolTableProps {
     data: any[];
@@ -21,6 +32,105 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
         row: any;
         index: number;
     } | null>(null);
+
+    // 批量下载状态
+    const [bulkDownloadItems, setBulkDownloadItems] = useState<DownloadItem[]>([]);
+    const [showBulkDownloadManager, setShowBulkDownloadManager] = useState(false);
+    const [isBulkDownloading, setIsBulkDownloading] = useState(false);
+
+    // 准备批量下载
+    const prepareBulkDownload = () => {
+        const items: DownloadItem[] = data.map(row => ({
+            sid: row.SID,
+            bid: row.BID,
+            artist: row.artist || 'Unknown Artist',
+            title: row.title || row.MapInfo || 'Unknown Title',
+            status: 'pending',
+            progress: 0
+        }));
+
+        setBulkDownloadItems(items);
+        setShowBulkDownloadManager(true);
+    };
+
+    // 开始批量下载
+    const startBulkDownload = async () => {
+        if (bulkDownloadItems.length === 0) return;
+
+        setIsBulkDownloading(true);
+
+        try {
+            // 更新所有项目状态为下载中
+            setBulkDownloadItems(prev => prev.map(item => ({ ...item, status: 'downloading', progress: 0 })));
+
+            const sids = bulkDownloadItems.map(item => item.sid);
+
+            console.log('Starting bulk download for', sids.length, 'beatmaps');
+
+            const response = await fetch('/api/bulk-download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ sids }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                throw new Error(errorData.error || `HTTP ${response.status}`);
+            }
+
+            // 创建下载链接
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+
+            // 获取文件名
+            const contentDisposition = response.headers.get('content-disposition');
+            let filename = `beatmaps_${Date.now()}.zip`;
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                if (filenameMatch && filenameMatch[1]) {
+                    filename = filenameMatch[1].replace(/['"]/g, '');
+                }
+            }
+
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            // 更新所有项目状态为完成
+            setBulkDownloadItems(prev => prev.map(item => ({ ...item, status: 'completed', progress: 100 })));
+
+            showSuccess(`批量下载完成！共下载 ${sids.length} 个谱面`);
+
+        } catch (error) {
+            console.error('Bulk download failed:', error);
+            const errorMessage = error instanceof Error ? error.message : '未知错误';
+
+            // 更新所有项目状态为失败
+            setBulkDownloadItems(prev => prev.map(item => ({
+                ...item,
+                status: 'failed',
+                error: errorMessage
+            })));
+
+            showError(`批量下载失败: ${errorMessage}`);
+        } finally {
+            setIsBulkDownloading(false);
+        }
+    };
+
+    // 取消批量下载
+    const cancelBulkDownload = () => {
+        setIsBulkDownloading(false);
+        setBulkDownloadItems([]);
+        setShowBulkDownloadManager(false);
+        showInfo('批量下载已取消');
+    };
 
     // 生成右击菜单项
     const getContextMenuItems = (row: any, index: number) => {
@@ -98,14 +208,25 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
         <div className="mb-20">
             <div className="flex justify-between items-start mb-0">
                 <h1 className="text-xl font-bold text-white">{title}</h1>
-                {/* {downloadUrl && (
-                    <a
-                        href={downloadUrl}
-                        className="px-5 py-3 bg-[#E93B66] text-white hover:bg-[#95E1D3] transition font-bold"
+                <div className="flex space-x-3">
+                    {/* 批量下载按钮 */}
+                    <button
+                        onClick={prepareBulkDownload}
+                        disabled={data.length === 0}
+                        className="px-5 py-3 bg-[#95E1D3] text-white hover:bg-[#E93B66] transition font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="下载当前表格中的所有谱面"
                     >
-                        图包下载 MAPPAK DOWNLOAD
-                    </a>
-                )} */}
+                        📦 批量下载 ({data.length})
+                    </button>
+                    {/* {downloadUrl && (
+                        <a
+                            href={downloadUrl}
+                            className="px-5 py-3 bg-[#E93B66] text-white hover:bg-[#95E1D3] transition font-bold"
+                        >
+                            图包下载 MAPPAK DOWNLOAD
+                        </a>
+                    )} */}
+                </div>
             </div>
             <div className="overflow-x-auto relative">
                 <table className="table-fixed min-w-[1800px]">
@@ -233,6 +354,16 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                     onClose={() => setContextMenu(null)}
                 />
             )}
+
+            {/* 批量下载管理器 */}
+            <BulkDownloadManager
+                isOpen={showBulkDownloadManager}
+                onClose={() => setShowBulkDownloadManager(false)}
+                items={bulkDownloadItems}
+                onStartDownload={startBulkDownload}
+                onCancelDownload={cancelBulkDownload}
+                isDownloading={isBulkDownloading}
+            />
         </div>
     );
 }
