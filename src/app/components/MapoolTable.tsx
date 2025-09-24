@@ -2,17 +2,67 @@
 import Image from "next/image";
 import { useState } from "react";
 import { showSuccess, showError, showInfo } from '../components/Notification';
+import ContextMenu from './ContextMenu';
 
 interface MapoolTableProps {
     data: any[];
     title: string;
     downloadUrl?: string;
     onRowClick?: (row: any, index: number) => void;
-    onRowDoubleClick?: (row: any, index: number) => void;
+    onRowRightClick?: (row: any, index: number) => void;
+    showUploadJump?: boolean; // 是否显示跳转到上传区域的选项
 }
 
-export default function MapoolTable({ data, title, downloadUrl, onRowClick, onRowDoubleClick }: MapoolTableProps) {
+export default function MapoolTable({ data, title, downloadUrl, onRowClick, onRowRightClick, showUploadJump = false }: MapoolTableProps) {
     const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+    const [contextMenu, setContextMenu] = useState<{
+        visible: boolean;
+        position: { x: number; y: number };
+        row: any;
+        index: number;
+    } | null>(null);
+
+    // 生成右击菜单项
+    const getContextMenuItems = (row: any, index: number) => {
+        const items = [
+            {
+                label: '跳转到 osu! 谱面',
+                icon: '🔗',
+                onClick: () => {
+                    window.open(`https://osu.ppy.sh/beatmaps/${row.BID}`, '_blank');
+                }
+            },
+            {
+                label: '下载谱面 (Sayobot)',
+                icon: '⬇️',
+                onClick: () => {
+                    window.open(`https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`, '_blank');
+                }
+            },
+            {
+                label: '复制谱面ID (BID)',
+                icon: '📋',
+                onClick: () => {
+                    navigator.clipboard.writeText(row.BID);
+                    showInfo('BID 已复制到剪贴板');
+                }
+            }
+        ];
+
+        // 如果是测图页面，添加跳转到上传区域的选项
+        if (showUploadJump && onRowRightClick) {
+            items.push({
+                label: '跳转到上传卡片',
+                icon: '📤',
+                onClick: () => {
+                    onRowRightClick(row, index);
+                }
+            });
+        }
+
+        return items;
+    };
+
     return (
         <div className="mb-20">
             <div className="flex justify-between items-start mb-0">
@@ -73,8 +123,16 @@ export default function MapoolTable({ data, title, downloadUrl, onRowClick, onRo
                             return (
                                 <tr
                                     key={idx}
-                                    className={`${bgClass} ${onRowDoubleClick ? 'cursor-pointer hover:bg-gray-100' : ''}`}
-                                    onDoubleClick={() => onRowDoubleClick?.(row, idx)}
+                                    className={`${bgClass} cursor-pointer hover:bg-gray-100`}
+                                    onContextMenu={(e) => {
+                                        e.preventDefault(); // 阻止默认右键菜单
+                                        setContextMenu({
+                                            visible: true,
+                                            position: { x: e.clientX, y: e.clientY },
+                                            row,
+                                            index: idx
+                                        });
+                                    }}
                                 >
                                     <td className="text-center"><a className={slotClass}>{row.Slot}</a></td>
                                     <td
@@ -135,6 +193,15 @@ export default function MapoolTable({ data, title, downloadUrl, onRowClick, onRo
                     </tbody>
                 </table>
             </div>
+
+            {/* 右击菜单 */}
+            {contextMenu?.visible && (
+                <ContextMenu
+                    items={getContextMenuItems(contextMenu.row, contextMenu.index)}
+                    position={contextMenu.position}
+                    onClose={() => setContextMenu(null)}
+                />
+            )}
         </div>
     );
 }
