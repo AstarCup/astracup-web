@@ -7,6 +7,7 @@ import Dropdown, { DropdownOption } from '../components/Dropdown';
 import RatingDisplay from '../components/RatingDisplay';
 import CommentComponent from '../components/CommentComponent';
 import CurrentRating from '../components/CurrentRating';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 interface User {
     id: number;
@@ -86,6 +87,8 @@ const CATEGORY_OPTIONS = [
 ];
 
 export default function MapSelectionPage() {
+    usePageTitle('/map-selection');
+
     // 图池配置数据
     const poolData = [
         {

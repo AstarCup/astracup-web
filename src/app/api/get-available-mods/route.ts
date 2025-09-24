@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { verifyMapSelectionAuth } from '@/lib/permissions';
 
 // 动态加载rosu-pp-js模块
 async function loadRosuPP() {
@@ -13,6 +15,44 @@ async function loadRosuPP() {
 
 export async function GET() {
     try {
+        // 获取用户session进行权限验证
+        const cookieStore = await cookies();
+        const sessionCookie = cookieStore.get('session')?.value;
+
+        if (!sessionCookie) {
+            return NextResponse.json(
+                { error: '未登录用户' },
+                { status: 401 }
+            );
+        }
+
+        let session;
+        try {
+            session = JSON.parse(sessionCookie);
+        } catch {
+            return NextResponse.json(
+                { error: '无效的会话' },
+                { status: 401 }
+            );
+        }
+
+        const osuId = session.osuId;
+        if (!osuId) {
+            return NextResponse.json(
+                { error: '无效的用户ID' },
+                { status: 401 }
+            );
+        }
+
+        // 验证选图权限
+        const hasPermission = await verifyMapSelectionAuth(osuId);
+        if (!hasPermission) {
+            return NextResponse.json(
+                { error: '无选图权限' },
+                { status: 403 }
+            );
+        }
+
         const rosu = await loadRosuPP();
 
         // 获取所有可用的mod

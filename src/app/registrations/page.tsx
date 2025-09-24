@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { TournamentRegistration } from "@/lib/edge-registrations";
 import localFont from "next/font/local";
+import { usePageTitle } from '@/lib/usePageTitle';
 
 const audiowide = localFont({
     src: "../font/Audiowide-Regular.ttf",
@@ -10,6 +11,8 @@ const audiowide = localFont({
 });
 
 export default function RegistrationsPage() {
+    usePageTitle('/registrations');
+
     const [registrations, setRegistrations] = useState<TournamentRegistration[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");

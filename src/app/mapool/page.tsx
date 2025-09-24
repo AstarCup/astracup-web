@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import MapoolTable from '@/app/components/MapoolTable';
 import Dropdown, { DropdownOption } from '@/app/components/Dropdown';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 interface MapSelection {
     id: number;
@@ -34,6 +35,8 @@ interface MapSelection {
 const MOD_ORDER = ['NM', 'HD', 'HR', 'DT', 'FM', 'LZ', 'TB'];
 
 export default function Mapool() {
+    usePageTitle('/mappool');
+
     const [mapPoolData, setMapPoolData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');

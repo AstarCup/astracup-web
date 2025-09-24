@@ -1,5 +1,9 @@
 import ScheduleTable from "@/app/components/ScheduleTable";
 import scheduleData from "@/app/s1/schedule-data.json";
+import { generatePageMetadata } from '../layout';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = generatePageMetadata('/schedule');
 
 export default function Schedule() {
     return (

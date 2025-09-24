@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminAuth } from '@/lib/map-selection';
+import { verifyAdminAuth } from '@/lib/permissions';
 
 export async function POST(request: NextRequest) {
     try {

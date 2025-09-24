@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { hasReplayAccess } from './edgeconfig';
 import MapoolTable from '../components/MapoolTable';
 import { showError, showSuccess } from '../components/Notification';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 interface User {
     id: number;
@@ -12,6 +13,8 @@ interface User {
 }
 
 export default function ReplayCollectionPage() {
+    usePageTitle('/replay-collection');
+
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [paddingMaps, setPaddingMaps] = useState<any[]>([]);

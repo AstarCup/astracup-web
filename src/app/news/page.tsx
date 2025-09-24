@@ -1,5 +1,9 @@
 import { getNewsBySlug, getNewsSlugs, createSafeSlug } from '@/lib/utils';
 import Link from 'next/link';
+import { generatePageMetadata } from '../layout';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = generatePageMetadata('/news');
 
 export default async function NewsList() {
     const slugs = await getNewsSlugs();

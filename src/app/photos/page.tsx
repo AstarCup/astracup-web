@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import WinnerCard from '@/app/components/WinnerCard';
 import winnersData from '@/config/winners.json';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 interface Winner {
     rank: number;
@@ -31,6 +32,8 @@ interface Season {
 }
 
 export default function Photos() {
+    usePageTitle('/photos');
+
     const [selectedSeason, setSelectedSeason] = useState<string>('all');
     const seasons = winnersData.seasons as Season[];
 

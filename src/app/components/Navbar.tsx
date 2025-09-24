@@ -21,6 +21,11 @@ export default function Navbar() {
     const [clickedGroup, setClickedGroup] = useState<string | null>(null);
     const [user, setUser] = useState<UserSession | null>(null);
     const [showUserProfile, setShowUserProfile] = useState(false);
+    const [permissions, setPermissions] = useState({
+        isMapSelector: false,
+        isReplayTester: false,
+        isAdmin: false
+    });
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
@@ -50,21 +55,29 @@ export default function Navbar() {
         };
     }, []);
 
-    // 获取用户session
+    // 获取用户session和权限
     useEffect(() => {
-        const fetchUserSession = async () => {
+        const fetchUserData = async () => {
             try {
-                const response = await fetch('/api/session/get');
-                const data = await response.json();
-                if (data.success) {
-                    setUser(data.session);
+                // 获取用户session
+                const sessionResponse = await fetch('/api/session/get');
+                const sessionData = await sessionResponse.json();
+                if (sessionData.success) {
+                    setUser(sessionData.session);
+
+                    // 获取用户权限
+                    const permissionsResponse = await fetch('/api/user-permissions');
+                    const permissionsData = await permissionsResponse.json();
+                    if (permissionsData.success) {
+                        setPermissions(permissionsData.permissions);
+                    }
                 }
             } catch (error) {
-                console.error('Failed to fetch user session:', error);
+                console.error('Failed to fetch user data:', error);
             }
         };
 
-        fetchUserSession();
+        fetchUserData();
     }, []);
 
     const handleLogout = async () => {
@@ -108,6 +121,7 @@ export default function Navbar() {
     const shouldShowGroup = (groupName: string) => {
         return hoveredGroup === groupName || clickedGroup === groupName;
     };
+    // 动态构建导航组
     const navGroups = [
         {
             name: '主页与新闻',
@@ -131,11 +145,26 @@ export default function Navbar() {
             name: '其他',
             svg: '',
             links: [
-
                 { name: 'CONTACT', href: '/contact', tip: '联系我们', svg: '' },
                 { name: 'PHOTOS', href: `/photos`, tip: '历届荣誉展示', svg: '' }
             ]
-        }
+        },
+        // 管理菜单 - 根据权限动态显示
+        ...(permissions.isMapSelector || permissions.isReplayTester || permissions.isAdmin ? [{
+            name: '管理',
+            svg: '',
+            links: [
+                ...(permissions.isMapSelector || permissions.isAdmin ? [
+                    { name: '选图系统', href: '/map-selection', tip: '地图选择管理', svg: '' }
+                ] : []),
+                ...(permissions.isReplayTester || permissions.isAdmin ? [
+                    { name: '上传Replay', href: '/replay-collection', tip: '上传和收集Replay', svg: '' }
+                ] : []),
+                ...(permissions.isAdmin ? [
+                    { name: '调试页面', href: '/debug', tip: '系统调试和测试', svg: '' }
+                ] : [])
+            ].filter(Boolean)
+        }] : [])
     ];
 
     const isActive = (href: string) => pathname === href;

@@ -4,8 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { isAdminUser, UserSession } from "@/lib/session";
 import { TournamentRegistration } from "@/lib/edge-registrations";
+import { usePageTitle } from '@/lib/usePageTitle';
 
 export default function DebugPage() {
+    usePageTitle('/debug');
+
     const router = useRouter();
     const [envInfo, setEnvInfo] = useState<Record<string, string>>({});
     const [serverEnvInfo, setServerEnvInfo] = useState<Record<string, string>>({});
