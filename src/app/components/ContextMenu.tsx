@@ -1,10 +1,12 @@
 "use client";
 import { useEffect, useRef } from 'react';
+import Image from 'next/image';
 
 interface ContextMenuItem {
     label: string;
-    onClick: () => void;
+    onClick?: () => void;
     icon?: string;
+    type?: 'item' | 'separator';
 }
 
 interface ContextMenuProps {
@@ -48,17 +50,21 @@ export default function ContextMenu({ items, position, onClose }: ContextMenuPro
             }}
         >
             {items.map((item, index) => (
-                <button
-                    key={index}
-                    onClick={() => {
-                        item.onClick();
-                        onClose();
-                    }}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center space-x-2 text-sm"
-                >
-                    {item.icon && <span>{item.icon}</span>}
-                    <span>{item.label}</span>
-                </button>
+                item.type === 'separator' ? (
+                    <div key={index} className="border-t border-gray-200 my-1"></div>
+                ) : (
+                    <button
+                        key={index}
+                        onClick={() => {
+                            item.onClick?.();
+                            onClose();
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center space-x-2 text-sm"
+                    >
+                        <Image src={item.icon || ''} alt="" width={24} height={24} />
+                        <span>{item.label}</span>
+                    </button>
+                )
             ))}
         </div>
     );

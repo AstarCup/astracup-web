@@ -315,73 +315,91 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
 
     // 生成右击菜单项
     const getContextMenuItems = (row: any, index: number) => {
-        const items = [
-            {
-                label: '跳转到 osu! 谱面',
-                icon: '',
-                onClick: () => {
-                    window.open(`https://osu.ppy.sh/beatmaps/${row.BID}`, '_blank');
-                }
+        const items = [{ type: 'separator' as const, label: '' },
+        // 工具相关
+        {
+            label: '复制谱面ID (BID)',
+            icon: '/icons/copy.svg',
+            onClick: () => {
+                navigator.clipboard.writeText(row.BID);
+                showInfo('BID 已复制到剪贴板');
             },
-            {
-                label: '下载谱面 (Sayobot)',
-                icon: '',
-                onClick: () => {
-                    const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`;
-                    console.log('直接跳转到Sayobot下载:', {
-                        sid: row.SID,
-                        bid: row.BID,
-                        url: downloadUrl
-                    });
+            type: 'item' as const
+        },
+        // 导航相关
+        {
+            label: '跳转到 osu! 谱面',
+            icon: '/icons/link.svg',
+            onClick: () => {
+                window.open(`https://osu.ppy.sh/beatmaps/${row.BID}`, '_blank');
+            },
+            type: 'item' as const
+        },
+        {
+            label: '从osu中打开',
+            icon: '/icons/share.svg',
+            onClick: () => {
+                window.open(`osu://b/${row.BID}`, '_blank');
+                showInfo('已在osu客户端中打开谱面');
+            },
+            type: 'item' as const
+        },
+        // 分隔符
+        { type: 'separator' as const, label: '' },
+        // 下载相关
+        {
+            label: '下载谱面 (Sayobot)',
+            icon: '/icons/download-sayobot.svg',
+            onClick: () => {
+                const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`;
+                console.log('直接跳转到Sayobot下载:', {
+                    sid: row.SID,
+                    bid: row.BID,
+                    url: downloadUrl
+                });
 
-                    // 直接跳转到Sayobot下载链接，让浏览器处理下载
-                    window.open(downloadUrl, '_blank');
-                    showSuccess('已打开谱面下载链接');
-                }
+                // 直接跳转到Sayobot下载链接，让浏览器处理下载
+                window.open(downloadUrl, '_blank');
+                showSuccess('已打开谱面下载链接');
             },
-            {
-                label: 'osu官方下载',
-                icon: '',
-                onClick: () => {
-                    const downloadUrl = `https://osu.ppy.sh/beatmapsets/${row.SID}/download`;
-                    console.log('跳转到osu官方下载:', {
-                        sid: row.SID,
-                        bid: row.BID,
-                        url: downloadUrl
-                    });
+            type: 'item' as const
+        },
+        {
+            label: 'osu官方下载',
+            icon: '/icons/download.svg',
+            onClick: () => {
+                const downloadUrl = `https://osu.ppy.sh/beatmapsets/${row.SID}/download`;
+                console.log('跳转到osu官方下载:', {
+                    sid: row.SID,
+                    bid: row.BID,
+                    url: downloadUrl
+                });
 
-                    // 跳转到osu官方下载链接
-                    window.open(downloadUrl, '_blank');
-                    showSuccess('已打开osu官方下载链接');
-                }
+                // 跳转到osu官方下载链接
+                window.open(downloadUrl, '_blank');
+                showSuccess('已打开osu官方下载链接');
             },
-            {
-                label: '复制谱面ID (BID)',
-                icon: '',
-                onClick: () => {
-                    navigator.clipboard.writeText(row.BID);
-                    showInfo('BID 已复制到剪贴板');
-                }
-            },
-            {
-                label: '从osu中打开',
-                icon: '',
-                onClick: () => {
-                    window.open(`osu://b/${row.BID}`, '_blank');
-                    showInfo('已在osu客户端中打开谱面');
-                }
-            }
+            type: 'item' as const
+        }
+            // 分隔符
+
         ];
 
         // 如果是测图页面，添加跳转到上传区域的选项
         if (showUploadJump && onRowRightClick) {
-            items.push({
-                label: '跳转到上传卡片',
-                icon: '',
-                onClick: () => {
-                    onRowRightClick(row, index);
+            items.push(
+                // 分隔符
+                { type: 'separator' as const, label: '' },
+                // 页面导航
+                {
+                    label: '跳转到上传卡片',
+                    icon: '/icons/corner-right-down-fill.svg',
+                    onClick: () => {
+                        onRowRightClick(row, index);
+                    },
+                    type: 'item' as const
                 }
-            });
+            );
         }
 
         return items;
