@@ -8,12 +8,24 @@ const audiowide = localFont({
     display: "auto",
 });
 
-interface MatchSchedule {
+interface MatchRoom {
     id: number;
+    room_name: string;
     round_number: number;
     match_date: string;
     match_time: string;
     match_number: number;
+    max_participants: number;
+    status: 'open' | 'full' | 'closed';
+    description?: string;
+    created_by: string;
+    created_at: string;
+    updated_at: string;
+}
+
+interface MatchSchedule {
+    id: number;
+    room_id: number;
     player1_osuId: string;
     player1_username: string;
     player2_osuId: string;
@@ -32,6 +44,32 @@ interface MatchSchedule {
     created_by: string;
     created_at: string;
     updated_at: string;
+    room?: MatchRoom;
+}
+
+interface ApprovedPlayer {
+    osuId: string;
+    username: string;
+    inGameName: string;
+    avatar_url: string;
+    pp: number;
+    global_rank: number;
+    country_rank: number;
+    country: string;
+}
+
+interface PlayerMatchup {
+    id: number;
+    room_id: number;
+    player1_osuId: string;
+    player1_username: string;
+    player2_osuId: string;
+    player2_username: string;
+    status: 'available' | 'scheduled' | 'completed';
+    created_by: string;
+    created_at: string;
+    updated_at: string;
+    room?: MatchRoom;
 }
 
 interface MatchScheduleSystemProps {
@@ -41,13 +79,27 @@ interface MatchScheduleSystemProps {
 
 export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchScheduleSystemProps) {
     const [schedules, setSchedules] = useState<MatchSchedule[]>([]);
+    const [rooms, setRooms] = useState<MatchRoom[]>([]);
+    const [matchups, setMatchups] = useState<PlayerMatchup[]>([]);
+    const [approvedPlayers, setApprovedPlayers] = useState<ApprovedPlayer[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreateForm, setShowCreateForm] = useState(false);
+    const [showRoomForm, setShowRoomForm] = useState(false);
+    const [showMatchupForm, setShowMatchupForm] = useState(false);
+    const [selectedRoomId, setSelectedRoomId] = useState('');
     const [formData, setFormData] = useState({
+        matchup_id: ''
+    });
+    const [roomFormData, setRoomFormData] = useState({
+        room_name: '',
         round_number: '',
         match_date: '',
         match_time: '',
         match_number: '',
+        max_participants: '2',
+        description: ''
+    });
+    const [matchupFormData, setMatchupFormData] = useState({
         player1_osuId: '',
         player1_username: '',
         player2_osuId: '',
@@ -56,7 +108,17 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
 
     useEffect(() => {
         fetchSchedules();
+        fetchRooms();
+        if (isAdmin) {
+            fetchApprovedPlayers();
+        }
     }, []);
+
+    useEffect(() => {
+        if (selectedRoomId) {
+            fetchMatchups(selectedRoomId);
+        }
+    }, [selectedRoomId]);
 
     const fetchSchedules = async () => {
         try {
@@ -72,6 +134,42 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
         }
     };
 
+    const fetchRooms = async () => {
+        try {
+            const response = await fetch('/api/match-rooms');
+            if (response.ok) {
+                const data = await response.json();
+                setRooms(data.rooms || []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch rooms:', error);
+        }
+    };
+
+    const fetchMatchups = async (roomId: string) => {
+        try {
+            const response = await fetch(`/api/player-matchups?roomId=${roomId}`);
+            if (response.ok) {
+                const data = await response.json();
+                setMatchups(data.matchups || []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch matchups:', error);
+        }
+    };
+
+    const fetchApprovedPlayers = async () => {
+        try {
+            const response = await fetch('/api/approved-players');
+            if (response.ok) {
+                const data = await response.json();
+                setApprovedPlayers(data.players || []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch approved players:', error);
+        }
+    };
+
     const handleCreateSchedule = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -84,16 +182,9 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
 
             if (response.ok) {
                 setShowCreateForm(false);
-                setFormData({
-                    round_number: '',
-                    match_date: '',
-                    match_time: '',
-                    match_number: '',
-                    player1_osuId: '',
-                    player1_username: '',
-                    player2_osuId: '',
-                    player2_username: ''
-                });
+                setFormData({ matchup_id: '' });
+                setSelectedRoomId('');
+                setMatchups([]);
                 fetchSchedules();
                 alert('比赛预约创建成功！');
             } else {
@@ -106,12 +197,83 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
         }
     };
 
-    const handleUpdateStatus = async (id: number, status: MatchSchedule['status']) => {
+    const handleCreateRoom = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        try {
+            const response = await fetch('/api/match-rooms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(roomFormData)
+            });
+
+            if (response.ok) {
+                setShowRoomForm(false);
+                setRoomFormData({
+                    room_name: '',
+                    round_number: '',
+                    match_date: '',
+                    match_time: '',
+                    match_number: '',
+                    max_participants: '2',
+                    description: ''
+                });
+                fetchRooms();
+                alert('比赛房间创建成功！');
+            } else {
+                const error = await response.json();
+                alert(error.error || '创建失败');
+            }
+        } catch (error) {
+            console.error('Error creating room:', error);
+            alert('创建失败，请重试');
+        }
+    };
+
+    const handleCreateMatchup = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!selectedRoomId) {
+            alert('请先选择房间');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/player-matchups', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...matchupFormData,
+                    room_id: selectedRoomId
+                })
+            });
+
+            if (response.ok) {
+                setShowMatchupForm(false);
+                setMatchupFormData({
+                    player1_osuId: '',
+                    player1_username: '',
+                    player2_osuId: '',
+                    player2_username: ''
+                });
+                fetchMatchups(selectedRoomId);
+                alert('玩家对战创建成功！');
+            } else {
+                const error = await response.json();
+                alert(error.error || '创建失败');
+            }
+        } catch (error) {
+            console.error('Error creating matchup:', error);
+            alert('创建失败，请重试');
+        }
+    };
+
+    const handleUpdateStatus = async (scheduleId: number, status: MatchSchedule['status']) => {
         try {
             const response = await fetch('/api/match-schedules/update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, status })
+                body: JSON.stringify({ id: scheduleId, status })
             });
 
             if (response.ok) {
@@ -147,8 +309,30 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
         }
     };
 
+    const getMatchupStatusText = (status: PlayerMatchup['status']) => {
+        switch (status) {
+            case 'available': return '可预约';
+            case 'scheduled': return '已预约';
+            case 'completed': return '已完成';
+            default: return status;
+        }
+    };
+
+    const getMatchupStatusColor = (status: PlayerMatchup['status']) => {
+        switch (status) {
+            case 'available': return 'text-green-400';
+            case 'scheduled': return 'text-blue-400';
+            case 'completed': return 'text-gray-400';
+            default: return 'text-gray-400';
+        }
+    };
+
     const isUserInMatch = (schedule: MatchSchedule) => {
         return schedule.player1_osuId === userOsuId || schedule.player2_osuId === userOsuId;
+    };
+
+    const isUserInMatchup = (matchup: PlayerMatchup) => {
+        return matchup.player1_osuId === userOsuId || matchup.player2_osuId === userOsuId;
     };
 
     if (loading) {
@@ -173,7 +357,111 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                 <div className="bg-gray-800 p-4 rounded-lg">
                     <h4 className="text-lg font-bold text-white mb-4">创建比赛预约</h4>
                     <form onSubmit={handleCreateSchedule} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1">
+                                选择比赛房间
+                            </label>
+                            <select
+                                required
+                                value={selectedRoomId}
+                                onChange={(e) => setSelectedRoomId(e.target.value)}
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white mb-4"
+                            >
+                                <option value="">请选择比赛房间</option>
+                                {rooms.filter(room => room.status === 'open').map(room => (
+                                    <option key={room.id} value={room.id}>
+                                        {room.room_name} - 第{room.round_number}轮 - 场次{room.match_number} ({room.match_date} {room.match_time})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {selectedRoomId && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">
+                                    选择对手
+                                </label>
+                                <select
+                                    required
+                                    value={formData.matchup_id}
+                                    onChange={(e) => setFormData({ ...formData, matchup_id: e.target.value })}
+                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                                >
+                                    <option value="">请选择对手</option>
+                                    {matchups.filter(matchup => matchup.status === 'available' && isUserInMatchup(matchup)).map(matchup => (
+                                        <option key={matchup.id} value={matchup.id}>
+                                            {matchup.player1_username} vs {matchup.player2_username}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        <div className="flex gap-2">
+                            <button
+                                type="submit"
+                                className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-4 py-2 rounded-md transition-colors duration-200"
+                            >
+                                创建预约
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowCreateForm(false);
+                                    setSelectedRoomId('');
+                                    setMatchups([]);
+                                    setFormData({ matchup_id: '' });
+                                }}
+                                className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-md transition-colors duration-200"
+                            >
+                                取消
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {/* 管理员创建房间表单 */}
+            {isAdmin && (
+                <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-400">管理员功能</span>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setShowRoomForm(!showRoomForm)}
+                            className="bg-[#3BE9D8] hover:bg-[#E93B66] text-white px-4 py-2 rounded-md transition-colors duration-200 text-sm"
+                        >
+                            {showRoomForm ? '取消创建房间' : '创建比赛房间'}
+                        </button>
+                        <button
+                            onClick={() => setShowMatchupForm(!showMatchupForm)}
+                            className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-4 py-2 rounded-md transition-colors duration-200 text-sm"
+                        >
+                            {showMatchupForm ? '取消创建对战' : '管理玩家对战'}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* 创建房间表单 */}
+            {showRoomForm && isAdmin && (
+                <div className="bg-gray-800 p-4 rounded-lg">
+                    <h4 className="text-lg font-bold text-white mb-4">创建比赛房间</h4>
+                    <form onSubmit={handleCreateRoom} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1">
+                                房间名称
+                            </label>
+                            <input
+                                type="text"
+                                required
+                                value={roomFormData.room_name}
+                                onChange={(e) => setRoomFormData({ ...roomFormData, room_name: e.target.value })}
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                                placeholder="例如: 决赛房间A"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-1">
                                     轮次
@@ -181,8 +469,8 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                 <input
                                     type="number"
                                     required
-                                    value={formData.round_number}
-                                    onChange={(e) => setFormData({ ...formData, round_number: e.target.value })}
+                                    value={roomFormData.round_number}
+                                    onChange={(e) => setRoomFormData({ ...roomFormData, round_number: e.target.value })}
                                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
                                 />
                             </div>
@@ -193,8 +481,22 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                 <input
                                     type="number"
                                     required
-                                    value={formData.match_number}
-                                    onChange={(e) => setFormData({ ...formData, match_number: e.target.value })}
+                                    value={roomFormData.match_number}
+                                    onChange={(e) => setRoomFormData({ ...roomFormData, match_number: e.target.value })}
+                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">
+                                    最大参与人数
+                                </label>
+                                <input
+                                    type="number"
+                                    required
+                                    min="2"
+                                    max="16"
+                                    value={roomFormData.max_participants}
+                                    onChange={(e) => setRoomFormData({ ...roomFormData, max_participants: e.target.value })}
                                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
                                 />
                             </div>
@@ -208,8 +510,8 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                 <input
                                     type="date"
                                     required
-                                    value={formData.match_date}
-                                    onChange={(e) => setFormData({ ...formData, match_date: e.target.value })}
+                                    value={roomFormData.match_date}
+                                    onChange={(e) => setRoomFormData({ ...roomFormData, match_date: e.target.value })}
                                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
                                 />
                             </div>
@@ -220,25 +522,94 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                 <input
                                     type="time"
                                     required
-                                    value={formData.match_time}
-                                    onChange={(e) => setFormData({ ...formData, match_time: e.target.value })}
+                                    value={roomFormData.match_time}
+                                    onChange={(e) => setRoomFormData({ ...roomFormData, match_time: e.target.value })}
                                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
                                 />
                             </div>
                         </div>
 
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1">
+                                房间描述（可选）
+                            </label>
+                            <textarea
+                                value={roomFormData.description}
+                                onChange={(e) => setRoomFormData({ ...roomFormData, description: e.target.value })}
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                                rows={3}
+                                placeholder="房间的额外说明信息..."
+                            />
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button
+                                type="submit"
+                                className="bg-[#3BE9D8] hover:bg-[#E93B66] text-white px-4 py-2 rounded-md transition-colors duration-200"
+                            >
+                                创建房间
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setShowRoomForm(false)}
+                                className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-md transition-colors duration-200"
+                            >
+                                取消
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {/* 创建对战表单 */}
+            {showMatchupForm && isAdmin && (
+                <div className="bg-gray-800 p-4 rounded-lg">
+                    <h4 className="text-lg font-bold text-white mb-4">创建玩家对战</h4>
+                    <form onSubmit={handleCreateMatchup} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1">
+                                选择房间
+                            </label>
+                            <select
+                                required
+                                value={selectedRoomId}
+                                onChange={(e) => setSelectedRoomId(e.target.value)}
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                            >
+                                <option value="">请选择房间</option>
+                                {rooms.map(room => (
+                                    <option key={room.id} value={room.id}>
+                                        {room.room_name} - 第{room.round_number}轮 - 场次{room.match_number}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    选手1 osu! ID
+                                    选手1
                                 </label>
-                                <input
-                                    type="text"
+                                <select
                                     required
-                                    value={formData.player1_osuId}
-                                    onChange={(e) => setFormData({ ...formData, player1_osuId: e.target.value })}
+                                    value={matchupFormData.player1_osuId}
+                                    onChange={(e) => {
+                                        const selectedPlayer = approvedPlayers.find(p => p.osuId === e.target.value);
+                                        setMatchupFormData({
+                                            ...matchupFormData,
+                                            player1_osuId: e.target.value,
+                                            player1_username: selectedPlayer?.inGameName || selectedPlayer?.username || ''
+                                        });
+                                    }}
                                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-                                />
+                                >
+                                    <option value="">请选择选手1</option>
+                                    {approvedPlayers.map(player => (
+                                        <option key={player.osuId} value={player.osuId}>
+                                            {player.inGameName || player.username} (ID: {player.osuId})
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -246,10 +617,9 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                 </label>
                                 <input
                                     type="text"
-                                    required
-                                    value={formData.player1_username}
-                                    onChange={(e) => setFormData({ ...formData, player1_username: e.target.value })}
-                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                                    readOnly
+                                    value={matchupFormData.player1_username}
+                                    className="w-full px-3 py-2 bg-gray-600 border border-gray-600 rounded-md text-white cursor-not-allowed"
                                 />
                             </div>
                         </div>
@@ -257,15 +627,28 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    选手2 osu! ID
+                                    选手2
                                 </label>
-                                <input
-                                    type="text"
+                                <select
                                     required
-                                    value={formData.player2_osuId}
-                                    onChange={(e) => setFormData({ ...formData, player2_osuId: e.target.value })}
+                                    value={matchupFormData.player2_osuId}
+                                    onChange={(e) => {
+                                        const selectedPlayer = approvedPlayers.find(p => p.osuId === e.target.value);
+                                        setMatchupFormData({
+                                            ...matchupFormData,
+                                            player2_osuId: e.target.value,
+                                            player2_username: selectedPlayer?.inGameName || selectedPlayer?.username || ''
+                                        });
+                                    }}
                                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-                                />
+                                >
+                                    <option value="">请选择选手2</option>
+                                    {approvedPlayers.map(player => (
+                                        <option key={player.osuId} value={player.osuId}>
+                                            {player.inGameName || player.username} (ID: {player.osuId})
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -273,35 +656,34 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                 </label>
                                 <input
                                     type="text"
-                                    required
-                                    value={formData.player2_username}
-                                    onChange={(e) => setFormData({ ...formData, player2_username: e.target.value })}
-                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+                                    readOnly
+                                    value={matchupFormData.player2_username}
+                                    className="w-full px-3 py-2 bg-gray-600 border border-gray-600 rounded-md text-white cursor-not-allowed"
                                 />
                             </div>
                         </div>
 
-                        <div className="flex justify-end space-x-2">
-                            <button
-                                type="button"
-                                onClick={() => setShowCreateForm(false)}
-                                className="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-md transition-colors duration-200"
-                            >
-                                取消
-                            </button>
+                        <div className="flex gap-2">
                             <button
                                 type="submit"
-                                className="px-4 py-2 bg-[#E93B66] hover:bg-[#3BE9D8] text-white rounded-md transition-colors duration-200"
+                                className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-4 py-2 rounded-md transition-colors duration-200"
                             >
-                                创建预约
+                                创建对战
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setShowMatchupForm(false)}
+                                className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-md transition-colors duration-200"
+                            >
+                                取消
                             </button>
                         </div>
                     </form>
                 </div>
             )}
 
-            {/* 预约列表 */}
-            <div className="space-y-3">
+            {/* 比赛预约列表 */}
+            <div className="space-y-4">
                 {schedules.length === 0 ? (
                     <div className="text-center py-8 text-gray-400">
                         暂无比赛预约
@@ -309,13 +691,16 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                 ) : (
                     schedules.map((schedule) => (
                         <div key={schedule.id} className="bg-gray-800 p-4 rounded-lg">
-                            <div className="flex justify-between items-start mb-3">
+                            <div className="flex justify-between items-start mb-2">
                                 <div>
                                     <h4 className="text-lg font-bold text-white">
-                                        第{schedule.round_number}轮 - 场次{schedule.match_number}
+                                        {schedule.room?.room_name || `房间 ${schedule.room_id}`}
                                     </h4>
-                                    <p className="text-gray-300">
-                                        {schedule.match_date} {schedule.match_time}
+                                    <p className="text-gray-400">
+                                        第{schedule.room?.round_number || '?'}轮 - 场次{schedule.room?.match_number || '?'}
+                                    </p>
+                                    <p className="text-gray-400">
+                                        {schedule.room?.match_date || '?'} {schedule.room?.match_time || '?'}
                                     </p>
                                 </div>
                                 <span className={`px-2 py-1 text-sm rounded ${getStatusColor(schedule.status)}`}>
@@ -323,54 +708,34 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 mb-3">
-                                <div className="text-center">
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div className="bg-gray-700 p-3 rounded">
                                     <p className="text-sm text-gray-400">选手1</p>
-                                    <p className="font-medium text-white">{schedule.player1_username}</p>
-                                    {schedule.red_player_osuId === schedule.player1_osuId && (
-                                        <span className="text-red-400 text-sm">红方</span>
-                                    )}
-                                    {schedule.blue_player_osuId === schedule.player1_osuId && (
-                                        <span className="text-blue-400 text-sm">蓝方</span>
-                                    )}
+                                    <p className="text-white font-medium">{schedule.player1_username}</p>
+                                    <p className="text-xs text-gray-500">ID: {schedule.player1_osuId}</p>
                                 </div>
-                                <div className="text-center">
+                                <div className="bg-gray-700 p-3 rounded">
                                     <p className="text-sm text-gray-400">选手2</p>
-                                    <p className="font-medium text-white">{schedule.player2_username}</p>
-                                    {schedule.red_player_osuId === schedule.player2_osuId && (
-                                        <span className="text-red-400 text-sm">红方</span>
-                                    )}
-                                    {schedule.blue_player_osuId === schedule.player2_osuId && (
-                                        <span className="text-blue-400 text-sm">蓝方</span>
-                                    )}
+                                    <p className="text-white font-medium">{schedule.player2_username}</p>
+                                    <p className="text-xs text-gray-500">ID: {schedule.player2_osuId}</p>
                                 </div>
                             </div>
 
-                            {schedule.status === 'completed' && (
-                                <div className="text-center mb-3">
-                                    <p className="text-lg font-bold">
-                                        <span className="text-red-400">{schedule.red_score}</span>
-                                        {' - '}
-                                        <span className="text-blue-400">{schedule.blue_score}</span>
-                                    </p>
-                                </div>
-                            )}
-
                             {/* 操作按钮 */}
-                            <div className="flex justify-end space-x-2">
+                            <div className="flex gap-2">
                                 {isUserInMatch(schedule) && schedule.status === 'pending' && (
                                     <>
                                         <button
                                             onClick={() => handleUpdateStatus(schedule.id, 'confirmed')}
-                                            className="px-3 py-1 bg-green-600 hover:bg-green-500 text-white text-sm rounded transition-colors duration-200"
+                                            className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-sm"
                                         >
-                                            接受
+                                            确认参加
                                         </button>
                                         <button
                                             onClick={() => handleUpdateStatus(schedule.id, 'cancelled')}
-                                            className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white text-sm rounded transition-colors duration-200"
+                                            className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-sm"
                                         >
-                                            拒绝
+                                            取消预约
                                         </button>
                                     </>
                                 )}
@@ -378,34 +743,42 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                 {isAdmin && schedule.status === 'confirmed' && (
                                     <button
                                         onClick={() => handleUpdateStatus(schedule.id, 'completed')}
-                                        className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded transition-colors duration-200"
+                                        className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-sm"
                                     >
-                                        完成比赛
+                                        标记完成
                                     </button>
                                 )}
                             </div>
-
-                            {/* 附加信息 */}
-                            {(schedule.referee_username || schedule.commentator_username || schedule.replay_link || schedule.match_link) && (
-                                <div className="mt-3 pt-3 border-t border-gray-600 text-sm text-gray-400">
-                                    {schedule.referee_username && (
-                                        <p>裁判: {schedule.referee_username}</p>
-                                    )}
-                                    {schedule.commentator_username && (
-                                        <p>解说: {schedule.commentator_username}</p>
-                                    )}
-                                    {schedule.match_link && (
-                                        <p>比赛链接: <a href={schedule.match_link} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">点击查看</a></p>
-                                    )}
-                                    {schedule.replay_link && (
-                                        <p>回放链接: <a href={schedule.replay_link} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">点击查看</a></p>
-                                    )}
-                                </div>
-                            )}
                         </div>
                     ))
                 )}
             </div>
+
+            {/* 玩家对战列表（管理员可见） */}
+            {isAdmin && selectedRoomId && matchups.length > 0 && (
+                <div className="bg-gray-800 p-4 rounded-lg">
+                    <h4 className="text-lg font-bold text-white mb-4">
+                        {rooms.find(r => r.id === parseInt(selectedRoomId))?.room_name} - 玩家对战列表
+                    </h4>
+                    <div className="space-y-2">
+                        {matchups.map((matchup) => (
+                            <div key={matchup.id} className="bg-gray-700 p-3 rounded flex justify-between items-center">
+                                <div>
+                                    <p className="text-white font-medium">
+                                        {matchup.player1_username} vs {matchup.player2_username}
+                                    </p>
+                                    <p className="text-xs text-gray-400">
+                                        ID: {matchup.player1_osuId} vs {matchup.player2_osuId}
+                                    </p>
+                                </div>
+                                <span className={`px-2 py-1 text-sm rounded ${getMatchupStatusColor(matchup.status)}`}>
+                                    {getMatchupStatusText(matchup.status)}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

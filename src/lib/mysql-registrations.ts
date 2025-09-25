@@ -53,14 +53,33 @@ export const initDatabase = async (): Promise<void> => {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
 
-        // 创建比赛预约表（如果不存在）
+        // 创建比赛房间表（如果不存在）
         await connection.execute(`
-            CREATE TABLE IF NOT EXISTS match_schedules (
+            CREATE TABLE IF NOT EXISTS match_rooms (
                 id INT AUTO_INCREMENT PRIMARY KEY,
+                room_name VARCHAR(255) NOT NULL COMMENT '房间名称',
                 round_number INT NOT NULL COMMENT '轮次',
                 match_date DATE NOT NULL COMMENT '比赛日期',
                 match_time TIME NOT NULL COMMENT '比赛时间',
                 match_number INT NOT NULL COMMENT '比赛场次',
+                max_participants INT DEFAULT 2 COMMENT '最大参赛人数',
+                status ENUM('open', 'full', 'closed') DEFAULT 'open' COMMENT '房间状态：open-开放报名，full-已满员，closed-已关闭',
+                description TEXT COMMENT '房间描述',
+                created_by VARCHAR(255) NOT NULL COMMENT '创建者osuId',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_round (round_number),
+                INDEX idx_date (match_date),
+                INDEX idx_status (status),
+                INDEX idx_created_by (created_by)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        // 创建比赛预约表（如果不存在）
+        await connection.execute(`
+            CREATE TABLE IF NOT EXISTS match_schedules (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                room_id INT NOT NULL COMMENT '所属房间ID',
                 player1_osuId VARCHAR(255) NOT NULL COMMENT '选手1 osuId',
                 player1_username VARCHAR(255) NOT NULL COMMENT '选手1 用户名',
                 player2_osuId VARCHAR(255) NOT NULL COMMENT '选手2 osuId',
@@ -79,9 +98,33 @@ export const initDatabase = async (): Promise<void> => {
                 created_by VARCHAR(255) NOT NULL COMMENT '创建者osuId',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (room_id) REFERENCES match_rooms(id) ON DELETE CASCADE,
+                INDEX idx_room (room_id),
                 INDEX idx_player1 (player1_osuId),
                 INDEX idx_player2 (player2_osuId),
-                INDEX idx_date (match_date),
+                INDEX idx_status (status),
+                INDEX idx_created_by (created_by)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        // 创建玩家对战列表表（如果不存在）
+        await connection.execute(`
+            CREATE TABLE IF NOT EXISTS player_matchups (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                room_id INT NOT NULL COMMENT '所属房间ID',
+                player1_osuId VARCHAR(255) NOT NULL COMMENT '选手1 osuId',
+                player1_username VARCHAR(255) NOT NULL COMMENT '选手1 用户名',
+                player2_osuId VARCHAR(255) NOT NULL COMMENT '选手2 osuId',
+                player2_username VARCHAR(255) NOT NULL COMMENT '选手2 用户名',
+                status ENUM('available', 'scheduled', 'completed') DEFAULT 'available' COMMENT '状态：available-可预约，scheduled-已预约，completed-已完成',
+                created_by VARCHAR(255) NOT NULL COMMENT '创建者osuId',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (room_id) REFERENCES match_rooms(id) ON DELETE CASCADE,
+                UNIQUE KEY unique_matchup (room_id, player1_osuId, player2_osuId),
+                INDEX idx_room (room_id),
+                INDEX idx_player1 (player1_osuId),
+                INDEX idx_player2 (player2_osuId),
                 INDEX idx_status (status),
                 INDEX idx_created_by (created_by)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -122,12 +165,38 @@ export const initDatabase = async (): Promise<void> => {
     }
 };
 
-export interface MatchSchedule {
+export interface MatchRoom {
     id: number;
+    room_name: string;
     round_number: number;
     match_date: string;
     match_time: string;
     match_number: number;
+    max_participants: number;
+    status: 'open' | 'full' | 'closed';
+    description?: string;
+    created_by: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PlayerMatchup {
+    id: number;
+    room_id: number;
+    player1_osuId: string;
+    player1_username: string;
+    player2_osuId: string;
+    player2_username: string;
+    status: 'available' | 'scheduled' | 'completed';
+    created_by: string;
+    created_at: string;
+    updated_at: string;
+    room?: MatchRoom;
+}
+
+export interface MatchSchedule {
+    id: number;
+    room_id: number;
     player1_osuId: string;
     player1_username: string;
     player2_osuId: string;
@@ -146,6 +215,7 @@ export interface MatchSchedule {
     created_by: string;
     created_at: string;
     updated_at: string;
+    room?: MatchRoom; // 关联的房间信息
 }
 export interface Registration {
     osuId: string;
@@ -383,34 +453,249 @@ const mysqlStorage = {
         }
     },
 
-    // 创建比赛预约
-    createMatchSchedule: async (schedule: Omit<MatchSchedule, 'id' | 'created_at' | 'updated_at'>): Promise<number> => {
+    // 创建比赛房间
+    createMatchRoom: async (room: Omit<MatchRoom, 'id' | 'created_at' | 'updated_at'>): Promise<number> => {
         try {
             const connection = await getPool().getConnection();
 
             const [result] = await connection.execute(`
-                INSERT INTO match_schedules (
-                    round_number, match_date, match_time, match_number,
-                    player1_osuId, player1_username, player2_osuId, player2_username,
-                    red_player_osuId, blue_player_osuId, red_score, blue_score,
-                    status, replay_link, match_link, referee_osuId, referee_username,
-                    commentator_osuId, commentator_username, created_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO match_rooms (
+                    room_name, round_number, match_date, match_time, match_number,
+                    max_participants, status, description, created_by
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [
-                schedule.round_number, schedule.match_date, schedule.match_time, schedule.match_number,
-                schedule.player1_osuId, schedule.player1_username, schedule.player2_osuId, schedule.player2_username,
-                schedule.red_player_osuId || null, schedule.blue_player_osuId || null, schedule.red_score, schedule.blue_score,
-                schedule.status, schedule.replay_link || null, schedule.match_link || null,
-                schedule.referee_osuId || null, schedule.referee_username || null,
-                schedule.commentator_osuId || null, schedule.commentator_username || null, schedule.created_by
+                room.room_name, room.round_number, room.match_date, room.match_time, room.match_number,
+                room.max_participants, room.status, room.description || null, room.created_by
             ]);
 
             connection.release();
 
             return (result as any).insertId;
         } catch (error) {
-            console.error('Error creating match schedule:', error);
+            console.error('Error creating match room:', error);
             throw error;
+        }
+    },
+
+    // 获取所有比赛房间
+    getMatchRooms: async (): Promise<MatchRoom[]> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [rows] = await connection.execute(`
+                SELECT * FROM match_rooms
+                ORDER BY match_date DESC, match_time DESC
+            `);
+
+            connection.release();
+
+            return (rows as any[]).map(row => ({
+                id: row.id,
+                room_name: row.room_name,
+                round_number: row.round_number,
+                match_date: row.match_date,
+                match_time: row.match_time,
+                match_number: row.match_number,
+                max_participants: row.max_participants,
+                status: row.status,
+                description: row.description,
+                created_by: row.created_by,
+                created_at: row.created_at,
+                updated_at: row.updated_at
+            }));
+        } catch (error) {
+            console.error('Error getting match rooms:', error);
+            return [];
+        }
+    },
+
+    // 获取单个比赛房间
+    getMatchRoom: async (id: number): Promise<MatchRoom | null> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [rows] = await connection.execute(`
+                SELECT * FROM match_rooms WHERE id = ?
+            `, [id]);
+
+            connection.release();
+
+            const row = (rows as any[])[0];
+            if (!row) return null;
+
+            return {
+                id: row.id,
+                room_name: row.room_name,
+                round_number: row.round_number,
+                match_date: row.match_date,
+                match_time: row.match_time,
+                match_number: row.match_number,
+                max_participants: row.max_participants,
+                status: row.status,
+                description: row.description,
+                created_by: row.created_by,
+                created_at: row.created_at,
+                updated_at: row.updated_at
+            };
+        } catch (error) {
+            console.error('Error getting match room:', error);
+            return null;
+        }
+    },
+
+    // 更新比赛房间状态
+    updateMatchRoomStatus: async (id: number, status: MatchRoom['status']): Promise<boolean> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(
+                'UPDATE match_rooms SET status = ? WHERE id = ?',
+                [status, id]
+            );
+
+            connection.release();
+
+            return (result as any).affectedRows > 0;
+        } catch (error) {
+            console.error('Error updating match room status:', error);
+            return false;
+        }
+    },
+
+    // 删除比赛房间
+    deleteMatchRoom: async (id: number): Promise<boolean> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(
+                'DELETE FROM match_rooms WHERE id = ?',
+                [id]
+            );
+
+            connection.release();
+
+            return (result as any).affectedRows > 0;
+        } catch (error) {
+            console.error('Error deleting match room:', error);
+            return false;
+        }
+    },
+
+    // 创建玩家对战列表
+    createPlayerMatchup: async (matchup: Omit<PlayerMatchup, 'id' | 'created_at' | 'updated_at'>): Promise<number> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(`
+                INSERT INTO player_matchups (
+                    room_id, player1_osuId, player1_username, player2_osuId, player2_username,
+                    status, created_by
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            `, [
+                matchup.room_id, matchup.player1_osuId, matchup.player1_username,
+                matchup.player2_osuId, matchup.player2_username,
+                matchup.status, matchup.created_by
+            ]);
+
+            connection.release();
+
+            return (result as any).insertId;
+        } catch (error) {
+            console.error('Error creating player matchup:', error);
+            throw error;
+        }
+    },
+
+    // 获取房间的玩家对战列表
+    getPlayerMatchups: async (roomId?: number): Promise<PlayerMatchup[]> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            let query = `
+                SELECT pm.*, mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number
+                FROM player_matchups pm
+                JOIN match_rooms mr ON pm.room_id = mr.id
+            `;
+            let params: any[] = [];
+
+            if (roomId) {
+                query += ` WHERE pm.room_id = ?`;
+                params.push(roomId);
+            }
+
+            query += ` ORDER BY pm.created_at ASC`;
+
+            const [rows] = await connection.execute(query, params);
+
+            connection.release();
+
+            return (rows as any[]).map(row => ({
+                id: row.id,
+                room_id: row.room_id,
+                player1_osuId: row.player1_osuId,
+                player1_username: row.player1_username,
+                player2_osuId: row.player2_osuId,
+                player2_username: row.player2_username,
+                status: row.status,
+                created_by: row.created_by,
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+                room: {
+                    id: row.room_id,
+                    room_name: row.room_name,
+                    round_number: row.round_number,
+                    match_date: row.match_date,
+                    match_time: row.match_time,
+                    match_number: row.match_number,
+                    max_participants: row.max_participants,
+                    status: row.status,
+                    description: row.description,
+                    created_by: row.created_by,
+                    created_at: row.created_at,
+                    updated_at: row.updated_at
+                }
+            }));
+        } catch (error) {
+            console.error('Error getting player matchups:', error);
+            return [];
+        }
+    },
+
+    // 更新玩家对战状态
+    updatePlayerMatchupStatus: async (id: number, status: PlayerMatchup['status']): Promise<boolean> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(
+                'UPDATE player_matchups SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                [status, id]
+            );
+
+            connection.release();
+
+            return (result as any).affectedRows > 0;
+        } catch (error) {
+            console.error('Error updating player matchup status:', error);
+            return false;
+        }
+    },
+
+    // 删除玩家对战
+    deletePlayerMatchup: async (id: number): Promise<boolean> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(
+                'DELETE FROM player_matchups WHERE id = ?',
+                [id]
+            );
+
+            connection.release();
+
+            return (result as any).affectedRows > 0;
+        } catch (error) {
+            console.error('Error deleting player matchup:', error);
+            return false;
         }
     },
 
@@ -420,19 +705,18 @@ const mysqlStorage = {
             const connection = await getPool().getConnection();
 
             const [rows] = await connection.execute(`
-                SELECT * FROM match_schedules
-                WHERE player1_osuId = ? OR player2_osuId = ?
-                ORDER BY match_date DESC, match_time DESC
+                SELECT ms.*, mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number
+                FROM match_schedules ms
+                JOIN match_rooms mr ON ms.room_id = mr.id
+                WHERE ms.player1_osuId = ? OR ms.player2_osuId = ?
+                ORDER BY mr.match_date DESC, mr.match_time DESC
             `, [osuId, osuId]);
 
             connection.release();
 
             return (rows as any[]).map(row => ({
                 id: row.id,
-                round_number: row.round_number,
-                match_date: row.match_date,
-                match_time: row.match_time,
-                match_number: row.match_number,
+                room_id: row.room_id,
                 player1_osuId: row.player1_osuId,
                 player1_username: row.player1_username,
                 player2_osuId: row.player2_osuId,
@@ -450,7 +734,21 @@ const mysqlStorage = {
                 commentator_username: row.commentator_username,
                 created_by: row.created_by,
                 created_at: row.created_at,
-                updated_at: row.updated_at
+                updated_at: row.updated_at,
+                room: {
+                    id: row.room_id,
+                    room_name: row.room_name,
+                    round_number: row.round_number,
+                    match_date: row.match_date,
+                    match_time: row.match_time,
+                    match_number: row.match_number,
+                    max_participants: row.max_participants,
+                    status: row.status,
+                    description: row.description,
+                    created_by: row.created_by,
+                    created_at: row.created_at,
+                    updated_at: row.updated_at
+                }
             }));
         } catch (error) {
             console.error('Error getting user match schedules:', error);
@@ -499,18 +797,17 @@ const mysqlStorage = {
             const connection = await getPool().getConnection();
 
             const [rows] = await connection.execute(`
-                SELECT * FROM match_schedules
-                ORDER BY match_date DESC, match_time DESC
+                SELECT ms.*, mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number
+                FROM match_schedules ms
+                JOIN match_rooms mr ON ms.room_id = mr.id
+                ORDER BY mr.match_date DESC, mr.match_time DESC
             `);
 
             connection.release();
 
             return (rows as any[]).map(row => ({
                 id: row.id,
-                round_number: row.round_number,
-                match_date: row.match_date,
-                match_time: row.match_time,
-                match_number: row.match_number,
+                room_id: row.room_id,
                 player1_osuId: row.player1_osuId,
                 player1_username: row.player1_username,
                 player2_osuId: row.player2_osuId,
@@ -528,11 +825,57 @@ const mysqlStorage = {
                 commentator_username: row.commentator_username,
                 created_by: row.created_by,
                 created_at: row.created_at,
-                updated_at: row.updated_at
+                updated_at: row.updated_at,
+                room: {
+                    id: row.room_id,
+                    room_name: row.room_name,
+                    round_number: row.round_number,
+                    match_date: row.match_date,
+                    match_time: row.match_time,
+                    match_number: row.match_number,
+                    max_participants: row.max_participants,
+                    status: row.status,
+                    description: row.description,
+                    created_by: row.created_by,
+                    created_at: row.created_at,
+                    updated_at: row.updated_at
+                }
             }));
         } catch (error) {
             console.error('Error getting all match schedules:', error);
             return [];
+        }
+    },
+
+    // 创建比赛预约
+    createMatchSchedule: async (schedule: Omit<MatchSchedule, 'id' | 'created_at' | 'updated_at' | 'room'>): Promise<number> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(`
+                INSERT INTO match_schedules (
+                    room_id, player1_osuId, player1_username, player2_osuId, player2_username,
+                    red_player_osuId, blue_player_osuId, red_score, blue_score,
+                    status, replay_link, match_link, referee_osuId, referee_username,
+                    commentator_osuId, commentator_username, created_by
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+                schedule.room_id, schedule.player1_osuId, schedule.player1_username,
+                schedule.player2_osuId, schedule.player2_username,
+                schedule.red_player_osuId || null, schedule.blue_player_osuId || null,
+                schedule.red_score, schedule.blue_score, schedule.status,
+                schedule.replay_link || null, schedule.match_link || null,
+                schedule.referee_osuId || null, schedule.referee_username || null,
+                schedule.commentator_osuId || null, schedule.commentator_username || null,
+                schedule.created_by
+            ]);
+
+            connection.release();
+
+            return (result as any).insertId;
+        } catch (error) {
+            console.error('Error creating match schedule:', error);
+            throw error;
         }
     }
 };
@@ -551,6 +894,19 @@ export const createMatchSchedule = mysqlStorage.createMatchSchedule;
 export const getUserMatchSchedules = mysqlStorage.getUserMatchSchedules;
 export const updateMatchScheduleStatus = mysqlStorage.updateMatchScheduleStatus;
 export const getAllMatchSchedules = mysqlStorage.getAllMatchSchedules;
+
+// 比赛房间相关导出
+export const createMatchRoom = mysqlStorage.createMatchRoom;
+export const getMatchRooms = mysqlStorage.getMatchRooms;
+export const getMatchRoom = mysqlStorage.getMatchRoom;
+export const updateMatchRoomStatus = mysqlStorage.updateMatchRoomStatus;
+export const deleteMatchRoom = mysqlStorage.deleteMatchRoom;
+
+// 玩家对战列表相关导出
+export const createPlayerMatchup = mysqlStorage.createPlayerMatchup;
+export const getPlayerMatchups = mysqlStorage.getPlayerMatchups;
+export const updatePlayerMatchupStatus = mysqlStorage.updatePlayerMatchupStatus;
+export const deletePlayerMatchup = mysqlStorage.deletePlayerMatchup;
 
 // 默认导出初始化函数
 export default initDatabase;
