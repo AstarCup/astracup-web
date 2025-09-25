@@ -315,72 +315,61 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
 
     // 生成右击菜单项
     const getContextMenuItems = (row: any, index: number) => {
-        const items = [{ type: 'separator' as const, label: '' },
-        // 工具相关
-        {
-            label: '复制谱面ID (BID)',
-            icon: '/icons/copy.svg',
-            onClick: () => {
-                navigator.clipboard.writeText(row.BID);
-                showInfo('BID 已复制到剪贴板');
+        const items = [
+            // 工具相关
+            {
+                label: '复制谱面ID (BID)',
+                icon: '/icons/copy.svg',
+                onClick: () => {
+                    navigator.clipboard.writeText(row.BID);
+                    showInfo('BID 已复制到剪贴板');
+                },
+                type: 'item' as const
             },
-            type: 'item' as const
-        },
-        // 导航相关
-        {
-            label: '跳转到 osu! 谱面',
-            icon: '/icons/link.svg',
-            onClick: () => {
-                window.open(`https://osu.ppy.sh/beatmaps/${row.BID}`, '_blank');
+            // 导航相关
+            {
+                label: '跳转到 osu! 谱面',
+                icon: '/icons/link.svg',
+                onClick: () => {
+                    window.open(`https://osu.ppy.sh/beatmaps/${row.BID}`, '_blank');
+                },
+                type: 'item' as const
             },
-            type: 'item' as const
-        },
-        {
-            label: '从osu中打开',
-            icon: '/icons/share.svg',
-            onClick: () => {
-                window.open(`osu://b/${row.BID}`, '_blank');
-                showInfo('已在osu客户端中打开谱面');
+            {
+                label: '从osu中打开',
+                icon: '/icons/share.svg',
+                onClick: () => {
+                    window.open(`osu://b/${row.BID}`, '_blank');
+                    showInfo('已在osu客户端中打开谱面');
+                },
+                type: 'item' as const
             },
-            type: 'item' as const
-        },
-        // 分隔符
-        { type: 'separator' as const, label: '' },
-        // 下载相关
-        {
-            label: '下载谱面 (Sayobot)',
-            icon: '/icons/download-sayobot.svg',
-            onClick: () => {
-                const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`;
-                console.log('直接跳转到Sayobot下载:', {
-                    sid: row.SID,
-                    bid: row.BID,
-                    url: downloadUrl
-                });
+            // 分隔符
+            { type: 'separator' as const, label: '' },
+            // 下载相关
+            {
+                label: '下载谱面 (Sayobot)',
+                icon: '/icons/download-sayobot.svg',
+                onClick: () => {
+                    const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`;
 
-                // 直接跳转到Sayobot下载链接，让浏览器处理下载
-                window.open(downloadUrl, '_blank');
-                showSuccess('已打开谱面下载链接');
+                    // 直接跳转到Sayobot下载链接，让浏览器处理下载
+                    window.open(downloadUrl, '_blank');
+                    showSuccess('已开始从sayobot下载');
+                },
+                type: 'item' as const
             },
-            type: 'item' as const
-        },
-        {
-            label: 'osu官方下载',
-            icon: '/icons/download.svg',
-            onClick: () => {
-                const downloadUrl = `https://osu.ppy.sh/beatmapsets/${row.SID}/download`;
-                console.log('跳转到osu官方下载:', {
-                    sid: row.SID,
-                    bid: row.BID,
-                    url: downloadUrl
-                });
-
-                // 跳转到osu官方下载链接
-                window.open(downloadUrl, '_blank');
-                showSuccess('已打开osu官方下载链接');
-            },
-            type: 'item' as const
-        }
+            {
+                label: 'osu官方下载',
+                icon: '/icons/download.svg',
+                onClick: () => {
+                    const downloadUrl = `https://osu.ppy.sh/beatmapsets/${row.SID}/download`;
+                    // 跳转到osu官方下载链接
+                    window.open(downloadUrl, '_blank');
+                    showSuccess('已开始从osu官方下载');
+                },
+                type: 'item' as const
+            }
             // 分隔符
 
         ];
@@ -417,16 +406,9 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                         className="px-4 py-3 bg-[#7B68EE] text-white hover:bg-[#95E1D3] transition font-bold disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                         title="打开批量下载管理器"
                     >
-                        批量下载 ({data.length})
+                        图池批量下载 ({data.length})
                     </button>
-                    {/* {downloadUrl && (
-                        <a
-                            href={downloadUrl}
-                            className="px-5 py-3 bg-[#E93B66] text-white hover:bg-[#95E1D3] transition font-bold"
-                        >
-                            图包下载 MAPPAK DOWNLOAD
-                        </a>
-                    )} */}
+
                 </div>
             </div>
             <div className="overflow-x-auto relative">

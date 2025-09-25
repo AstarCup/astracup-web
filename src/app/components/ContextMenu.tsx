@@ -2,6 +2,9 @@
 import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 
+// 图标缓存，避免重复创建Image组件
+const iconCache = new Map<string, React.ReactElement>();
+
 interface ContextMenuItem {
     label: string;
     onClick?: () => void;
@@ -14,6 +17,17 @@ interface ContextMenuProps {
     position: { x: number; y: number };
     onClose: () => void;
 }
+
+// 获取缓存的图标组件
+const getCachedIcon = (iconSrc: string) => {
+    if (!iconSrc) return null;
+
+    if (!iconCache.has(iconSrc)) {
+        iconCache.set(iconSrc, <Image src={iconSrc} alt="" width={24} height={24} />);
+    }
+
+    return iconCache.get(iconSrc);
+};
 
 export default function ContextMenu({ items, position, onClose }: ContextMenuProps) {
     const menuRef = useRef<HTMLDivElement>(null);
@@ -61,7 +75,7 @@ export default function ContextMenu({ items, position, onClose }: ContextMenuPro
                         }}
                         className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center space-x-2 text-sm"
                     >
-                        <Image src={item.icon || ''} alt="" width={24} height={24} />
+                        {getCachedIcon(item.icon || '')}
                         <span>{item.label}</span>
                     </button>
                 )
