@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import localFont from "next/font/local";
 import UserProfile from './UserProfile';
+import PlayerInfoPanel from './PlayerInfoPanel';
 import { UserSession } from '@/lib/session';
 import { getUserPermissions } from '@/lib/permissions';
 
@@ -359,7 +360,11 @@ export default function Navbar() {
                                             <div
                                                 className="absolute top-full right-0 mt-2 bg-[#3d3d3d] shadow-lg p-4 min-w-80 z-50"
                                             >
-                                                <UserProfile user={user} onLogout={handleLogout} />
+                                                <PlayerInfoPanel
+                                                    user={user}
+                                                    permissions={permissions}
+                                                    onLogout={handleLogout}
+                                                />
 
                                                 {/* 权限组标志 - 仅对非普通用户显示 */}
                                                 {(permissions.isMapSelector || permissions.isReplayTester || permissions.isAdmin) && (
