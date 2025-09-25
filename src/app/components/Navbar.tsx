@@ -5,8 +5,6 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import localFont from "next/font/local";
-import UserProfile from './UserProfile';
-import PlayerInfoPanel from './PlayerInfoPanel';
 import { UserSession } from '@/lib/session';
 import { getUserPermissions } from '@/lib/permissions';
 
@@ -22,7 +20,6 @@ export default function Navbar() {
     const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
     const [clickedGroup, setClickedGroup] = useState<string | null>(null);
     const [user, setUser] = useState<UserSession | null>(null);
-    const [showUserProfile, setShowUserProfile] = useState(false);
     const [permissions, setPermissions] = useState({
         isMapSelector: false,
         isReplayTester: false,
@@ -75,20 +72,19 @@ export default function Navbar() {
         const handleDocumentClick = (event: MouseEvent) => {
             // Check if the click is outside the navbar menu
             const target = event.target as Element;
-            if (!target.closest('.navbar-menu') && !target.closest('.user-profile-container')) {
+            if (!target.closest('.navbar-menu')) {
                 setClickedGroup(null);
-                setShowUserProfile(false);
             }
         };
 
-        if (clickedGroup || showUserProfile) {
+        if (clickedGroup) {
             document.addEventListener('click', handleDocumentClick);
         }
 
         return () => {
             document.removeEventListener('click', handleDocumentClick);
         };
-    }, [clickedGroup, showUserProfile]);
+    }, [clickedGroup]);
 
     // 获取版本信息
     useEffect(() => {
@@ -153,7 +149,6 @@ export default function Navbar() {
         try {
             await fetch('/api/auth/logout', { method: 'POST' });
             setUser(null);
-            setShowUserProfile(false);
             // 可以添加页面刷新或重定向
             window.location.reload();
         } catch (error) {
@@ -308,7 +303,6 @@ export default function Navbar() {
                                                                     setActiveLink(link.href);
                                                                     setHoveredGroup(null);
                                                                     setClickedGroup(null);
-                                                                    setShowUserProfile(false); // 关闭头像菜单
                                                                 }}
                                                             >
                                                                 {link.svg ? (
@@ -339,65 +333,20 @@ export default function Navbar() {
                             </ul>
 
                             {/* User Profile */}
-                            <div className="hidden xl:flex items-center ml-4 user-profile-container">
+                            <div className="hidden xl:flex items-center ml-4">
                                 {user ? (
-                                    <div className="relative">
+                                    <Link href="/player-info">
                                         <img
                                             src={user.avatar_url}
                                             alt={user.username}
                                             width={40}
                                             height={40}
                                             className="rounded-full outline outline-2 outline-[#E93B66] cursor-pointer hover:outline-[#3BE9D8] hover:scale-110 hover:shadow-lg hover:shadow-[#E93B66]/50 transition-all duration-200"
-                                            onClick={() => {
-                                                setShowUserProfile(!showUserProfile);
-                                                setClickedGroup(null); // 关闭导航菜单
-                                            }}
                                             onError={(e) => {
                                                 e.currentTarget.src = '/default-avatar.png';
                                             }}
                                         />
-                                        {showUserProfile && (
-                                            <div
-                                                className="absolute top-full right-0 mt-2 bg-[#3d3d3d] shadow-lg p-4 min-w-80 z-50"
-                                            >
-                                                <PlayerInfoPanel
-                                                    user={user}
-                                                    permissions={permissions}
-                                                    onLogout={handleLogout}
-                                                />
-
-                                                {/* 权限组标志 - 仅对非普通用户显示 */}
-                                                {(permissions.isMapSelector || permissions.isReplayTester || permissions.isAdmin) && (
-                                                    <div className="mt-3 pt-3 border-t border-gray-600">
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {permissions.isAdmin && (
-                                                                <span className="px-2 py-1 text-gray-800 bg-white text-xl border-b-4 border-red-600">
-                                                                    管理员
-                                                                </span>
-                                                            )}
-                                                            {permissions.isMapSelector && (
-                                                                <span className="px-2 py-1 text-gray-800 bg-white text-xl border-b-4 border-blue-600">
-                                                                    选图组
-                                                                </span>
-                                                            )}
-                                                            {permissions.isReplayTester && (
-                                                                <span className="px-2 py-1 text-gray-800 bg-white text-xl border-b-4 border-green-600">
-                                                                    测图组
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* 版本信息 */}
-                                                <div className="mt-3 pt-3 border-t border-gray-600 text-center">
-                                                    <div className="text-xs text-gray-400">
-                                                        版本: {versionInfo}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
+                                    </Link>
                                 ) : (
                                     <button
                                         onClick={() => window.location.href = '/register'}
@@ -513,54 +462,24 @@ export default function Navbar() {
                             {/* Mobile User Profile */}
                             {user && (
                                 <div className="mt-4 pt-4 border-t border-gray-300">
-                                    <div className="flex items-center gap-3 p-3 bg-[#3d3d3d] rounded-md">
-                                        <img
-                                            src={user.avatar_url}
-                                            alt={user.username}
-                                            width={40}
-                                            height={40}
-                                            className="rounded-full outline outline-2 outline-[#E93B66]"
-                                            onError={(e) => {
-                                                e.currentTarget.src = '/default-avatar.png';
-                                            }}
-                                        />
-                                        <div className="flex-1">
-                                            <div className="text-white font-bold text-sm">{user.username}</div>
-                                            <div className="text-gray-300 text-xs">ID: {user.osuId}</div>
+                                    <Link href="/player-info" onClick={() => setMobileMenuOpen(false)}>
+                                        <div className="flex items-center gap-3 p-3 bg-[#3d3d3d] rounded-md cursor-pointer hover:bg-[#4d4d4d] transition-colors duration-200">
+                                            <img
+                                                src={user.avatar_url}
+                                                alt={user.username}
+                                                width={40}
+                                                height={40}
+                                                className="rounded-full outline outline-2 outline-[#E93B66]"
+                                                onError={(e) => {
+                                                    e.currentTarget.src = '/default-avatar.png';
+                                                }}
+                                            />
+                                            <div className="flex-1">
+                                                <div className="text-white font-bold text-sm">{user.username}</div>
+                                                <div className="text-gray-300 text-xs">点击查看详细信息</div>
+                                            </div>
                                         </div>
-                                        <button
-                                            onClick={handleLogout}
-                                            className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-3 py-1 rounded text-xs transition-colors duration-200"
-                                        >
-                                            登出
-                                        </button>
-                                    </div>
-                                    {/* 用户权限标志 */}
-                                    <div className="mt-3 pt-3 border-t border-gray-600">
-                                        <div className="flex flex-wrap gap-1">
-                                            {permissions.isAdmin && (
-                                                <span className="px-2 py-1 text-gray-800 bg-white text-xl border-b-4 border-red-600">
-                                                    管理员
-                                                </span>
-                                            )}
-                                            {permissions.isMapSelector && (
-                                                <span className="px-2 py-1 text-gray-800 bg-white text-xl border-b-4 border-blue-600">
-                                                    选图组
-                                                </span>
-                                            )}
-                                            {permissions.isReplayTester && (
-                                                <span className="px-2 py-1 text-gray-800 bg-white text-xl border-b-4 border-green-600">
-                                                    测图组
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    {/* 版本号显示 */}
-                                    <div className="mt-3 pt-3 border-t border-gray-600 text-center">
-                                        <div className="text-xs text-gray-400">
-                                            版本: {versionInfo}
-                                        </div>
-                                    </div>
+                                    </Link>
                                 </div>
                             )}
                         </div>
