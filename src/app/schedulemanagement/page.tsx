@@ -27,6 +27,17 @@ interface MatchRoom {
     created_at: string;
 }
 
+interface PlayerMatchup {
+    id: number;
+    player1_osuId: number;
+    player1_username: string;
+    player2_osuId: number;
+    player2_username: string;
+    status: 'available' | 'in_progress' | 'completed';
+    created_by: number;
+    created_at: string;
+}
+
 const audiowide = localFont({
     src: "../components/font/Audiowide-Regular.ttf",
     display: "auto",
@@ -206,6 +217,154 @@ function CreateRoomModal({ onClose, onCreate }: {
     );
 }
 
+// 创建对战模态框组件
+function CreateMatchupModal({ onClose, onCreate }: {
+    onClose: () => void;
+    onCreate: (matchupData: {
+        player1_osuId: number;
+        player1_username: string;
+        player2_osuId: number;
+        player2_username: string;
+    }) => void;
+}) {
+    const [formData, setFormData] = useState({
+        player1_osuId: '',
+        player1_username: '',
+        player2_osuId: '',
+        player2_username: ''
+    });
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            await onCreate({
+                player1_osuId: parseInt(formData.player1_osuId),
+                player1_username: formData.player1_username,
+                player2_osuId: parseInt(formData.player2_osuId),
+                player2_username: formData.player2_username
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-white">创建玩家对战</h3>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-white"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* 玩家1 */}
+                    <div className="bg-[#1a1a1a] p-4 rounded-lg">
+                        <h4 className="text-white font-medium mb-3 flex items-center">
+                            <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                            玩家 1
+                        </h4>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">
+                                    osu! ID *
+                                </label>
+                                <input
+                                    type="number"
+                                    value={formData.player1_osuId}
+                                    onChange={(e) => setFormData({ ...formData, player1_osuId: e.target.value })}
+                                    className="w-full px-3 py-2 bg-[#2d2d2d] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">
+                                    用户名 *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.player1_username}
+                                    onChange={(e) => setFormData({ ...formData, player1_username: e.target.value })}
+                                    className="w-full px-3 py-2 bg-[#2d2d2d] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
+                                    required
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* VS */}
+                    <div className="flex justify-center py-2">
+                        <span className="text-[#E93B66] font-bold text-xl">VS</span>
+                    </div>
+
+                    {/* 玩家2 */}
+                    <div className="bg-[#1a1a1a] p-4 rounded-lg">
+                        <h4 className="text-white font-medium mb-3 flex items-center">
+                            <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                            玩家 2
+                        </h4>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">
+                                    osu! ID *
+                                </label>
+                                <input
+                                    type="number"
+                                    value={formData.player2_osuId}
+                                    onChange={(e) => setFormData({ ...formData, player2_osuId: e.target.value })}
+                                    className="w-full px-3 py-2 bg-[#2d2d2d] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">
+                                    用户名 *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.player2_username}
+                                    onChange={(e) => setFormData({ ...formData, player2_username: e.target.value })}
+                                    className="w-full px-3 py-2 bg-[#2d2d2d] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
+                                    required
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end space-x-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+                        >
+                            取消
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="px-4 py-2 bg-[#E93B66] text-white rounded-md hover:bg-[#d32f5a] disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                        >
+                            {loading && (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b border-white mr-2"></div>
+                            )}
+                            创建对战
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
 export default function AdminPage() {
     const router = useRouter();
     usePageTitle('/schedulemanagement');
@@ -228,6 +387,12 @@ export default function AdminPage() {
     const [roomsLoading, setRoomsLoading] = useState(false);
     const [showCreateRoomModal, setShowCreateRoomModal] = useState(false);
     const [deletingRoomId, setDeletingRoomId] = useState<number | null>(null);
+
+    // 对战管理状态
+    const [matchups, setMatchups] = useState<PlayerMatchup[]>([]);
+    const [matchupsLoading, setMatchupsLoading] = useState(false);
+    const [showCreateMatchupModal, setShowCreateMatchupModal] = useState(false);
+    const [deletingMatchupId, setDeletingMatchupId] = useState<number | null>(null);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -268,6 +433,13 @@ export default function AdminPage() {
     useEffect(() => {
         if (activeTab === 'rooms' && permissions.isAdmin) {
             fetchRooms();
+        }
+    }, [activeTab, permissions.isAdmin]);
+
+    // 当切换到对战管理选项卡时获取对战列表
+    useEffect(() => {
+        if (activeTab === 'matchups' && permissions.isAdmin) {
+            fetchMatchups();
         }
     }, [activeTab, permissions.isAdmin]);
 
@@ -437,6 +609,83 @@ export default function AdminPage() {
         }
     };
 
+    // 对战管理函数
+    const fetchMatchups = async () => {
+        setMatchupsLoading(true);
+        try {
+            const response = await fetch('/api/player-matchups');
+            const data = await response.json();
+            if (data.success) {
+                setMatchups(data.matchups);
+            } else {
+                console.error('Failed to fetch matchups:', data.error);
+            }
+        } catch (error) {
+            console.error('Error fetching matchups:', error);
+        } finally {
+            setMatchupsLoading(false);
+        }
+    };
+
+    const handleDeleteMatchup = async (matchupId: number) => {
+        if (!confirm('确定要删除这个玩家对战吗？此操作不可撤销。')) {
+            return;
+        }
+
+        setDeletingMatchupId(matchupId);
+        try {
+            const response = await fetch('/api/player-matchups/delete', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: matchupId }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setMatchups(matchups.filter(matchup => matchup.id !== matchupId));
+                alert('对战删除成功');
+            } else {
+                alert('删除失败: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error deleting matchup:', error);
+            alert('删除对战时发生错误');
+        } finally {
+            setDeletingMatchupId(null);
+        }
+    };
+
+    const handleCreateMatchup = async (matchupData: {
+        player1_osuId: number;
+        player1_username: string;
+        player2_osuId: number;
+        player2_username: string;
+    }) => {
+        try {
+            const response = await fetch('/api/player-matchups', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(matchupData),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setShowCreateMatchupModal(false);
+                fetchMatchups(); // 重新获取对战列表
+                alert('对战创建成功');
+            } else {
+                alert('创建失败: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error creating matchup:', error);
+            alert('创建对战时发生错误');
+        }
+    };
+
     const handleLogout = async () => {
         try {
             await fetch('/api/auth/logout', { method: 'POST' });
@@ -590,6 +839,19 @@ export default function AdminPage() {
                             比赛房间管理
                         </button>
 
+                        <button
+                            onClick={() => setActiveTab('matchups')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'matchups'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
+                            </svg>
+                            对战列表管理
+                        </button>
+
                         {(permissions?.isStreamer || permissions?.isReferee) && (
                             <button
                                 onClick={() => setActiveTab('streaming')}
@@ -628,11 +890,12 @@ export default function AdminPage() {
                 <header className="bg-[#2d2d2d] border-b border-[#404040] px-6 py-4">
                     <h1 className="text-2xl font-bold text-white">
                         {activeTab === 'overview' && '管理概览'}
+                        {activeTab === 'matchups' && '对战列表管理'}
+                        {activeTab === 'rooms' && '比赛房间管理'}
                         {activeTab === 'matches' && '比赛管理'}
+                        {activeTab === 'streaming' && '直播裁判'}
                         {activeTab === 'users' && '用户管理'}
                         {activeTab === 'settings' && '系统设置'}
-                        {activeTab === 'rooms' && '比赛房间管理'}
-                        {activeTab === 'streaming' && '直播裁判'}
                     </h1>
                 </header>
 
@@ -911,8 +1174,8 @@ export default function AdminPage() {
                                                     <div className="flex justify-between">
                                                         <span>状态:</span>
                                                         <span className={`px-2 py-1 rounded text-xs ${room.status === 'open' ? 'bg-green-600 text-white' :
-                                                                room.status === 'in_progress' ? 'bg-yellow-600 text-white' :
-                                                                    'bg-red-600 text-white'
+                                                            room.status === 'in_progress' ? 'bg-yellow-600 text-white' :
+                                                                'bg-red-600 text-white'
                                                             }`}>
                                                             {room.status === 'open' ? '开放' :
                                                                 room.status === 'in_progress' ? '进行中' : '关闭'}
@@ -925,6 +1188,105 @@ export default function AdminPage() {
                                                         <p className="text-xs text-gray-500 line-clamp-2">{room.description}</p>
                                                     </div>
                                                 )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'matchups' && (
+                        <div className="space-y-6">
+                            <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
+                                <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+                                    <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
+                                    对战列表管理
+                                </h3>
+
+                                {matchupsLoading ? (
+                                    <div className="flex justify-center items-center py-8">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E93B66]"></div>
+                                        <span className="ml-2 text-gray-400">加载中...</span>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        {/* 添加对战卡片 */}
+                                        <div
+                                            onClick={() => setShowCreateMatchupModal(true)}
+                                            className="bg-[#2d2d2d] border-2 border-dashed border-gray-600 hover:border-[#E93B66] rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors duration-200 min-h-[200px]"
+                                        >
+                                            <svg className="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                            <span className="text-gray-400 text-center">添加新对战</span>
+                                        </div>
+
+                                        {/* 对战卡片列表 */}
+                                        {matchups.map((matchup) => (
+                                            <div key={matchup.id} className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-4 hover:border-[#E93B66] transition-colors duration-200">
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <h4 className="text-white font-semibold text-sm truncate flex-1 mr-2">
+                                                        对战 #{matchup.id}
+                                                    </h4>
+                                                    <button
+                                                        onClick={() => handleDeleteMatchup(matchup.id)}
+                                                        disabled={deletingMatchupId === matchup.id}
+                                                        className="text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed p-1"
+                                                        title="删除对战"
+                                                    >
+                                                        {deletingMatchupId === matchup.id ? (
+                                                            <div className="animate-spin rounded-full h-4 w-4 border-b border-red-400"></div>
+                                                        ) : (
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        )}
+                                                    </button>
+                                                </div>
+
+                                                <div className="space-y-3">
+                                                    {/* 玩家1 */}
+                                                    <div className="bg-[#1a1a1a] p-3 rounded">
+                                                        <div className="flex items-center mb-1">
+                                                            <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                                                            <span className="text-xs text-gray-400">玩家 1</span>
+                                                        </div>
+                                                        <p className="text-white text-sm font-medium">{matchup.player1_username}</p>
+                                                        <p className="text-xs text-gray-500">ID: {matchup.player1_osuId}</p>
+                                                    </div>
+
+                                                    {/* VS */}
+                                                    <div className="flex justify-center">
+                                                        <span className="text-[#E93B66] font-bold text-lg">VS</span>
+                                                    </div>
+
+                                                    {/* 玩家2 */}
+                                                    <div className="bg-[#1a1a1a] p-3 rounded">
+                                                        <div className="flex items-center mb-1">
+                                                            <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                                                            <span className="text-xs text-gray-400">玩家 2</span>
+                                                        </div>
+                                                        <p className="text-white text-sm font-medium">{matchup.player2_username}</p>
+                                                        <p className="text-xs text-gray-500">ID: {matchup.player2_osuId}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="mt-3 pt-3 border-t border-gray-600">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-xs text-gray-400">状态:</span>
+                                                        <span className={`px-2 py-1 rounded text-xs ${matchup.status === 'available' ? 'bg-green-600 text-white' :
+                                                            matchup.status === 'in_progress' ? 'bg-yellow-600 text-white' :
+                                                                'bg-blue-600 text-white'
+                                                            }`}>
+                                                            {matchup.status === 'available' ? '可参加' :
+                                                                matchup.status === 'in_progress' ? '进行中' : '已完成'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="mt-2 text-xs text-gray-500">
+                                                        创建时间: {new Date(matchup.created_at).toLocaleString('zh-CN')}
+                                                    </div>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -954,6 +1316,14 @@ export default function AdminPage() {
                 <CreateRoomModal
                     onClose={() => setShowCreateRoomModal(false)}
                     onCreate={handleCreateRoom}
+                />
+            )}
+
+            {/* 创建对战模态框 */}
+            {showCreateMatchupModal && (
+                <CreateMatchupModal
+                    onClose={() => setShowCreateMatchupModal(false)}
+                    onCreate={handleCreateMatchup}
                 />
             )}
         </div>

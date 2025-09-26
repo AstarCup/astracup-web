@@ -382,12 +382,12 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
     return (
         <div className={`${audiowide.className} space-y-4`}>
             {/* 标题和创建按钮 */}
-            <div className="flex justify-between items-center">
+            {/* <div className="flex justify-between items-center">
                 <h3 className="text-xl font-bold text-white">比赛预约</h3>
-            </div>
+            </div> */}
 
             {/* 管理员创建房间表单 */}
-            {isAdmin && (
+            {/* {isAdmin && (
                 <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-400">管理员功能</span>
                     <div className="flex gap-2">
@@ -405,10 +405,10 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                         </button>
                     </div>
                 </div>
-            )}
+            )} */}
 
             {/* 创建房间模态框 */}
-            {showRoomModal && isAdmin && (
+            {/* {showRoomModal && isAdmin && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-gray-800 p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-4">
@@ -534,10 +534,10 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                         </form>
                     </div>
                 </div>
-            )}
+            )} */}
 
             {/* 创建对战模态框 */}
-            {showMatchupModal && isAdmin && (
+            {/* {showMatchupModal && isAdmin && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-gray-800 p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-4">
@@ -621,7 +621,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                         </form>
                     </div>
                 </div>
-            )}
+            )} */}
 
             {/* 比赛预约列表 */}
             <div className="space-y-4">
@@ -733,7 +733,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
             </div>
 
             {/* 玩家对战列表（管理员可见） */}
-            {isAdmin && matchups.length > 0 && (
+            {/* {isAdmin && matchups.length > 0 && (
                 <div className="border border-gray-600 p-4 ">
                     <h4 className="text-lg font-bold text-white mb-4">
                         玩家对战列表
@@ -786,7 +786,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                         ))}
                     </div>
                 </div>
-            )}
+            )} */}
         </div>
     );
 }
