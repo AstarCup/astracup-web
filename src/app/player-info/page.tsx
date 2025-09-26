@@ -203,14 +203,45 @@ export default function PlayerInfoPage() {
     }
 
     return (
-        <div className={`${audiowide.className} min-h-screen from-gray-900 via-gray-800 to-gray-900`}>
+        <div className="flex flex-col items-center justify-center relative min-h-screen">
+            {/* 背景 */}
+            <div className="fixed inset-0 z-0">
+                <Image
+                    src="/background-parallax.svg"
+                    alt="background"
+                    fill
+                    className="object-cover opacity-20"
+                />
+            </div>
+
+            {/* Header */}
+            <div className="relative z-10 w-full max-w-6xl mx-auto px-4 py-4 mb-6">
+                <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66] rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                            <Link href="/" className="flex items-center space-x-2">
+                                <Image src='/AstaraCup.svg' alt='AstataCup' width={120} height={48} />
+                            </Link>
+                            <h1 className={`${audiowide.className} text-2xl font-bold text-white`}>个人中心</h1>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                            <Link
+                                href="/admin"
+                                className="text-gray-300 hover:text-[#3BE9D8] transition-colors duration-200 px-3 py-2 rounded hover:bg-[#3BE9D8]/20"
+                            >
+                                管理员面板
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
 
             {/* Main Content */}
-            <div className="max-w-4xl mx-auto px-4 py-8">
-                <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-8 shadow-2xl">
+            <div className="relative z-10 w-full max-w-6xl mx-auto px-4 pb-8">
+                <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66] rounded-lg p-8 shadow-2xl">
                     {/* 用户基本信息 */}
-                    <div className="flex items-center mb-8 pb-6 border-b border-gray-600">
+                    <div className="flex items-center mb-8 pb-6 border-b-4 border-[#E93B66]">
 
                         <img
                             src={user.avatar_url}
@@ -243,21 +274,21 @@ export default function PlayerInfoPage() {
 
                     {/* 权限信息 */}
                     {(permissions.isMapSelector || permissions.isReplayTester || permissions.isAdmin) && (
-                        <div className="mb-8">
+                        <div className="mb-8 pb-6 border-b-4 border-[#E93B66]">
                             <h3 className="text-xl font-bold text-white mb-4">权限组</h3>
                             <div className="flex flex-wrap gap-3">
                                 {permissions.isAdmin && (
-                                    <span className="px-4 py-2 bg-red-600 text-white text-lg rounded-lg">
+                                    <span className="px-4 py-2 bg-[#E93B66] text-white text-lg rounded-lg border-b-4 border-[#3BE9D8]">
                                         管理员
                                     </span>
                                 )}
                                 {permissions.isMapSelector && (
-                                    <span className="px-4 py-2 bg-blue-600 text-white text-lg rounded-lg">
+                                    <span className="px-4 py-2 bg-[#E93B66] text-white text-lg rounded-lg border-b-4 border-[#3BE9D8]">
                                         选图组
                                     </span>
                                 )}
                                 {permissions.isReplayTester && (
-                                    <span className="px-4 py-2 bg-green-600 text-white text-lg rounded-lg">
+                                    <span className="px-4 py-2 bg-[#E93B66] text-white text-lg rounded-lg border-b-4 border-[#3BE9D8]">
                                         测图组
                                     </span>
                                 )}
@@ -266,7 +297,7 @@ export default function PlayerInfoPage() {
                     )}
 
                     {/* 注册信息 */}
-                    <div className="mb-8">
+                    <div className="mb-8 pb-6 border-b-4 border-[#E93B66]">
                         <h3 className="text-xl font-bold text-white mb-4">注册信息</h3>
                         {registration ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-300">
@@ -302,10 +333,10 @@ export default function PlayerInfoPage() {
                     </div>
 
                     {/* 下一轮对战信息 */}
-                    <div className="mb-8">
+                    <div className="mb-8 pb-6 border-b-4 border-[#E93B66]">
                         <h3 className="text-xl font-bold text-white mb-4">下一轮对战</h3>
                         {nextMatch ? (
-                            <div className="bg-gray-700/50 rounded-lg p-6">
+                            <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66] rounded-lg p-6">
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
                                         <h4 className="text-lg font-bold text-white">对战对手</h4>
@@ -362,7 +393,7 @@ export default function PlayerInfoPage() {
                                 {nextMatch.status === 'available' && (
                                     <div className="mt-4 text-center">
                                         <button
-                                            className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-2 rounded-lg transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-2 rounded-lg transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed border-b-4 border-[#3BE9D8] hover:border-[#E93B66]"
                                             onClick={handleRequestMatch}
                                             disabled={requestingMatch}
                                         >
@@ -379,7 +410,7 @@ export default function PlayerInfoPage() {
                                             {availableRooms.map((room) => (
                                                 <div
                                                     key={room.id}
-                                                    className="bg-gray-700/50 backdrop-blur-sm rounded-lg p-4 border border-gray-600 hover:border-[#E93B66] transition-colors cursor-pointer"
+                                                    className="bg-[#3D3D3D80] backdrop-blur-sm rounded-lg p-4 border-b-4 border-[#E93B66] hover:border-[#3BE9D8] transition-colors cursor-pointer"
                                                     onClick={() => handleRoomSelect(room.id)}
                                                 >
                                                     <div className="flex justify-between items-start mb-3">
@@ -417,7 +448,7 @@ export default function PlayerInfoPage() {
                                                     </div>
 
                                                     <button
-                                                        className="w-full mt-3 bg-[#E93B66] hover:bg-[#3BE9D8] text-white py-2 rounded-lg transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        className="w-full mt-3 bg-[#E93B66] hover:bg-[#3BE9D8] text-white py-2 rounded-lg transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed border-b-4 border-[#3BE9D8] hover:border-[#E93B66]"
                                                         disabled={requestingMatch || room.status !== 'open'}
                                                     >
                                                         {requestingMatch ? '预约中...' : '选择此房间'}
@@ -428,7 +459,7 @@ export default function PlayerInfoPage() {
                                         <div className="mt-4 text-center">
                                             <button
                                                 onClick={() => setShowRoomSelection(false)}
-                                                className="bg-gray-600 hover:bg-gray-500 text-white px-6 py-2 rounded-lg transition-colors"
+                                                className="bg-[#3D3D3D] hover:bg-[#E93B66] text-white px-6 py-2 rounded-lg transition-colors border-b-4 border-[#E93B66] hover:border-[#3BE9D8]"
                                                 disabled={requestingMatch}
                                             >
                                                 取消选择
@@ -439,22 +470,22 @@ export default function PlayerInfoPage() {
 
                             </div>
                         ) : (
-                            <div className="bg-gray-700/50 rounded-lg p-6 text-center">
+                            <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66] rounded-lg p-6 text-center">
                                 <p className="text-gray-400">暂无下一轮对战安排</p>
                             </div>
                         )}
                     </div>
 
                     {/* 比赛预约系统 */}
-                    <div className="border-t border-gray-600 pt-8">
+                    <div className="border-b-4 border-[#E93B66] pt-8">
                         <MatchScheduleSystem userOsuId={user.osuId} isAdmin={false} />
                     </div>
 
                     {/* 登出按钮 */}
-                    <div className="border-t border-gray-600 pt-8 mt-8">
+                    <div className="border-b-4 border-[#E93B66] pt-8 mt-8">
                         <button
                             onClick={handleLogout}
-                            className="w-full bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3 rounded-lg transition-colors duration-200 font-medium text-lg"
+                            className="w-full bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3 rounded-lg transition-colors duration-200 font-medium text-lg border-b-4 border-[#3BE9D8] hover:border-[#E93B66]"
                         >
                             登出
                         </button>
