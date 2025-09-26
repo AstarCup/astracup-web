@@ -1291,7 +1291,7 @@ export default function AdminPage() {
                             对战列表管理
                         </button>
 
-                        {(permissions?.isStreamer || permissions?.isReferee) && (
+                        {(permissions?.isStreamer || permissions?.isReferee || permissions?.isAdmin) && (
                             <button
                                 onClick={() => setActiveTab('streaming')}
                                 className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'streaming'
@@ -1803,7 +1803,7 @@ export default function AdminPage() {
                             <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
                                 <h3 className="text-xl font-bold text-white mb-4 flex items-center">
                                     <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
-                                    直播裁判房间确认
+                                    {permissions.isAdmin ? 'Staff房间分配管理' : '直播裁判房间确认'}
                                 </h3>
 
                                 {staffAssignmentsLoading ? (
@@ -1811,7 +1811,121 @@ export default function AdminPage() {
                                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E93B66]"></div>
                                         <span className="ml-2 text-gray-400">加载中...</span>
                                     </div>
+                                ) : permissions.isAdmin ? (
+                                    // 管理员视图 - 显示所有申请，允许确认/拒绝
+                                    <div className="space-y-4">
+                                        {/* 添加分配按钮 */}
+                                        <div className="flex justify-end">
+                                            <button
+                                                onClick={() => setShowCreateStaffAssignmentModal(true)}
+                                                className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3 transition-colors duration-200 font-medium flex items-center"
+                                            >
+                                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                </svg>
+                                                手动分配Staff到房间
+                                            </button>
+                                        </div>
+
+                                        {/* Staff分配列表 */}
+                                        {staffAssignments.length > 0 ? (
+                                            <div className="space-y-3">
+                                                {staffAssignments.map((assignment) => (
+                                                    <div key={assignment.id} className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-4 hover:border-[#E93B66] transition-colors duration-200">
+                                                        <div className="flex justify-between items-start mb-3">
+                                                            <div className="flex items-center space-x-3">
+                                                                <img
+                                                                    src={assignment.staff_avatar_url || '/unknow.svg'}
+                                                                    alt={`${assignment.staff_username} avatar`}
+                                                                    className="w-10 h-10 rounded-full"
+                                                                    onError={(e) => {
+                                                                        e.currentTarget.src = '/unknow.svg';
+                                                                    }}
+                                                                />
+                                                                <div>
+                                                                    <h4 className="text-white font-semibold">{assignment.staff_username}</h4>
+                                                                    <p className="text-sm text-gray-400">ID: {assignment.staff_osuId}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center space-x-2">
+                                                                <span className={`px-2 py-1 rounded text-xs font-medium ${assignment.staff_role === 'referee' ? 'bg-blue-600 text-white' :
+                                                                        assignment.staff_role === 'streamer' ? 'bg-purple-600 text-white' :
+                                                                            'bg-green-600 text-white'
+                                                                    }`}>
+                                                                    {assignment.staff_role === 'referee' ? '裁判' :
+                                                                        assignment.staff_role === 'streamer' ? '直播' : '解说'}
+                                                                </span>
+                                                                <button
+                                                                    onClick={() => handleDeleteStaffAssignment(assignment.id)}
+                                                                    disabled={deletingAssignmentId === assignment.id}
+                                                                    className="text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed p-1"
+                                                                    title="删除分配"
+                                                                >
+                                                                    {deletingAssignmentId === assignment.id ? (
+                                                                        <div className="animate-spin rounded-full h-4 w-4 border-b border-red-400"></div>
+                                                                    ) : (
+                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                        </svg>
+                                                                    )}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex justify-between items-center">
+                                                            <div className="text-sm text-gray-400">
+                                                                <span>房间: </span>
+                                                                <span className="text-white">
+                                                                    {assignment.room?.room_name || `房间 ${assignment.room_id}`}
+                                                                    (轮次 {assignment.room?.round_number}, 场次 {assignment.room?.match_number})
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center space-x-3">
+                                                                <span className="text-xs text-gray-400">状态:</span>
+                                                                <div className="flex items-center space-x-2">
+                                                                    {assignment.status === 'confirmed' ? (
+                                                                        <span className="px-2 py-1 bg-green-600 text-white text-xs rounded">已确认</span>
+                                                                    ) : assignment.status === 'declined' ? (
+                                                                        <span className="px-2 py-1 bg-red-600 text-white text-xs rounded">已拒绝</span>
+                                                                    ) : (
+                                                                        <div className="flex space-x-2">
+                                                                            <button
+                                                                                onClick={() => handleUpdateStaffAssignmentStatus(assignment.id, 'confirmed')}
+                                                                                className="px-3 py-1 bg-green-600 hover:bg-green-500 text-white text-xs rounded transition-colors"
+                                                                            >
+                                                                                确认
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => handleUpdateStaffAssignmentStatus(assignment.id, 'declined')}
+                                                                                className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white text-xs rounded transition-colors"
+                                                                            >
+                                                                                拒绝
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="mt-2 text-xs text-gray-500">
+                                                            分配时间: {new Date(assignment.assigned_at).toLocaleString('zh-CN')}
+                                                            {assignment.responded_at && (
+                                                                <span className="ml-4">
+                                                                    响应时间: {new Date(assignment.responded_at).toLocaleString('zh-CN')}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-8 text-gray-400">
+                                                <p>暂无Staff房间分配</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 ) : (
+                                    // Staff视图 - 显示自己的申请和可参加的房间
                                     <div className="space-y-6">
                                         {/* 已参加的房间 */}
                                         {staffAssignments.filter(a => a.staff_osuId === user.osuId && a.status === 'confirmed').length > 0 && (
@@ -1830,8 +1944,8 @@ export default function AdminPage() {
                                                                         {assignment.room?.room_name || `房间 ${assignment.room_id}`}
                                                                     </h5>
                                                                     <span className={`px-2 py-1 rounded text-xs font-medium ${assignment.staff_role === 'referee' ? 'bg-blue-600 text-white' :
-                                                                            assignment.staff_role === 'streamer' ? 'bg-purple-600 text-white' :
-                                                                                'bg-green-600 text-white'
+                                                                        assignment.staff_role === 'streamer' ? 'bg-purple-600 text-white' :
+                                                                            'bg-green-600 text-white'
                                                                         }`}>
                                                                         {assignment.staff_role === 'referee' ? '裁判' :
                                                                             assignment.staff_role === 'streamer' ? '直播' : '解说'}
@@ -1872,8 +1986,8 @@ export default function AdminPage() {
                                                                         {assignment.room?.room_name || `房间 ${assignment.room_id}`}
                                                                     </h5>
                                                                     <span className={`px-2 py-1 rounded text-xs font-medium ${assignment.staff_role === 'referee' ? 'bg-blue-600 text-white' :
-                                                                            assignment.staff_role === 'streamer' ? 'bg-purple-600 text-white' :
-                                                                                'bg-green-600 text-white'
+                                                                        assignment.staff_role === 'streamer' ? 'bg-purple-600 text-white' :
+                                                                            'bg-green-600 text-white'
                                                                         }`}>
                                                                         {assignment.staff_role === 'referee' ? '裁判' :
                                                                             assignment.staff_role === 'streamer' ? '直播' : '解说'}
@@ -1914,8 +2028,8 @@ export default function AdminPage() {
                                                                         {room.room_name}
                                                                     </h5>
                                                                     <span className={`px-2 py-1 rounded text-xs ${room.status === 'open' ? 'bg-green-600 text-white' :
-                                                                            room.status === 'in_progress' ? 'bg-yellow-600 text-white' :
-                                                                                'bg-red-600 text-white'
+                                                                        room.status === 'in_progress' ? 'bg-yellow-600 text-white' :
+                                                                            'bg-red-600 text-white'
                                                                         }`}>
                                                                         {room.status === 'open' ? '开放' :
                                                                             room.status === 'in_progress' ? '进行中' : '关闭'}
