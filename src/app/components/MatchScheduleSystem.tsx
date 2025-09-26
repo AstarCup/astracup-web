@@ -526,7 +526,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
 
             {/* 创建对战表单 */}
             {showMatchupForm && isAdmin && (
-                <div className="bg-gray-800 p-4 ">
+                <div className="p-4 ">
                     <h4 className="text-lg font-bold text-white mb-4">创建玩家对战</h4>
                     <form onSubmit={handleCreateMatchup} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
@@ -629,7 +629,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
             {/* 比赛预约列表 */}
             <div className="space-y-4">
                 {schedules.length === 0 ? (
-                    <div className="text-center py-8 text-">
+                    <div className="text-center py-8 text-white">
                         暂无比赛预约
                     </div>
                 ) : (

@@ -921,8 +921,8 @@ const mysqlStorage = {
                        r1.avatar_url as player1_avatar_url, r2.avatar_url as player2_avatar_url
                 FROM match_schedules ms
                 JOIN match_rooms mr ON ms.room_id = mr.id
-                LEFT JOIN registrations r1 ON ms.player1_osuId = r1.osuId
-                LEFT JOIN registrations r2 ON ms.player2_osuId = r2.osuId
+                LEFT JOIN registrations r1 ON ms.player1_osuId = r1.osuId COLLATE utf8mb4_unicode_ci
+                LEFT JOIN registrations r2 ON ms.player2_osuId = r2.osuId COLLATE utf8mb4_unicode_ci
                 WHERE ms.player1_osuId = ? OR ms.player2_osuId = ?
                 ORDER BY mr.match_date DESC, mr.match_time DESC
             `, [osuId, osuId]);
@@ -1018,8 +1018,8 @@ const mysqlStorage = {
                        r1.avatar_url as player1_avatar_url, r2.avatar_url as player2_avatar_url
                 FROM match_schedules ms
                 JOIN match_rooms mr ON ms.room_id = mr.id
-                LEFT JOIN registrations r1 ON ms.player1_osuId = r1.osuId
-                LEFT JOIN registrations r2 ON ms.player2_osuId = r2.osuId
+                LEFT JOIN registrations r1 ON ms.player1_osuId = r1.osuId COLLATE utf8mb4_unicode_ci
+                LEFT JOIN registrations r2 ON ms.player2_osuId = r2.osuId COLLATE utf8mb4_unicode_ci
                 ORDER BY mr.match_date DESC, mr.match_time DESC
             `);
 
