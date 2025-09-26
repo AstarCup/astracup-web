@@ -330,7 +330,7 @@ export default function PlayerInfoPage() {
                                                     {availableRooms.map((room) => (
                                                         <div
                                                             key={room.id}
-                                                            className="bg-[#3D3D3D80] backdrop-blur-sm p-4 border-b-4 border-[#E93B66] hover:border-[#3BE9D8] transition-colors cursor-pointer"
+                                                            className="bg-[#2d2d2d] backdrop-blur-sm p-4 border border-[#E93B66] hover:border-[#3BE9D8] transition-colors cursor-pointer"
                                                             onClick={() => handleRoomSelect(room.id)}
                                                         >
                                                             <div className="flex justify-between items-start mb-3">
@@ -411,31 +411,79 @@ export default function PlayerInfoPage() {
                                 <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
                                 快速导航
                             </h4>
-                            <div className="space-y-3">
-                                <Link
-                                    href="/mapool"
-                                    className="block w-full bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-4 py-3  transition-colors duration-200 text-center font-medium border-b-2 border-[#E93B66] hover:border-[#3BE9D8]"
-                                >
-                                    图池信息
-                                </Link>
-                                <Link
-                                    href="/guide"
-                                    className="block w-full bg-blue-600 hover:bg-blue-500 text-white px-4 py-3  transition-colors duration-200 text-center font-medium border-b-2 border-blue-600 hover:border-blue-500"
-                                >
-                                    比赛规则
-                                </Link>
-                                <Link
-                                    href="/schedule"
-                                    className="block w-full bg-green-600 hover:bg-green-500 text-white px-4 py-3  transition-colors duration-200 text-center font-medium border-b-2 border-green-600 hover:border-green-500"
-                                >
-                                    比赛时间表
-                                </Link>
-                                <Link
-                                    href="/news"
-                                    className="block w-full bg-purple-600 hover:bg-purple-500 text-white px-4 py-3  transition-colors duration-200 text-center font-medium border-b-2 border-purple-600 hover:border-purple-500"
-                                >
-                                    最新消息
-                                </Link>
+                            <div className="space-y-2">
+                                <div className="border-b-4 border-[#E93B66] bg-white hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-16 flex">
+                                    <Link
+                                        href="/mapool"
+                                        className="flex-1 p-3 text-left text-sm font-medium flex items-center gap-2 relative text-gray-800"
+                                    >
+                                        <Image
+                                            src="/icons/mapool-sm.svg"
+                                            alt="图池信息"
+                                            width={32}
+                                            height={32}
+                                            className="flex-shrink-0 filter brightness-0 saturate-0 opacity-80 transition-all duration-200"
+                                        />
+                                        <div className="flex flex-col justify-center">
+                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight">MAPPOOL</div>
+                                            <div className="text-lg font-bold leading-tight">图池信息</div>
+                                        </div>
+                                    </Link>
+                                </div>
+                                <div className="border-b-4 border-[#E93B66] bg-white hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-16 flex">
+                                    <Link
+                                        href="/guide"
+                                        className="flex-1 p-3 text-left text-sm font-medium flex items-center gap-2 relative text-gray-800"
+                                    >
+                                        <Image
+                                            src="/icons/guide-sm.svg"
+                                            alt="比赛规则"
+                                            width={32}
+                                            height={32}
+                                            className="flex-shrink-0 filter brightness-0 saturate-0 opacity-80 transition-all duration-200"
+                                        />
+                                        <div className="flex flex-col justify-center">
+                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight">GUIDE</div>
+                                            <div className="text-lg font-bold leading-tight">比赛规则</div>
+                                        </div>
+                                    </Link>
+                                </div>
+                                <div className="border-b-4 border-[#E93B66] bg-white hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-16 flex">
+                                    <Link
+                                        href="/schedule"
+                                        className="flex-1 p-3 text-left text-sm font-medium flex items-center gap-2 relative text-gray-800"
+                                    >
+                                        <Image
+                                            src="/icons/table-fill.svg"
+                                            alt="比赛时间表"
+                                            width={32}
+                                            height={32}
+                                            className="flex-shrink-0 filter brightness-0 saturate-0 opacity-80 transition-all duration-200"
+                                        />
+                                        <div className="flex flex-col justify-center">
+                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight">SCHEDULE</div>
+                                            <div className="text-lg font-bold leading-tight">比赛时间表</div>
+                                        </div>
+                                    </Link>
+                                </div>
+                                <div className="border-b-4 border-[#E93B66] bg-white hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-16 flex">
+                                    <Link
+                                        href="/news"
+                                        className="flex-1 p-3 text-left text-sm font-medium flex items-center gap-2 relative text-gray-800"
+                                    >
+                                        <Image
+                                            src="/icons/news.svg"
+                                            alt="最新消息"
+                                            width={32}
+                                            height={32}
+                                            className="flex-shrink-0 filter brightness-0 saturate-0 opacity-80 transition-all duration-200"
+                                        />
+                                        <div className="flex flex-col justify-center">
+                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight">NEWS</div>
+                                            <div className="text-lg font-bold leading-tight">最新消息</div>
+                                        </div>
+                                    </Link>
+                                </div>
                             </div>
                         </div>
 
