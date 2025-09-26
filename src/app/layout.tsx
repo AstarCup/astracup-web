@@ -22,7 +22,6 @@ const pageTitles: Record<string, string> = {
   '/register': '注册登录',
   '/map-selection': '地图选择',
   '/replay-collection': '回放收集',
-  '/debug': '调试页面',
 };
 
 // 生成页面metadata的工具函数 - 在页面组件中使用

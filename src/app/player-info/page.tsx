@@ -447,7 +447,7 @@ export default function PlayerInfoPage() {
 
                     {/* 比赛预约系统 */}
                     <div className="border-t border-gray-600 pt-8">
-                        <MatchScheduleSystem userOsuId={user.osuId} isAdmin={permissions.isAdmin} />
+                        <MatchScheduleSystem userOsuId={user.osuId} isAdmin={false} />
                     </div>
 
                     {/* 登出按钮 */}
