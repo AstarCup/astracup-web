@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isUserRegistered } from '@/lib/registrations';
+import { isUserRegistered } from '@/lib/mysql-registrations';
 
 export async function GET(request: NextRequest) {
     try {

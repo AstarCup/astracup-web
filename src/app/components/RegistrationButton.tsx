@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { UserSession } from "@/lib/session";
+import { UserSession } from "@/lib/permissions";
 import RegistrationModal from "./RegistrationModal";
 import { TournamentRegistration } from "@/lib/mysql-registrations";
 

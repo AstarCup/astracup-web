@@ -1,6 +1,6 @@
 "use client";
 
-import { UserSession } from "@/lib/session";
+import { UserSession } from "@/lib/permissions";
 import { useState, useEffect } from "react";
 import localFont from "next/font/local";
 

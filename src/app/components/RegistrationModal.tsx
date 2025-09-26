@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { UserSession } from "@/lib/session";
+import { UserSession } from "@/lib/permissions";
 import { TournamentRegistration } from "@/lib/mysql-registrations";
 import { count } from "console";
 

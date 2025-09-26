@@ -1,5 +1,15 @@
 import { get } from '@vercel/edge-config';
 
+// 会话管理接口定义
+export interface UserSession {
+    osuId: string;
+    username: string;
+    avatar_url: string;
+    pp: number;
+    global_rank: number | null;
+    country_rank: number | null;
+    country: string;
+}
 
 export interface UserPermissions {
     isMapSelector: boolean;

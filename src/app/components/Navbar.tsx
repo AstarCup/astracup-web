@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import localFont from "next/font/local";
-import { UserSession } from '@/lib/session';
+import { UserSession } from '@/lib/permissions';
 import { getUserPermissions } from '@/lib/permissions';
 import MessageNotification from './MessageNotification';
 

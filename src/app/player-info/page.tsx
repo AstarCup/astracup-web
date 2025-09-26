@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { UserSession } from '@/lib/session';
+import { UserSession } from '@/lib/permissions';
 import { UserPermissions } from '@/lib/permissions';
 import { getUserPermissions } from '@/lib/permissions';
 import MatchScheduleSystem from '@/app/components/MatchScheduleSystem';
