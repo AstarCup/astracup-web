@@ -25,6 +25,17 @@ interface MatchRoom {
     description: string;
     created_by: number;
     created_at: string;
+    schedules?: {
+        id: number;
+        player1_osuId: number;
+        player1_username: string;
+        player1_avatar_url: string;
+        player2_osuId: number;
+        player2_username: string;
+        player2_avatar_url: string;
+        status: 'scheduled' | 'in_progress' | 'completed';
+        scheduled_time: string;
+    }[];
 }
 
 interface PlayerMatchup {
@@ -72,6 +83,11 @@ interface StaffRoomAssignment {
         match_number: number;
     };
     staff_avatar_url?: string;
+    match_info?: {
+        player1_username: string;
+        player2_username: string;
+        scheduled_time: string;
+    };
 }
 
 const audiowide = localFont({
@@ -406,273 +422,6 @@ function CreateMatchupModal({ onClose, onCreate, approvedPlayers }: {
     );
 }
 
-function CreateStaffAssignmentModal({ onClose, onCreate, rooms }: {
-    onClose: () => void;
-    onCreate: (assignmentData: {
-        room_id: number;
-        staff_osuId: string;
-        staff_username: string;
-        staff_role: 'referee' | 'streamer' | 'commentator';
-    }) => void;
-    rooms: MatchRoom[];
-}) {
-    const [formData, setFormData] = useState({
-        room_id: '',
-        staff_osuId: '',
-        staff_username: '',
-        staff_role: 'referee' as 'referee' | 'streamer' | 'commentator'
-    });
-    const [loading, setLoading] = useState(false);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!formData.room_id || !formData.staff_osuId || !formData.staff_username) {
-            alert('请填写所有必要信息');
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-            await onCreate({
-                room_id: parseInt(formData.room_id),
-                staff_osuId: formData.staff_osuId,
-                staff_username: formData.staff_username,
-                staff_role: formData.staff_role
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-white">分配Staff到房间</h3>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-white"
-                    >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            选择房间
-                        </label>
-                        <select
-                            value={formData.room_id}
-                            onChange={(e) => setFormData({ ...formData, room_id: e.target.value })}
-                            className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:outline-none focus:border-[#E93B66]"
-                            required
-                        >
-                            <option value="">请选择房间</option>
-                            {rooms.map((room) => (
-                                <option key={room.id} value={room.id}>
-                                    {room.room_name} (轮次 {room.round_number}, 场次 {room.match_number})
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Staff osu! ID
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.staff_osuId}
-                            onChange={(e) => setFormData({ ...formData, staff_osuId: e.target.value })}
-                            className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:outline-none focus:border-[#E93B66]"
-                            placeholder="输入Staff的osu! ID"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Staff 用户名
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.staff_username}
-                            onChange={(e) => setFormData({ ...formData, staff_username: e.target.value })}
-                            className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:outline-none focus:border-[#E93B66]"
-                            placeholder="输入Staff的用户名"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Staff 角色
-                        </label>
-                        <select
-                            value={formData.staff_role}
-                            onChange={(e) => setFormData({ ...formData, staff_role: e.target.value as 'referee' | 'streamer' | 'commentator' })}
-                            className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:outline-none focus:border-[#E93B66]"
-                            required
-                        >
-                            <option value="referee">裁判 (Referee)</option>
-                            <option value="streamer">直播 (Streamer)</option>
-                            <option value="commentator">解说 (Commentator)</option>
-                        </select>
-                    </div>
-
-                    <div className="flex justify-end space-x-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
-                        >
-                            取消
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="px-4 py-2 bg-[#E93B66] text-white rounded-md hover:bg-[#d32f5a] disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                        >
-                            {loading && (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b border-white mr-2"></div>
-                            )}
-                            分配Staff
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-}
-
-function JoinRoomModal({ onClose, onJoin, room, user }: {
-    onClose: () => void;
-    onJoin: (roomId: number, role: 'referee' | 'streamer' | 'commentator') => void;
-    room: MatchRoom;
-    user: UserSession;
-}) {
-    const [selectedRole, setSelectedRole] = useState<'referee' | 'streamer' | 'commentator'>('referee');
-    const [loading, setLoading] = useState(false);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-
-        try {
-            await onJoin(room.id, selectedRole);
-            onClose();
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-6 w-full max-w-md">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-white">参加房间</h3>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-white"
-                    >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                <div className="mb-6">
-                    <div className="bg-[#1a1a1a] p-4 rounded-lg">
-                        <h4 className="text-white font-medium mb-2">{room.room_name}</h4>
-                        <div className="text-sm text-gray-400 space-y-1">
-                            <div>轮次: {room.round_number} | 场次: {room.match_number}</div>
-                            <div>日期: {room.match_date} | 时间: {room.match_time}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-3">
-                            选择您的角色 *
-                        </label>
-                        <div className="space-y-2">
-                            <label className="flex items-center p-3 bg-[#1a1a1a] rounded-lg cursor-pointer hover:bg-[#2a2a2a] transition-colors">
-                                <input
-                                    type="radio"
-                                    name="role"
-                                    value="referee"
-                                    checked={selectedRole === 'referee'}
-                                    onChange={(e) => setSelectedRole(e.target.value as 'referee')}
-                                    className="mr-3 text-[#E93B66] focus:ring-[#E93B66]"
-                                />
-                                <div>
-                                    <div className="text-white font-medium">裁判 (Referee)</div>
-                                    <div className="text-sm text-gray-400">负责比赛裁决和规则执行</div>
-                                </div>
-                            </label>
-
-                            <label className="flex items-center p-3 bg-[#1a1a1a] rounded-lg cursor-pointer hover:bg-[#2a2a2a] transition-colors">
-                                <input
-                                    type="radio"
-                                    name="role"
-                                    value="streamer"
-                                    checked={selectedRole === 'streamer'}
-                                    onChange={(e) => setSelectedRole(e.target.value as 'streamer')}
-                                    className="mr-3 text-[#E93B66] focus:ring-[#E93B66]"
-                                />
-                                <div>
-                                    <div className="text-white font-medium">直播 (Streamer)</div>
-                                    <div className="text-sm text-gray-400">负责比赛直播和技术支持</div>
-                                </div>
-                            </label>
-
-                            <label className="flex items-center p-3 bg-[#1a1a1a] rounded-lg cursor-pointer hover:bg-[#2a2a2a] transition-colors">
-                                <input
-                                    type="radio"
-                                    name="role"
-                                    value="commentator"
-                                    checked={selectedRole === 'commentator'}
-                                    onChange={(e) => setSelectedRole(e.target.value as 'commentator')}
-                                    className="mr-3 text-[#E93B66] focus:ring-[#E93B66]"
-                                />
-                                <div>
-                                    <div className="text-white font-medium">解说 (Commentator)</div>
-                                    <div className="text-sm text-gray-400">负责比赛解说和观众互动</div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div className="flex justify-end space-x-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
-                        >
-                            取消
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="px-4 py-2 bg-[#E93B66] text-white rounded-md hover:bg-[#d32f5a] disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                        >
-                            {loading && (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b border-white mr-2"></div>
-                            )}
-                            申请参加
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-}
-
 export default function AdminPage() {
     const router = useRouter();
     usePageTitle('/schedulemanagement');
@@ -708,9 +457,6 @@ export default function AdminPage() {
     // Staff房间分配状态
     const [staffAssignments, setStaffAssignments] = useState<StaffRoomAssignment[]>([]);
     const [staffAssignmentsLoading, setStaffAssignmentsLoading] = useState(false);
-    const [showCreateStaffAssignmentModal, setShowCreateStaffAssignmentModal] = useState(false);
-    const [deletingAssignmentId, setDeletingAssignmentId] = useState<number | null>(null);
-    const [selectedRoomForJoin, setSelectedRoomForJoin] = useState<MatchRoom | null>(null);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -866,7 +612,7 @@ export default function AdminPage() {
     const fetchRooms = async () => {
         setRoomsLoading(true);
         try {
-            const response = await fetch('/api/match-rooms');
+            const response = await fetch('/api/match-rooms?withSchedules=true');
             const data = await response.json();
             if (data.success) {
                 setRooms(data.rooms);
@@ -1048,123 +794,7 @@ export default function AdminPage() {
         }
     };
 
-    // 创建staff房间分配
-    const handleCreateStaffAssignment = async (assignmentData: {
-        room_id: number;
-        staff_osuId: string;
-        staff_username: string;
-        staff_role: 'referee' | 'streamer' | 'commentator';
-    }) => {
-        if (!user) return;
-
-        try {
-            const response = await fetch('/api/staff-room-assignments', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    ...assignmentData,
-                    assigned_by: user.osuId
-                }),
-            });
-
-            if (response.ok) {
-                fetchStaffAssignments(); // 重新获取列表
-                setShowCreateStaffAssignmentModal(false);
-            } else {
-                alert('创建staff分配失败');
-            }
-        } catch (error) {
-            console.error('Error creating staff assignment:', error);
-            alert('创建staff分配时发生错误');
-        }
-    };
-
-    // 更新staff分配状态
-    const handleUpdateStaffAssignmentStatus = async (assignmentId: number, status: StaffRoomAssignment['status']) => {
-        if (!user) return;
-
-        try {
-            const response = await fetch(`/api/staff-room-assignments/${assignmentId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    status,
-                    staff_osuId: user.osuId // 用于权限验证
-                }),
-            });
-
-            if (response.ok) {
-                fetchStaffAssignments(); // 重新获取列表
-            } else {
-                alert('更新分配状态失败');
-            }
-        } catch (error) {
-            console.error('Error updating staff assignment status:', error);
-            alert('更新分配状态时发生错误');
-        }
-    };
-
-    // 删除staff分配
-    const handleDeleteStaffAssignment = async (assignmentId: number) => {
-        if (!confirm('确定要删除这个staff分配吗？此操作不可撤销。')) {
-            return;
-        }
-
-        try {
-            setDeletingAssignmentId(assignmentId);
-            const response = await fetch(`/api/staff-room-assignments/${assignmentId}`, {
-                method: 'DELETE',
-            });
-
-            if (response.ok) {
-                fetchStaffAssignments(); // 重新获取列表
-            } else {
-                alert('删除staff分配失败');
-            }
-        } catch (error) {
-            console.error('Error deleting staff assignment:', error);
-            alert('删除staff分配时发生错误');
-        } finally {
-            setDeletingAssignmentId(null);
-        }
-    };
-
     // Staff加入房间
-    const handleJoinRoom = async (roomId: number, role: 'referee' | 'streamer' | 'commentator') => {
-        if (!user) return;
-
-        try {
-            const response = await fetch('/api/staff-room-assignments', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    room_id: roomId,
-                    staff_osuId: user.osuId,
-                    staff_username: user.username,
-                    staff_role: role,
-                    assigned_by: user.osuId // Staff自己申请，所以assigned_by也是自己
-                }),
-            });
-
-            if (response.ok) {
-                fetchStaffAssignments(); // 重新获取列表
-                alert('申请成功！请等待管理员确认。');
-            } else {
-                const errorData = await response.json();
-                alert(`申请失败: ${errorData.error || '未知错误'}`);
-            }
-        } catch (error) {
-            console.error('Error joining room:', error);
-            alert('申请参加房间时发生错误');
-        }
-    };
-
     const handleLogout = async () => {
         try {
             await fetch('/api/auth/logout', { method: 'POST' });
@@ -1662,6 +1292,54 @@ export default function AdminPage() {
                                                     </div>
                                                 </div>
 
+                                                {/* 显示比赛预约信息 */}
+                                                {room.schedules && room.schedules.length > 0 && (
+                                                    <div className="mt-3 pt-3 border-t border-gray-600">
+                                                        <div className="text-xs text-gray-400 mb-2">比赛预约:</div>
+                                                        <div className="space-y-2">
+                                                            {room.schedules.map((schedule) => (
+                                                                <div key={schedule.id} className="bg-[#1a1a1a] rounded p-2">
+                                                                    <div className="flex items-center justify-between mb-2">
+                                                                        <div className="flex items-center space-x-2">
+                                                                            <Image
+                                                                                src={schedule.player1_avatar_url || '/default-avatar.png'}
+                                                                                alt={schedule.player1_username}
+                                                                                width={20}
+                                                                                height={20}
+                                                                                className="rounded-full"
+                                                                            />
+                                                                            <span className="text-white text-xs">{schedule.player1_username}</span>
+                                                                        </div>
+                                                                        <span className="text-gray-400 text-xs">vs</span>
+                                                                        <div className="flex items-center space-x-2">
+                                                                            <Image
+                                                                                src={schedule.player2_avatar_url || '/default-avatar.png'}
+                                                                                alt={schedule.player2_username}
+                                                                                width={20}
+                                                                                height={20}
+                                                                                className="rounded-full"
+                                                                            />
+                                                                            <span className="text-white text-xs">{schedule.player2_username}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center">
+                                                                        <span className="text-xs text-gray-400">
+                                                                            {new Date(schedule.scheduled_time).toLocaleString('zh-CN')}
+                                                                        </span>
+                                                                        <span className={`px-2 py-1 rounded text-xs ${schedule.status === 'scheduled' ? 'bg-blue-600 text-white' :
+                                                                                schedule.status === 'in_progress' ? 'bg-yellow-600 text-white' :
+                                                                                    'bg-green-600 text-white'
+                                                                            }`}>
+                                                                            {schedule.status === 'scheduled' ? '已预约' :
+                                                                                schedule.status === 'in_progress' ? '进行中' : '已完成'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                                 {room.description && (
                                                     <div className="mt-3 pt-3 border-t border-gray-600">
                                                         <p className="text-xs text-gray-500 line-clamp-2">{room.description}</p>
@@ -1812,19 +1490,18 @@ export default function AdminPage() {
                                         <span className="ml-2 text-gray-400">加载中...</span>
                                     </div>
                                 ) : permissions.isAdmin ? (
-                                    // 管理员视图 - 显示所有申请，允许确认/拒绝
+                                    // 管理员视图 - 显示所有已确认的staff分配（从比赛预约表获取）
                                     <div className="space-y-4">
-                                        {/* 添加分配按钮 */}
-                                        <div className="flex justify-end">
-                                            <button
-                                                onClick={() => setShowCreateStaffAssignmentModal(true)}
-                                                className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3 transition-colors duration-200 font-medium flex items-center"
-                                            >
-                                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                        {/* 提示信息 */}
+                                        <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+                                            <div className="flex items-center">
+                                                <svg className="w-5 h-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
-                                                手动分配Staff到房间
-                                            </button>
+                                                <span className="text-blue-400 text-sm">
+                                                    Staff分配信息现在从比赛预约表自动获取，不支持手动分配
+                                                </span>
+                                            </div>
                                         </div>
 
                                         {/* Staff分配列表 */}
@@ -1849,26 +1526,12 @@ export default function AdminPage() {
                                                             </div>
                                                             <div className="flex items-center space-x-2">
                                                                 <span className={`px-2 py-1 rounded text-xs font-medium ${assignment.staff_role === 'referee' ? 'bg-blue-600 text-white' :
-                                                                        assignment.staff_role === 'streamer' ? 'bg-purple-600 text-white' :
-                                                                            'bg-green-600 text-white'
+                                                                    assignment.staff_role === 'streamer' ? 'bg-purple-600 text-white' :
+                                                                        'bg-green-600 text-white'
                                                                     }`}>
                                                                     {assignment.staff_role === 'referee' ? '裁判' :
                                                                         assignment.staff_role === 'streamer' ? '直播' : '解说'}
                                                                 </span>
-                                                                <button
-                                                                    onClick={() => handleDeleteStaffAssignment(assignment.id)}
-                                                                    disabled={deletingAssignmentId === assignment.id}
-                                                                    className="text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed p-1"
-                                                                    title="删除分配"
-                                                                >
-                                                                    {deletingAssignmentId === assignment.id ? (
-                                                                        <div className="animate-spin rounded-full h-4 w-4 border-b border-red-400"></div>
-                                                                    ) : (
-                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                        </svg>
-                                                                    )}
-                                                                </button>
                                                             </div>
                                                         </div>
 
@@ -1882,30 +1545,22 @@ export default function AdminPage() {
                                                             </div>
                                                             <div className="flex items-center space-x-3">
                                                                 <span className="text-xs text-gray-400">状态:</span>
-                                                                <div className="flex items-center space-x-2">
-                                                                    {assignment.status === 'confirmed' ? (
-                                                                        <span className="px-2 py-1 bg-green-600 text-white text-xs rounded">已确认</span>
-                                                                    ) : assignment.status === 'declined' ? (
-                                                                        <span className="px-2 py-1 bg-red-600 text-white text-xs rounded">已拒绝</span>
-                                                                    ) : (
-                                                                        <div className="flex space-x-2">
-                                                                            <button
-                                                                                onClick={() => handleUpdateStaffAssignmentStatus(assignment.id, 'confirmed')}
-                                                                                className="px-3 py-1 bg-green-600 hover:bg-green-500 text-white text-xs rounded transition-colors"
-                                                                            >
-                                                                                确认
-                                                                            </button>
-                                                                            <button
-                                                                                onClick={() => handleUpdateStaffAssignmentStatus(assignment.id, 'declined')}
-                                                                                className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white text-xs rounded transition-colors"
-                                                                            >
-                                                                                拒绝
-                                                                            </button>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
+                                                                <span className="px-2 py-1 bg-green-600 text-white text-xs rounded">已确认</span>
                                                             </div>
                                                         </div>
+
+                                                        {/* 显示比赛信息 */}
+                                                        {assignment.match_info && (
+                                                            <div className="mt-2 text-sm text-gray-400">
+                                                                <span>比赛: </span>
+                                                                <span className="text-white">
+                                                                    {assignment.match_info.player1_username} vs {assignment.match_info.player2_username}
+                                                                </span>
+                                                                <span className="ml-4 text-xs">
+                                                                    {new Date(assignment.match_info.scheduled_time).toLocaleString('zh-CN')}
+                                                                </span>
+                                                            </div>
+                                                        )}
 
                                                         <div className="mt-2 text-xs text-gray-500">
                                                             分配时间: {new Date(assignment.assigned_at).toLocaleString('zh-CN')}
@@ -1954,14 +1609,6 @@ export default function AdminPage() {
                                                                 <div className="text-xs text-gray-400 space-y-1">
                                                                     <div>轮次: {assignment.room?.round_number} | 场次: {assignment.room?.match_number}</div>
                                                                     <div>日期: {assignment.room?.match_date} | 时间: {assignment.room?.match_time}</div>
-                                                                </div>
-                                                                <div className="mt-3 flex justify-end">
-                                                                    <button
-                                                                        onClick={() => handleUpdateStaffAssignmentStatus(assignment.id, 'declined')}
-                                                                        className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white text-xs rounded transition-colors"
-                                                                    >
-                                                                        取消参加
-                                                                    </button>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -2016,11 +1663,6 @@ export default function AdminPage() {
                                                 {rooms
                                                     .filter(room => room.status !== 'closed')
                                                     .map((room) => {
-                                                        const myAssignment = staffAssignments.find(a =>
-                                                            a.staff_osuId === user.osuId && a.room_id === room.id
-                                                        );
-                                                        const isParticipating = myAssignment && myAssignment.status !== 'declined';
-
                                                         return (
                                                             <div key={room.id} className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-4 hover:border-[#E93B66] transition-colors duration-200">
                                                                 <div className="flex justify-between items-start mb-3">
@@ -2049,21 +1691,9 @@ export default function AdminPage() {
                                                                 )}
 
                                                                 <div className="flex justify-end">
-                                                                    {isParticipating ? (
-                                                                        <div className="text-xs text-green-400 flex items-center">
-                                                                            <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                                            </svg>
-                                                                            已申请
-                                                                        </div>
-                                                                    ) : (
-                                                                        <button
-                                                                            onClick={() => setSelectedRoomForJoin(room)}
-                                                                            className="px-4 py-2 bg-[#E93B66] hover:bg-[#3BE9D8] text-white text-sm rounded transition-colors"
-                                                                        >
-                                                                            参加房间
-                                                                        </button>
-                                                                    )}
+                                                                    <div className="text-xs text-gray-400">
+                                                                        Staff分配从比赛预约自动获取
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         );
@@ -2098,25 +1728,6 @@ export default function AdminPage() {
                     onClose={() => setShowCreateMatchupModal(false)}
                     onCreate={handleCreateMatchup}
                     approvedPlayers={approvedPlayers}
-                />
-            )}
-
-            {/* 创建Staff分配模态框 */}
-            {showCreateStaffAssignmentModal && (
-                <CreateStaffAssignmentModal
-                    onClose={() => setShowCreateStaffAssignmentModal(false)}
-                    onCreate={handleCreateStaffAssignment}
-                    rooms={rooms}
-                />
-            )}
-
-            {/* 加入房间模态框 */}
-            {selectedRoomForJoin && user && (
-                <JoinRoomModal
-                    onClose={() => setSelectedRoomForJoin(null)}
-                    onJoin={handleJoinRoom}
-                    room={selectedRoomForJoin}
-                    user={user}
                 />
             )}
         </div>

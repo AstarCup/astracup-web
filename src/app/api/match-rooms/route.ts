@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { getMatchRooms, createMatchRoom } from '@/lib/mysql-registrations';
+import { getMatchRooms, createMatchRoom, getMatchRoomsWithSchedules } from '@/lib/mysql-registrations';
 import { getUserPermissions } from '@/lib/permissions';
 
 export async function GET(request: NextRequest) {
@@ -34,8 +34,18 @@ export async function GET(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // 获取所有可用的比赛房间
-        const rooms = await getMatchRooms();
+        // 检查是否请求包含比赛预约信息的房间数据
+        const { searchParams } = new URL(request.url);
+        const withSchedules = searchParams.get('withSchedules') === 'true';
+
+        let rooms;
+        if (withSchedules) {
+            // 获取包含比赛预约信息的房间数据
+            rooms = await getMatchRoomsWithSchedules();
+        } else {
+            // 获取基本房间信息
+            rooms = await getMatchRooms();
+        }
 
         return NextResponse.json({
             success: true,
