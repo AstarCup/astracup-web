@@ -248,11 +248,11 @@ export default function PlayerInfoPage() {
             {/* Main Content */}
             {/* 玩家cover */}
             {user.cover && (
-                <div className="mb-6 relative w-full">
+                <div className="mb-6 relative w-full max-w-4xl">
                     <img
                         src={user.cover.custom_url || user.cover.url}
                         alt={`${user.username}的封面`}
-                        className="w-full h-30 object-cover"
+                        className="w-full h-80 object-cover"
                         onError={(e) => {
                             // 如果cover加载失败，隐藏这个元素
                             e.currentTarget.style.display = 'none';
@@ -261,7 +261,7 @@ export default function PlayerInfoPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
                 </div>
             )}
-            <div className="relative z-10 w-full max-w-4xl mx-auto px-4 pb-8 mt-6">
+            <div className="relative z-10 w-full max-w-4xl mx-auto px-4 pb-8 -mt-6">
                 <div className="space-y-6">
                     <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-8 shadow-2xl">
                         {/* 用户基本信息 */}
