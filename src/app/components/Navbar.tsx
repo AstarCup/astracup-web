@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 import localFont from "next/font/local";
 import { UserSession } from '@/lib/session';
 import { getUserPermissions } from '@/lib/permissions';
+import MessageNotification from './MessageNotification';
 
 const audiowide = localFont({
     src: "./font/Audiowide-Regular.ttf",
@@ -331,7 +332,7 @@ export default function Navbar() {
                                     </li>
                                 ))}
                             </ul>
-
+                            <MessageNotification />
                             {/* User Profile */}
                             <div className="hidden xl:flex items-center ml-4">
                                 {user ? (

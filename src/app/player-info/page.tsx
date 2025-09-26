@@ -204,40 +204,20 @@ export default function PlayerInfoPage() {
 
     return (
         <div className={`${audiowide.className} min-h-screen from-gray-900 via-gray-800 to-gray-900`}>
-            {/* Header */}
-            <div className="bg-black/20 backdrop-blur-sm border-b border-gray-700">
-                <div className="max-w-7xl mx-auto px-4 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            <Link href="/" className="flex items-center space-x-2">
-                                <Image src='/AstaraCup.svg' alt='AstataCup' width={150} height={60} />
-                            </Link>
-                            <h1 className="text-2xl font-bold text-white">玩家信息</h1>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            <MessageNotification />
-                            <Link
-                                href="/"
-                                className="text-gray-300 hover:text-white transition-colors duration-200"
-                            >
-                                返回首页
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
 
             {/* Main Content */}
             <div className="max-w-4xl mx-auto px-4 py-8">
                 <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-8 shadow-2xl">
                     {/* 用户基本信息 */}
                     <div className="flex items-center mb-8 pb-6 border-b border-gray-600">
+
                         <img
                             src={user.avatar_url}
                             alt={user.username}
                             width={80}
                             height={80}
-                            className="rounded-full outline outline-2 outline-[#E93B66] mr-6"
+                            className="rounded-full outline outline-2 outline-[#E93B66] ml-4 mr-6"
                             onError={(e) => {
                                 e.currentTarget.src = '/default-avatar.png';
                             }}
