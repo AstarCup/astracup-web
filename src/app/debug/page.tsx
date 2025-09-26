@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { TournamentRegistration } from "@/lib/edge-registrations";
 import { usePageTitle } from '@/lib/usePageTitle';
 import { getUserPermissions } from '@/lib/permissions';
 

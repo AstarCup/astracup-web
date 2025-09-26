@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { UserSession } from "@/lib/session";
-import { TournamentRegistration } from "@/lib/edge-registrations";
+import { TournamentRegistration } from "@/lib/mysql-registrations";
 import { count } from "console";
 
 interface RegistrationModalProps {

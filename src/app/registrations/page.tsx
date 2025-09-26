@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { TournamentRegistration } from "@/lib/edge-registrations";
+import { TournamentRegistration } from "@/lib/mysql-registrations";
 import localFont from "next/font/local";
 import { usePageTitle } from '@/lib/usePageTitle';
 

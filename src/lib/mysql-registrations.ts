@@ -303,6 +303,23 @@ export interface Registration {
     approvedAt: string | null;
 }
 
+// 锦标赛报名接口
+export interface TournamentRegistration {
+    osuId: string;
+    username: string;
+    avatar_url: string;
+    pp: number;
+    global_rank: number | null;
+    country_rank: number | null;
+    country: string;
+    teamName: string; // 队伍名，初始为空
+    seedPosition: number | null; // seed位，初始为null
+    agreedToTerms: boolean; // 是否同意条款
+    approved: boolean; // 审核状态
+    approvedAt: string | null; // 审核通过时间
+    registeredAt: string;
+}
+
 // MySQL 存储实现
 const mysqlStorage = {
     // 读取所有注册信息
@@ -404,6 +421,72 @@ const mysqlStorage = {
             await connection.rollback();
             console.error('Error writing to database:', error);
             throw error;
+        } finally {
+            connection.release();
+        }
+    },
+
+    // 添加锦标赛报名
+    addTournamentRegistration: async (registration: Omit<TournamentRegistration, 'registeredAt'>): Promise<boolean> => {
+        const connection = await getPool().getConnection();
+
+        try {
+            await connection.beginTransaction();
+
+            // 检查是否已存在
+            const [existingRows] = await connection.execute(
+                'SELECT osuId FROM registrations WHERE osuId = ?',
+                [registration.osuId]
+            );
+
+            const existing = (existingRows as any[]).length > 0;
+
+            if (existing) {
+                // 更新现有用户信息
+                await connection.execute(`
+                    UPDATE registrations SET
+                        username = ?, timezone = ?, availability = ?,
+                        avatar_url = ?, pp = ?, global_rank = ?, country_rank = ?, country = ?, updatedAt = CURRENT_TIMESTAMP
+                    WHERE osuId = ?
+                `, [
+                    registration.username,
+                    '', // timezone - TournamentRegistration 没有这个字段
+                    '', // availability - TournamentRegistration 没有这个字段
+                    registration.avatar_url,
+                    registration.pp,
+                    registration.global_rank,
+                    registration.country_rank,
+                    registration.country || '',
+                    registration.osuId
+                ]);
+            } else {
+                // 插入新用户
+                await connection.execute(`
+                    INSERT INTO registrations
+                    (osuId, username, inGameName, timezone, availability, registeredAt, avatar_url, pp, global_rank, country_rank, country)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `, [
+                    registration.osuId,
+                    registration.username,
+                    registration.username, // inGameName 默认为 username
+                    '', // timezone
+                    '', // availability
+                    new Date(),
+                    registration.avatar_url,
+                    registration.pp,
+                    registration.global_rank,
+                    registration.country_rank,
+                    registration.country || ''
+                ]);
+            }
+
+            await connection.commit();
+            return true;
+
+        } catch (error) {
+            await connection.rollback();
+            console.error('Error writing tournament registration to database:', error);
+            return false;
         } finally {
             connection.release();
         }
@@ -1013,6 +1096,7 @@ const mysqlStorage = {
 export const getRegistrations = mysqlStorage.getRegistrations;
 export const isUserRegistered = mysqlStorage.isUserRegistered;
 export const addRegistration = mysqlStorage.addRegistration;
+export const addTournamentRegistration = mysqlStorage.addTournamentRegistration;
 export const getUserRegistration = mysqlStorage.getUserRegistration;
 export const getRegistrationCount = mysqlStorage.getRegistrationCount;
 export const deleteRegistration = mysqlStorage.deleteRegistration;
@@ -1044,3 +1128,56 @@ export const updateMessageStatus = mysqlStorage.updateMessageStatus;
 
 // 默认导出初始化函数
 export default initDatabase;
+
+// 获取锦标赛报名数据（转换 Registration 为 TournamentRegistration）
+export const getTournamentRegistrations = async (): Promise<TournamentRegistration[]> => {
+    const registrations = await getRegistrations();
+    return registrations.map(reg => ({
+        osuId: reg.osuId,
+        username: reg.username,
+        avatar_url: reg.avatar_url,
+        pp: reg.pp,
+        global_rank: reg.global_rank,
+        country_rank: reg.country_rank,
+        country: reg.country,
+        teamName: '', // 默认空值
+        seedPosition: null, // 默认 null
+        agreedToTerms: true, // 假设已同意条款
+        approved: reg.approved,
+        approvedAt: reg.approvedAt,
+        registeredAt: reg.registeredAt
+    }));
+};
+
+// 检查用户是否已报名（锦标赛报名）
+export const isTournamentUserRegistered = async (osuId: string): Promise<boolean> => {
+    try {
+        const registrations = await getTournamentRegistrations();
+        return registrations.some(reg => reg.osuId === osuId);
+    } catch (error) {
+        console.error('Error checking tournament user registration:', error);
+        return false;
+    }
+};
+
+// 获取用户报名信息（锦标赛报名）
+export const getTournamentUserRegistration = async (osuId: string): Promise<TournamentRegistration | null> => {
+    try {
+        const registrations = await getTournamentRegistrations();
+        return registrations.find(reg => reg.osuId === osuId) || null;
+    } catch (error) {
+        console.error('Error getting tournament user registration:', error);
+        return null;
+    }
+};
+
+// 获取报名总数（锦标赛报名）
+export const getTournamentRegistrationCount = async (): Promise<number> => {
+    try {
+        const registrations = await getTournamentRegistrations();
+        return registrations.length;
+    } catch (error) {
+        console.error('Error getting tournament registration count:', error);
+        return 0;
+    }
+};

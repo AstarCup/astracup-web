@@ -10,7 +10,7 @@ import MessageNotification from '@/app/components/MessageNotification';
 import localFont from "next/font/local";
 import Link from 'next/link';
 import Image from 'next/image';
-import { TournamentRegistration } from '@/lib/edge-registrations';
+import { TournamentRegistration } from '@/lib/mysql-registrations';
 
 const audiowide = localFont({
     src: "../components/font/Audiowide-Regular.ttf",

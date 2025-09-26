@@ -41,6 +41,15 @@ interface NextMatch {
         avatar_url: string | null;
     };
     status: 'available' | 'scheduled' | 'completed';
+    scheduledRoom?: {
+        id: number;
+        room_name: string;
+        round_number: number;
+        match_date: string;
+        match_time: string;
+        match_number: number;
+        max_participants: number;
+    };
 }
 
 export default function PlayerInfoPage() {
@@ -154,6 +163,24 @@ export default function PlayerInfoPage() {
             setRequestingMatch(true);
             setShowRoomSelection(false);
 
+            // 立即显示预约中的状态和房间信息
+            const selectedRoom = availableRooms.find(room => room.id === roomId);
+            if (selectedRoom) {
+                setNextMatch(prev => prev ? {
+                    ...prev,
+                    status: 'scheduled',
+                    scheduledRoom: {
+                        id: selectedRoom.id,
+                        room_name: selectedRoom.room_name,
+                        round_number: selectedRoom.round_number,
+                        match_date: selectedRoom.match_date,
+                        match_time: selectedRoom.match_time,
+                        match_number: selectedRoom.match_number,
+                        max_participants: selectedRoom.max_participants
+                    }
+                } : null);
+            }
+
             const response = await fetch('/api/request-match', {
                 method: 'POST',
                 headers: {
@@ -177,10 +204,22 @@ export default function PlayerInfoPage() {
                 }
             } else {
                 alert(`预约失败: ${data.error}`);
+                // 预约失败时恢复原始状态
+                setNextMatch(prev => prev ? {
+                    ...prev,
+                    status: 'available',
+                    scheduledRoom: undefined
+                } : null);
             }
         } catch (error) {
             console.error('Error requesting match:', error);
             alert('预约对战时发生错误');
+            // 发生错误时恢复原始状态
+            setNextMatch(prev => prev ? {
+                ...prev,
+                status: 'available',
+                scheduledRoom: undefined
+            } : null);
         } finally {
             setRequestingMatch(false);
         }
@@ -213,42 +252,44 @@ export default function PlayerInfoPage() {
                     <div className="lg:col-span-2 space-y-6">
                         <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-8 shadow-2xl">
                             {/* 用户基本信息 */}
-                            <div className="flex items-center mb-8 pb-6">
+                            <div className="mb-8 pb-6">
+                                {/* 头像和用户名在一行 */}
+                                <div className="flex items-center mb-4">
+                                    <img
+                                        src={user.avatar_url}
+                                        alt={user.username}
+                                        width={80}
+                                        height={80}
+                                        className="rounded-full outline outline-2 outline-[#E93B66] mr-6"
+                                        onError={(e) => {
+                                            e.currentTarget.src = '/default-avatar.png';
+                                        }}
+                                    />
+                                    <h2 className="text-3xl font-bold text-white">{user.username}</h2>
+                                </div>
 
-                                <img
-                                    src={user.avatar_url}
-                                    alt={user.username}
-                                    width={80}
-                                    height={80}
-                                    className="rounded-full outline outline-2 outline-[#E93B66] ml-4 mr-6"
-                                    onError={(e) => {
-                                        e.currentTarget.src = '/default-avatar.png';
-                                    }}
-                                />
-                                <div className="flex-1">
-                                    <h2 className="text-3xl font-bold text-white mb-2">{user.username}</h2>
-                                    <div className="grid grid-cols-2 gap-3 text-sm">
-                                        <div className="flex flex-col items-start">
-                                            <span className="text-gray-100 mb-1">PP</span>
-                                            <span className={`${audiowide.className} text-3xl text-white`}>{user.pp?.toFixed(0) || 'N/A'}</span>
-                                        </div>
-                                        <div className="flex flex-col items-start">
-                                            <span className="text-gray-100 mb-1">全球排名</span>
-                                            <span className={`${audiowide.className} text-3xl text-white`}>{formatRank(user.global_rank)}</span>
-                                        </div>
-                                        {user.country_rank && (
-                                            <div className="col-span-2 flex flex-col items-start mt-2">
-                                                <span className="text-gray-100 mb-1">地区排名</span>
-                                                <span className={`${audiowide.className} text-3xl text-white`}>{formatRank(user.country_rank)} <a className="text-xl">{user.country}</a></span>
-                                            </div>
-                                        )}
-                                        {!user.country_rank && (
-                                            <div className="col-span-2 flex flex-col items-start mt-2">
-                                                <span className="text-gray-100 mb-1">地区</span>
-                                                <span className={`${audiowide.className} text-3xl text-white`}>{user.country || '未知'}</span>
-                                            </div>
-                                        )}
+                                {/* 下方flex信息显示 */}
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div className="flex flex-col items-start">
+                                        <span className="text-gray-100 mb-1">PP</span>
+                                        <span className={`${audiowide.className} text-3xl text-white`}>{user.pp?.toFixed(0) || 'N/A'}</span>
                                     </div>
+                                    <div className="flex flex-col items-start">
+                                        <span className="text-gray-100 mb-1">全球排名</span>
+                                        <span className={`${audiowide.className} text-3xl text-white`}>{formatRank(user.global_rank)}</span>
+                                    </div>
+                                    {user.country_rank && (
+                                        <div className="col-span-2 flex flex-col items-start mt-2">
+                                            <span className="text-gray-100 mb-1">地区排名</span>
+                                            <span className={`${audiowide.className} text-3xl text-white`}>{formatRank(user.country_rank)} <a className="text-xl">{user.country}</a></span>
+                                        </div>
+                                    )}
+                                    {!user.country_rank && (
+                                        <div className="col-span-2 flex flex-col items-start mt-2">
+                                            <span className="text-gray-100 mb-1">地区</span>
+                                            <span className={`${audiowide.className} text-3xl text-white`}>{user.country || '未知'}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -261,14 +302,29 @@ export default function PlayerInfoPage() {
                                             <div>
                                                 <h4 className="text-lg font-bold text-white">对战对手</h4>
                                                 <p className="text-gray-300">与 {nextMatch.opponent.username} 的比赛</p>
+                                                {(nextMatch.status === 'scheduled' || requestingMatch) && nextMatch.scheduledRoom && (
+                                                    <div className="mt-2 p-3 bg-[#2d2d2d] border border-[#3BE9D8]">
+                                                        <p className="text-[#3BE9D8] font-medium text-sm">
+                                                            {requestingMatch ? '房间预约中...' : '房间已预约'}
+                                                        </p>
+                                                        <div className="text-xs text-gray-300 mt-1 space-y-1">
+                                                            <p>房间: {nextMatch.scheduledRoom.room_name}</p>
+                                                            <p>轮次: 第{nextMatch.scheduledRoom.round_number}轮</p>
+                                                            <p>时间: {formatDate(nextMatch.scheduledRoom.match_date)} {nextMatch.scheduledRoom.match_time}</p>
+                                                            <p>房间号: {nextMatch.scheduledRoom.match_number}</p>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="text-right">
-                                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${nextMatch.status === 'available' ? 'bg-green-600 text-white' :
-                                                    nextMatch.status === 'scheduled' ? 'bg-blue-600 text-white' :
-                                                        'bg-gray-600 text-white'
+                                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${requestingMatch ? 'bg-yellow-600 text-white' :
+                                                    nextMatch.status === 'available' ? 'bg-green-600 text-white' :
+                                                        nextMatch.status === 'scheduled' ? 'bg-blue-600 text-white' :
+                                                            'bg-gray-600 text-white'
                                                     }`}>
-                                                    {nextMatch.status === 'available' ? '可预约' :
-                                                        nextMatch.status === 'scheduled' ? '已预约' : '已完成'}
+                                                    {requestingMatch ? '预约中' :
+                                                        nextMatch.status === 'available' ? '可预约' :
+                                                            nextMatch.status === 'scheduled' ? '已预约' : '已完成'}
                                                 </span>
                                             </div>
                                         </div>
