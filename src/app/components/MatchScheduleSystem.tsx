@@ -28,8 +28,10 @@ interface MatchSchedule {
     room_id: number;
     player1_osuId: string;
     player1_username: string;
+    player1_avatar_url?: string;
     player2_osuId: string;
     player2_username: string;
+    player2_avatar_url?: string;
     red_player_osuId?: string;
     blue_player_osuId?: string;
     red_score: number;
@@ -627,12 +629,12 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
             {/* 比赛预约列表 */}
             <div className="space-y-4">
                 {schedules.length === 0 ? (
-                    <div className="text-center py-8 text-gray-400">
+                    <div className="text-center py-8 text-">
                         暂无比赛预约
                     </div>
                 ) : (
                     schedules.map((schedule) => (
-                        <div key={schedule.id} className="bg-gray-800 p-4 ">
+                        <div key={schedule.id} className="p-4 ">
                             <div className="flex justify-between items-start mb-2">
                                 <div>
                                     <h4 className="text-lg font-bold text-white">
@@ -652,14 +654,42 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
 
                             <div className="grid grid-cols-2 gap-4 mb-4">
                                 <div className="bg-gray-700 p-3 rounded">
-                                    <p className="text-sm text-gray-400">选手1</p>
-                                    <p className="text-white font-medium">{schedule.player1_username}</p>
-                                    <p className="text-xs text-gray-500">ID: {schedule.player1_osuId}</p>
+                                    <p className="text-sm text-gray-400">红方</p>
+                                    <div className="flex items-center gap-3 mt-2">
+                                        {schedule.player1_avatar_url && (
+                                            <img
+                                                src={schedule.player1_avatar_url}
+                                                alt={`${schedule.player1_username} avatar`}
+                                                className="w-10 h-10 rounded-full border-2 border-red-500"
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = 'none';
+                                                }}
+                                            />
+                                        )}
+                                        <div>
+                                            <p className="text-white font-medium">{schedule.player1_username}</p>
+                                            <p className="text-xs text-gray-500">ID: {schedule.player1_osuId}</p>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="bg-gray-700 p-3 rounded">
-                                    <p className="text-sm text-gray-400">选手2</p>
-                                    <p className="text-white font-medium">{schedule.player2_username}</p>
-                                    <p className="text-xs text-gray-500">ID: {schedule.player2_osuId}</p>
+                                    <p className="text-sm text-gray-400">蓝方</p>
+                                    <div className="flex items-center gap-3 mt-2">
+                                        {schedule.player2_avatar_url && (
+                                            <img
+                                                src={schedule.player2_avatar_url}
+                                                alt={`${schedule.player2_username} avatar`}
+                                                className="w-10 h-10 rounded-full border-2 border-blue-500"
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = 'none';
+                                                }}
+                                            />
+                                        )}
+                                        <div>
+                                            <p className="text-white font-medium">{schedule.player2_username}</p>
+                                            <p className="text-xs text-gray-500">ID: {schedule.player2_osuId}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 

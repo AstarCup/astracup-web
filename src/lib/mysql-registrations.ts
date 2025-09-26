@@ -917,9 +917,12 @@ const mysqlStorage = {
             const connection = await getPool().getConnection();
 
             const [rows] = await connection.execute(`
-                SELECT ms.*, mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number
+                SELECT ms.*, mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number,
+                       r1.avatar_url as player1_avatar_url, r2.avatar_url as player2_avatar_url
                 FROM match_schedules ms
                 JOIN match_rooms mr ON ms.room_id = mr.id
+                LEFT JOIN registrations r1 ON ms.player1_osuId = r1.osuId
+                LEFT JOIN registrations r2 ON ms.player2_osuId = r2.osuId
                 WHERE ms.player1_osuId = ? OR ms.player2_osuId = ?
                 ORDER BY mr.match_date DESC, mr.match_time DESC
             `, [osuId, osuId]);
@@ -931,8 +934,10 @@ const mysqlStorage = {
                 room_id: row.room_id,
                 player1_osuId: row.player1_osuId,
                 player1_username: row.player1_username,
+                player1_avatar_url: row.player1_avatar_url,
                 player2_osuId: row.player2_osuId,
                 player2_username: row.player2_username,
+                player2_avatar_url: row.player2_avatar_url,
                 red_player_osuId: row.red_player_osuId,
                 blue_player_osuId: row.blue_player_osuId,
                 red_score: row.red_score,
@@ -1009,9 +1014,12 @@ const mysqlStorage = {
             const connection = await getPool().getConnection();
 
             const [rows] = await connection.execute(`
-                SELECT ms.*, mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number
+                SELECT ms.*, mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number,
+                       r1.avatar_url as player1_avatar_url, r2.avatar_url as player2_avatar_url
                 FROM match_schedules ms
                 JOIN match_rooms mr ON ms.room_id = mr.id
+                LEFT JOIN registrations r1 ON ms.player1_osuId = r1.osuId
+                LEFT JOIN registrations r2 ON ms.player2_osuId = r2.osuId
                 ORDER BY mr.match_date DESC, mr.match_time DESC
             `);
 
@@ -1022,8 +1030,10 @@ const mysqlStorage = {
                 room_id: row.room_id,
                 player1_osuId: row.player1_osuId,
                 player1_username: row.player1_username,
+                player1_avatar_url: row.player1_avatar_url,
                 player2_osuId: row.player2_osuId,
                 player2_username: row.player2_username,
+                player2_avatar_url: row.player2_avatar_url,
                 red_player_osuId: row.red_player_osuId,
                 blue_player_osuId: row.blue_player_osuId,
                 red_score: row.red_score,
