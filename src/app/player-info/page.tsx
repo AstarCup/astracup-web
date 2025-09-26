@@ -227,59 +227,29 @@ export default function PlayerInfoPage() {
                                 />
                                 <div className="flex-1">
                                     <h2 className="text-3xl font-bold text-white mb-2">{user.username}</h2>
-                                    <div className="grid grid-cols-2 gap-4 text-gray-300">
-                                        <div>
-                                            <span className="font-medium">PP:</span> {user.pp?.toFixed(0) || 'N/A'}
+                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <div className="flex flex-col items-start">
+                                            <span className="text-gray-100 mb-1">PP</span>
+                                            <span className={`${audiowide.className} text-3xl text-white`}>{user.pp?.toFixed(0) || 'N/A'}</span>
                                         </div>
-                                        <div>
-                                            <span className="font-medium">全球排名:</span> {formatRank(user.global_rank)}
+                                        <div className="flex flex-col items-start">
+                                            <span className="text-gray-100 mb-1">全球排名</span>
+                                            <span className={`${audiowide.className} text-3xl text-white`}>{formatRank(user.global_rank)}</span>
                                         </div>
-                                        <div>
-                                            <span className="font-medium">地区排名:</span> {formatRank(user.country_rank)}
-                                        </div>
-                                        <div>
-                                            <span className="font-medium">地区:</span> {user.country || '未知'}
-                                        </div>
+                                        {user.country_rank && (
+                                            <div className="col-span-2 flex flex-col items-start mt-2">
+                                                <span className="text-gray-100 mb-1">地区排名</span>
+                                                <span className={`${audiowide.className} text-3xl text-white`}>{formatRank(user.country_rank)} <a className="text-xl">{user.country}</a></span>
+                                            </div>
+                                        )}
+                                        {!user.country_rank && (
+                                            <div className="col-span-2 flex flex-col items-start mt-2">
+                                                <span className="text-gray-100 mb-1">地区</span>
+                                                <span className={`${audiowide.className} text-3xl text-white`}>{user.country || '未知'}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                            </div>
-
-
-
-                            {/* 注册信息 */}
-                            <div className="mb-8 pb-6">
-                                <h3 className="text-xl font-bold text-white mb-4">注册信息</h3>
-                                {registration ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-300">
-                                        <div>
-                                            <span className="font-medium text-white">游戏内名称:</span> {registration.inGameName}
-                                        </div>
-                                        <div>
-                                            <span className="font-medium text-white">时区:</span> {registration.timezone || '未设置'}
-                                        </div>
-                                        <div>
-                                            <span className="font-medium text-white">注册时间:</span> {formatDate(registration.registeredAt)}
-                                        </div>
-                                        <div>
-                                            <span className="font-medium text-white">审核状态:</span>
-                                            <span className={registration.approved ? 'text-green-400' : 'text-yellow-400'}>
-                                                {registration.approved ? '已通过' : '待审核'}
-                                            </span>
-                                        </div>
-                                        {registration.approved && registration.approvedAt && (
-                                            <div>
-                                                <span className="font-medium text-white">审核时间:</span> {formatDate(registration.approvedAt)}
-                                            </div>
-                                        )}
-                                        {registration.availability && (
-                                            <div className="md:col-span-2">
-                                                <span className="font-medium text-white">可用时间:</span> {registration.availability}
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <p className="text-gray-400">未找到注册信息</p>
-                                )}
                             </div>
 
                             {/* 下一轮对战信息 */}
@@ -466,12 +436,6 @@ export default function PlayerInfoPage() {
                                 >
                                     最新消息
                                 </Link>
-                                <Link
-                                    href="/contact"
-                                    className="block w-full bg-orange-600 hover:bg-orange-500 text-white px-4 py-3  transition-colors duration-200 text-center font-medium border-b-2 border-orange-600 hover:border-orange-500"
-                                >
-                                    联系我们
-                                </Link>
                             </div>
                         </div>
 
@@ -483,7 +447,7 @@ export default function PlayerInfoPage() {
                             </h4>
                             <div className="space-y-3 text-gray-300">
                                 <div className="flex justify-between items-center">
-                                    <span>注册状态:</span>
+                                    <span>状态:</span>
                                     <span className={`font-medium ${registration?.approved ? 'text-green-400' : 'text-yellow-400'}`}>
                                         {registration?.approved ? '已审核' : '待审核'}
                                     </span>
@@ -500,6 +464,28 @@ export default function PlayerInfoPage() {
                                         {permissions.isAdmin ? '管理员' : permissions.isMapSelector || permissions.isReplayTester ? '工作人员' : '玩家'}
                                     </span>
                                 </div>
+                                {registration ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-300">
+                                        <div>
+                                            <span className="font-medium text-white">时区:</span> {registration.timezone || '未设置'}
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-white">注册时间:</span> {formatDate(registration.registeredAt)}
+                                        </div>
+                                        {registration.approved && registration.approvedAt && (
+                                            <div>
+                                                <span className="font-medium text-white">审核时间:</span> {formatDate(registration.approvedAt)}
+                                            </div>
+                                        )}
+                                        {registration.availability && (
+                                            <div className="md:col-span-2">
+                                                <span className="font-medium text-white">可用时间:</span> {registration.availability}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-400">未找到注册信息</p>
+                                )}
                             </div>
                         </div>
 
