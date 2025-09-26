@@ -38,12 +38,21 @@ interface PlayerMatchup {
     created_at: string;
 }
 
+interface ApprovedPlayer {
+    osuId: string;
+    username: string;
+    inGameName: string;
+    avatar_url: string;
+    pp: number;
+    global_rank: number;
+    country_rank: number;
+    country: string;
+}
+
 const audiowide = localFont({
     src: "../components/font/Audiowide-Regular.ttf",
     display: "auto",
 });
-
-// 创建房间模态框组件
 function CreateRoomModal({ onClose, onCreate }: {
     onClose: () => void;
     onCreate: (roomData: {
@@ -218,7 +227,7 @@ function CreateRoomModal({ onClose, onCreate }: {
 }
 
 // 创建对战模态框组件
-function CreateMatchupModal({ onClose, onCreate }: {
+function CreateMatchupModal({ onClose, onCreate, approvedPlayers }: {
     onClose: () => void;
     onCreate: (matchupData: {
         player1_osuId: number;
@@ -226,6 +235,7 @@ function CreateMatchupModal({ onClose, onCreate }: {
         player2_osuId: number;
         player2_username: string;
     }) => void;
+    approvedPlayers: ApprovedPlayer[];
 }) {
     const [formData, setFormData] = useState({
         player1_osuId: '',
@@ -276,27 +286,30 @@ function CreateMatchupModal({ onClose, onCreate }: {
                         <div className="space-y-3">
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    osu! ID *
+                                    选择玩家 *
                                 </label>
-                                <input
-                                    type="number"
+                                <select
                                     value={formData.player1_osuId}
-                                    onChange={(e) => setFormData({ ...formData, player1_osuId: e.target.value })}
+                                    onChange={(e) => {
+                                        const selectedPlayer = approvedPlayers.find(p => p.osuId === e.target.value);
+                                        if (selectedPlayer) {
+                                            setFormData({
+                                                ...formData,
+                                                player1_osuId: e.target.value,
+                                                player1_username: selectedPlayer.username
+                                            });
+                                        }
+                                    }}
                                     className="w-full px-3 py-2 bg-[#2d2d2d] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
                                     required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    用户名 *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.player1_username}
-                                    onChange={(e) => setFormData({ ...formData, player1_username: e.target.value })}
-                                    className="w-full px-3 py-2 bg-[#2d2d2d] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
-                                    required
-                                />
+                                >
+                                    <option value="">请选择玩家...</option>
+                                    {approvedPlayers.map(player => (
+                                        <option key={player.osuId} value={player.osuId}>
+                                            {player.username} (ID: {player.osuId})
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -315,27 +328,30 @@ function CreateMatchupModal({ onClose, onCreate }: {
                         <div className="space-y-3">
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    osu! ID *
+                                    选择玩家 *
                                 </label>
-                                <input
-                                    type="number"
+                                <select
                                     value={formData.player2_osuId}
-                                    onChange={(e) => setFormData({ ...formData, player2_osuId: e.target.value })}
+                                    onChange={(e) => {
+                                        const selectedPlayer = approvedPlayers.find(p => p.osuId === e.target.value);
+                                        if (selectedPlayer) {
+                                            setFormData({
+                                                ...formData,
+                                                player2_osuId: e.target.value,
+                                                player2_username: selectedPlayer.username
+                                            });
+                                        }
+                                    }}
                                     className="w-full px-3 py-2 bg-[#2d2d2d] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
                                     required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    用户名 *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.player2_username}
-                                    onChange={(e) => setFormData({ ...formData, player2_username: e.target.value })}
-                                    className="w-full px-3 py-2 bg-[#2d2d2d] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
-                                    required
-                                />
+                                >
+                                    <option value="">请选择玩家...</option>
+                                    {approvedPlayers.map(player => (
+                                        <option key={player.osuId} value={player.osuId}>
+                                            {player.username} (ID: {player.osuId})
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -394,6 +410,9 @@ export default function AdminPage() {
     const [showCreateMatchupModal, setShowCreateMatchupModal] = useState(false);
     const [deletingMatchupId, setDeletingMatchupId] = useState<number | null>(null);
 
+    // 已过审玩家状态
+    const [approvedPlayers, setApprovedPlayers] = useState<ApprovedPlayer[]>([]);
+
     useEffect(() => {
         const fetchUserData = async () => {
             try {
@@ -436,10 +455,11 @@ export default function AdminPage() {
         }
     }, [activeTab, permissions.isAdmin]);
 
-    // 当切换到对战管理选项卡时获取对战列表
+    // 当切换到对战管理选项卡时获取对战列表和已过审玩家
     useEffect(() => {
         if (activeTab === 'matchups' && permissions.isAdmin) {
             fetchMatchups();
+            fetchApprovedPlayers();
         }
     }, [activeTab, permissions.isAdmin]);
 
@@ -683,6 +703,19 @@ export default function AdminPage() {
         } catch (error) {
             console.error('Error creating matchup:', error);
             alert('创建对战时发生错误');
+        }
+    };
+
+    // 获取已过审玩家
+    const fetchApprovedPlayers = async () => {
+        try {
+            const response = await fetch('/api/approved-players');
+            if (response.ok) {
+                const data = await response.json();
+                setApprovedPlayers(data.players || []);
+            }
+        } catch (error) {
+            console.error('Error fetching approved players:', error);
         }
     };
 
@@ -1324,6 +1357,7 @@ export default function AdminPage() {
                 <CreateMatchupModal
                     onClose={() => setShowCreateMatchupModal(false)}
                     onCreate={handleCreateMatchup}
+                    approvedPlayers={approvedPlayers}
                 />
             )}
         </div>
