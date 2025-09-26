@@ -204,47 +204,16 @@ export default function PlayerInfoPage() {
 
     return (
         <div className="flex flex-col items-center justify-center relative min-h-screen">
-            {/* 背景 */}
-            <div className="fixed inset-0 z-0">
-                <Image
-                    src="/background-parallax.svg"
-                    alt="background"
-                    fill
-                    className="object-cover opacity-20"
-                />
-            </div>
-
-            {/* Header */}
-            <div className="relative z-10 w-full max-w-6xl mx-auto px-4 py-4 mb-6">
-                <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66] p-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            <Link href="/" className="flex items-center space-x-2">
-                                <Image src='/AstaraCup.svg' alt='AstataCup' width={120} height={48} />
-                            </Link>
-                            <h1 className={`${audiowide.className} text-2xl font-bold text-white`}>个人中心</h1>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            <Link
-                                href="/admin"
-                                className="text-gray-300 hover:text-[#3BE9D8] transition-colors duration-200 px-3 py-2 rounded hover:bg-[#3BE9D8]/20"
-                            >
-                                管理员面板
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
 
             {/* Main Content */}
-            <div className="relative z-10 w-full max-w-6xl mx-auto px-4 pb-8">
+            <div className="relative z-10 w-full max-w-6xl mx-auto px-4 pb-8 mt-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* 左侧主要内容 */}
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66] p-8 shadow-2xl">
+                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-8 shadow-2xl">
                             {/* 用户基本信息 */}
-                            <div className="flex items-center mb-8 pb-6 border-b-4 border-[#E93B66]">
+                            <div className="flex items-center mb-8 pb-6">
 
                                 <img
                                     src={user.avatar_url}
@@ -275,32 +244,10 @@ export default function PlayerInfoPage() {
                                 </div>
                             </div>
 
-                            {/* 权限信息 */}
-                            {(permissions.isMapSelector || permissions.isReplayTester || permissions.isAdmin) && (
-                                <div className="mb-8 pb-6 border-b-4 border-[#E93B66]">
-                                    <h3 className="text-xl font-bold text-white mb-4">权限组</h3>
-                                    <div className="flex flex-wrap gap-3">
-                                        {permissions.isAdmin && (
-                                            <span className="px-4 py-2 bg-[#E93B66] text-white text-lg border-b-4 border-[#3BE9D8]">
-                                                管理员
-                                            </span>
-                                        )}
-                                        {permissions.isMapSelector && (
-                                            <span className="px-4 py-2 bg-[#E93B66] text-white text-lg border-b-4 border-[#3BE9D8]">
-                                                选图组
-                                            </span>
-                                        )}
-                                        {permissions.isReplayTester && (
-                                            <span className="px-4 py-2 bg-[#E93B66] text-white text-lg border-b-4 border-[#3BE9D8]">
-                                                测图组
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
+
 
                             {/* 注册信息 */}
-                            <div className="mb-8 pb-6 border-b-4 border-[#E93B66]">
+                            <div className="mb-8 pb-6">
                                 <h3 className="text-xl font-bold text-white mb-4">注册信息</h3>
                                 {registration ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-300">
@@ -336,7 +283,7 @@ export default function PlayerInfoPage() {
                             </div>
 
                             {/* 下一轮对战信息 */}
-                            <div className="mb-8 pb-6 border-b-4 border-[#E93B66]">
+                            <div className="mb-8 pb-6">
                                 <h3 className="text-xl font-bold text-white mb-4">下一轮对战</h3>
                                 {nextMatch ? (
                                     <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66] p-6">
@@ -480,7 +427,7 @@ export default function PlayerInfoPage() {
                             </div>
 
                             {/* 比赛预约系统 */}
-                            <div className="border-b-4 border-[#E93B66] pt-8">
+                            <div className="border-b-4">
                                 <MatchScheduleSystem userOsuId={user.osuId} isAdmin={false} />
                             </div>
                         </div>
