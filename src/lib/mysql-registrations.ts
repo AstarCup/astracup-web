@@ -238,8 +238,10 @@ export interface PlayerMatchup {
     id: number;
     player1_osuId: string;
     player1_username: string;
+    player1_avatar_url?: string;
     player2_osuId: string;
     player2_username: string;
+    player2_avatar_url?: string;
     status: 'available' | 'scheduled' | 'completed';
     created_by: string;
     created_at: string;
@@ -765,7 +767,13 @@ const mysqlStorage = {
             const connection = await getPool().getConnection();
 
             const [rows] = await connection.execute(
-                'SELECT * FROM player_matchups ORDER BY created_at ASC'
+                `SELECT pm.*,
+                        r1.avatar_url as player1_avatar_url,
+                        r2.avatar_url as player2_avatar_url
+                 FROM player_matchups pm
+                 LEFT JOIN registrations r1 ON pm.player1_osuId = r1.osuId
+                 LEFT JOIN registrations r2 ON pm.player2_osuId = r2.osuId
+                 ORDER BY pm.created_at ASC`
             );
 
             connection.release();
@@ -774,8 +782,10 @@ const mysqlStorage = {
                 id: row.id,
                 player1_osuId: row.player1_osuId,
                 player1_username: row.player1_username,
+                player1_avatar_url: row.player1_avatar_url,
                 player2_osuId: row.player2_osuId,
                 player2_username: row.player2_username,
+                player2_avatar_url: row.player2_avatar_url,
                 status: row.status,
                 created_by: row.created_by,
                 created_at: row.created_at,
