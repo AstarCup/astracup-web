@@ -771,8 +771,8 @@ const mysqlStorage = {
                         r1.avatar_url as player1_avatar_url,
                         r2.avatar_url as player2_avatar_url
                  FROM player_matchups pm
-                 LEFT JOIN registrations r1 ON pm.player1_osuId = r1.osuId
-                 LEFT JOIN registrations r2 ON pm.player2_osuId = r2.osuId
+                 LEFT JOIN registrations r1 ON pm.player1_osuId = r1.osuId COLLATE utf8mb4_unicode_ci
+                 LEFT JOIN registrations r2 ON pm.player2_osuId = r2.osuId COLLATE utf8mb4_unicode_ci
                  ORDER BY pm.created_at ASC`
             );
 
