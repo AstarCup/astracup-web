@@ -1334,8 +1334,7 @@ const mysqlStorage = {
                 // 添加比赛信息
                 match_info: {
                     player1_username: row.player1_username,
-                    player2_username: row.player2_username,
-                    scheduled_time: row.scheduled_time
+                    player2_username: row.player2_username
                 }
             }));
         } catch (error) {
