@@ -8,6 +8,7 @@ import { getUserPermissions } from '@/lib/permissions';
 import MatchScheduleSystem from '@/app/components/MatchScheduleSystem';
 import MessageNotification from '@/app/components/MessageNotification';
 import localFont from "next/font/local";
+import { MatchRoom } from '@/lib/mysql-registrations';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -34,20 +35,6 @@ interface Registration {
 
 interface NextMatch {
     id: number;
-    room: {
-        id: number;
-        room_name: string;
-        round_number: number;
-        match_date: string;
-        match_time: string;
-        match_number: number;
-        max_participants: number;
-        status: 'open' | 'full' | 'closed';
-        description?: string;
-        created_by: string;
-        created_at: string;
-        updated_at: string;
-    };
     opponent: {
         osuId: string;
         username: string;
@@ -66,6 +53,8 @@ export default function PlayerInfoPage() {
     const [registration, setRegistration] = useState<Registration | null>(null);
     const [nextMatch, setNextMatch] = useState<NextMatch | null>(null);
     const [requestingMatch, setRequestingMatch] = useState(false);
+    const [availableRooms, setAvailableRooms] = useState<MatchRoom[]>([]);
+    const [showRoomSelection, setShowRoomSelection] = useState(false);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -128,18 +117,66 @@ export default function PlayerInfoPage() {
         return new Date(dateString).toLocaleDateString('zh-CN');
     };
 
+    const formatMatchDate = (dateString: string) => {
+        // 假设数据库中的时间已经是UTC，转换为+8时区显示
+        const date = new Date(dateString);
+        return date.toLocaleDateString('zh-CN', {
+            timeZone: 'Asia/Shanghai',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+    };
+
+    const formatMatchTime = (timeString: string) => {
+        // 假设数据库中的时间已经是UTC，转换为+8时区显示
+        const [hours, minutes] = timeString.split(':');
+        const date = new Date();
+        date.setUTCHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+        return date.toLocaleTimeString('zh-CN', {
+            timeZone: 'Asia/Shanghai',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+    };
+
     const handleRequestMatch = async () => {
         if (!nextMatch) return;
 
         try {
+            // 获取所有房间
+            const roomsResponse = await fetch('/api/match-rooms');
+            const roomsData = await roomsResponse.json();
+
+            if (roomsData.success) {
+                setAvailableRooms(roomsData.rooms);
+                setShowRoomSelection(true);
+            } else {
+                alert('获取房间列表失败');
+            }
+        } catch (error) {
+            console.error('Error fetching rooms:', error);
+            alert('获取房间列表时发生错误');
+        }
+    };
+
+    const handleRoomSelect = async (roomId: number) => {
+        if (!nextMatch) return;
+
+        try {
             setRequestingMatch(true);
+            setShowRoomSelection(false);
+
             const response = await fetch('/api/request-match', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    matchupId: nextMatch.id
+                    matchupId: nextMatch.id,
+                    roomId: roomId
                 }),
             });
 
@@ -306,13 +343,8 @@ export default function PlayerInfoPage() {
                             <div className="bg-gray-700/50 rounded-lg p-6">
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
-                                        <h4 className="text-lg font-bold text-white">{nextMatch.room.room_name}</h4>
-                                        <p className="text-gray-300">
-                                            第{nextMatch.room.round_number}轮 - 房间号 {nextMatch.room.match_number}
-                                        </p>
-                                        <p className="text-gray-300">
-                                            {nextMatch.room.match_date} {nextMatch.room.match_time}
-                                        </p>
+                                        <h4 className="text-lg font-bold text-white">对战对手</h4>
+                                        <p className="text-gray-300">与 {nextMatch.opponent.username} 的比赛</p>
                                     </div>
                                     <div className="text-right">
                                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${nextMatch.status === 'available' ? 'bg-green-600 text-white' :
@@ -364,6 +396,72 @@ export default function PlayerInfoPage() {
                                         >
                                             {requestingMatch ? '预约中...' : '预约对战'}
                                         </button>
+                                    </div>
+                                )}
+
+                                {/* 房间选择界面 */}
+                                {showRoomSelection && (
+                                    <div className="mt-6">
+                                        <h4 className="text-white font-medium mb-4 text-center">选择比赛房间</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+                                            {availableRooms.map((room) => (
+                                                <div
+                                                    key={room.id}
+                                                    className="bg-gray-700/50 backdrop-blur-sm rounded-lg p-4 border border-gray-600 hover:border-[#E93B66] transition-colors cursor-pointer"
+                                                    onClick={() => handleRoomSelect(room.id)}
+                                                >
+                                                    <div className="flex justify-between items-start mb-3">
+                                                        <h5 className="text-white font-bold text-lg">{room.room_name}</h5>
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${room.status === 'open' ? 'bg-green-600 text-white' :
+                                                                room.status === 'full' ? 'bg-red-600 text-white' :
+                                                                    'bg-gray-600 text-white'
+                                                            }`}>
+                                                            {room.status === 'open' ? '可预约' :
+                                                                room.status === 'full' ? '已满' : '关闭'}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="space-y-2 text-sm text-gray-300">
+                                                        <div className="flex justify-between">
+                                                            <span>轮次:</span>
+                                                            <span className="text-white">第{room.round_number}轮</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span>日期:</span>
+                                                            <span className="text-white">{formatMatchDate(room.match_date)}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span>时间:</span>
+                                                            <span className="text-white">{formatMatchTime(room.match_time)}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span>房间号:</span>
+                                                            <span className="text-white">{room.match_number}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span>最多参与:</span>
+                                                            <span className="text-white">{room.max_participants}人</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <button
+                                                        className="w-full mt-3 bg-[#E93B66] hover:bg-[#3BE9D8] text-white py-2 rounded-lg transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        disabled={requestingMatch || room.status !== 'open'}
+                                                    >
+                                                        {requestingMatch ? '预约中...' : '选择此房间'}
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="mt-4 text-center">
+                                            <button
+                                                onClick={() => setShowRoomSelection(false)}
+                                                className="bg-gray-600 hover:bg-gray-500 text-white px-6 py-2 rounded-lg transition-colors"
+                                                disabled={requestingMatch}
+                                            >
+                                                取消选择
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
                             </div>

@@ -48,30 +48,23 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        // 按房间轮次排序，找到下一轮的对战
-        // 这里简化逻辑：假设轮次越小越早，取第一个可用的对战
-        const sortedMatchups = userMatchups
-            .filter(matchup => matchup.room && matchup.status === 'available')
-            .sort((a, b) => {
-                if (!a.room || !b.room) return 0;
-                return a.room.round_number - b.room.round_number;
-            });
-
-        const nextMatch = sortedMatchups.length > 0 ? sortedMatchups[0] : null;
+        // 找到第一个可用的对战（按创建时间排序）
+        const availableMatchup = userMatchups
+            .filter(matchup => matchup.status === 'available')
+            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0];
 
         return NextResponse.json({
             success: true,
-            nextMatch: nextMatch ? {
-                id: nextMatch.id,
-                room: nextMatch.room,
-                opponent: nextMatch.player1_osuId === userOsuId ? {
-                    osuId: nextMatch.player2_osuId,
-                    username: nextMatch.player2_username
+            nextMatch: availableMatchup ? {
+                id: availableMatchup.id,
+                opponent: availableMatchup.player1_osuId === userOsuId ? {
+                    osuId: availableMatchup.player2_osuId,
+                    username: availableMatchup.player2_username
                 } : {
-                    osuId: nextMatch.player1_osuId,
-                    username: nextMatch.player1_username
+                    osuId: availableMatchup.player1_osuId,
+                    username: availableMatchup.player1_username
                 },
-                status: nextMatch.status
+                status: availableMatchup.status
             } : null
         });
     } catch (error) {

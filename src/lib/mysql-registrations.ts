@@ -111,7 +111,6 @@ export const initDatabase = async (): Promise<void> => {
         await connection.execute(`
             CREATE TABLE IF NOT EXISTS player_matchups (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                room_id INT NOT NULL COMMENT '所属房间ID',
                 player1_osuId VARCHAR(255) NOT NULL COMMENT '选手1 osuId',
                 player1_username VARCHAR(255) NOT NULL COMMENT '选手1 用户名',
                 player2_osuId VARCHAR(255) NOT NULL COMMENT '选手2 osuId',
@@ -120,9 +119,7 @@ export const initDatabase = async (): Promise<void> => {
                 created_by VARCHAR(255) NOT NULL COMMENT '创建者osuId',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                FOREIGN KEY (room_id) REFERENCES match_rooms(id) ON DELETE CASCADE,
-                UNIQUE KEY unique_matchup (room_id, player1_osuId, player2_osuId),
-                INDEX idx_room (room_id),
+                UNIQUE KEY unique_matchup (player1_osuId, player2_osuId),
                 INDEX idx_player1 (player1_osuId),
                 INDEX idx_player2 (player2_osuId),
                 INDEX idx_status (status),
@@ -208,7 +205,6 @@ export interface MatchRoom {
 
 export interface PlayerMatchup {
     id: number;
-    room_id: number;
     player1_osuId: string;
     player1_username: string;
     player2_osuId: string;
@@ -217,7 +213,6 @@ export interface PlayerMatchup {
     created_by: string;
     created_at: string;
     updated_at: string;
-    room?: MatchRoom;
 }
 
 export interface MatchSchedule {
@@ -632,11 +627,11 @@ const mysqlStorage = {
 
             const [result] = await connection.execute(`
                 INSERT INTO player_matchups (
-                    room_id, player1_osuId, player1_username, player2_osuId, player2_username,
+                    player1_osuId, player1_username, player2_osuId, player2_username,
                     status, created_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?)
             `, [
-                matchup.room_id, matchup.player1_osuId, matchup.player1_username,
+                matchup.player1_osuId, matchup.player1_username,
                 matchup.player2_osuId, matchup.player2_username,
                 matchup.status, matchup.created_by
             ]);
@@ -650,32 +645,19 @@ const mysqlStorage = {
         }
     },
 
-    // 获取房间的玩家对战列表
-    getPlayerMatchups: async (roomId?: number): Promise<PlayerMatchup[]> => {
+    // 获取玩家对战列表
+    getPlayerMatchups: async (): Promise<PlayerMatchup[]> => {
         try {
             const connection = await getPool().getConnection();
 
-            let query = `
-                SELECT pm.*, mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number
-                FROM player_matchups pm
-                JOIN match_rooms mr ON pm.room_id = mr.id
-            `;
-            let params: any[] = [];
-
-            if (roomId) {
-                query += ` WHERE pm.room_id = ?`;
-                params.push(roomId);
-            }
-
-            query += ` ORDER BY pm.created_at ASC`;
-
-            const [rows] = await connection.execute(query, params);
+            const [rows] = await connection.execute(
+                'SELECT * FROM player_matchups ORDER BY created_at ASC'
+            );
 
             connection.release();
 
             return (rows as any[]).map(row => ({
                 id: row.id,
-                room_id: row.room_id,
                 player1_osuId: row.player1_osuId,
                 player1_username: row.player1_username,
                 player2_osuId: row.player2_osuId,
@@ -683,21 +665,7 @@ const mysqlStorage = {
                 status: row.status,
                 created_by: row.created_by,
                 created_at: row.created_at,
-                updated_at: row.updated_at,
-                room: {
-                    id: row.room_id,
-                    room_name: row.room_name,
-                    round_number: row.round_number,
-                    match_date: row.match_date,
-                    match_time: row.match_time,
-                    match_number: row.match_number,
-                    max_participants: row.max_participants,
-                    status: row.status,
-                    description: row.description,
-                    created_by: row.created_by,
-                    created_at: row.created_at,
-                    updated_at: row.updated_at
-                }
+                updated_at: row.updated_at
             }));
         } catch (error) {
             console.error('Error getting player matchups:', error);
