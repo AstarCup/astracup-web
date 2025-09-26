@@ -1280,7 +1280,7 @@ const mysqlStorage = {
                     ms.updated_at,
                     mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number,
                     r1.avatar_url as staff_avatar_url,
-                    ms.player1_username, ms.player2_username, ms.scheduled_time
+                    ms.player1_username, ms.player2_username
                 FROM match_schedules ms
                 JOIN match_rooms mr ON ms.room_id = mr.id
                 LEFT JOIN registrations r1 ON ms.referee_osuId = r1.osuId COLLATE utf8mb4_unicode_ci
@@ -1300,7 +1300,7 @@ const mysqlStorage = {
                     ms.updated_at,
                     mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number,
                     r2.avatar_url as staff_avatar_url,
-                    ms.player1_username, ms.player2_username, ms.scheduled_time
+                    ms.player1_username, ms.player2_username
                 FROM match_schedules ms
                 JOIN match_rooms mr ON ms.room_id = mr.id
                 LEFT JOIN registrations r2 ON ms.commentator_osuId = r2.osuId COLLATE utf8mb4_unicode_ci
