@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Message } from '@/lib/mysql-registrations';
+import Image from 'next/image';
 
 interface MessageNotificationProps {
     onNewMessage?: (count: number) => void;
@@ -74,9 +75,9 @@ export default function MessageNotification({ onNewMessage }: MessageNotificatio
             {/* 消息按钮 */}
             <button
                 onClick={() => setShowMessages(!showMessages)}
-                className="relative bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium"
+                className="relative hover:scale-110 text-white px-4 py-2 transition-all duration-200 font-medium"
             >
-                消息
+                <Image src="/icons/message.svg" alt="消息" width={24} height={24} />
                 {unreadCount > 0 && (
                     <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                         {unreadCount}
@@ -86,7 +87,7 @@ export default function MessageNotification({ onNewMessage }: MessageNotificatio
 
             {/* 消息下拉列表 */}
             {showMessages && (
-                <div className="absolute right-0 mt-2 w-96 bg-gray-800 border border-gray-600 rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto">
+                <div className="absolute right-0 mt-2 w-96 max-w-[calc(100vw-2rem)] sm:w-96 bg-[#3d3d3d] border-[#E93B66] border-b-4  shadow-xl z-50 max-h-96 overflow-y-auto">
                     <div className="p-4">
                         <h3 className="text-white font-bold mb-3">消息通知</h3>
 
@@ -95,12 +96,12 @@ export default function MessageNotification({ onNewMessage }: MessageNotificatio
                         ) : (
                             <div className="space-y-3">
                                 {messages.map((message) => (
-                                    <div key={message.id} className="bg-gray-700 rounded-lg p-3">
+                                    <div key={message.id} className="bg-gray-700  p-3">
                                         <div className="flex justify-between items-start mb-2">
                                             <h4 className="text-white font-medium text-sm">{message.title}</h4>
                                             <span className={`text-xs px-2 py-1 rounded ${message.status === 'unread' ? 'bg-red-600 text-white' :
-                                                    message.status === 'read' ? 'bg-blue-600 text-white' :
-                                                        'bg-green-600 text-white'
+                                                message.status === 'read' ? 'bg-blue-600 text-white' :
+                                                    'bg-green-600 text-white'
                                                 }`}>
                                                 {message.status === 'unread' ? '未读' :
                                                     message.status === 'read' ? '已读' : '已回复'}
@@ -115,18 +116,18 @@ export default function MessageNotification({ onNewMessage }: MessageNotificatio
 
                                         {/* 响应按钮 */}
                                         {message.type === 'match_invitation' && message.status === 'unread' && (
-                                            <div className="flex space-x-2">
+                                            <div className="flex flex-col sm:flex-row gap-2">
                                                 <button
                                                     onClick={() => updateMessageStatus(message.id, 'accept')}
                                                     disabled={loading}
-                                                    className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-50"
+                                                    className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-2 rounded transition-colors disabled:opacity-50 w-full sm:w-auto"
                                                 >
                                                     接受
                                                 </button>
                                                 <button
                                                     onClick={() => updateMessageStatus(message.id, 'decline')}
                                                     disabled={loading}
-                                                    className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-50"
+                                                    className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-2 rounded transition-colors disabled:opacity-50 w-full sm:w-auto"
                                                 >
                                                     拒绝
                                                 </button>
@@ -137,7 +138,7 @@ export default function MessageNotification({ onNewMessage }: MessageNotificatio
                                             <button
                                                 onClick={() => updateMessageStatus(message.id, 'read')}
                                                 disabled={loading}
-                                                className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition-colors disabled:opacity-50"
+                                                className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-2 rounded transition-colors disabled:opacity-50 w-full sm:w-auto"
                                             >
                                                 标记已读
                                             </button>

@@ -1,10 +1,27 @@
 'use client';
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 export default function Footer() {
+    const [version, setVersion] = useState('loading...');
+
     const handleBackToTop = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
+    useEffect(() => {
+        const fetchVersion = async () => {
+            try {
+                const response = await fetch('/api/version');
+                const data = await response.json();
+                setVersion(data.version);
+            } catch (error) {
+                console.error('Failed to fetch version:', error);
+                setVersion('unknown');
+            }
+        };
+
+        fetchVersion();
+    }, []);
     return (
         <footer
             style={{
@@ -62,6 +79,7 @@ export default function Footer() {
                 </span>
                 <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>
                     <p>Ciallo～ (∠・ω&lt; )⌒☆</p>
+                    <p>{version}</p>
                 </span>
             </div>
 

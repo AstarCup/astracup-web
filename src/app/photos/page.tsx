@@ -70,7 +70,7 @@ export default function Photos() {
                         <div className="flex flex-wrap gap-3">
                             <button
                                 onClick={() => setSelectedSeason('all')}
-                                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${selectedSeason === 'all'
+                                className={`px-4 py-2  font-semibold transition-colors ${selectedSeason === 'all'
                                     ? 'bg-[#E93B66] text-white'
                                     : 'bg-[#2A2A2A] text-gray-300 hover:bg-[#3A3A3A]'
                                     }`}
@@ -81,7 +81,7 @@ export default function Photos() {
                                 <button
                                     key={season.seasonId}
                                     onClick={() => setSelectedSeason(season.seasonId)}
-                                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${selectedSeason === season.seasonId
+                                    className={`px-4 py-2  font-semibold transition-colors ${selectedSeason === season.seasonId
                                         ? 'bg-[#E93B66] text-white'
                                         : 'bg-[#2A2A2A] text-gray-300 hover:bg-[#3A3A3A]'
                                         } ${season.status === 'ongoing' ? 'relative' : ''}`}

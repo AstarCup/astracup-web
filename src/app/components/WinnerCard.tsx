@@ -123,7 +123,7 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
                     </h4>
 
                     {/* 队伍名称 */}
-                    <div className="bg-[#3A3A3A] rounded-lg px-3 py-1 mb-3">
+                    <div className="bg-[#3A3A3A]  px-3 py-1 mb-3">
                         <span className="text-gray-300 text-sm">{winner.teamName}</span>
                     </div>
 
@@ -136,7 +136,7 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
                     </div>
 
                     {/* 成就描述 */}
-                    <div className="bg-[#2A2A2A] rounded-lg p-3 border border-gray-600">
+                    <div className="bg-[#2A2A2A]  p-3 border border-gray-600">
                         <p className="text-gray-300 text-sm text-center">
                             {winner.achievement}
                         </p>
@@ -145,7 +145,7 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
 
                 {/* osu! ID */}
                 {!isPending && (
-                    <div className="flex items-center justify-center bg-[#3A3A3A] rounded-lg px-3 py-2 mb-3">
+                    <div className="flex items-center justify-center bg-[#3A3A3A]  px-3 py-2 mb-3">
                         <span className="text-gray-400 text-xs mr-2">osu! ID:</span>
                         <span className="text-white font-mono text-sm">{winner.osuId}</span>
                     </div>
@@ -155,7 +155,7 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
                 {!isPending && winner.resultImage && winner.resultImage.trim() !== "" && (
                     <button
                         onClick={handleImageClick}
-                        className={`w-full py-3 px-4 bg-gradient-to-r ${rankStyle.bgGradient} hover:opacity-90 rounded-lg transition-all duration-300 hover:scale-105 shadow-lg border border-gray-600`}
+                        className={`w-full py-3 px-4 bg-gradient-to-r ${rankStyle.bgGradient} hover:opacity-90  transition-all duration-300 hover:scale-105 shadow-lg border border-gray-600`}
                         title="查看返图"
                     >
                         <div className="flex items-center justify-center">
@@ -198,7 +198,7 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
                                 <img
                                     src={winner.resultImage}
                                     alt={`${winner.playerName} 的返图`}
-                                    className="max-w-full max-h-[70vh] rounded-lg shadow-lg"
+                                    className="max-w-full max-h-[70vh]  shadow-lg"
                                     onError={(e) => {
                                         (e.target as HTMLImageElement).style.display = 'none';
                                     }}

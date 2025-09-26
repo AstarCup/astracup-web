@@ -1153,7 +1153,7 @@ export default function MapSelectionPage() {
     if (!isAuthorized) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="bg-red-500/20 border border-red-500 rounded-lg p-6 max-w-2xl">
+                <div className="bg-red-500/20 border border-red-500  p-6 max-w-2xl">
                     <h2 className="text-gray-800 text-xl font-bold mb-4">访问被拒绝</h2>
                     <p className="text-gray-800 mb-4">您没有访问此页面的权限。</p>
                     <button
@@ -1172,7 +1172,7 @@ export default function MapSelectionPage() {
             <div className="min-h-screen p-6">
                 <div className="max-w-6xl mx-auto">
                     {/* Header */}
-                    <div className='bg-gray-100 rounded-lg p-6 mb-6'>
+                    <div className='bg-gray-100  p-6 mb-6'>
                         <p>该选图系统仅限选图组使用，请勿往外发截图、消息。</p>
                         <p>选图可打分，分高优先使用，评论区请文明发言。</p>
                         <table className="table-auto mt-2 text-sm">
@@ -1230,7 +1230,7 @@ export default function MapSelectionPage() {
                     </div>
 
                     {/* Control panel */}
-                    <div className="bg-gray-100 rounded-lg p-6 mb-6">
+                    <div className="bg-gray-100  p-6 mb-6">
                         <div className="flex flex-wrap gap-4 items-center justify-between">
                             <div className="flex gap-4 items-center">
                                 <Dropdown
@@ -1271,7 +1271,7 @@ export default function MapSelectionPage() {
 
                     {/* Add map form */}
                     {showAddForm && (
-                        <div className="bg-gray-100 rounded-lg p-6 mb-6">
+                        <div className="bg-gray-100  p-6 mb-6">
                             <h3 className="text-gray-800 text-xl font-bold mb-4">添加新选图</h3>
 
                             <div className="space-y-4">
@@ -1309,7 +1309,7 @@ export default function MapSelectionPage() {
 
                                 {/* 重复警告 */}
                                 {duplicateWarning.show && (
-                                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                    <div className="bg-yellow-50 border border-yellow-200  p-4">
                                         <div className="flex items-start">
                                             <div className="flex-shrink-0">
                                                 <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
@@ -1365,7 +1365,7 @@ export default function MapSelectionPage() {
 
                                 {/* Beatmap preview */}
                                 {beatmapPreview && (
-                                    <div className="bg-gray-200 rounded-lg p-4">
+                                    <div className="bg-gray-200  p-4">
                                         <h4 className="text-gray-800 font-bold mb-2">歌曲预览</h4>
 
                                         {/* 难度选择器 - 只在有多个难度时显示 */}
@@ -1398,7 +1398,7 @@ export default function MapSelectionPage() {
                                                 <img
                                                     src={beatmapPreview.cover_url}
                                                     alt={`${beatmapPreview.title} cover`}
-                                                    className="w-24 h-24 rounded-lg object-cover"
+                                                    className="w-24 h-24  object-cover"
                                                     onError={(e) => {
                                                         e.currentTarget.style.display = 'none';
                                                     }}
@@ -1649,7 +1649,7 @@ export default function MapSelectionPage() {
                     )}
 
                     {/* Map selection list */}
-                    <div className="bg-gray-100 rounded-lg p-6">
+                    <div className="bg-gray-100  p-6">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                             <h3 className="text-gray-800 text-xl font-bold">
                                 已选歌曲 ({filteredSelections.length}/{selections.length})
@@ -1711,7 +1711,7 @@ export default function MapSelectionPage() {
                         ) : (
                             <div className="space-y-4">
                                 {filteredSelections.map((selection) => (
-                                    <div key={selection.id} className="bg-gray-200 rounded-lg p-4">
+                                    <div key={selection.id} className="bg-gray-200  p-4">
                                         {/* 标题和标签行 */}
                                         <div className="flex items-center justify-between mb-3">
                                             <div className="flex items-center gap-3 flex-1">
@@ -1762,7 +1762,7 @@ export default function MapSelectionPage() {
                                                         <img
                                                             src={selection.coverUrl}
                                                             alt={`${selection.title} cover`}
-                                                            className="w-16 h-16 rounded-lg object-cover"
+                                                            className="w-16 h-16  object-cover"
                                                             onError={(e) => {
                                                                 e.currentTarget.style.display = 'none';
                                                             }}
@@ -1923,7 +1923,7 @@ export default function MapSelectionPage() {
             {/* 批量过审弹窗 */}
             {showBulkApprovalModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+                    <div className="bg-white  p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
                         <h3 className="text-xl font-bold text-gray-800 mb-4">批量过审确认</h3>
                         <p className="text-gray-600 mb-4">
                             以下 {tempApprovedSelections.size} 个选图将被过审并公开，请确认：

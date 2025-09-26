@@ -224,7 +224,7 @@ export default function Navbar() {
                     { name: 'UPLOAD REPLAY', href: '/replay-collection', tip: '测图上传', svg: '/icons/upload.svg' }
                 ] : []),
                 ...(permissions.isAdmin ? [
-                    { name: 'DEBUG', href: '/debug', tip: '系统调试', svg: '/icons/debug.svg' }
+                    { name: 'ADMIN PANEL', href: '/admin', tip: '管理员面板', svg: '/icons/admin-fill.svg' }
                 ] : [])
             ].filter(Boolean)
         }] : [])
@@ -332,9 +332,10 @@ export default function Navbar() {
                                     </li>
                                 ))}
                             </ul>
-                            <MessageNotification />
+
                             {/* User Profile */}
                             <div className="hidden xl:flex items-center ml-4">
+                                <MessageNotification />
                                 {user ? (
                                     <Link href="/player-info">
                                         <img
