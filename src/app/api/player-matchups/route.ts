@@ -34,17 +34,8 @@ export async function GET(request: NextRequest) {
             }, { status: 400 });
         }
 
-        const { searchParams } = new URL(request.url);
-        const roomId = searchParams.get('roomId');
-
-        if (!roomId) {
-            return NextResponse.json({
-                success: false,
-                error: '缺少房间ID'
-            }, { status: 400 });
-        }
-
-        const matchups = await getPlayerMatchups(parseInt(roomId));
+        // 获取所有玩家对战列表
+        const matchups = await getPlayerMatchups();
 
         return NextResponse.json({
             success: true,

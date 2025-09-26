@@ -34,13 +34,13 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { matchup_id } = body;
+        const { matchup_id, room_id } = body;
 
         // 验证必填字段
-        if (!matchup_id) {
+        if (!matchup_id || !room_id) {
             return NextResponse.json({
                 success: false,
-                error: '缺少对战ID'
+                error: '缺少对战ID或房间ID'
             }, { status: 400 });
         }
 
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
         // 创建比赛预约
         const scheduleData = {
-            room_id: matchup.room_id,
+            room_id: parseInt(room_id),
             player1_osuId: matchup.player1_osuId,
             player1_username: matchup.player1_username,
             player2_osuId: matchup.player2_osuId,
