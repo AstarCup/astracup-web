@@ -111,14 +111,9 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
         fetchRooms();
         if (isAdmin) {
             fetchApprovedPlayers();
+            fetchAllMatchups(); // 获取所有玩家对战列表
         }
     }, []);
-
-    useEffect(() => {
-        if (selectedRoomId) {
-            fetchMatchups(selectedRoomId);
-        }
-    }, [selectedRoomId]);
 
     const fetchSchedules = async () => {
         try {
@@ -146,9 +141,9 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
         }
     };
 
-    const fetchMatchups = async (roomId: string) => {
+    const fetchAllMatchups = async () => {
         try {
-            const response = await fetch(`/api/player-matchups?roomId=${roomId}`);
+            const response = await fetch('/api/player-matchups');
             if (response.ok) {
                 const data = await response.json();
                 setMatchups(data.matchups || []);
@@ -183,8 +178,6 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
             if (response.ok) {
                 setShowCreateForm(false);
                 setFormData({ matchup_id: '' });
-                setSelectedRoomId('');
-                setMatchups([]);
                 fetchSchedules();
                 alert('比赛预约创建成功！');
             } else {
@@ -233,19 +226,11 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
     const handleCreateMatchup = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!selectedRoomId) {
-            alert('请先选择房间');
-            return;
-        }
-
         try {
             const response = await fetch('/api/player-matchups', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...matchupFormData,
-                    room_id: selectedRoomId
-                })
+                body: JSON.stringify(matchupFormData)
             });
 
             if (response.ok) {
@@ -256,7 +241,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                     player2_osuId: '',
                     player2_username: ''
                 });
-                fetchMatchups(selectedRoomId);
+                fetchAllMatchups();
                 alert('玩家对战创建成功！');
             } else {
                 const error = await response.json();
@@ -359,38 +344,38 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                     <form onSubmit={handleCreateSchedule} className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-300 mb-1">
-                                选择比赛房间
+                                选择对手配对
                             </label>
                             <select
                                 required
-                                value={selectedRoomId}
-                                onChange={(e) => setSelectedRoomId(e.target.value)}
+                                value={formData.matchup_id}
+                                onChange={(e) => setFormData({ ...formData, matchup_id: e.target.value })}
                                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white mb-4"
                             >
-                                <option value="">请选择比赛房间</option>
-                                {rooms.filter(room => room.status === 'open').map(room => (
-                                    <option key={room.id} value={room.id}>
-                                        {room.room_name} - 第{room.round_number}轮 - 场次{room.match_number} ({room.match_date} {room.match_time})
+                                <option value="">请选择对手配对</option>
+                                {matchups.filter(matchup => matchup.status === 'available' && isUserInMatchup(matchup)).map(matchup => (
+                                    <option key={matchup.id} value={matchup.id}>
+                                        {matchup.player1_username} vs {matchup.player2_username}
                                     </option>
                                 ))}
                             </select>
                         </div>
 
-                        {selectedRoomId && (
+                        {formData.matchup_id && (
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    选择对手
+                                    选择比赛房间
                                 </label>
                                 <select
                                     required
-                                    value={formData.matchup_id}
-                                    onChange={(e) => setFormData({ ...formData, matchup_id: e.target.value })}
+                                    value={selectedRoomId}
+                                    onChange={(e) => setSelectedRoomId(e.target.value)}
                                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
                                 >
-                                    <option value="">请选择对手</option>
-                                    {matchups.filter(matchup => matchup.status === 'available' && isUserInMatchup(matchup)).map(matchup => (
-                                        <option key={matchup.id} value={matchup.id}>
-                                            {matchup.player1_username} vs {matchup.player2_username}
+                                    <option value="">请选择比赛房间</option>
+                                    {rooms.filter(room => room.status === 'open').map(room => (
+                                        <option key={room.id} value={room.id}>
+                                            {room.room_name} - 第{room.round_number}轮 - 场次{room.match_number} ({room.match_date} {room.match_time})
                                         </option>
                                     ))}
                                 </select>
@@ -409,7 +394,6 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                 onClick={() => {
                                     setShowCreateForm(false);
                                     setSelectedRoomId('');
-                                    setMatchups([]);
                                     setFormData({ matchup_id: '' });
                                 }}
                                 className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-md transition-colors duration-200"
@@ -566,25 +550,6 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                 <div className="bg-gray-800 p-4 rounded-lg">
                     <h4 className="text-lg font-bold text-white mb-4">创建玩家对战</h4>
                     <form onSubmit={handleCreateMatchup} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1">
-                                选择房间
-                            </label>
-                            <select
-                                required
-                                value={selectedRoomId}
-                                onChange={(e) => setSelectedRoomId(e.target.value)}
-                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-                            >
-                                <option value="">请选择房间</option>
-                                {rooms.map(room => (
-                                    <option key={room.id} value={room.id}>
-                                        {room.room_name} - 第{room.round_number}轮 - 场次{room.match_number}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -755,10 +720,10 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
             </div>
 
             {/* 玩家对战列表（管理员可见） */}
-            {isAdmin && selectedRoomId && matchups.length > 0 && (
+            {isAdmin && matchups.length > 0 && (
                 <div className="bg-gray-800 p-4 rounded-lg">
                     <h4 className="text-lg font-bold text-white mb-4">
-                        {rooms.find(r => r.id === parseInt(selectedRoomId))?.room_name} - 玩家对战列表
+                        玩家对战列表
                     </h4>
                     <div className="space-y-2">
                         {matchups.map((matchup) => (

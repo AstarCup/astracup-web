@@ -92,7 +92,6 @@ export async function POST(request: NextRequest) {
 
         const body = await request.json();
         const {
-            room_id,
             player1_osuId,
             player1_username,
             player2_osuId,
@@ -100,7 +99,7 @@ export async function POST(request: NextRequest) {
         } = body;
 
         // 验证必填字段
-        if (!room_id || !player1_osuId || !player1_username || !player2_osuId || !player2_username) {
+        if (!player1_osuId || !player1_username || !player2_osuId || !player2_username) {
             return NextResponse.json({
                 success: false,
                 error: '缺少必要字段'
@@ -109,7 +108,6 @@ export async function POST(request: NextRequest) {
 
         // 创建玩家对战
         const matchupData = {
-            room_id: parseInt(room_id),
             player1_osuId,
             player1_username,
             player2_osuId,

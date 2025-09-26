@@ -99,6 +99,19 @@ export default function PlayerInfoPage() {
         fetchUserData();
     }, [router]);
 
+    // 格式化日期函数
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        // 转换为东八区时间
+        const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
+        const cstTime = new Date(utcTime + (8 * 3600000));
+        return cstTime.toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+    };
+
     const handleLogout = async () => {
         try {
             await fetch('/api/auth/logout', { method: 'POST' });
@@ -111,35 +124,6 @@ export default function PlayerInfoPage() {
     const formatRank = (rank: number | null) => {
         if (rank === null) return "未排名";
         return `#${rank.toLocaleString()}`;
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('zh-CN');
-    };
-
-    const formatMatchDate = (dateString: string) => {
-        // 假设数据库中的时间已经是UTC，转换为+8时区显示
-        const date = new Date(dateString);
-        return date.toLocaleDateString('zh-CN', {
-            timeZone: 'Asia/Shanghai',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
-    };
-
-    const formatMatchTime = (timeString: string) => {
-        // 假设数据库中的时间已经是UTC，转换为+8时区显示
-        const [hours, minutes] = timeString.split(':');
-        const date = new Date();
-        date.setUTCHours(parseInt(hours), parseInt(minutes), 0, 0);
-
-        return date.toLocaleTimeString('zh-CN', {
-            timeZone: 'Asia/Shanghai',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        });
     };
 
     const handleRequestMatch = async () => {
@@ -428,11 +412,11 @@ export default function PlayerInfoPage() {
                                                         </div>
                                                         <div className="flex justify-between">
                                                             <span>日期:</span>
-                                                            <span className="text-white">{formatMatchDate(room.match_date)}</span>
+                                                            <span className="text-white">{formatDate(room.match_date)}</span>
                                                         </div>
                                                         <div className="flex justify-between">
                                                             <span>时间:</span>
-                                                            <span className="text-white">{formatMatchTime(room.match_time)}</span>
+                                                            <span className="text-white">{room.match_time}</span>
                                                         </div>
                                                         <div className="flex justify-between">
                                                             <span>房间号:</span>
@@ -464,6 +448,7 @@ export default function PlayerInfoPage() {
                                         </div>
                                     </div>
                                 )}
+
                             </div>
                         ) : (
                             <div className="bg-gray-700/50 rounded-lg p-6 text-center">
