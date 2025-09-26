@@ -332,9 +332,10 @@ export default function Navbar() {
                                     </li>
                                 ))}
                             </ul>
-                            <MessageNotification />
+
                             {/* User Profile */}
                             <div className="hidden xl:flex items-center ml-4">
+                                <MessageNotification />
                                 {user ? (
                                     <Link href="/player-info">
                                         <img
