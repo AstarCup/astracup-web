@@ -465,6 +465,13 @@ export default function AdminPage() {
         }
     }, [activeTab, permissions.isAdmin]);
 
+    // 当切换到用户管理选项卡时获取用户列表
+    useEffect(() => {
+        if (activeTab === 'users' && permissions.isAdmin) {
+            fetchRegistrations();
+        }
+    }, [activeTab, permissions.isAdmin]);
+
     // 获取注册用户列表
     const fetchRegistrations = async () => {
         try {
