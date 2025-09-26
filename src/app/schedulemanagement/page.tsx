@@ -1284,8 +1284,8 @@ export default function AdminPage() {
                                                     {/* 玩家1 */}
                                                     <div className="bg-[#1a1a1a] p-3 rounded">
                                                         <div className="flex items-center mb-1">
-                                                            <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-                                                            <span className="text-xs text-gray-400">玩家 1</span>
+                                                            <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                                                            <span className="text-xs text-gray-400">红方</span>
                                                         </div>
                                                         <div className="flex items-center">
                                                             <img
@@ -1311,8 +1311,8 @@ export default function AdminPage() {
                                                     {/* 玩家2 */}
                                                     <div className="bg-[#1a1a1a] p-3 rounded">
                                                         <div className="flex items-center mb-1">
-                                                            <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-                                                            <span className="text-xs text-gray-400">玩家 2</span>
+                                                            <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                                                            <span className="text-xs text-gray-400">蓝方</span>
                                                         </div>
                                                         <div className="flex items-center">
                                                             <img
