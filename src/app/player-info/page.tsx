@@ -6,6 +6,7 @@ import { UserSession } from '@/lib/session';
 import { UserPermissions } from '@/lib/permissions';
 import { getUserPermissions } from '@/lib/permissions';
 import MatchScheduleSystem from '@/app/components/MatchScheduleSystem';
+import MessageNotification from '@/app/components/MessageNotification';
 import localFont from "next/font/local";
 import Link from 'next/link';
 import Image from 'next/image';
@@ -31,6 +32,29 @@ interface Registration {
     approvedAt: string | null;
 }
 
+interface NextMatch {
+    id: number;
+    room: {
+        id: number;
+        room_name: string;
+        round_number: number;
+        match_date: string;
+        match_time: string;
+        match_number: number;
+        max_participants: number;
+        status: 'open' | 'full' | 'closed';
+        description?: string;
+        created_by: string;
+        created_at: string;
+        updated_at: string;
+    };
+    opponent: {
+        osuId: string;
+        username: string;
+    };
+    status: 'available' | 'scheduled' | 'completed';
+}
+
 export default function PlayerInfoPage() {
     const router = useRouter();
     const [user, setUser] = useState<UserSession | null>(null);
@@ -40,6 +64,8 @@ export default function PlayerInfoPage() {
         isAdmin: false
     });
     const [registration, setRegistration] = useState<Registration | null>(null);
+    const [nextMatch, setNextMatch] = useState<NextMatch | null>(null);
+    const [requestingMatch, setRequestingMatch] = useState(false);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -65,6 +91,13 @@ export default function PlayerInfoPage() {
                 if (registrationResponse.ok) {
                     const registrationData = await registrationResponse.json();
                     setRegistration(registrationData.registration);
+                }
+
+                // 获取下一轮对战信息
+                const nextMatchResponse = await fetch('/api/player-next-match');
+                if (nextMatchResponse.ok) {
+                    const nextMatchData = await nextMatchResponse.json();
+                    setNextMatch(nextMatchData.nextMatch);
                 }
             } catch (error) {
                 console.error('Failed to fetch user data:', error);
@@ -95,6 +128,42 @@ export default function PlayerInfoPage() {
         return new Date(dateString).toLocaleDateString('zh-CN');
     };
 
+    const handleRequestMatch = async () => {
+        if (!nextMatch) return;
+
+        try {
+            setRequestingMatch(true);
+            const response = await fetch('/api/request-match', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    matchupId: nextMatch.id
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(data.message);
+                // 刷新下一轮对战信息
+                const nextMatchResponse = await fetch('/api/player-next-match');
+                if (nextMatchResponse.ok) {
+                    const nextMatchData = await nextMatchResponse.json();
+                    setNextMatch(nextMatchData.nextMatch);
+                }
+            } else {
+                alert(`预约失败: ${data.error}`);
+            }
+        } catch (error) {
+            console.error('Error requesting match:', error);
+            alert('预约对战时发生错误');
+        } finally {
+            setRequestingMatch(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
@@ -123,12 +192,15 @@ export default function PlayerInfoPage() {
                             </Link>
                             <h1 className="text-2xl font-bold text-white">玩家信息</h1>
                         </div>
-                        <Link
-                            href="/"
-                            className="text-gray-300 hover:text-white transition-colors duration-200"
-                        >
-                            返回首页
-                        </Link>
+                        <div className="flex items-center space-x-4">
+                            <MessageNotification />
+                            <Link
+                                href="/"
+                                className="text-gray-300 hover:text-white transition-colors duration-200"
+                            >
+                                返回首页
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -224,6 +296,81 @@ export default function PlayerInfoPage() {
                             </div>
                         ) : (
                             <p className="text-gray-400">未找到注册信息</p>
+                        )}
+                    </div>
+
+                    {/* 下一轮对战信息 */}
+                    <div className="mb-8">
+                        <h3 className="text-xl font-bold text-white mb-4">下一轮对战</h3>
+                        {nextMatch ? (
+                            <div className="bg-gray-700/50 rounded-lg p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h4 className="text-lg font-bold text-white">{nextMatch.room.room_name}</h4>
+                                        <p className="text-gray-300">
+                                            第{nextMatch.room.round_number}轮 - 房间号 {nextMatch.room.match_number}
+                                        </p>
+                                        <p className="text-gray-300">
+                                            {nextMatch.room.match_date} {nextMatch.room.match_time}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${nextMatch.status === 'available' ? 'bg-green-600 text-white' :
+                                            nextMatch.status === 'scheduled' ? 'bg-blue-600 text-white' :
+                                                'bg-gray-600 text-white'
+                                            }`}>
+                                            {nextMatch.status === 'available' ? '可预约' :
+                                                nextMatch.status === 'scheduled' ? '已预约' : '已完成'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-center space-x-8">
+                                    {/* 当前玩家 */}
+                                    <div className="text-center">
+                                        <img
+                                            src={user.avatar_url}
+                                            alt={user.username}
+                                            width={60}
+                                            height={60}
+                                            className="rounded-full mx-auto mb-2 outline outline-2 outline-[#E93B66]"
+                                            onError={(e) => {
+                                                e.currentTarget.src = '/default-avatar.png';
+                                            }}
+                                        />
+                                        <p className="text-white font-medium">{user.username}</p>
+                                        <p className="text-gray-400 text-sm">你</p>
+                                    </div>
+
+                                    {/* VS */}
+                                    <div className="text-white text-2xl font-bold">VS</div>
+
+                                    {/* 对手 */}
+                                    <div className="text-center">
+                                        <div className="w-15 h-15 bg-gray-600 rounded-full mx-auto mb-2 flex items-center justify-center">
+                                            <span className="text-gray-300 text-2xl">?</span>
+                                        </div>
+                                        <p className="text-white font-medium">{nextMatch.opponent.username}</p>
+                                        <p className="text-gray-400 text-sm">对手</p>
+                                    </div>
+                                </div>
+
+                                {nextMatch.status === 'available' && (
+                                    <div className="mt-4 text-center">
+                                        <button
+                                            className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-2 rounded-lg transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                            onClick={handleRequestMatch}
+                                            disabled={requestingMatch}
+                                        >
+                                            {requestingMatch ? '预约中...' : '预约对战'}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="bg-gray-700/50 rounded-lg p-6 text-center">
+                                <p className="text-gray-400">暂无下一轮对战安排</p>
+                            </div>
                         )}
                     </div>
 

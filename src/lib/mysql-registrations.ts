@@ -130,6 +130,32 @@ export const initDatabase = async (): Promise<void> => {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
 
+        // 创建消息通知表（如果不存在）
+        await connection.execute(`
+            CREATE TABLE IF NOT EXISTS messages (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                sender_osuId VARCHAR(255) NOT NULL COMMENT '发送者osuId',
+                sender_username VARCHAR(255) NOT NULL COMMENT '发送者用户名',
+                receiver_osuId VARCHAR(255) NOT NULL COMMENT '接收者osuId',
+                receiver_username VARCHAR(255) NOT NULL COMMENT '接收者用户名',
+                type ENUM('match_invitation', 'match_response', 'system') DEFAULT 'system' COMMENT '消息类型',
+                title VARCHAR(255) NOT NULL COMMENT '消息标题',
+                content TEXT NOT NULL COMMENT '消息内容',
+                related_matchup_id INT NULL COMMENT '相关对战ID',
+                status ENUM('unread', 'read', 'responded') DEFAULT 'unread' COMMENT '消息状态',
+                response_action VARCHAR(50) NULL COMMENT '响应动作：accept/decline',
+                response_time DATETIME NULL COMMENT '响应时间',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (related_matchup_id) REFERENCES player_matchups(id) ON DELETE SET NULL,
+                INDEX idx_receiver (receiver_osuId),
+                INDEX idx_sender (sender_osuId),
+                INDEX idx_type (type),
+                INDEX idx_status (status),
+                INDEX idx_related_matchup (related_matchup_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
         // 检查并添加缺失的字段（表结构升级）
         const requiredColumns = [
             { name: 'approved', type: 'BOOLEAN DEFAULT FALSE COMMENT \'审核状态：0-待审核，1-审核通过\'' },
@@ -217,6 +243,24 @@ export interface MatchSchedule {
     updated_at: string;
     room?: MatchRoom; // 关联的房间信息
 }
+
+export interface Message {
+    id: number;
+    sender_osuId: string;
+    sender_username: string;
+    receiver_osuId: string;
+    receiver_username: string;
+    type: 'match_invitation' | 'match_response' | 'system';
+    title: string;
+    content: string;
+    related_matchup_id?: number;
+    status: 'unread' | 'read' | 'responded';
+    response_action?: string;
+    response_time?: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface Registration {
     osuId: string;
     username: string;
@@ -699,6 +743,92 @@ const mysqlStorage = {
         }
     },
 
+    // 创建消息通知
+    createMessage: async (message: Omit<Message, 'id' | 'created_at' | 'updated_at'>): Promise<number> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(
+                `INSERT INTO messages (
+                    sender_osuId, sender_username, receiver_osuId, receiver_username,
+                    type, title, content, related_matchup_id, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    message.sender_osuId, message.sender_username, message.receiver_osuId, message.receiver_username,
+                    message.type, message.title, message.content, message.related_matchup_id, message.status
+                ]
+            );
+
+            connection.release();
+
+            return (result as any).insertId;
+        } catch (error) {
+            console.error('Error creating message:', error);
+            throw error;
+        }
+    },
+
+    // 获取用户消息
+    getUserMessages: async (osuId: string): Promise<Message[]> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [rows] = await connection.execute(
+                'SELECT * FROM messages WHERE receiver_osuId = ? ORDER BY created_at DESC',
+                [osuId]
+            );
+
+            connection.release();
+
+            return (rows as any[]).map(row => ({
+                id: row.id,
+                sender_osuId: row.sender_osuId,
+                sender_username: row.sender_username,
+                receiver_osuId: row.receiver_osuId,
+                receiver_username: row.receiver_username,
+                type: row.type,
+                title: row.title,
+                content: row.content,
+                related_matchup_id: row.related_matchup_id,
+                status: row.status,
+                response_action: row.response_action,
+                response_time: row.response_time ? new Date(row.response_time).toISOString() : null,
+                created_at: new Date(row.created_at).toISOString(),
+                updated_at: new Date(row.updated_at).toISOString()
+            }));
+        } catch (error) {
+            console.error('Error getting user messages:', error);
+            return [];
+        }
+    },
+
+    // 更新消息状态
+    updateMessageStatus: async (id: number, status: Message['status'], response_action?: string): Promise<boolean> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            let query = 'UPDATE messages SET status = ?, updated_at = CURRENT_TIMESTAMP';
+            let params: any[] = [status];
+
+            if (response_action) {
+                query += ', response_action = ?, response_time = CURRENT_TIMESTAMP';
+                params.push(response_action);
+            }
+
+            query += ' WHERE id = ?';
+            params.push(id);
+
+            const [result] = await connection.execute(query, params);
+
+            connection.release();
+
+            return (result as any).affectedRows > 0;
+        } catch (error) {
+            console.error('Error updating message status:', error);
+            return false;
+        }
+    },
+
     // 获取用户相关的比赛预约
     getUserMatchSchedules: async (osuId: string): Promise<MatchSchedule[]> => {
         try {
@@ -907,6 +1037,11 @@ export const createPlayerMatchup = mysqlStorage.createPlayerMatchup;
 export const getPlayerMatchups = mysqlStorage.getPlayerMatchups;
 export const updatePlayerMatchupStatus = mysqlStorage.updatePlayerMatchupStatus;
 export const deletePlayerMatchup = mysqlStorage.deletePlayerMatchup;
+
+// 消息通知相关导出
+export const createMessage = mysqlStorage.createMessage;
+export const getUserMessages = mysqlStorage.getUserMessages;
+export const updateMessageStatus = mysqlStorage.updateMessageStatus;
 
 // 默认导出初始化函数
 export default initDatabase;
