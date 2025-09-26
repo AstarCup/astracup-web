@@ -180,6 +180,37 @@ export const initDatabase = async (): Promise<void> => {
             }
         }
 
+        // 检查并移除 player_matchups 表中不需要的字段
+        try {
+            // 检查 room_id 字段是否存在，如果存在则修改为可为NULL
+            const [roomIdColumns] = await connection.execute(
+                `SHOW COLUMNS FROM player_matchups LIKE 'room_id'`
+            );
+
+            if ((roomIdColumns as any[]).length > 0) {
+                console.log('Modifying room_id column in player_matchups table to allow NULL');
+
+                // 先删除外键约束（如果存在）
+                try {
+                    await connection.execute(
+                        `ALTER TABLE player_matchups DROP FOREIGN KEY player_matchups_ibfk_1`
+                    );
+                    console.log('✅ Foreign key constraint removed');
+                } catch (fkError) {
+                    console.log('Foreign key constraint might not exist or already removed, continuing...');
+                }
+
+                // 修改字段为可为NULL
+                await connection.execute(
+                    `ALTER TABLE player_matchups MODIFY COLUMN room_id INT NULL`
+                );
+                console.log('✅ Column room_id modified to allow NULL values');
+            }
+        } catch (columnError) {
+            console.error('Error modifying room_id column in player_matchups:', columnError);
+            // 继续处理，不中断整个初始化过程
+        }
+
         connection.release();
         console.log('Database initialized and upgraded successfully');
     } catch (error) {
