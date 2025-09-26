@@ -253,6 +253,57 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
         }
     };
 
+    const handleDeleteRoom = async (roomId: number, roomName: string) => {
+        if (!confirm(`确定要删除房间 "${roomName}" 吗？\n\n注意：删除房间将同时删除该房间的所有比赛预约！`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/match-rooms/delete', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: roomId })
+            });
+
+            if (response.ok) {
+                fetchRooms();
+                fetchSchedules();
+                alert('房间删除成功！');
+            } else {
+                const error = await response.json();
+                alert(error.error || '删除失败');
+            }
+        } catch (error) {
+            console.error('Error deleting room:', error);
+            alert('删除失败，请重试');
+        }
+    };
+
+    const handleDeleteMatchup = async (matchupId: number, player1: string, player2: string) => {
+        if (!confirm(`确定要删除对战 "${player1} vs ${player2}" 吗？`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/player-matchups/delete', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: matchupId })
+            });
+
+            if (response.ok) {
+                fetchAllMatchups();
+                alert('对战删除成功！');
+            } else {
+                const error = await response.json();
+                alert(error.error || '删除失败');
+            }
+        } catch (error) {
+            console.error('Error deleting matchup:', error);
+            alert('删除失败，请重试');
+        }
+    };
+
     const handleUpdateStatus = async (scheduleId: number, status: MatchSchedule['status']) => {
         try {
             const response = await fetch('/api/match-schedules/update', {
@@ -713,6 +764,15 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                         标记完成
                                     </button>
                                 )}
+
+                                {isAdmin && (
+                                    <button
+                                        onClick={() => handleDeleteRoom(schedule.room_id, schedule.room?.room_name || `房间 ${schedule.room_id}`)}
+                                        className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-sm"
+                                    >
+                                        删除房间
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))
@@ -736,9 +796,18 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                         ID: {matchup.player1_osuId} vs {matchup.player2_osuId}
                                     </p>
                                 </div>
-                                <span className={`px-2 py-1 text-sm rounded ${getMatchupStatusColor(matchup.status)}`}>
-                                    {getMatchupStatusText(matchup.status)}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span className={`px-2 py-1 text-sm rounded ${getMatchupStatusColor(matchup.status)}`}>
+                                        {getMatchupStatusText(matchup.status)}
+                                    </span>
+                                    <button
+                                        onClick={() => handleDeleteMatchup(matchup.id, matchup.player1_username, matchup.player2_username)}
+                                        className="bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-sm"
+                                        title="删除对战"
+                                    >
+                                        删除
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>

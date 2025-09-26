@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { getPlayerMatchups } from '@/lib/mysql-registrations';
+import { getPlayerMatchups, getUserRegistration } from '@/lib/mysql-registrations';
 
 export async function GET(request: NextRequest) {
     try {
@@ -53,19 +53,32 @@ export async function GET(request: NextRequest) {
             .filter(matchup => matchup.status === 'available')
             .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0];
 
+        if (!availableMatchup) {
+            return NextResponse.json({
+                success: true,
+                nextMatch: null
+            });
+        }
+
+        // 获取对手信息
+        const opponentOsuId = availableMatchup.player1_osuId === userOsuId
+            ? availableMatchup.player2_osuId
+            : availableMatchup.player1_osuId;
+
+        const opponentRegistration = await getUserRegistration(opponentOsuId);
+
         return NextResponse.json({
             success: true,
-            nextMatch: availableMatchup ? {
+            nextMatch: {
                 id: availableMatchup.id,
-                opponent: availableMatchup.player1_osuId === userOsuId ? {
-                    osuId: availableMatchup.player2_osuId,
-                    username: availableMatchup.player2_username
-                } : {
-                    osuId: availableMatchup.player1_osuId,
-                    username: availableMatchup.player1_username
+                opponent: {
+                    osuId: opponentOsuId,
+                    username: opponentRegistration?.inGameName || opponentRegistration?.username ||
+                        (availableMatchup.player1_osuId === userOsuId ? availableMatchup.player2_username : availableMatchup.player1_username),
+                    avatar_url: opponentRegistration?.avatar_url || null
                 },
                 status: availableMatchup.status
-            } : null
+            }
         });
     } catch (error) {
         console.error('Error getting player next match:', error);

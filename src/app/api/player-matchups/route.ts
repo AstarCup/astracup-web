@@ -34,12 +34,26 @@ export async function GET(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // 获取所有玩家对战列表
-        const matchups = await getPlayerMatchups();
+        // 检查用户权限
+        const permissions = await getUserPermissions(userOsuId);
+
+        // 获取玩家对战列表
+        const allMatchups = await getPlayerMatchups();
+
+        let userMatchups;
+        if (permissions.isAdmin) {
+            // 管理员可以看到所有配对
+            userMatchups = allMatchups;
+        } else {
+            // 普通用户只能看到自己相关的配对
+            userMatchups = allMatchups.filter(matchup =>
+                matchup.player1_osuId === userOsuId || matchup.player2_osuId === userOsuId
+            );
+        }
 
         return NextResponse.json({
             success: true,
-            matchups
+            matchups: userMatchups
         });
     } catch (error) {
         console.error('Error getting player matchups:', error);

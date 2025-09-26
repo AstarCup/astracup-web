@@ -38,6 +38,7 @@ interface NextMatch {
     opponent: {
         osuId: string;
         username: string;
+        avatar_url: string | null;
     };
     status: 'available' | 'scheduled' | 'completed';
 }
@@ -187,7 +188,7 @@ export default function PlayerInfoPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+            <div className="min-h-screen from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
                 <div className="text-white text-xl">加载中...</div>
             </div>
         );
@@ -195,14 +196,14 @@ export default function PlayerInfoPage() {
 
     if (!user) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+            <div className="min-h-screen from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
                 <div className="text-white text-xl">未登录</div>
             </div>
         );
     }
 
     return (
-        <div className={`${audiowide.className} min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900`}>
+        <div className={`${audiowide.className} min-h-screen from-gray-900 via-gray-800 to-gray-900`}>
             {/* Header */}
             <div className="bg-black/20 backdrop-blur-sm border-b border-gray-700">
                 <div className="max-w-7xl mx-auto px-4 py-4">
@@ -363,9 +364,16 @@ export default function PlayerInfoPage() {
 
                                     {/* 对手 */}
                                     <div className="text-center">
-                                        <div className="w-15 h-15 bg-gray-600 rounded-full mx-auto mb-2 flex items-center justify-center">
-                                            <span className="text-gray-300 text-2xl">?</span>
-                                        </div>
+                                        <img
+                                            src={nextMatch.opponent.avatar_url || '/default-avatar.png'}
+                                            alt={nextMatch.opponent.username}
+                                            width={60}
+                                            height={60}
+                                            className="rounded-full mx-auto mb-2 outline outline-2 outline-[#3BE9D8]"
+                                            onError={(e) => {
+                                                e.currentTarget.src = '/default-avatar.png';
+                                            }}
+                                        />
                                         <p className="text-white font-medium">{nextMatch.opponent.username}</p>
                                         <p className="text-gray-400 text-sm">对手</p>
                                     </div>
@@ -397,8 +405,8 @@ export default function PlayerInfoPage() {
                                                     <div className="flex justify-between items-start mb-3">
                                                         <h5 className="text-white font-bold text-lg">{room.room_name}</h5>
                                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${room.status === 'open' ? 'bg-green-600 text-white' :
-                                                                room.status === 'full' ? 'bg-red-600 text-white' :
-                                                                    'bg-gray-600 text-white'
+                                                            room.status === 'full' ? 'bg-red-600 text-white' :
+                                                                'bg-gray-600 text-white'
                                                             }`}>
                                                             {room.status === 'open' ? '可预约' :
                                                                 room.status === 'full' ? '已满' : '关闭'}
