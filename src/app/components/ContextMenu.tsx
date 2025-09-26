@@ -57,7 +57,7 @@ export default function ContextMenu({ items, position, onClose }: ContextMenuPro
     return (
         <div
             ref={menuRef}
-            className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg py-1 min-w-48"
+            className="fixed z-50 bg-white border border-gray-300  shadow-lg py-1 min-w-48"
             style={{
                 left: position.x,
                 top: position.y,

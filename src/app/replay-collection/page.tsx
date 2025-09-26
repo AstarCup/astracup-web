@@ -471,7 +471,7 @@ export default function ReplayCollectionPage() {
                             {getFilteredMaps().map(map => (
                                 <div
                                     key={map.id}
-                                    className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''
+                                    className={`border  p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''
                                         }`}
                                     style={{
                                         backgroundImage: `url(https://assets.ppy.sh/beatmaps/${map.SID}/covers/cover.jpg)`,
@@ -587,7 +587,7 @@ export default function ReplayCollectionPage() {
 
                                         {/* 上传中遮罩 */}
                                         {uploading && (
-                                            <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg z-30">
+                                            <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center  z-30">
                                                 <div className="text-sm text-blue-600 bg-white px-3 py-2 rounded shadow-lg">上传中...</div>
                                             </div>
                                         )}
@@ -603,7 +603,7 @@ export default function ReplayCollectionPage() {
                             <h3 className="text-xl font-bold">下载全部回放</h3>
                             <button
                                 onClick={handleDownloadAllReplays}
-                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center gap-2"
+                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white  transition-colors flex items-center gap-2"
                                 disabled={downloadingAll}
                             >
                                 {downloadingAll ? (

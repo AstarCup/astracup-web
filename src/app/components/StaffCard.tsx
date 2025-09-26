@@ -59,7 +59,7 @@ export default function StaffCard({ member }: StaffCardProps) {
                 </p>
 
                 {/* osu! ID */}
-                <div className="flex items-center bg-[#3A3A3A] rounded-lg px-3 py-2">
+                <div className="flex items-center bg-[#3A3A3A]  px-3 py-2">
                     <span className="text-gray-400 text-xs mr-2">ID:</span>
                     <span className="text-white font-mono text-sm">{member.osuId}</span>
                 </div>

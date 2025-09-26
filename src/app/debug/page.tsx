@@ -240,7 +240,7 @@ export default function DebugPage() {
     if (!userSession || (userSession && !isAdmin)) {
         return (
             <div className="min-h-screen bg-gray-50 py-12">
-                <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8 text-center">
+                <div className="max-w-4xl mx-auto bg-white  shadow-md p-8 text-center">
                     <h1 className="text-3xl font-bold text-red-600 mb-6">
                         {!userSession ? '请先登录' : '权限不足'}
                     </h1>
@@ -263,7 +263,7 @@ export default function DebugPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 py-12">
-            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8">
+            <div className="max-w-4xl mx-auto bg-white  shadow-md p-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-6">调试面板 - 管理员权限</h1>
 
 
@@ -534,7 +534,7 @@ export default function DebugPage() {
                             {/* 编辑模态框 */}
                             {editingStaff && (
                                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                                    <div className="bg-white rounded-lg p-6 w-96 max-h-96 overflow-y-auto">
+                                    <div className="bg-white  p-6 w-96 max-h-96 overflow-y-auto">
                                         <h3 className="text-lg font-bold mb-4">编辑 Staff 信息</h3>
 
                                         <div className="space-y-3">

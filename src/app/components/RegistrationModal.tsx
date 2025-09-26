@@ -129,7 +129,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
     if (success) {
         return (
             <div className="fixed inset-0 bg-black bg-opacity-100 flex items-center justify-center z-[9999] p-4">
-                <div className="bg-white rounded-lg max-w-md w-full p-8 text-center">
+                <div className="bg-white  max-w-md w-full p-8 text-center">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -160,7 +160,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
     if (configLoading || edgeConfigLoading) {
         return (
             <div className="fixed inset-0 bg-black bg-opacity-100 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-lg max-w-2xl w-full p-6 text-center">
+                <div className="bg-white  max-w-2xl w-full p-6 text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                     <h2 className="text-xl font-semibold text-gray-900 mb-2">正在加载配置信息</h2>
                     <p className="text-gray-600">请稍候...</p>
@@ -171,7 +171,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-100 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-white  max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-2xl font-bold text-gray-900">比赛报名确认</h2>

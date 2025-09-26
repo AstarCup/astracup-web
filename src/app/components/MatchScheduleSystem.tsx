@@ -379,82 +379,8 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
         <div className={`${audiowide.className} space-y-4`}>
             {/* 标题和创建按钮 */}
             <div className="flex justify-between items-center">
-                <h3 className="text-xl font-bold text-white">比赛预约系统</h3>
-                <button
-                    onClick={() => setShowCreateForm(!showCreateForm)}
-                    className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-4 py-2 rounded-md transition-colors duration-200"
-                >
-                    {showCreateForm ? '取消' : '预约比赛'}
-                </button>
+                <h3 className="text-xl font-bold text-white">比赛预约</h3>
             </div>
-
-            {/* 创建预约表单 */}
-            {showCreateForm && (
-                <div className="bg-gray-800 p-4 rounded-lg">
-                    <h4 className="text-lg font-bold text-white mb-4">创建比赛预约</h4>
-                    <form onSubmit={handleCreateSchedule} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1">
-                                选择对手配对
-                            </label>
-                            <select
-                                required
-                                value={formData.matchup_id}
-                                onChange={(e) => setFormData({ ...formData, matchup_id: e.target.value })}
-                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white mb-4"
-                            >
-                                <option value="">请选择对手配对</option>
-                                {matchups.filter(matchup => matchup.status === 'available' && isUserInMatchup(matchup)).map(matchup => (
-                                    <option key={matchup.id} value={matchup.id}>
-                                        {matchup.player1_username} vs {matchup.player2_username}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {formData.matchup_id && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    选择比赛房间
-                                </label>
-                                <select
-                                    required
-                                    value={selectedRoomId}
-                                    onChange={(e) => setSelectedRoomId(e.target.value)}
-                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-                                >
-                                    <option value="">请选择比赛房间</option>
-                                    {rooms.filter(room => room.status === 'open').map(room => (
-                                        <option key={room.id} value={room.id}>
-                                            {room.room_name} - 第{room.round_number}轮 - 场次{room.match_number} ({room.match_date} {room.match_time})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-
-                        <div className="flex gap-2">
-                            <button
-                                type="submit"
-                                className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-4 py-2 rounded-md transition-colors duration-200"
-                            >
-                                创建预约
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowCreateForm(false);
-                                    setSelectedRoomId('');
-                                    setFormData({ matchup_id: '' });
-                                }}
-                                className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-md transition-colors duration-200"
-                            >
-                                取消
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
 
             {/* 管理员创建房间表单 */}
             {isAdmin && (
@@ -479,7 +405,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
 
             {/* 创建房间表单 */}
             {showRoomForm && isAdmin && (
-                <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="bg-gray-800 p-4 ">
                     <h4 className="text-lg font-bold text-white mb-4">创建比赛房间</h4>
                     <form onSubmit={handleCreateRoom} className="space-y-4">
                         <div>
@@ -598,7 +524,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
 
             {/* 创建对战表单 */}
             {showMatchupForm && isAdmin && (
-                <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="bg-gray-800 p-4 ">
                     <h4 className="text-lg font-bold text-white mb-4">创建玩家对战</h4>
                     <form onSubmit={handleCreateMatchup} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
@@ -706,7 +632,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                     </div>
                 ) : (
                     schedules.map((schedule) => (
-                        <div key={schedule.id} className="bg-gray-800 p-4 rounded-lg">
+                        <div key={schedule.id} className="bg-gray-800 p-4 ">
                             <div className="flex justify-between items-start mb-2">
                                 <div>
                                     <h4 className="text-lg font-bold text-white">
@@ -781,7 +707,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
 
             {/* 玩家对战列表（管理员可见） */}
             {isAdmin && matchups.length > 0 && (
-                <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="bg-gray-800 p-4 ">
                     <h4 className="text-lg font-bold text-white mb-4">
                         玩家对战列表
                     </h4>

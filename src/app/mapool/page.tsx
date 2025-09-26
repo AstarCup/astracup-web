@@ -156,7 +156,7 @@ export default function Mapool() {
     if (error) {
         return (
             <div className="max-w-9xl mx-auto p-6">
-                <div className="bg-red-500/20 border border-red-500 rounded-lg p-4 mb-6">
+                <div className="bg-red-500/20 border border-red-500  p-4 mb-6">
                     <p className="text-white">{error}</p>
                 </div>
             </div>

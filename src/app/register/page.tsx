@@ -113,7 +113,7 @@ export default function Login() {
                         <button
                             onClick={handleOsuLogin}
                             disabled={isLoading}
-                            className={`px-8 py-4 rounded-lg text-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF66AA] ${!isLoading
+                            className={`px-8 py-4  text-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF66AA] ${!isLoading
                                 ? 'bg-[#FF66AA] text-white hover:bg-[#FF4488]'
                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 }`}
