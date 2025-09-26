@@ -266,10 +266,10 @@ export default function PlayerInfoPage() {
                                             <span className="font-medium">全球排名:</span> {formatRank(user.global_rank)}
                                         </div>
                                         <div>
-                                            <span className="font-medium">国家排名:</span> {formatRank(user.country_rank)}
+                                            <span className="font-medium">地区排名:</span> {formatRank(user.country_rank)}
                                         </div>
                                         <div>
-                                            <span className="font-medium">国家:</span> {user.country || '未知'}
+                                            <span className="font-medium">地区:</span> {user.country || '未知'}
                                         </div>
                                     </div>
                                 </div>
