@@ -47,7 +47,7 @@ export default function BulkDownloadManager({
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="bg-white  p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold text-gray-800">批量下载管理器</h2>
                     <button
@@ -81,7 +81,7 @@ export default function BulkDownloadManager({
                 {/* 下载列表 */}
                 <div className="space-y-2 mb-6 max-h-96 overflow-y-auto">
                     {items.map((item, index) => (
-                        <div key={item.sid} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div key={item.sid} className="flex items-center justify-between p-3 bg-gray-50 ">
                             <div className="flex-1 min-w-0">
                                 <div className="text-sm font-medium text-gray-900 truncate">
                                     {item.artist} - {item.title}
@@ -136,14 +136,14 @@ export default function BulkDownloadManager({
                         <button
                             onClick={onCancelDownload}
                             disabled={!isDownloading}
-                            className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 text-gray-600 border border-gray-300  hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             取消下载
                         </button>
                         <button
                             onClick={() => onStartDownload(downloadSource)}
                             disabled={isDownloading || totalCount === 0}
-                            className="px-4 py-2 bg-[#E93B66] text-white rounded-lg hover:bg-[#95E1D3] disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-[#E93B66] text-white  hover:bg-[#95E1D3] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isDownloading ? '下载中...' : `开始下载 (${downloadSource === 'sayobot' ? 'Sayobot' : 'osu官方'})`}
                         </button>

@@ -390,7 +390,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
 
             {/* 创建预约表单 */}
             {showCreateForm && (
-                <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="bg-gray-800 p-4 ">
                     <h4 className="text-lg font-bold text-white mb-4">创建比赛预约</h4>
                     <form onSubmit={handleCreateSchedule} className="space-y-4">
                         <div>
@@ -479,7 +479,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
 
             {/* 创建房间表单 */}
             {showRoomForm && isAdmin && (
-                <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="bg-gray-800 p-4 ">
                     <h4 className="text-lg font-bold text-white mb-4">创建比赛房间</h4>
                     <form onSubmit={handleCreateRoom} className="space-y-4">
                         <div>
@@ -598,7 +598,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
 
             {/* 创建对战表单 */}
             {showMatchupForm && isAdmin && (
-                <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="bg-gray-800 p-4 ">
                     <h4 className="text-lg font-bold text-white mb-4">创建玩家对战</h4>
                     <form onSubmit={handleCreateMatchup} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
@@ -706,7 +706,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                     </div>
                 ) : (
                     schedules.map((schedule) => (
-                        <div key={schedule.id} className="bg-gray-800 p-4 rounded-lg">
+                        <div key={schedule.id} className="bg-gray-800 p-4 ">
                             <div className="flex justify-between items-start mb-2">
                                 <div>
                                     <h4 className="text-lg font-bold text-white">
@@ -781,7 +781,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
 
             {/* 玩家对战列表（管理员可见） */}
             {isAdmin && matchups.length > 0 && (
-                <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="bg-gray-800 p-4 ">
                     <h4 className="text-lg font-bold text-white mb-4">
                         玩家对战列表
                     </h4>

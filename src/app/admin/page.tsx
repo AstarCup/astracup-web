@@ -138,7 +138,7 @@ export default function AdminPage() {
                         className="object-cover opacity-20"
                     />
                 </div>
-                <div className="relative z-10 bg-[#3D3D3D] border-b-4 border-[#E93B66] rounded-lg p-8 text-center">
+                <div className="relative z-10 bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-8 text-center">
                     <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#E93B66] mx-auto mb-4"></div>
                     <div className="text-white text-xl font-medium">加载中...</div>
                 </div>
@@ -157,7 +157,7 @@ export default function AdminPage() {
                         className="object-cover opacity-20"
                     />
                 </div>
-                <div className="relative z-10 bg-[#3D3D3D] border-b-4 border-[#E93B66] rounded-lg p-8 text-center max-w-md">
+                <div className="relative z-10 bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-8 text-center max-w-md">
                     <div className="text-red-400 text-2xl mb-4">⚠️</div>
                     <h1 className="text-2xl font-bold text-white mb-4">
                         {!user ? '请先登录' : '权限不足'}
@@ -170,7 +170,7 @@ export default function AdminPage() {
                     </p>
                     <Link
                         href="/"
-                        className="inline-block bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3 rounded-lg transition-colors duration-200 font-medium"
+                        className="inline-block bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3  transition-colors duration-200 font-medium"
                     >
                         返回首页
                     </Link>
@@ -193,7 +193,7 @@ export default function AdminPage() {
 
             {/* Header */}
             <div className="relative z-10 w-full max-w-6xl mx-auto px-4 py-4 mb-6">
-                <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66] rounded-lg p-4">
+                <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66]  p-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                             <Link href="/" className="flex items-center space-x-2">
@@ -220,7 +220,7 @@ export default function AdminPage() {
                     {/* 左侧主要内容 */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* 管理员信息卡片 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] rounded-lg p-6">
+                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
                             <div className="flex items-center mb-4">
                                 <img
                                     src={user.avatar_url}
@@ -235,16 +235,16 @@ export default function AdminPage() {
                                 <div className="flex-1">
                                     <h2 className="text-2xl font-bold text-white mb-2">管理员: {user.username}</h2>
                                     <div className="flex flex-wrap gap-2">
-                                        <span className="px-3 py-1 bg-[#E93B66] text-white text-sm rounded-lg border-b-2 border-[#E93B66]">
+                                        <span className="px-3 py-1 bg-[#E93B66] text-white text-sm  border-b-2 border-[#E93B66]">
                                             管理员
                                         </span>
                                         {permissions.isMapSelector && (
-                                            <span className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg border-b-2 border-blue-600">
+                                            <span className="px-3 py-1 bg-blue-600 text-white text-sm  border-b-2 border-blue-600">
                                                 选图组
                                             </span>
                                         )}
                                         {permissions.isReplayTester && (
-                                            <span className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg border-b-2 border-green-600">
+                                            <span className="px-3 py-1 bg-green-600 text-white text-sm  border-b-2 border-green-600">
                                                 测图组
                                             </span>
                                         )}
@@ -254,28 +254,28 @@ export default function AdminPage() {
                         </div>
 
                         {/* 比赛预约系统管理 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] rounded-lg p-6">
+                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
                             <h3 className="text-xl font-bold text-white mb-4 flex items-center">
                                 <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
                                 比赛预约系统管理
                             </h3>
-                            <div className="bg-[#3D3D3D80] rounded-lg p-4 border border-gray-600">
+                            <div className="bg-[#3D3D3D80]  p-4 border border-gray-600">
                                 <MatchScheduleSystem userOsuId={user.osuId} isAdmin={permissions.isAdmin} />
                             </div>
                         </div>
 
                         {/* 用户注册审核管理 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] rounded-lg p-6">
+                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
                             <h3 className="text-xl font-bold text-white mb-4 flex items-center">
                                 <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
                                 用户注册审核管理
                             </h3>
-                            <div className="bg-[#3D3D3D80] rounded-lg p-4 border border-gray-600">
+                            <div className="bg-[#3D3D3D80]  p-4 border border-gray-600">
                                 <div className="mb-4">
                                     <button
                                         onClick={fetchRegistrations}
                                         disabled={registrationsLoading}
-                                        className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                                        className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3  transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                                     >
                                         {registrationsLoading ? (
                                             <div className="flex items-center">
@@ -300,7 +300,7 @@ export default function AdminPage() {
                                         </h4>
                                         <div className="space-y-3 max-h-96 overflow-y-auto">
                                             {registrations.map((player) => (
-                                                <div key={player.osuId} className="bg-[#3D3D3D80] border border-gray-600 rounded-lg p-4 hover:border-[#3BE9D8] transition-colors duration-200">
+                                                <div key={player.osuId} className="bg-[#3D3D3D80] border border-gray-600  p-4 hover:border-[#3BE9D8] transition-colors duration-200">
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center space-x-3">
                                                             <img
@@ -330,7 +330,7 @@ export default function AdminPage() {
                                                                 <button
                                                                     onClick={() => handleApproveRegistration(player.osuId, player.username)}
                                                                     disabled={processingUser === player.osuId}
-                                                                    className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-4 py-2 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                                                                    className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-4 py-2  transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                                                                 >
                                                                     {processingUser === player.osuId ? '审核中...' : '审核通过'}
                                                                 </button>
@@ -358,7 +358,7 @@ export default function AdminPage() {
                     {/* 右侧边栏 */}
                     <div className="space-y-6">
                         {/* 快速操作 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] rounded-lg p-6">
+                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
                             <h4 className="text-lg font-bold text-white mb-4 flex items-center">
                                 <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
                                 快速操作
@@ -366,19 +366,19 @@ export default function AdminPage() {
                             <div className="space-y-3">
                                 <Link
                                     href="/map-selection"
-                                    className="block w-full bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-4 py-3 rounded-lg transition-colors duration-200 text-center font-medium border-b-2 border-[#E93B66] hover:border-[#3BE9D8]"
+                                    className="block w-full bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-4 py-3  transition-colors duration-200 text-center font-medium border-b-2 border-[#E93B66] hover:border-[#3BE9D8]"
                                 >
                                     图池管理
                                 </Link>
                                 <Link
                                     href="/replay-collection"
-                                    className="block w-full bg-purple-600 hover:bg-purple-500 text-white px-4 py-3 rounded-lg transition-colors duration-200 text-center font-medium border-b-2 border-purple-600 hover:border-purple-500"
+                                    className="block w-full bg-purple-600 hover:bg-purple-500 text-white px-4 py-3  transition-colors duration-200 text-center font-medium border-b-2 border-purple-600 hover:border-purple-500"
                                 >
                                     回放管理
                                 </Link>
                                 <Link
                                     href="/debug"
-                                    className="block w-full bg-gray-600 hover:bg-gray-500 text-white px-4 py-3 rounded-lg transition-colors duration-200 text-center font-medium border-b-2 border-gray-600 hover:border-gray-500"
+                                    className="block w-full bg-gray-600 hover:bg-gray-500 text-white px-4 py-3  transition-colors duration-200 text-center font-medium border-b-2 border-gray-600 hover:border-gray-500"
                                 >
                                     调试面板
                                 </Link>
@@ -386,7 +386,7 @@ export default function AdminPage() {
                         </div>
 
                         {/* 数据统计 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] rounded-lg p-6">
+                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
                             <h4 className="text-lg font-bold text-white mb-4 flex items-center">
                                 <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
                                 数据统计
@@ -408,7 +408,7 @@ export default function AdminPage() {
                         </div>
 
                         {/* 系统状态 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] rounded-lg p-6">
+                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
                             <h4 className="text-lg font-bold text-white mb-4 flex items-center">
                                 <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
                                 系统状态
@@ -430,10 +430,10 @@ export default function AdminPage() {
                         </div>
 
                         {/* 登出按钮 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] rounded-lg p-6">
+                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
                             <button
                                 onClick={handleLogout}
-                                className="w-full bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3 rounded-lg transition-colors duration-200 font-medium text-lg border-b-2 border-[#E93B66] hover:border-[#3BE9D8]"
+                                className="w-full bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3  transition-colors duration-200 font-medium text-lg border-b-2 border-[#E93B66] hover:border-[#3BE9D8]"
                             >
                                 登出
                             </button>

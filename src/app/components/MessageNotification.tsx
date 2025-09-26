@@ -87,7 +87,7 @@ export default function MessageNotification({ onNewMessage }: MessageNotificatio
 
             {/* 消息下拉列表 */}
             {showMessages && (
-                <div className="absolute right-0 mt-2 w-96 max-w-[calc(100vw-2rem)] sm:w-96 bg-[#3d3d3d] border-[#E93B66] border-b-4 rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto">
+                <div className="absolute right-0 mt-2 w-96 max-w-[calc(100vw-2rem)] sm:w-96 bg-[#3d3d3d] border-[#E93B66] border-b-4  shadow-xl z-50 max-h-96 overflow-y-auto">
                     <div className="p-4">
                         <h3 className="text-white font-bold mb-3">消息通知</h3>
 
@@ -96,7 +96,7 @@ export default function MessageNotification({ onNewMessage }: MessageNotificatio
                         ) : (
                             <div className="space-y-3">
                                 {messages.map((message) => (
-                                    <div key={message.id} className="bg-gray-700 rounded-lg p-3">
+                                    <div key={message.id} className="bg-gray-700  p-3">
                                         <div className="flex justify-between items-start mb-2">
                                             <h4 className="text-white font-medium text-sm">{message.title}</h4>
                                             <span className={`text-xs px-2 py-1 rounded ${message.status === 'unread' ? 'bg-red-600 text-white' :

@@ -216,7 +216,7 @@ export default function PlayerInfoPage() {
 
             {/* Header */}
             <div className="relative z-10 w-full max-w-6xl mx-auto px-4 py-4 mb-6">
-                <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66] rounded-lg p-4">
+                <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66] p-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                             <Link href="/" className="flex items-center space-x-2">
@@ -239,256 +239,332 @@ export default function PlayerInfoPage() {
 
             {/* Main Content */}
             <div className="relative z-10 w-full max-w-6xl mx-auto px-4 pb-8">
-                <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66] rounded-lg p-8 shadow-2xl">
-                    {/* 用户基本信息 */}
-                    <div className="flex items-center mb-8 pb-6 border-b-4 border-[#E93B66]">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* 左侧主要内容 */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66] p-8 shadow-2xl">
+                            {/* 用户基本信息 */}
+                            <div className="flex items-center mb-8 pb-6 border-b-4 border-[#E93B66]">
 
-                        <img
-                            src={user.avatar_url}
-                            alt={user.username}
-                            width={80}
-                            height={80}
-                            className="rounded-full outline outline-2 outline-[#E93B66] ml-4 mr-6"
-                            onError={(e) => {
-                                e.currentTarget.src = '/default-avatar.png';
-                            }}
-                        />
-                        <div className="flex-1">
-                            <h2 className="text-3xl font-bold text-white mb-2">{user.username}</h2>
-                            <div className="grid grid-cols-2 gap-4 text-gray-300">
-                                <div>
-                                    <span className="font-medium">PP:</span> {user.pp?.toFixed(0) || 'N/A'}
-                                </div>
-                                <div>
-                                    <span className="font-medium">全球排名:</span> {formatRank(user.global_rank)}
-                                </div>
-                                <div>
-                                    <span className="font-medium">国家排名:</span> {formatRank(user.country_rank)}
-                                </div>
-                                <div>
-                                    <span className="font-medium">国家:</span> {user.country || '未知'}
+                                <img
+                                    src={user.avatar_url}
+                                    alt={user.username}
+                                    width={80}
+                                    height={80}
+                                    className="rounded-full outline outline-2 outline-[#E93B66] ml-4 mr-6"
+                                    onError={(e) => {
+                                        e.currentTarget.src = '/default-avatar.png';
+                                    }}
+                                />
+                                <div className="flex-1">
+                                    <h2 className="text-3xl font-bold text-white mb-2">{user.username}</h2>
+                                    <div className="grid grid-cols-2 gap-4 text-gray-300">
+                                        <div>
+                                            <span className="font-medium">PP:</span> {user.pp?.toFixed(0) || 'N/A'}
+                                        </div>
+                                        <div>
+                                            <span className="font-medium">全球排名:</span> {formatRank(user.global_rank)}
+                                        </div>
+                                        <div>
+                                            <span className="font-medium">国家排名:</span> {formatRank(user.country_rank)}
+                                        </div>
+                                        <div>
+                                            <span className="font-medium">国家:</span> {user.country || '未知'}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* 权限信息 */}
-                    {(permissions.isMapSelector || permissions.isReplayTester || permissions.isAdmin) && (
-                        <div className="mb-8 pb-6 border-b-4 border-[#E93B66]">
-                            <h3 className="text-xl font-bold text-white mb-4">权限组</h3>
-                            <div className="flex flex-wrap gap-3">
-                                {permissions.isAdmin && (
-                                    <span className="px-4 py-2 bg-[#E93B66] text-white text-lg rounded-lg border-b-4 border-[#3BE9D8]">
-                                        管理员
-                                    </span>
-                                )}
-                                {permissions.isMapSelector && (
-                                    <span className="px-4 py-2 bg-[#E93B66] text-white text-lg rounded-lg border-b-4 border-[#3BE9D8]">
-                                        选图组
-                                    </span>
-                                )}
-                                {permissions.isReplayTester && (
-                                    <span className="px-4 py-2 bg-[#E93B66] text-white text-lg rounded-lg border-b-4 border-[#3BE9D8]">
-                                        测图组
-                                    </span>
+                            {/* 权限信息 */}
+                            {(permissions.isMapSelector || permissions.isReplayTester || permissions.isAdmin) && (
+                                <div className="mb-8 pb-6 border-b-4 border-[#E93B66]">
+                                    <h3 className="text-xl font-bold text-white mb-4">权限组</h3>
+                                    <div className="flex flex-wrap gap-3">
+                                        {permissions.isAdmin && (
+                                            <span className="px-4 py-2 bg-[#E93B66] text-white text-lg border-b-4 border-[#3BE9D8]">
+                                                管理员
+                                            </span>
+                                        )}
+                                        {permissions.isMapSelector && (
+                                            <span className="px-4 py-2 bg-[#E93B66] text-white text-lg border-b-4 border-[#3BE9D8]">
+                                                选图组
+                                            </span>
+                                        )}
+                                        {permissions.isReplayTester && (
+                                            <span className="px-4 py-2 bg-[#E93B66] text-white text-lg border-b-4 border-[#3BE9D8]">
+                                                测图组
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 注册信息 */}
+                            <div className="mb-8 pb-6 border-b-4 border-[#E93B66]">
+                                <h3 className="text-xl font-bold text-white mb-4">注册信息</h3>
+                                {registration ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-300">
+                                        <div>
+                                            <span className="font-medium text-white">游戏内名称:</span> {registration.inGameName}
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-white">时区:</span> {registration.timezone || '未设置'}
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-white">注册时间:</span> {formatDate(registration.registeredAt)}
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-white">审核状态:</span>
+                                            <span className={registration.approved ? 'text-green-400' : 'text-yellow-400'}>
+                                                {registration.approved ? '已通过' : '待审核'}
+                                            </span>
+                                        </div>
+                                        {registration.approved && registration.approvedAt && (
+                                            <div>
+                                                <span className="font-medium text-white">审核时间:</span> {formatDate(registration.approvedAt)}
+                                            </div>
+                                        )}
+                                        {registration.availability && (
+                                            <div className="md:col-span-2">
+                                                <span className="font-medium text-white">可用时间:</span> {registration.availability}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-400">未找到注册信息</p>
                                 )}
                             </div>
-                        </div>
-                    )}
 
-                    {/* 注册信息 */}
-                    <div className="mb-8 pb-6 border-b-4 border-[#E93B66]">
-                        <h3 className="text-xl font-bold text-white mb-4">注册信息</h3>
-                        {registration ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-300">
-                                <div>
-                                    <span className="font-medium text-white">游戏内名称:</span> {registration.inGameName}
-                                </div>
-                                <div>
-                                    <span className="font-medium text-white">时区:</span> {registration.timezone || '未设置'}
-                                </div>
-                                <div>
-                                    <span className="font-medium text-white">注册时间:</span> {formatDate(registration.registeredAt)}
-                                </div>
-                                <div>
-                                    <span className="font-medium text-white">审核状态:</span>
-                                    <span className={registration.approved ? 'text-green-400' : 'text-yellow-400'}>
-                                        {registration.approved ? '已通过' : '待审核'}
-                                    </span>
-                                </div>
-                                {registration.approved && registration.approvedAt && (
-                                    <div>
-                                        <span className="font-medium text-white">审核时间:</span> {formatDate(registration.approvedAt)}
-                                    </div>
-                                )}
-                                {registration.availability && (
-                                    <div className="md:col-span-2">
-                                        <span className="font-medium text-white">可用时间:</span> {registration.availability}
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <p className="text-gray-400">未找到注册信息</p>
-                        )}
-                    </div>
+                            {/* 下一轮对战信息 */}
+                            <div className="mb-8 pb-6 border-b-4 border-[#E93B66]">
+                                <h3 className="text-xl font-bold text-white mb-4">下一轮对战</h3>
+                                {nextMatch ? (
+                                    <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66] p-6">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div>
+                                                <h4 className="text-lg font-bold text-white">对战对手</h4>
+                                                <p className="text-gray-300">与 {nextMatch.opponent.username} 的比赛</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${nextMatch.status === 'available' ? 'bg-green-600 text-white' :
+                                                    nextMatch.status === 'scheduled' ? 'bg-blue-600 text-white' :
+                                                        'bg-gray-600 text-white'
+                                                    }`}>
+                                                    {nextMatch.status === 'available' ? '可预约' :
+                                                        nextMatch.status === 'scheduled' ? '已预约' : '已完成'}
+                                                </span>
+                                            </div>
+                                        </div>
 
-                    {/* 下一轮对战信息 */}
-                    <div className="mb-8 pb-6 border-b-4 border-[#E93B66]">
-                        <h3 className="text-xl font-bold text-white mb-4">下一轮对战</h3>
-                        {nextMatch ? (
-                            <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66] rounded-lg p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div>
-                                        <h4 className="text-lg font-bold text-white">对战对手</h4>
-                                        <p className="text-gray-300">与 {nextMatch.opponent.username} 的比赛</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${nextMatch.status === 'available' ? 'bg-green-600 text-white' :
-                                            nextMatch.status === 'scheduled' ? 'bg-blue-600 text-white' :
-                                                'bg-gray-600 text-white'
-                                            }`}>
-                                            {nextMatch.status === 'available' ? '可预约' :
-                                                nextMatch.status === 'scheduled' ? '已预约' : '已完成'}
-                                        </span>
-                                    </div>
-                                </div>
+                                        <div className="flex items-center justify-center space-x-8">
+                                            {/* 当前玩家 */}
+                                            <div className="text-center">
+                                                <img
+                                                    src={user.avatar_url}
+                                                    alt={user.username}
+                                                    width={60}
+                                                    height={60}
+                                                    className="rounded-full mx-auto mb-2 outline outline-2 outline-[#E93B66]"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = '/default-avatar.png';
+                                                    }}
+                                                />
+                                                <p className="text-white font-medium">{user.username}</p>
+                                                <p className="text-gray-400 text-sm">你</p>
+                                            </div>
 
-                                <div className="flex items-center justify-center space-x-8">
-                                    {/* 当前玩家 */}
-                                    <div className="text-center">
-                                        <img
-                                            src={user.avatar_url}
-                                            alt={user.username}
-                                            width={60}
-                                            height={60}
-                                            className="rounded-full mx-auto mb-2 outline outline-2 outline-[#E93B66]"
-                                            onError={(e) => {
-                                                e.currentTarget.src = '/default-avatar.png';
-                                            }}
-                                        />
-                                        <p className="text-white font-medium">{user.username}</p>
-                                        <p className="text-gray-400 text-sm">你</p>
-                                    </div>
+                                            {/* VS */}
+                                            <div className="text-white text-2xl font-bold">VS</div>
 
-                                    {/* VS */}
-                                    <div className="text-white text-2xl font-bold">VS</div>
+                                            {/* 对手 */}
+                                            <div className="text-center">
+                                                <img
+                                                    src={nextMatch.opponent.avatar_url || '/default-avatar.png'}
+                                                    alt={nextMatch.opponent.username}
+                                                    width={60}
+                                                    height={60}
+                                                    className="rounded-full mx-auto mb-2 outline outline-2 outline-[#3BE9D8]"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = '/default-avatar.png';
+                                                    }}
+                                                />
+                                                <p className="text-white font-medium">{nextMatch.opponent.username}</p>
+                                                <p className="text-gray-400 text-sm">对手</p>
+                                            </div>
+                                        </div>
 
-                                    {/* 对手 */}
-                                    <div className="text-center">
-                                        <img
-                                            src={nextMatch.opponent.avatar_url || '/default-avatar.png'}
-                                            alt={nextMatch.opponent.username}
-                                            width={60}
-                                            height={60}
-                                            className="rounded-full mx-auto mb-2 outline outline-2 outline-[#3BE9D8]"
-                                            onError={(e) => {
-                                                e.currentTarget.src = '/default-avatar.png';
-                                            }}
-                                        />
-                                        <p className="text-white font-medium">{nextMatch.opponent.username}</p>
-                                        <p className="text-gray-400 text-sm">对手</p>
-                                    </div>
-                                </div>
-
-                                {nextMatch.status === 'available' && (
-                                    <div className="mt-4 text-center">
-                                        <button
-                                            className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-2 rounded-lg transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed border-b-4 border-[#3BE9D8] hover:border-[#E93B66]"
-                                            onClick={handleRequestMatch}
-                                            disabled={requestingMatch}
-                                        >
-                                            {requestingMatch ? '预约中...' : '预约对战'}
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* 房间选择界面 */}
-                                {showRoomSelection && (
-                                    <div className="mt-6">
-                                        <h4 className="text-white font-medium mb-4 text-center">选择比赛房间</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
-                                            {availableRooms.map((room) => (
-                                                <div
-                                                    key={room.id}
-                                                    className="bg-[#3D3D3D80] backdrop-blur-sm rounded-lg p-4 border-b-4 border-[#E93B66] hover:border-[#3BE9D8] transition-colors cursor-pointer"
-                                                    onClick={() => handleRoomSelect(room.id)}
+                                        {nextMatch.status === 'available' && (
+                                            <div className="mt-4 text-center">
+                                                <button
+                                                    className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-2 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed border-b-4 border-[#3BE9D8] hover:border-[#E93B66]"
+                                                    onClick={handleRequestMatch}
+                                                    disabled={requestingMatch}
                                                 >
-                                                    <div className="flex justify-between items-start mb-3">
-                                                        <h5 className="text-white font-bold text-lg">{room.room_name}</h5>
-                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${room.status === 'open' ? 'bg-green-600 text-white' :
-                                                            room.status === 'full' ? 'bg-red-600 text-white' :
-                                                                'bg-gray-600 text-white'
-                                                            }`}>
-                                                            {room.status === 'open' ? '可预约' :
-                                                                room.status === 'full' ? '已满' : '关闭'}
-                                                        </span>
-                                                    </div>
+                                                    {requestingMatch ? '预约中...' : '预约对战'}
+                                                </button>
+                                            </div>
+                                        )}
 
-                                                    <div className="space-y-2 text-sm text-gray-300">
-                                                        <div className="flex justify-between">
-                                                            <span>轮次:</span>
-                                                            <span className="text-white">第{room.round_number}轮</span>
-                                                        </div>
-                                                        <div className="flex justify-between">
-                                                            <span>日期:</span>
-                                                            <span className="text-white">{formatDate(room.match_date)}</span>
-                                                        </div>
-                                                        <div className="flex justify-between">
-                                                            <span>时间:</span>
-                                                            <span className="text-white">{room.match_time}</span>
-                                                        </div>
-                                                        <div className="flex justify-between">
-                                                            <span>房间号:</span>
-                                                            <span className="text-white">{room.match_number}</span>
-                                                        </div>
-                                                        <div className="flex justify-between">
-                                                            <span>最多参与:</span>
-                                                            <span className="text-white">{room.max_participants}人</span>
-                                                        </div>
-                                                    </div>
+                                        {/* 房间选择界面 */}
+                                        {showRoomSelection && (
+                                            <div className="mt-6">
+                                                <h4 className="text-white font-medium mb-4 text-center">选择比赛房间</h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+                                                    {availableRooms.map((room) => (
+                                                        <div
+                                                            key={room.id}
+                                                            className="bg-[#3D3D3D80] backdrop-blur-sm p-4 border-b-4 border-[#E93B66] hover:border-[#3BE9D8] transition-colors cursor-pointer"
+                                                            onClick={() => handleRoomSelect(room.id)}
+                                                        >
+                                                            <div className="flex justify-between items-start mb-3">
+                                                                <h5 className="text-white font-bold text-lg">{room.room_name}</h5>
+                                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${room.status === 'open' ? 'bg-green-600 text-white' :
+                                                                    room.status === 'full' ? 'bg-red-600 text-white' :
+                                                                        'bg-gray-600 text-white'
+                                                                    }`}>
+                                                                    {room.status === 'open' ? '可预约' :
+                                                                        room.status === 'full' ? '已满' : '关闭'}
+                                                                </span>
+                                                            </div>
 
+                                                            <div className="space-y-2 text-sm text-gray-300">
+                                                                <div className="flex justify-between">
+                                                                    <span>轮次:</span>
+                                                                    <span className="text-white">第{room.round_number}轮</span>
+                                                                </div>
+                                                                <div className="flex justify-between">
+                                                                    <span>日期:</span>
+                                                                    <span className="text-white">{formatDate(room.match_date)}</span>
+                                                                </div>
+                                                                <div className="flex justify-between">
+                                                                    <span>时间:</span>
+                                                                    <span className="text-white">{room.match_time}</span>
+                                                                </div>
+                                                                <div className="flex justify-between">
+                                                                    <span>房间号:</span>
+                                                                    <span className="text-white">{room.match_number}</span>
+                                                                </div>
+                                                                <div className="flex justify-between">
+                                                                    <span>最多参与:</span>
+                                                                    <span className="text-white">{room.max_participants}人</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <button
+                                                                className="w-full mt-3 bg-[#E93B66] hover:bg-[#3BE9D8] text-white py-2 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed border-b-4 border-[#3BE9D8] hover:border-[#E93B66]"
+                                                                disabled={requestingMatch || room.status !== 'open'}
+                                                            >
+                                                                {requestingMatch ? '预约中...' : '选择此房间'}
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="mt-4 text-center">
                                                     <button
-                                                        className="w-full mt-3 bg-[#E93B66] hover:bg-[#3BE9D8] text-white py-2 rounded-lg transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed border-b-4 border-[#3BE9D8] hover:border-[#E93B66]"
-                                                        disabled={requestingMatch || room.status !== 'open'}
+                                                        onClick={() => setShowRoomSelection(false)}
+                                                        className="bg-[#3D3D3D] hover:bg-[#E93B66] text-white px-6 py-2  transition-colors border-b-4 border-[#E93B66] hover:border-[#3BE9D8]"
+                                                        disabled={requestingMatch}
                                                     >
-                                                        {requestingMatch ? '预约中...' : '选择此房间'}
+                                                        取消选择
                                                     </button>
                                                 </div>
-                                            ))}
-                                        </div>
-                                        <div className="mt-4 text-center">
-                                            <button
-                                                onClick={() => setShowRoomSelection(false)}
-                                                className="bg-[#3D3D3D] hover:bg-[#E93B66] text-white px-6 py-2 rounded-lg transition-colors border-b-4 border-[#E93B66] hover:border-[#3BE9D8]"
-                                                disabled={requestingMatch}
-                                            >
-                                                取消选择
-                                            </button>
-                                        </div>
+                                            </div>
+                                        )}
+
+                                    </div>
+                                ) : (
+                                    <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66]  p-6 text-center">
+                                        <p className="text-gray-400">暂无下一轮对战安排</p>
                                     </div>
                                 )}
+                            </div>
 
+                            {/* 比赛预约系统 */}
+                            <div className="border-b-4 border-[#E93B66] pt-8">
+                                <MatchScheduleSystem userOsuId={user.osuId} isAdmin={false} />
                             </div>
-                        ) : (
-                            <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66] rounded-lg p-6 text-center">
-                                <p className="text-gray-400">暂无下一轮对战安排</p>
-                            </div>
-                        )}
+                        </div>
                     </div>
 
-                    {/* 比赛预约系统 */}
-                    <div className="border-b-4 border-[#E93B66] pt-8">
-                        <MatchScheduleSystem userOsuId={user.osuId} isAdmin={false} />
-                    </div>
+                    {/* 右侧边栏 */}
+                    <div className="space-y-6">
+                        {/* 快速导航 */}
+                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
+                            <h4 className="text-lg font-bold text-white mb-4 flex items-center">
+                                <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
+                                快速导航
+                            </h4>
+                            <div className="space-y-3">
+                                <Link
+                                    href="/mapool"
+                                    className="block w-full bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-4 py-3  transition-colors duration-200 text-center font-medium border-b-2 border-[#E93B66] hover:border-[#3BE9D8]"
+                                >
+                                    图池信息
+                                </Link>
+                                <Link
+                                    href="/guide"
+                                    className="block w-full bg-blue-600 hover:bg-blue-500 text-white px-4 py-3  transition-colors duration-200 text-center font-medium border-b-2 border-blue-600 hover:border-blue-500"
+                                >
+                                    比赛规则
+                                </Link>
+                                <Link
+                                    href="/schedule"
+                                    className="block w-full bg-green-600 hover:bg-green-500 text-white px-4 py-3  transition-colors duration-200 text-center font-medium border-b-2 border-green-600 hover:border-green-500"
+                                >
+                                    比赛时间表
+                                </Link>
+                                <Link
+                                    href="/news"
+                                    className="block w-full bg-purple-600 hover:bg-purple-500 text-white px-4 py-3  transition-colors duration-200 text-center font-medium border-b-2 border-purple-600 hover:border-purple-500"
+                                >
+                                    最新消息
+                                </Link>
+                                <Link
+                                    href="/contact"
+                                    className="block w-full bg-orange-600 hover:bg-orange-500 text-white px-4 py-3  transition-colors duration-200 text-center font-medium border-b-2 border-orange-600 hover:border-orange-500"
+                                >
+                                    联系我们
+                                </Link>
+                            </div>
+                        </div>
 
-                    {/* 登出按钮 */}
-                    <div className="border-b-4 border-[#E93B66] pt-8 mt-8">
-                        <button
-                            onClick={handleLogout}
-                            className="w-full bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3 rounded-lg transition-colors duration-200 font-medium text-lg border-b-4 border-[#3BE9D8] hover:border-[#E93B66]"
-                        >
-                            登出
-                        </button>
+                        {/* 个人统计 */}
+                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
+                            <h4 className="text-lg font-bold text-white mb-4 flex items-center">
+                                <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
+                                个人统计
+                            </h4>
+                            <div className="space-y-3 text-gray-300">
+                                <div className="flex justify-between items-center">
+                                    <span>注册状态:</span>
+                                    <span className={`font-medium ${registration?.approved ? 'text-green-400' : 'text-yellow-400'}`}>
+                                        {registration?.approved ? '已审核' : '待审核'}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span>下一场比赛:</span>
+                                    <span className="text-[#3BE9D8] font-medium">
+                                        {nextMatch ? '已预约' : '未预约'}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span>权限等级:</span>
+                                    <span className="text-[#3BE9D8] font-medium">
+                                        {permissions.isAdmin ? '管理员' : permissions.isMapSelector || permissions.isReplayTester ? '工作人员' : '玩家'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 登出按钮 */}
+                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
+                            <button
+                                onClick={handleLogout}
+                                className="w-full bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3  transition-colors duration-200 font-medium text-lg border-b-2 border-[#E93B66] hover:border-[#3BE9D8]"
+                            >
+                                登出
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
