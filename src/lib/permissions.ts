@@ -20,6 +20,8 @@ export interface UserPermissions {
     isMapSelector: boolean;
     isReplayTester: boolean;
     isAdmin: boolean;
+    isStreamer: boolean;
+    isReferee: boolean;
 }
 
 /**
@@ -61,7 +63,9 @@ export async function getUserPermissions(osuId: string): Promise<UserPermissions
                     const permissions = {
                         isMapSelector: mapData.isMapSelector || false,
                         isReplayTester: replayData.isReplayTester || false,
-                        isAdmin: adminData.isAdmin || false
+                        isAdmin: adminData.isAdmin || false,
+                        isStreamer: false, // TODO: 实现直播员权限检查
+                        isReferee: false  // TODO: 实现裁判员权限检查
                     };
 
                     return permissions;
@@ -145,7 +149,9 @@ export async function getUserPermissions(osuId: string): Promise<UserPermissions
         const result = {
             isMapSelector,
             isReplayTester,
-            isAdmin
+            isAdmin,
+            isStreamer: false, // TODO: 实现直播员权限检查
+            isReferee: false   // TODO: 实现裁判员权限检查
         };
         return result;
     } catch (error) {
@@ -153,7 +159,9 @@ export async function getUserPermissions(osuId: string): Promise<UserPermissions
         return {
             isMapSelector: false,
             isReplayTester: false,
-            isAdmin: false
+            isAdmin: false,
+            isStreamer: false,
+            isReferee: false
         };
     }
 }

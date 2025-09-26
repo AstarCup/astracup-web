@@ -58,7 +58,9 @@ export default function PlayerInfoPage() {
     const [permissions, setPermissions] = useState<UserPermissions>({
         isMapSelector: false,
         isReplayTester: false,
-        isAdmin: false
+        isAdmin: false,
+        isStreamer: false,
+        isReferee: false
     });
     const [registration, setRegistration] = useState<Registration | null>(null);
     const [nextMatch, setNextMatch] = useState<NextMatch | null>(null);

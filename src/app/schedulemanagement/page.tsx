@@ -13,10 +13,198 @@ import Image from 'next/image';
 import { TournamentRegistration } from '@/lib/mysql-registrations';
 import { usePageTitle } from '@/lib/usePageTitle';
 
+interface MatchRoom {
+    id: number;
+    room_name: string;
+    round_number: number;
+    match_date: string;
+    match_time: string;
+    match_number: number;
+    max_participants: number;
+    status: 'open' | 'closed' | 'in_progress';
+    description: string;
+    created_by: number;
+    created_at: string;
+}
+
 const audiowide = localFont({
     src: "../components/font/Audiowide-Regular.ttf",
     display: "auto",
 });
+
+// 创建房间模态框组件
+function CreateRoomModal({ onClose, onCreate }: {
+    onClose: () => void;
+    onCreate: (roomData: {
+        room_name: string;
+        round_number: number;
+        match_date: string;
+        match_time: string;
+        match_number: number;
+        max_participants: number;
+        description: string;
+    }) => void;
+}) {
+    const [formData, setFormData] = useState({
+        room_name: '',
+        round_number: 1,
+        match_date: '',
+        match_time: '',
+        match_number: 1,
+        max_participants: 2,
+        description: ''
+    });
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            await onCreate(formData);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-white">创建比赛房间</h3>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-white"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                            房间名称 *
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.room_name}
+                            onChange={(e) => setFormData({ ...formData, room_name: e.target.value })}
+                            className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
+                            required
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1">
+                                轮次 *
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                value={formData.round_number}
+                                onChange={(e) => setFormData({ ...formData, round_number: parseInt(e.target.value) })}
+                                className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1">
+                                比赛编号 *
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                value={formData.match_number}
+                                onChange={(e) => setFormData({ ...formData, match_number: parseInt(e.target.value) })}
+                                className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1">
+                                比赛日期 *
+                            </label>
+                            <input
+                                type="date"
+                                value={formData.match_date}
+                                onChange={(e) => setFormData({ ...formData, match_date: e.target.value })}
+                                className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1">
+                                比赛时间 *
+                            </label>
+                            <input
+                                type="time"
+                                value={formData.match_time}
+                                onChange={(e) => setFormData({ ...formData, match_time: e.target.value })}
+                                className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                            最大参与者数
+                        </label>
+                        <input
+                            type="number"
+                            min="2"
+                            max="16"
+                            value={formData.max_participants}
+                            onChange={(e) => setFormData({ ...formData, max_participants: parseInt(e.target.value) })}
+                            className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                            描述
+                        </label>
+                        <textarea
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            rows={3}
+                            className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none resize-none"
+                            placeholder="可选的房间描述..."
+                        />
+                    </div>
+
+                    <div className="flex justify-end space-x-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+                        >
+                            取消
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="px-4 py-2 bg-[#E93B66] text-white rounded-md hover:bg-[#d32f5a] disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                        >
+                            {loading && (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b border-white mr-2"></div>
+                            )}
+                            创建房间
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
 
 export default function AdminPage() {
     const router = useRouter();
@@ -25,13 +213,21 @@ export default function AdminPage() {
     const [permissions, setPermissions] = useState<UserPermissions>({
         isMapSelector: false,
         isReplayTester: false,
-        isAdmin: false
+        isAdmin: false,
+        isStreamer: false,
+        isReferee: false
     });
     const [loading, setLoading] = useState(true);
     const [registrations, setRegistrations] = useState<TournamentRegistration[]>([]);
     const [registrationsLoading, setRegistrationsLoading] = useState(false);
     const [processingUser, setProcessingUser] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('overview');
+
+    // 房间管理状态
+    const [rooms, setRooms] = useState<MatchRoom[]>([]);
+    const [roomsLoading, setRoomsLoading] = useState(false);
+    const [showCreateRoomModal, setShowCreateRoomModal] = useState(false);
+    const [deletingRoomId, setDeletingRoomId] = useState<number | null>(null);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -67,6 +263,13 @@ export default function AdminPage() {
 
         fetchUserData();
     }, [router]);
+
+    // 当切换到房间管理选项卡时获取房间列表
+    useEffect(() => {
+        if (activeTab === 'rooms' && permissions.isAdmin) {
+            fetchRooms();
+        }
+    }, [activeTab, permissions.isAdmin]);
 
     // 获取注册用户列表
     const fetchRegistrations = async () => {
@@ -151,6 +354,86 @@ export default function AdminPage() {
             alert('删除用户注册信息时发生错误');
         } finally {
             setProcessingUser(null);
+        }
+    };
+
+    // 房间管理函数
+    const fetchRooms = async () => {
+        setRoomsLoading(true);
+        try {
+            const response = await fetch('/api/match-rooms');
+            const data = await response.json();
+            if (data.success) {
+                setRooms(data.rooms);
+            } else {
+                console.error('Failed to fetch rooms:', data.error);
+            }
+        } catch (error) {
+            console.error('Error fetching rooms:', error);
+        } finally {
+            setRoomsLoading(false);
+        }
+    };
+
+    const handleDeleteRoom = async (roomId: number) => {
+        if (!confirm('确定要删除这个比赛房间吗？此操作不可撤销。')) {
+            return;
+        }
+
+        setDeletingRoomId(roomId);
+        try {
+            const response = await fetch('/api/match-rooms/delete', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: roomId }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setRooms(rooms.filter(room => room.id !== roomId));
+                alert('房间删除成功');
+            } else {
+                alert('删除失败: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error deleting room:', error);
+            alert('删除房间时发生错误');
+        } finally {
+            setDeletingRoomId(null);
+        }
+    };
+
+    const handleCreateRoom = async (roomData: {
+        room_name: string;
+        round_number: number;
+        match_date: string;
+        match_time: string;
+        match_number: number;
+        max_participants: number;
+        description: string;
+    }) => {
+        try {
+            const response = await fetch('/api/match-rooms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(roomData),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setShowCreateRoomModal(false);
+                fetchRooms(); // 重新获取房间列表
+                alert('房间创建成功');
+            } else {
+                alert('创建失败: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error creating room:', error);
+            alert('创建房间时发生错误');
         }
     };
 
@@ -245,8 +528,8 @@ export default function AdminPage() {
                         <button
                             onClick={() => setActiveTab('overview')}
                             className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'overview'
-                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
                         >
                             <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
@@ -258,8 +541,8 @@ export default function AdminPage() {
                         <button
                             onClick={() => setActiveTab('matches')}
                             className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'matches'
-                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
                         >
                             <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
@@ -271,8 +554,8 @@ export default function AdminPage() {
                         <button
                             onClick={() => setActiveTab('users')}
                             className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'users'
-                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
                         >
                             <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
@@ -284,8 +567,8 @@ export default function AdminPage() {
                         <button
                             onClick={() => setActiveTab('settings')}
                             className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'settings'
-                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
                         >
                             <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
@@ -293,6 +576,35 @@ export default function AdminPage() {
                             </svg>
                             系统设置
                         </button>
+
+                        <button
+                            onClick={() => setActiveTab('rooms')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'rooms'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                            </svg>
+                            比赛房间管理
+                        </button>
+
+                        {(permissions?.isStreamer || permissions?.isReferee) && (
+                            <button
+                                onClick={() => setActiveTab('streaming')}
+                                className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'streaming'
+                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                    }`}
+                            >
+                                <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.414-1.414A1 1 0 0010.586 3H7.414a1 1 0 00-.707.293L5.293 4.707A1 1 0 014.586 5H4zm12 12H4a4 4 0 01-4-4V7a4 4 0 014-4h1.586a1 1 0 01.707.293L7.707 5.707A1 1 0 008.414 6h3.172a1 1 0 01.707.293l1.414 1.414A1 1 0 0014.414 8H16a4 4 0 014 4v6a4 4 0 01-4 4z" clipRule="evenodd" />
+                                    <path fillRule="evenodd" d="M8 11a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
+                                </svg>
+                                直播裁判
+                            </button>
+                        )}
                     </div>
                 </nav>
 
@@ -319,6 +631,8 @@ export default function AdminPage() {
                         {activeTab === 'matches' && '比赛管理'}
                         {activeTab === 'users' && '用户管理'}
                         {activeTab === 'settings' && '系统设置'}
+                        {activeTab === 'rooms' && '比赛房间管理'}
+                        {activeTab === 'streaming' && '直播裁判'}
                     </h1>
                 </header>
 
@@ -525,8 +839,123 @@ export default function AdminPage() {
                             </div>
                         </div>
                     )}
+
+                    {activeTab === 'rooms' && (
+                        <div className="space-y-6">
+                            <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
+                                <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+                                    <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
+                                    比赛房间管理
+                                </h3>
+
+                                {roomsLoading ? (
+                                    <div className="flex justify-center items-center py-8">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E93B66]"></div>
+                                        <span className="ml-2 text-gray-400">加载中...</span>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        {/* 添加房间卡片 */}
+                                        <div
+                                            onClick={() => setShowCreateRoomModal(true)}
+                                            className="bg-[#2d2d2d] border-2 border-dashed border-gray-600 hover:border-[#E93B66] rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors duration-200 min-h-[200px]"
+                                        >
+                                            <svg className="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                            <span className="text-gray-400 text-center">添加新房间</span>
+                                        </div>
+
+                                        {/* 房间卡片列表 */}
+                                        {rooms.map((room) => (
+                                            <div key={room.id} className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-4 hover:border-[#E93B66] transition-colors duration-200">
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <h4 className="text-white font-semibold text-sm truncate flex-1 mr-2">{room.room_name}</h4>
+                                                    <button
+                                                        onClick={() => handleDeleteRoom(room.id)}
+                                                        disabled={deletingRoomId === room.id}
+                                                        className="text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed p-1"
+                                                        title="删除房间"
+                                                    >
+                                                        {deletingRoomId === room.id ? (
+                                                            <div className="animate-spin rounded-full h-4 w-4 border-b border-red-400"></div>
+                                                        ) : (
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        )}
+                                                    </button>
+                                                </div>
+
+                                                <div className="space-y-2 text-xs text-gray-400">
+                                                    <div className="flex justify-between">
+                                                        <span>轮次:</span>
+                                                        <span className="text-white">{room.round_number}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span>比赛编号:</span>
+                                                        <span className="text-white">{room.match_number}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span>日期:</span>
+                                                        <span className="text-white">{room.match_date}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span>时间:</span>
+                                                        <span className="text-white">{room.match_time}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span>最大参与者:</span>
+                                                        <span className="text-white">{room.max_participants}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span>状态:</span>
+                                                        <span className={`px-2 py-1 rounded text-xs ${room.status === 'open' ? 'bg-green-600 text-white' :
+                                                                room.status === 'in_progress' ? 'bg-yellow-600 text-white' :
+                                                                    'bg-red-600 text-white'
+                                                            }`}>
+                                                            {room.status === 'open' ? '开放' :
+                                                                room.status === 'in_progress' ? '进行中' : '关闭'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {room.description && (
+                                                    <div className="mt-3 pt-3 border-t border-gray-600">
+                                                        <p className="text-xs text-gray-500 line-clamp-2">{room.description}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'streaming' && (
+                        <div className="space-y-6">
+                            <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
+                                <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+                                    <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
+                                    直播裁判房间确认
+                                </h3>
+                                <div className="bg-[#3D3D3D80] p-4 border border-gray-600">
+                                    <p className="text-gray-400">直播裁判房间确认功能开发中...</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </main>
             </div>
+
+            {/* 创建房间模态框 */}
+            {showCreateRoomModal && (
+                <CreateRoomModal
+                    onClose={() => setShowCreateRoomModal(false)}
+                    onCreate={handleCreateRoom}
+                />
+            )}
         </div>
     );
 }
