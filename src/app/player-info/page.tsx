@@ -261,7 +261,7 @@ export default function PlayerInfoPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
                 </div>
             )}
-            <div className="relative z-10 w-full max-w-4xl mx-auto px-4 pb-8 -mt-6">
+            <div className="relative z-10 w-full max-w-4xl mx-auto pb-8 -mt-6">
                 <div className="space-y-6">
                     <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-8 shadow-2xl">
                         {/* 用户基本信息 */}
@@ -463,7 +463,7 @@ export default function PlayerInfoPage() {
                         )}
 
                         {/* 比赛预约系统 */}
-                        <div className="border-b-4">
+                        <div className="">
                             <MatchScheduleSystem userOsuId={user.osuId} isAdmin={false} />
                         </div>
                     </div>

@@ -31,6 +31,7 @@ export default function AdminPage() {
     const [registrations, setRegistrations] = useState<TournamentRegistration[]>([]);
     const [registrationsLoading, setRegistrationsLoading] = useState(false);
     const [processingUser, setProcessingUser] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState('overview');
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -215,241 +216,316 @@ export default function AdminPage() {
     }
 
     return (
-        <div className="flex flex-col items-center justify-center relative min-h-screen">
-
-            {/* Main Content */}
-            <div className="relative z-10 w-full max-w-6xl mx-auto px-4 pb-8 mt-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* 左侧主要内容 */}
-                    <div className="lg:col-span-2 space-y-6">
-                        {/* 管理员信息卡片 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
-                            <div className="flex items-center mb-4">
-                                <img
-                                    src={user.avatar_url}
-                                    alt={user.username}
-                                    width={60}
-                                    height={60}
-                                    className="rounded-full outline outline-2 outline-[#E93B66] mr-4"
-                                    onError={(e) => {
-                                        e.currentTarget.src = '/default-avatar.png';
-                                    }}
-                                />
-                                <div className="flex-1">
-                                    <h2 className="text-2xl font-bold text-white mb-2">管理员: {user.username}</h2>
-                                    <div className="flex flex-wrap gap-2">
-                                        <span className="px-3 py-1 bg-[#E93B66] text-white text-sm  border-b-2 border-[#E93B66]">
-                                            管理员
-                                        </span>
-                                        {permissions.isMapSelector && (
-                                            <span className="px-3 py-1 bg-blue-600 text-white text-sm  border-b-2 border-blue-600">
-                                                选图组
-                                            </span>
-                                        )}
-                                        {permissions.isReplayTester && (
-                                            <span className="px-3 py-1 bg-green-600 text-white text-sm  border-b-2 border-green-600">
-                                                测图组
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 比赛预约系统管理 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
-                            <h3 className="text-xl font-bold text-white mb-4 flex items-center">
-                                <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
-                                比赛预约系统管理
-                            </h3>
-                            <div className="bg-[#3D3D3D80]  p-4 border border-gray-600">
-                                <MatchScheduleSystem userOsuId={user.osuId} isAdmin={permissions.isAdmin} />
-                            </div>
-                        </div>
-
-                        {/* 用户注册审核管理 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
-                            <h3 className="text-xl font-bold text-white mb-4 flex items-center">
-                                <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
-                                用户注册审核管理
-                            </h3>
-                            <div className="bg-[#3D3D3D80]  p-4 border border-gray-600">
-                                <div className="mb-4">
-                                    <button
-                                        onClick={fetchRegistrations}
-                                        disabled={registrationsLoading}
-                                        className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3  transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                                    >
-                                        {registrationsLoading ? (
-                                            <div className="flex items-center">
-                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                加载中...
-                                            </div>
-                                        ) : '获取待审核用户列表'}
-                                    </button>
-                                </div>
-
-                                {registrationsLoading && (
-                                    <div className="text-center py-8">
-                                        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-[#E93B66] mx-auto mb-4"></div>
-                                        <p className="text-gray-400">正在加载注册数据...</p>
-                                    </div>
-                                )}
-
-                                {registrations.length > 0 && (
-                                    <div className="mt-6">
-                                        <h4 className="text-lg font-medium text-white mb-4">
-                                            注册用户列表 ({registrations.length} 人)
-                                        </h4>
-                                        <div className="space-y-3 max-h-96 overflow-y-auto">
-                                            {registrations.map((player) => (
-                                                <div key={player.osuId} className="bg-[#3D3D3D80] border border-gray-600  p-4 hover:border-[#3BE9D8] transition-colors duration-200">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center space-x-3">
-                                                            <img
-                                                                src={player.avatar_url}
-                                                                alt={player.username}
-                                                                width={40}
-                                                                height={40}
-                                                                className="rounded-full outline outline-1 outline-[#E93B66]"
-                                                                onError={(e) => {
-                                                                    e.currentTarget.src = '/default-avatar.png';
-                                                                }}
-                                                            />
-                                                            <div>
-                                                                <h4 className="font-medium text-white">{player.username}</h4>
-                                                                <p className="text-sm text-gray-400">ID: {player.osuId}</p>
-                                                                <p className="text-sm text-gray-400">
-                                                                    PP: {Math.round(player.pp).toLocaleString()} |
-                                                                    排名: {player.global_rank ? `#${player.global_rank.toLocaleString()}` : '未排名'}
-                                                                </p>
-                                                                <p className={`text-xs font-medium ${player.approved ? 'text-green-400' : 'text-yellow-400'}`}>
-                                                                    {player.approved ? '✓ 已审核通过' : '⏳ 待审核'}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex flex-col items-end space-y-2">
-                                                            {!player.approved && (
-                                                                <button
-                                                                    onClick={() => handleApproveRegistration(player.osuId, player.username)}
-                                                                    disabled={processingUser === player.osuId}
-                                                                    className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-4 py-2  transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                                                                >
-                                                                    {processingUser === player.osuId ? '审核中...' : '审核通过'}
-                                                                </button>
-                                                            )}
-                                                            <button
-                                                                onClick={() => handleDeleteRegistration(player.osuId, player.username)}
-                                                                disabled={processingUser === player.osuId}
-                                                                className="bg-red-600 hover:bg-red-500 text-white px-4 py-2  transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                                                            >
-                                                                {processingUser === player.osuId ? '删除中...' : '删除用户'}
-                                                            </button>
-                                                            <p className="text-xs text-gray-500 text-right">
-                                                                {new Date(player.registeredAt).toLocaleString('zh-CN')}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {registrations.length === 0 && !registrationsLoading && (
-                                    <div className="text-center py-8 text-gray-400">
-                                        <p>暂无注册用户数据，点击上方按钮获取</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 右侧边栏 */}
-                    <div className="space-y-6">
-                        {/* 快速操作 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
-                            <h4 className="text-lg font-bold text-white mb-4 flex items-center">
-                                <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
-                                快速操作
-                            </h4>
-                            <div className="space-y-3">
-                                <Link
-                                    href="/map-selection"
-                                    className="block w-full bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-4 py-3  transition-colors duration-200 text-center font-medium border-b-2 border-[#E93B66] hover:border-[#3BE9D8]"
-                                >
-                                    图池管理
-                                </Link>
-                                <Link
-                                    href="/replay-collection"
-                                    className="block w-full bg-purple-600 hover:bg-purple-500 text-white px-4 py-3  transition-colors duration-200 text-center font-medium border-b-2 border-purple-600 hover:border-purple-500"
-                                >
-                                    回放管理
-                                </Link>
-                                <Link
-                                    href="/debug"
-                                    className="block w-full bg-gray-600 hover:bg-gray-500 text-white px-4 py-3  transition-colors duration-200 text-center font-medium border-b-2 border-gray-600 hover:border-gray-500"
-                                >
-                                    调试面板
-                                </Link>
-                            </div>
-                        </div>
-
-                        {/* 数据统计 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
-                            <h4 className="text-lg font-bold text-white mb-4 flex items-center">
-                                <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
-                                数据统计
-                            </h4>
-                            <div className="space-y-3 text-gray-300">
-                                <div className="flex justify-between items-center">
-                                    <span>注册玩家:</span>
-                                    <span className="text-[#3BE9D8] font-medium">{registrations.length}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span>活跃房间:</span>
-                                    <span className="text-[#3BE9D8] font-medium">-</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span>待处理预约:</span>
-                                    <span className="text-[#3BE9D8] font-medium">-</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 系统状态 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
-                            <h4 className="text-lg font-bold text-white mb-4 flex items-center">
-                                <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
-                                系统状态
-                            </h4>
-                            <div className="space-y-3 text-gray-300">
-                                <div className="flex justify-between items-center">
-                                    <span>服务器状态:</span>
-                                    <span className="text-green-400 font-medium">正常</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span>数据库连接:</span>
-                                    <span className="text-green-400 font-medium">正常</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span>最后更新:</span>
-                                    <span className="text-[#3BE9D8] font-medium">刚刚</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 登出按钮 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
-                            <button
-                                onClick={handleLogout}
-                                className="w-full bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3  transition-colors duration-200 font-medium text-lg border-b-2 border-[#E93B66] hover:border-[#3BE9D8]"
-                            >
-                                登出
-                            </button>
+        <div className="flex h-screen bg-[#1a1a1a]">
+            {/* 侧边栏 */}
+            <div className="w-64 bg-[#2d2d2d] border-r border-[#404040] flex flex-col">
+                {/* 头部信息 */}
+                <div className="p-6 border-b border-[#404040]">
+                    <div className="flex items-center mb-4">
+                        <img
+                            src={user.avatar_url}
+                            alt={user.username}
+                            width={40}
+                            height={40}
+                            className="rounded-full outline outline-2 outline-[#E93B66] mr-3"
+                            onError={(e) => {
+                                e.currentTarget.src = '/default-avatar.png';
+                            }}
+                        />
+                        <div>
+                            <h3 className="text-white font-medium text-sm">{user.username}</h3>
+                            <p className="text-gray-400 text-xs">管理员</p>
                         </div>
                     </div>
                 </div>
+
+                {/* 导航菜单 */}
+                <nav className="flex-1 p-4">
+                    <div className="space-y-2">
+                        <button
+                            onClick={() => setActiveTab('overview')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'overview'
+                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                            </svg>
+                            概览
+                        </button>
+
+                        <button
+                            onClick={() => setActiveTab('matches')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'matches'
+                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                            </svg>
+                            比赛管理
+                        </button>
+
+                        <button
+                            onClick={() => setActiveTab('users')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'users'
+                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            用户管理
+                        </button>
+
+                        <button
+                            onClick={() => setActiveTab('settings')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'settings'
+                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                            </svg>
+                            系统设置
+                        </button>
+                    </div>
+                </nav>
+
+                {/* 底部登出按钮 */}
+                <div className="p-4 border-t border-[#404040]">
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center px-4 py-3 text-left text-gray-300 hover:bg-[#3a3a3a] hover:text-white transition-colors duration-200"
+                    >
+                        <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+                        </svg>
+                        登出
+                    </button>
+                </div>
+            </div>
+
+            {/* 主内容区域 */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+                {/* 顶部标题栏 */}
+                <header className="bg-[#2d2d2d] border-b border-[#404040] px-6 py-4">
+                    <h1 className="text-2xl font-bold text-white">
+                        {activeTab === 'overview' && '管理概览'}
+                        {activeTab === 'matches' && '比赛管理'}
+                        {activeTab === 'users' && '用户管理'}
+                        {activeTab === 'settings' && '系统设置'}
+                    </h1>
+                </header>
+
+                {/* 内容区域 */}
+                <main className="flex-1 overflow-y-auto p-6 bg-[#1a1a1a]">
+                    {/* 概览页面 */}
+                    {activeTab === 'overview' && (
+                        <div className="space-y-6">
+                            {/* 管理员信息卡片 */}
+                            <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
+                                <div className="flex items-center mb-4">
+                                    <img
+                                        src={user.avatar_url}
+                                        alt={user.username}
+                                        width={60}
+                                        height={60}
+                                        className="rounded-full outline outline-2 outline-[#E93B66] mr-4"
+                                        onError={(e) => {
+                                            e.currentTarget.src = '/default-avatar.png';
+                                        }}
+                                    />
+                                    <div className="flex-1">
+                                        <h2 className="text-2xl font-bold text-white mb-2">管理员: {user.username}</h2>
+                                        <div className="flex flex-wrap gap-2">
+                                            <span className="px-3 py-1 bg-[#E93B66] text-white text-sm border-b-2 border-[#E93B66]">
+                                                管理员
+                                            </span>
+                                            {permissions.isMapSelector && (
+                                                <span className="px-3 py-1 bg-blue-600 text-white text-sm border-b-2 border-blue-600">
+                                                    选图组
+                                                </span>
+                                            )}
+                                            {permissions.isReplayTester && (
+                                                <span className="px-3 py-1 bg-green-600 text-white text-sm border-b-2 border-green-600">
+                                                    测图组
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 数据统计 */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
+                                    <h4 className="text-lg font-bold text-white mb-4 flex items-center">
+                                        <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
+                                        注册玩家
+                                    </h4>
+                                    <div className="text-3xl font-bold text-[#3BE9D8]">{registrations.length}</div>
+                                    <p className="text-gray-400 text-sm mt-2">总注册人数</p>
+                                </div>
+
+                                <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
+                                    <h4 className="text-lg font-bold text-white mb-4 flex items-center">
+                                        <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
+                                        活跃房间
+                                    </h4>
+                                    <div className="text-3xl font-bold text-[#3BE9D8]">-</div>
+                                    <p className="text-gray-400 text-sm mt-2">当前活跃比赛房间</p>
+                                </div>
+
+                                <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
+                                    <h4 className="text-lg font-bold text-white mb-4 flex items-center">
+                                        <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
+                                        系统状态
+                                    </h4>
+                                    <div className="text-3xl font-bold text-green-400">正常</div>
+                                    <p className="text-gray-400 text-sm mt-2">系统运行状态</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 比赛管理页面 */}
+                    {activeTab === 'matches' && (
+                        <div className="space-y-6">
+                            {/* 比赛预约系统管理 */}
+                            <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
+                                <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+                                    <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
+                                    比赛预约系统管理
+                                </h3>
+                                <div className="bg-[#3D3D3D80] p-4 border border-gray-600">
+                                    <MatchScheduleSystem userOsuId={user.osuId} isAdmin={permissions.isAdmin} />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 用户管理页面 */}
+                    {activeTab === 'users' && (
+                        <div className="space-y-6">
+                            {/* 用户注册审核管理 */}
+                            <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
+                                <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+                                    <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
+                                    用户注册审核管理
+                                </h3>
+                                <div className="bg-[#3D3D3D80] p-4 border border-gray-600">
+                                    <div className="mb-4">
+                                        <button
+                                            onClick={fetchRegistrations}
+                                            disabled={registrationsLoading}
+                                            className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                                        >
+                                            {registrationsLoading ? (
+                                                <div className="flex items-center">
+                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                    加载中...
+                                                </div>
+                                            ) : '获取待审核用户列表'}
+                                        </button>
+                                    </div>
+
+                                    {registrationsLoading && (
+                                        <div className="text-center py-8">
+                                            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-[#E93B66] mx-auto mb-4"></div>
+                                            <p className="text-gray-400">正在加载注册数据...</p>
+                                        </div>
+                                    )}
+
+                                    {registrations.length > 0 && (
+                                        <div className="mt-6">
+                                            <h4 className="text-lg font-medium text-white mb-4">
+                                                注册用户列表 ({registrations.length} 人)
+                                            </h4>
+                                            <div className="space-y-3 max-h-96 overflow-y-auto">
+                                                {registrations.map((player) => (
+                                                    <div key={player.osuId} className="bg-[#3D3D3D80] border border-gray-600 p-4 hover:border-[#3BE9D8] transition-colors duration-200">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center space-x-3">
+                                                                <img
+                                                                    src={player.avatar_url}
+                                                                    alt={player.username}
+                                                                    width={40}
+                                                                    height={40}
+                                                                    className="rounded-full outline outline-1 outline-[#E93B66]"
+                                                                    onError={(e) => {
+                                                                        e.currentTarget.src = '/default-avatar.png';
+                                                                    }}
+                                                                />
+                                                                <div>
+                                                                    <h4 className="font-medium text-white">{player.username}</h4>
+                                                                    <p className="text-sm text-gray-400">ID: {player.osuId}</p>
+                                                                    <p className="text-sm text-gray-400">
+                                                                        PP: {Math.round(player.pp).toLocaleString()} |
+                                                                        排名: {player.global_rank ? `#${player.global_rank.toLocaleString()}` : '未排名'}
+                                                                    </p>
+                                                                    <p className={`text-xs font-medium ${player.approved ? 'text-green-400' : 'text-yellow-400'}`}>
+                                                                        {player.approved ? '✓ 已审核通过' : '⏳ 待审核'}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex flex-col items-end space-y-2">
+                                                                {!player.approved && (
+                                                                    <button
+                                                                        onClick={() => handleApproveRegistration(player.osuId, player.username)}
+                                                                        disabled={processingUser === player.osuId}
+                                                                        className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-4 py-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                                                                    >
+                                                                        {processingUser === player.osuId ? '审核中...' : '审核通过'}
+                                                                    </button>
+                                                                )}
+                                                                <button
+                                                                    onClick={() => handleDeleteRegistration(player.osuId, player.username)}
+                                                                    disabled={processingUser === player.osuId}
+                                                                    className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                                                                >
+                                                                    {processingUser === player.osuId ? '删除中...' : '删除用户'}
+                                                                </button>
+                                                                <p className="text-xs text-gray-500 text-right">
+                                                                    {new Date(player.registeredAt).toLocaleString('zh-CN')}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {registrations.length === 0 && !registrationsLoading && (
+                                        <div className="text-center py-8 text-gray-400">
+                                            <p>暂无注册用户数据，点击上方按钮获取</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 系统设置页面 */}
+                    {activeTab === 'settings' && (
+                        <div className="space-y-6">
+                            <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
+                                <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+                                    <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
+                                    系统设置
+                                </h3>
+                                <div className="bg-[#3D3D3D80] p-4 border border-gray-600">
+                                    <p className="text-gray-400">系统设置功能开发中...</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </main>
             </div>
         </div>
     );
