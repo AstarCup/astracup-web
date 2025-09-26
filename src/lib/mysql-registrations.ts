@@ -153,6 +153,30 @@ export const initDatabase = async (): Promise<void> => {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
 
+        // 创建staff房间分配表（如果不存在）
+        await connection.execute(`
+            CREATE TABLE IF NOT EXISTS staff_room_assignments (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                room_id INT NOT NULL COMMENT '房间ID',
+                staff_osuId VARCHAR(255) NOT NULL COMMENT 'staff osuId',
+                staff_username VARCHAR(255) NOT NULL COMMENT 'staff 用户名',
+                staff_role ENUM('referee', 'streamer', 'commentator') NOT NULL COMMENT 'staff角色：referee-裁判，streamer-直播，commentator-解说',
+                status ENUM('pending', 'confirmed', 'declined') DEFAULT 'pending' COMMENT '分配状态：pending-待确认，confirmed-已确认，declined-已拒绝',
+                assigned_by VARCHAR(255) NOT NULL COMMENT '分配者osuId',
+                assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                responded_at DATETIME NULL COMMENT '响应时间',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (room_id) REFERENCES match_rooms(id) ON DELETE CASCADE,
+                UNIQUE KEY unique_staff_room (room_id, staff_osuId, staff_role),
+                INDEX idx_room (room_id),
+                INDEX idx_staff (staff_osuId),
+                INDEX idx_role (staff_role),
+                INDEX idx_status (status),
+                INDEX idx_assigned_by (assigned_by)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
         // 检查并添加缺失的字段（表结构升级）
         const requiredColumns = [
             { name: 'approved', type: 'BOOLEAN DEFAULT FALSE COMMENT \'审核状态：0-待审核，1-审核通过\'' },
@@ -287,6 +311,29 @@ export interface Message {
     response_time?: string | null;
     created_at: string;
     updated_at: string;
+}
+
+export interface StaffRoomAssignment {
+    id: number;
+    room_id: number;
+    staff_osuId: string;
+    staff_username: string;
+    staff_role: 'referee' | 'streamer' | 'commentator';
+    status: 'pending' | 'confirmed' | 'declined';
+    assigned_by: string;
+    assigned_at: string;
+    responded_at?: string | null;
+    created_at: string;
+    updated_at: string;
+    room?: {
+        id: number;
+        room_name: string;
+        round_number: number;
+        match_date: string;
+        match_time: string;
+        match_number: number;
+    };
+    staff_avatar_url?: string;
 }
 
 export interface Registration {
@@ -1129,6 +1176,147 @@ const mysqlStorage = {
             console.error('Error creating match schedule:', error);
             throw error;
         }
+    },
+
+    // 获取staff房间分配列表
+    getStaffRoomAssignments: async (): Promise<StaffRoomAssignment[]> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [rows] = await connection.execute(`
+                SELECT sra.*, mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number,
+                       r.avatar_url as staff_avatar_url
+                FROM staff_room_assignments sra
+                JOIN match_rooms mr ON sra.room_id = mr.id
+                LEFT JOIN registrations r ON sra.staff_osuId = r.osuId COLLATE utf8mb4_unicode_ci
+                ORDER BY mr.match_date ASC, mr.match_time ASC, sra.staff_role ASC
+            `);
+
+            connection.release();
+
+            return (rows as any[]).map(row => ({
+                id: row.id,
+                room_id: row.room_id,
+                staff_osuId: row.staff_osuId,
+                staff_username: row.staff_username,
+                staff_role: row.staff_role,
+                status: row.status,
+                assigned_by: row.assigned_by,
+                assigned_at: row.assigned_at,
+                responded_at: row.responded_at,
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+                room: {
+                    id: row.room_id,
+                    room_name: row.room_name,
+                    round_number: row.round_number,
+                    match_date: row.match_date,
+                    match_time: row.match_time,
+                    match_number: row.match_number
+                },
+                staff_avatar_url: row.staff_avatar_url
+            }));
+        } catch (error) {
+            console.error('Error getting staff room assignments:', error);
+            return [];
+        }
+    },
+
+    // 创建staff房间分配
+    createStaffRoomAssignment: async (assignment: Omit<StaffRoomAssignment, 'id' | 'assigned_at' | 'created_at' | 'updated_at'>): Promise<number> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(
+                `INSERT INTO staff_room_assignments (
+                    room_id, staff_osuId, staff_username, staff_role, status, assigned_by
+                ) VALUES (?, ?, ?, ?, ?, ?)`,
+                [
+                    assignment.room_id, assignment.staff_osuId, assignment.staff_username,
+                    assignment.staff_role, assignment.status || 'pending', assignment.assigned_by
+                ]
+            );
+
+            connection.release();
+
+            return (result as any).insertId;
+        } catch (error) {
+            console.error('Error creating staff room assignment:', error);
+            throw error;
+        }
+    },
+
+    // 更新staff房间分配状态
+    updateStaffRoomAssignmentStatus: async (id: number, status: StaffRoomAssignment['status']): Promise<boolean> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(
+                'UPDATE staff_room_assignments SET status = ?, responded_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                [status, id]
+            );
+
+            connection.release();
+
+            return (result as any).affectedRows > 0;
+        } catch (error) {
+            console.error('Error updating staff room assignment status:', error);
+            return false;
+        }
+    },
+
+    // 删除staff房间分配
+    deleteStaffRoomAssignment: async (id: number): Promise<boolean> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(
+                'DELETE FROM staff_room_assignments WHERE id = ?',
+                [id]
+            );
+
+            connection.release();
+
+            return (result as any).affectedRows > 0;
+        } catch (error) {
+            console.error('Error deleting staff room assignment:', error);
+            return false;
+        }
+    },
+
+    // 获取指定房间的staff分配
+    getRoomStaffAssignments: async (roomId: number): Promise<StaffRoomAssignment[]> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [rows] = await connection.execute(`
+                SELECT sra.*, r.avatar_url as staff_avatar_url
+                FROM staff_room_assignments sra
+                LEFT JOIN registrations r ON sra.staff_osuId = r.osuId COLLATE utf8mb4_unicode_ci
+                WHERE sra.room_id = ?
+                ORDER BY sra.staff_role ASC
+            `, [roomId]);
+
+            connection.release();
+
+            return (rows as any[]).map(row => ({
+                id: row.id,
+                room_id: row.room_id,
+                staff_osuId: row.staff_osuId,
+                staff_username: row.staff_username,
+                staff_role: row.staff_role,
+                status: row.status,
+                assigned_by: row.assigned_by,
+                assigned_at: row.assigned_at,
+                responded_at: row.responded_at,
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+                staff_avatar_url: row.staff_avatar_url
+            }));
+        } catch (error) {
+            console.error('Error getting room staff assignments:', error);
+            return [];
+        }
     }
 };
 
@@ -1221,3 +1409,10 @@ export const getTournamentRegistrationCount = async (): Promise<number> => {
         return 0;
     }
 };
+
+// Staff房间分配相关函数
+export const getStaffRoomAssignments = mysqlStorage.getStaffRoomAssignments;
+export const createStaffRoomAssignment = mysqlStorage.createStaffRoomAssignment;
+export const updateStaffRoomAssignmentStatus = mysqlStorage.updateStaffRoomAssignmentStatus;
+export const deleteStaffRoomAssignment = mysqlStorage.deleteStaffRoomAssignment;
+export const getRoomStaffAssignments = mysqlStorage.getRoomStaffAssignments;
