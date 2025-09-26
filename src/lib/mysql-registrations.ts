@@ -978,6 +978,26 @@ const mysqlStorage = {
         try {
             const connection = await getPool().getConnection();
 
+            // 如果状态被设置为取消，需要将对应的对战重新设置为可预约
+            if (status === 'cancelled') {
+                // 获取预约信息
+                const [scheduleRows] = await connection.execute(
+                    'SELECT player1_osuId, player2_osuId FROM match_schedules WHERE id = ?',
+                    [id]
+                );
+
+                if ((scheduleRows as any[]).length > 0) {
+                    const schedule = (scheduleRows as any[])[0];
+                    const { player1_osuId, player2_osuId } = schedule;
+
+                    // 查找对应的对战并将其状态设置为available
+                    await connection.execute(
+                        'UPDATE player_matchups SET status = ? WHERE player1_osuId = ? AND player2_osuId = ? AND status = ?',
+                        ['available', player1_osuId, player2_osuId, 'scheduled']
+                    );
+                }
+            }
+
             let query = 'UPDATE match_schedules SET status = ?';
             let params: any[] = [status];
 
