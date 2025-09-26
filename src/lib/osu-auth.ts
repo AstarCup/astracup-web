@@ -92,6 +92,11 @@ export async function getOsuUserInfo(accessToken: string): Promise<{
     username: string;
     avatar_url: string;
     country_code: string;
+    cover?: {
+        custom_url: string | null;
+        url: string;
+        id: string | null;
+    };
     statistics?: {
         pp: number;
         global_rank: number | null;
@@ -116,6 +121,11 @@ export async function getOsuUserInfo(accessToken: string): Promise<{
         username: userData.username,
         avatar_url: userData.avatar_url,
         country_code: userData.country_code,
+        cover: userData.cover ? {
+            custom_url: userData.cover.custom_url || null,
+            url: userData.cover.url || '',
+            id: userData.cover.id || null,
+        } : undefined,
         statistics: userData.statistics ? {
             pp: userData.statistics.pp,
             global_rank: userData.statistics.global_rank,

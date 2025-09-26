@@ -253,6 +253,22 @@ export default function PlayerInfoPage() {
                         <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-8 shadow-2xl">
                             {/* 用户基本信息 */}
                             <div className="mb-8 pb-6">
+                                {/* 玩家cover */}
+                                {user.cover && (
+                                    <div className="mb-6 relative">
+                                        <img
+                                            src={user.cover.custom_url || user.cover.url}
+                                            alt={`${user.username}的封面`}
+                                            className="w-full h-32 md:h-40 object-cover rounded-lg border-2 border-[#E93B66]"
+                                            onError={(e) => {
+                                                // 如果cover加载失败，隐藏这个元素
+                                                e.currentTarget.style.display = 'none';
+                                            }}
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-lg"></div>
+                                    </div>
+                                )}
+
                                 {/* 头像和用户名在一行 */}
                                 <div className="flex items-center mb-4">
                                     <img

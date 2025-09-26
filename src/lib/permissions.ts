@@ -9,6 +9,11 @@ export interface UserSession {
     global_rank: number | null;
     country_rank: number | null;
     country: string;
+    cover?: {
+        custom_url: string | null;
+        url: string;
+        id: string | null;
+    };
 }
 
 export interface UserPermissions {
