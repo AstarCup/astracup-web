@@ -14,6 +14,7 @@ const pageTitles: Record<string, string> = {
     '/s1': 'Season 1',
     '/map-selection': '地图选择',
     '/replay-collection': '回放收集',
+    '/schedulemanagement': '管理比赛安排页面',
 };
 
 // Hook for setting page title in client components

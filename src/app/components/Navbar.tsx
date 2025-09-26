@@ -224,7 +224,7 @@ export default function Navbar() {
                     { name: 'UPLOAD REPLAY', href: '/replay-collection', tip: '测图上传', svg: '/icons/upload.svg' }
                 ] : []),
                 ...(permissions.isAdmin ? [
-                    { name: 'ADMIN PANEL', href: '/admin', tip: '管理员面板', svg: '/icons/admin-fill.svg' }
+                    { name: 'ADMIN PANEL', href: '/schedulemanagement', tip: '管理比赛安排', svg: '/icons/admin-fill.svg' }
                 ] : [])
             ].filter(Boolean)
         }] : [])

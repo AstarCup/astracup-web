@@ -255,11 +255,11 @@ export default function PlayerInfoPage() {
                             <div className="mb-8 pb-6">
                                 {/* 玩家cover */}
                                 {user.cover && (
-                                    <div className="mb-6 relative">
+                                    <div className="mb-6 relative w-full">
                                         <img
                                             src={user.cover.custom_url || user.cover.url}
                                             alt={`${user.username}的封面`}
-                                            className="w-full h-32 md:h-40 object-cover rounded-lg border-2 border-[#E93B66]"
+                                            className="w-full h-30 object-cover"
                                             onError={(e) => {
                                                 // 如果cover加载失败，隐藏这个元素
                                                 e.currentTarget.style.display = 'none';
@@ -310,9 +310,9 @@ export default function PlayerInfoPage() {
                             </div>
 
                             {/* 下一轮对战信息 */}
-                            <div className="mb-8 pb-6">
-                                <h3 className="text-xl font-bold text-white mb-4">下一轮对战</h3>
-                                {nextMatch ? (
+                            {nextMatch && (
+                                <div className="mb-8 pb-6">
+                                    <h3 className="text-xl font-bold text-white mb-4">下一轮对战</h3>
                                     <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66] p-6">
                                         <div className="flex items-center justify-between mb-4">
                                             <div>
@@ -461,162 +461,13 @@ export default function PlayerInfoPage() {
                                         )}
 
                                     </div>
-                                ) : (
-                                    <div className="bg-[#3D3D3D80] backdrop-blur-sm border-b-4 border-[#E93B66]  p-6 text-center">
-                                        <p className="text-gray-400">暂无下一轮对战安排</p>
-                                    </div>
-                                )}
-                            </div>
+                                </div>
+                            )}
 
                             {/* 比赛预约系统 */}
                             <div className="border-b-4">
                                 <MatchScheduleSystem userOsuId={user.osuId} isAdmin={false} />
                             </div>
-                        </div>
-                    </div>
-
-                    {/* 右侧边栏 */}
-                    <div className="space-y-6">
-                        {/* 快速导航 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
-                            <h4 className="text-lg font-bold text-white mb-4 flex items-center">
-                                <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
-                                快速导航
-                            </h4>
-                            <div className="space-y-2">
-                                <div className="border-b-4 border-[#E93B66] bg-white hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-16 flex">
-                                    <Link
-                                        href="/mapool"
-                                        className="flex-1 p-3 text-left text-sm font-medium flex items-center gap-2 relative text-gray-800"
-                                    >
-                                        <Image
-                                            src="/icons/mapool-sm.svg"
-                                            alt="图池信息"
-                                            width={32}
-                                            height={32}
-                                            className="flex-shrink-0 filter brightness-0 saturate-0 opacity-80 transition-all duration-200"
-                                        />
-                                        <div className="flex flex-col justify-center">
-                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight">MAPPOOL</div>
-                                            <div className="text-lg font-bold leading-tight">图池信息</div>
-                                        </div>
-                                    </Link>
-                                </div>
-                                <div className="border-b-4 border-[#E93B66] bg-white hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-16 flex">
-                                    <Link
-                                        href="/guide"
-                                        className="flex-1 p-3 text-left text-sm font-medium flex items-center gap-2 relative text-gray-800"
-                                    >
-                                        <Image
-                                            src="/icons/guide-sm.svg"
-                                            alt="比赛规则"
-                                            width={32}
-                                            height={32}
-                                            className="flex-shrink-0 filter brightness-0 saturate-0 opacity-80 transition-all duration-200"
-                                        />
-                                        <div className="flex flex-col justify-center">
-                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight">GUIDE</div>
-                                            <div className="text-lg font-bold leading-tight">比赛规则</div>
-                                        </div>
-                                    </Link>
-                                </div>
-                                <div className="border-b-4 border-[#E93B66] bg-white hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-16 flex">
-                                    <Link
-                                        href="/schedule"
-                                        className="flex-1 p-3 text-left text-sm font-medium flex items-center gap-2 relative text-gray-800"
-                                    >
-                                        <Image
-                                            src="/icons/table-fill.svg"
-                                            alt="比赛时间表"
-                                            width={32}
-                                            height={32}
-                                            className="flex-shrink-0 filter brightness-0 saturate-0 opacity-80 transition-all duration-200"
-                                        />
-                                        <div className="flex flex-col justify-center">
-                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight">SCHEDULE</div>
-                                            <div className="text-lg font-bold leading-tight">比赛时间表</div>
-                                        </div>
-                                    </Link>
-                                </div>
-                                <div className="border-b-4 border-[#E93B66] bg-white hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-16 flex">
-                                    <Link
-                                        href="/news"
-                                        className="flex-1 p-3 text-left text-sm font-medium flex items-center gap-2 relative text-gray-800"
-                                    >
-                                        <Image
-                                            src="/icons/news.svg"
-                                            alt="最新消息"
-                                            width={32}
-                                            height={32}
-                                            className="flex-shrink-0 filter brightness-0 saturate-0 opacity-80 transition-all duration-200"
-                                        />
-                                        <div className="flex flex-col justify-center">
-                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight">NEWS</div>
-                                            <div className="text-lg font-bold leading-tight">最新消息</div>
-                                        </div>
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 个人统计 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
-                            <h4 className="text-lg font-bold text-white mb-4 flex items-center">
-                                <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
-                                个人统计
-                            </h4>
-                            <div className="space-y-3 text-gray-300">
-                                <div className="flex justify-between items-center">
-                                    <span>状态:</span>
-                                    <span className={`font-medium ${registration?.approved ? 'text-green-400' : 'text-yellow-400'}`}>
-                                        {registration?.approved ? '已审核' : '待审核'}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span>下一场比赛:</span>
-                                    <span className="text-[#3BE9D8] font-medium">
-                                        {nextMatch ? '已预约' : '未预约'}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span>权限等级:</span>
-                                    <span className="text-[#3BE9D8] font-medium">
-                                        {permissions.isAdmin ? '管理员' : permissions.isMapSelector || permissions.isReplayTester ? '工作人员' : '玩家'}
-                                    </span>
-                                </div>
-                                {registration ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-300">
-                                        <div>
-                                            <span className="font-medium text-white">时区:</span> {registration.timezone || '未设置'}
-                                        </div>
-                                        <div>
-                                            <span className="font-medium text-white">注册时间:</span> {formatDate(registration.registeredAt)}
-                                        </div>
-                                        {registration.approved && registration.approvedAt && (
-                                            <div>
-                                                <span className="font-medium text-white">审核时间:</span> {formatDate(registration.approvedAt)}
-                                            </div>
-                                        )}
-                                        {registration.availability && (
-                                            <div className="md:col-span-2">
-                                                <span className="font-medium text-white">可用时间:</span> {registration.availability}
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <p className="text-gray-400">未找到注册信息</p>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* 登出按钮 */}
-                        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-6">
-                            <button
-                                onClick={handleLogout}
-                                className="w-full bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3  transition-colors duration-200 font-medium text-lg border-b-2 border-[#E93B66] hover:border-[#3BE9D8]"
-                            >
-                                登出
-                            </button>
                         </div>
                     </div>
                 </div>

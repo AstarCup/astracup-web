@@ -11,6 +11,7 @@ import localFont from "next/font/local";
 import Link from 'next/link';
 import Image from 'next/image';
 import { TournamentRegistration } from '@/lib/mysql-registrations';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 const audiowide = localFont({
     src: "../components/font/Audiowide-Regular.ttf",
@@ -19,6 +20,7 @@ const audiowide = localFont({
 
 export default function AdminPage() {
     const router = useRouter();
+    usePageTitle('/schedulemanagement');
     const [user, setUser] = useState<UserSession | null>(null);
     const [permissions, setPermissions] = useState<UserPermissions>({
         isMapSelector: false,
@@ -118,6 +120,39 @@ export default function AdminPage() {
         }
     };
 
+    // 删除用户注册
+    const handleDeleteRegistration = async (osuId: string, username: string) => {
+        if (!confirm(`确定要删除用户 ${username} (ID: ${osuId}) 的注册信息吗？此操作不可撤销！`)) {
+            return;
+        }
+
+        try {
+            setProcessingUser(osuId);
+            const response = await fetch('/api/admin/delete-registration', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ osuId }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(data.message);
+                // 刷新注册列表
+                fetchRegistrations();
+            } else {
+                alert(`删除失败: ${data.error}`);
+            }
+        } catch (error) {
+            console.error('Error deleting registration:', error);
+            alert('删除用户注册信息时发生错误');
+        } finally {
+            setProcessingUser(null);
+        }
+    };
+
     const handleLogout = async () => {
         try {
             await fetch('/api/auth/logout', { method: 'POST' });
@@ -165,7 +200,7 @@ export default function AdminPage() {
                     <p className="text-gray-300 mb-6">
                         {!user
                             ? '您需要登录后才能访问此页面'
-                            : '您没有权限访问管理员面板'
+                            : '您没有权限访问管理比赛安排页面'
                         }
                     </p>
                     <Link
@@ -303,6 +338,13 @@ export default function AdminPage() {
                                                                     {processingUser === player.osuId ? '审核中...' : '审核通过'}
                                                                 </button>
                                                             )}
+                                                            <button
+                                                                onClick={() => handleDeleteRegistration(player.osuId, player.username)}
+                                                                disabled={processingUser === player.osuId}
+                                                                className="bg-red-600 hover:bg-red-500 text-white px-4 py-2  transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                                                            >
+                                                                {processingUser === player.osuId ? '删除中...' : '删除用户'}
+                                                            </button>
                                                             <p className="text-xs text-gray-500 text-right">
                                                                 {new Date(player.registeredAt).toLocaleString('zh-CN')}
                                                             </p>
