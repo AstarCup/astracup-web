@@ -458,6 +458,10 @@ export default function AdminPage() {
     const [staffAssignments, setStaffAssignments] = useState<StaffRoomAssignment[]>([]);
     const [staffAssignmentsLoading, setStaffAssignmentsLoading] = useState(false);
 
+    // 可供staff选择的房间状态
+    const [availableRooms, setAvailableRooms] = useState<any[]>([]);
+    const [availableRoomsLoading, setAvailableRoomsLoading] = useState(false);
+
     useEffect(() => {
         const fetchUserData = async () => {
             try {
@@ -515,10 +519,11 @@ export default function AdminPage() {
         }
     }, [activeTab, permissions.isAdmin]);
 
-    // 当切换到直播裁判选项卡时获取staff分配列表
+    // 当切换到直播裁判选项卡时获取staff分配列表和可用房间
     useEffect(() => {
         if (activeTab === 'streaming' && (permissions.isAdmin || permissions.isReferee || permissions.isStreamer)) {
             fetchStaffAssignments();
+            fetchAvailableRooms();
         }
     }, [activeTab, permissions.isAdmin, permissions.isReferee, permissions.isStreamer]);
 
@@ -791,6 +796,62 @@ export default function AdminPage() {
             console.error('Error fetching staff assignments:', error);
         } finally {
             setStaffAssignmentsLoading(false);
+        }
+    };
+
+    // 获取可供staff选择的房间列表
+    const fetchAvailableRooms = async () => {
+        try {
+            setAvailableRoomsLoading(true);
+            const response = await fetch('/api/available-rooms-for-staff');
+            if (response.ok) {
+                const data = await response.json();
+                setAvailableRooms(data.rooms || []);
+            }
+        } catch (error) {
+            console.error('Error fetching available rooms:', error);
+        } finally {
+            setAvailableRoomsLoading(false);
+        }
+    };
+
+    // Staff申请加入房间
+    const handleApplyForRoom = async (roomId: number, role: 'referee' | 'streamer' | 'commentator') => {
+        if (!user) return;
+
+        const roleName = role === 'referee' ? '裁判' : role === 'streamer' ? '直播' : '解说';
+
+        if (!confirm(`确定要申请成为房间 ${roomId} 的${roleName}吗？`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/staff-room-assignments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    room_id: roomId,
+                    staff_osuId: user.osuId,
+                    staff_username: user.username,
+                    staff_role: role,
+                    assigned_by: user.osuId // 自己申请，所以assigned_by也是自己
+                }),
+            });
+
+            if (response.ok) {
+                alert(`成功申请成为${roleName}！请等待管理员确认。`);
+                // 重新获取数据
+                fetchStaffAssignments();
+                fetchAvailableRooms();
+            } else {
+                const errorData = await response.json();
+                alert(`申请失败: ${errorData.error || '未知错误'}`);
+            }
+        } catch (error) {
+            console.error('Error applying for room:', error);
+            alert('申请失败，请稍后重试');
         }
     };
 
@@ -1327,8 +1388,8 @@ export default function AdminPage() {
                                                                             {new Date(schedule.scheduled_time).toLocaleString('zh-CN')}
                                                                         </span>
                                                                         <span className={`px-2 py-1 rounded text-xs ${schedule.status === 'scheduled' ? 'bg-blue-600 text-white' :
-                                                                                schedule.status === 'in_progress' ? 'bg-yellow-600 text-white' :
-                                                                                    'bg-green-600 text-white'
+                                                                            schedule.status === 'in_progress' ? 'bg-yellow-600 text-white' :
+                                                                                'bg-green-600 text-white'
                                                                             }`}>
                                                                             {schedule.status === 'scheduled' ? '已预约' :
                                                                                 schedule.status === 'in_progress' ? '进行中' : '已完成'}
@@ -1657,12 +1718,24 @@ export default function AdminPage() {
                                         <div>
                                             <h4 className="text-lg font-medium text-white mb-4 flex items-center">
                                                 <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
-                                                可参加的比赛房间
+                                                可申请参加的比赛房间
                                             </h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                {rooms
-                                                    .filter(room => room.status !== 'closed')
-                                                    .map((room) => {
+
+                                            {availableRoomsLoading ? (
+                                                <div className="flex justify-center items-center py-8">
+                                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E93B66]"></div>
+                                                    <span className="ml-2 text-gray-400">加载房间中...</span>
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                    {availableRooms.map((room) => {
+                                                        // 检查用户是否已经申请了这个房间的某个角色
+                                                        const userApplication = staffAssignments.find(a =>
+                                                            a.staff_osuId === user.osuId &&
+                                                            a.room_id === room.id &&
+                                                            a.status === 'pending'
+                                                        );
+
                                                         return (
                                                             <div key={room.id} className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-4 hover:border-[#E93B66] transition-colors duration-200">
                                                                 <div className="flex justify-between items-start mb-3">
@@ -1681,7 +1754,14 @@ export default function AdminPage() {
                                                                 <div className="text-xs text-gray-400 space-y-1 mb-4">
                                                                     <div>轮次: {room.round_number} | 场次: {room.match_number}</div>
                                                                     <div>日期: {room.match_date} | 时间: {room.match_time}</div>
-                                                                    <div>最大参与者: {room.max_participants}</div>
+                                                                    <div>选手: {room.player1_username || '待定'} vs {room.player2_username || '待定'}</div>
+                                                                </div>
+
+                                                                {/* Staff分配情况 */}
+                                                                <div className="text-xs text-gray-400 space-y-1 mb-4">
+                                                                    <div>裁判: {room.staff_counts?.referee || 0}人 {room.referee_username && `(${room.referee_username})`}</div>
+                                                                    <div>解说: {room.staff_counts?.commentator || 0}人 {room.commentator_username && `(${room.commentator_username})`}</div>
+                                                                    <div>直播: {room.staff_counts?.streamer || 0}人</div>
                                                                 </div>
 
                                                                 {room.description && (
@@ -1690,19 +1770,47 @@ export default function AdminPage() {
                                                                     </div>
                                                                 )}
 
-                                                                <div className="flex justify-end">
-                                                                    <div className="text-xs text-gray-400">
-                                                                        Staff分配从比赛预约自动获取
-                                                                    </div>
+                                                                {/* 申请按钮 */}
+                                                                <div className="flex flex-col space-y-2">
+                                                                    {userApplication ? (
+                                                                        <div className="text-xs text-yellow-400 text-center py-2">
+                                                                            已申请 {userApplication.staff_role === 'referee' ? '裁判' :
+                                                                                userApplication.staff_role === 'streamer' ? '直播' : '解说'} - 等待确认
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="flex space-x-2">
+                                                                            <button
+                                                                                onClick={() => handleApplyForRoom(room.id, 'referee')}
+                                                                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-2 px-3 rounded transition-colors duration-200"
+                                                                                disabled={room.staff_counts?.referee >= 2}
+                                                                            >
+                                                                                申请裁判 {(room.staff_counts?.referee || 0) >= 2 && '(已满)'}
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => handleApplyForRoom(room.id, 'commentator')}
+                                                                                className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs py-2 px-3 rounded transition-colors duration-200"
+                                                                                disabled={room.staff_counts?.commentator >= 2}
+                                                                            >
+                                                                                申请解说 {(room.staff_counts?.commentator || 0) >= 2 && '(已满)'}
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => handleApplyForRoom(room.id, 'streamer')}
+                                                                                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs py-2 px-3 rounded transition-colors duration-200"
+                                                                            >
+                                                                                申请直播
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         );
                                                     })}
-                                            </div>
+                                                </div>
+                                            )}
 
-                                            {rooms.filter(room => room.status !== 'closed').length === 0 && (
+                                            {!availableRoomsLoading && availableRooms.length === 0 && (
                                                 <div className="text-center py-8 text-gray-400">
-                                                    <p>暂无可参加的比赛房间</p>
+                                                    <p>暂无可申请的比赛房间</p>
                                                 </div>
                                             )}
                                         </div>

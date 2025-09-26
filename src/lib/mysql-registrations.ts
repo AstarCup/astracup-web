@@ -1267,45 +1267,25 @@ const mysqlStorage = {
 
             const [rows] = await connection.execute(`
                 SELECT
-                    CONCAT('referee_', ms.id) as id,
-                    ms.room_id,
-                    ms.referee_osuId as staff_osuId,
-                    ms.referee_username as staff_username,
-                    'referee' as staff_role,
-                    'confirmed' as status,
-                    ms.created_by as assigned_by,
-                    ms.created_at as assigned_at,
-                    NULL as responded_at,
-                    ms.created_at,
-                    ms.updated_at,
+                    sra.id,
+                    sra.room_id,
+                    sra.staff_osuId,
+                    sra.staff_username,
+                    sra.staff_role,
+                    sra.status,
+                    sra.assigned_by,
+                    sra.assigned_at,
+                    sra.responded_at,
+                    sra.created_at,
+                    sra.updated_at,
                     mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number,
-                    r1.avatar_url as staff_avatar_url,
+                    r.avatar_url as staff_avatar_url,
                     ms.player1_username, ms.player2_username
-                FROM match_schedules ms
-                JOIN match_rooms mr ON ms.room_id = mr.id
-                LEFT JOIN registrations r1 ON ms.referee_osuId = r1.osuId COLLATE utf8mb4_unicode_ci
-                WHERE ms.referee_osuId IS NOT NULL AND ms.referee_username IS NOT NULL
-                UNION ALL
-                SELECT
-                    CONCAT('commentator_', ms.id) as id,
-                    ms.room_id,
-                    ms.commentator_osuId as staff_osuId,
-                    ms.commentator_username as staff_username,
-                    'commentator' as staff_role,
-                    'confirmed' as status,
-                    ms.created_by as assigned_by,
-                    ms.created_at as assigned_at,
-                    NULL as responded_at,
-                    ms.created_at,
-                    ms.updated_at,
-                    mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number,
-                    r2.avatar_url as staff_avatar_url,
-                    ms.player1_username, ms.player2_username
-                FROM match_schedules ms
-                JOIN match_rooms mr ON ms.room_id = mr.id
-                LEFT JOIN registrations r2 ON ms.commentator_osuId = r2.osuId COLLATE utf8mb4_unicode_ci
-                WHERE ms.commentator_osuId IS NOT NULL AND ms.commentator_username IS NOT NULL
-                ORDER BY room_name ASC, staff_role ASC
+                FROM staff_room_assignments sra
+                JOIN match_rooms mr ON sra.room_id = mr.id
+                LEFT JOIN registrations r ON sra.staff_osuId = r.osuId COLLATE utf8mb4_unicode_ci
+                LEFT JOIN match_schedules ms ON sra.room_id = ms.room_id
+                ORDER BY mr.room_name ASC, sra.staff_role ASC, sra.created_at DESC
             `);
 
             connection.release();
@@ -1339,6 +1319,66 @@ const mysqlStorage = {
             }));
         } catch (error) {
             console.error('Error getting staff room assignments:', error);
+            return [];
+        }
+    },
+
+    // 获取可供staff选择的房间列表
+    getAvailableRoomsForStaff: async (): Promise<any[]> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [rows] = await connection.execute(`
+                SELECT
+                    mr.id,
+                    mr.room_name,
+                    mr.round_number,
+                    mr.match_date,
+                    mr.match_time,
+                    mr.match_number,
+                    mr.status,
+                    mr.max_participants,
+                    mr.description,
+                    ms.player1_username,
+                    ms.player2_username,
+                    ms.referee_username,
+                    ms.commentator_username,
+                    -- 统计每个房间的staff数量
+                    COUNT(DISTINCT CASE WHEN sra.staff_role = 'referee' AND sra.status = 'confirmed' THEN sra.id END) as referee_count,
+                    COUNT(DISTINCT CASE WHEN sra.staff_role = 'commentator' AND sra.status = 'confirmed' THEN sra.id END) as commentator_count,
+                    COUNT(DISTINCT CASE WHEN sra.staff_role = 'streamer' AND sra.status = 'confirmed' THEN sra.id END) as streamer_count
+                FROM match_rooms mr
+                LEFT JOIN match_schedules ms ON mr.id = ms.room_id
+                LEFT JOIN staff_room_assignments sra ON mr.id = sra.room_id AND sra.status = 'confirmed'
+                WHERE mr.status IN ('open', 'in_progress')
+                GROUP BY mr.id, mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number, mr.status, mr.max_participants, mr.description, ms.player1_username, ms.player2_username, ms.referee_username, ms.commentator_username
+                ORDER BY mr.match_date ASC, mr.match_time ASC, mr.room_name ASC
+            `);
+
+            connection.release();
+
+            return (rows as any[]).map(row => ({
+                id: row.id,
+                room_name: row.room_name,
+                round_number: row.round_number,
+                match_date: row.match_date,
+                match_time: row.match_time,
+                match_number: row.match_number,
+                status: row.status,
+                max_participants: row.max_participants,
+                description: row.description,
+                player1_username: row.player1_username,
+                player2_username: row.player2_username,
+                referee_username: row.referee_username,
+                commentator_username: row.commentator_username,
+                staff_counts: {
+                    referee: row.referee_count || 0,
+                    commentator: row.commentator_count || 0,
+                    streamer: row.streamer_count || 0
+                }
+            }));
+        } catch (error) {
+            console.error('Error getting available rooms for staff:', error);
             return [];
         }
     },
@@ -1570,6 +1610,7 @@ export const getTournamentRegistrationCount = async (): Promise<number> => {
 
 // Staff房间分配相关函数
 export const getStaffRoomAssignments = mysqlStorage.getStaffRoomAssignments;
+export const getAvailableRoomsForStaff = mysqlStorage.getAvailableRoomsForStaff;
 export const createStaffRoomAssignment = mysqlStorage.createStaffRoomAssignment;
 export const updateStaffRoomAssignmentStatus = mysqlStorage.updateStaffRoomAssignmentStatus;
 export const deleteStaffRoomAssignment = mysqlStorage.deleteStaffRoomAssignment;
