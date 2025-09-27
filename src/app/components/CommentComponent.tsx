@@ -20,6 +20,22 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
     const [showCommentBox, setShowCommentBox] = useState(false); // 新增：控制评论框显示
     const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null); // 新增：正在删除的评论ID
 
+    const formatDateTime = (dateString: string | Date) => {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            return '无效日期';
+        }
+        // 转换为东八区时间
+        const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
+        const cstTime = new Date(utcTime + (8 * 3600000));
+        const year = cstTime.getFullYear();
+        const month = String(cstTime.getMonth() + 1).padStart(2, '0');
+        const day = String(cstTime.getDate()).padStart(2, '0');
+        const hours = String(cstTime.getHours()).padStart(2, '0');
+        const minutes = String(cstTime.getMinutes()).padStart(2, '0');
+        return `${year}年${month}月${day}日 ${hours}:${minutes}`;
+    };
+
     // 获取评论列表
     useEffect(() => {
         const fetchComments = async () => {
@@ -165,7 +181,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                                     {/* Hover弹窗 */}
                                     <div className="absolute top-full left-0 mt-1 bg-gray-900 text-white text-xs rounded shadow-lg p-2 z-20 min-w-[150px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                         <div className="font-semibold mb-1">{c.username}</div>
-                                        <div className="text-gray-300 text-xs mb-1">{new Date(c.createdAt).toLocaleString()}</div>
+                                        <div className="text-gray-300 text-xs mb-1">{formatDateTime(c.createdAt)}</div>
                                         <div className="text-gray-100">{c.comment}</div>
                                     </div>
                                 </div>
@@ -216,7 +232,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                                     <div
                                         key={c.id}
                                         className="relative group"
-                                        title={`${c.username}: ${c.comment} (${new Date(c.createdAt).toLocaleString()})`}
+                                        title={`${c.username}: ${c.comment} (${formatDateTime(c.createdAt)})`}
                                     >
                                         {/* 头像 */}
                                         <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-gray-600 border-2 border-gray-400">

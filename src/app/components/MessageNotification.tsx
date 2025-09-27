@@ -14,6 +14,22 @@ export default function MessageNotification({ onNewMessage }: MessageNotificatio
     const [showMessages, setShowMessages] = useState(false);
     const [loading, setLoading] = useState(false);
 
+    const formatDateTime = (dateString: string | Date) => {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            return '无效日期';
+        }
+        // 转换为东八区时间
+        const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
+        const cstTime = new Date(utcTime + (8 * 3600000));
+        const year = cstTime.getFullYear();
+        const month = String(cstTime.getMonth() + 1).padStart(2, '0');
+        const day = String(cstTime.getDate()).padStart(2, '0');
+        const hours = String(cstTime.getHours()).padStart(2, '0');
+        const minutes = String(cstTime.getMinutes()).padStart(2, '0');
+        return `${year}年${month}月${day}日 ${hours}:${minutes}`;
+    };
+
     // 获取用户消息
     const fetchMessages = async () => {
         try {
@@ -111,7 +127,7 @@ export default function MessageNotification({ onNewMessage }: MessageNotificatio
                                         <p className="text-gray-300 text-sm mb-2">{message.content}</p>
 
                                         <div className="text-xs text-gray-400 mb-3">
-                                            发送者: {message.sender_username} | {new Date(message.created_at).toLocaleString('zh-CN')}
+                                            发送者: {message.sender_username} | {formatDateTime(message.created_at)}
                                         </div>
 
                                         {/* 响应按钮 */}

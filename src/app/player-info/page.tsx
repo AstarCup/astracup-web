@@ -114,14 +114,18 @@ export default function PlayerInfoPage() {
     // 格式化日期函数
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            return '无效日期';
+        }
         // 转换为东八区时间
         const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
         const cstTime = new Date(utcTime + (8 * 3600000));
-        return cstTime.toLocaleDateString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
+        const year = cstTime.getFullYear();
+        const month = String(cstTime.getMonth() + 1).padStart(2, '0');
+        const day = String(cstTime.getDate()).padStart(2, '0');
+        const hours = String(cstTime.getHours()).padStart(2, '0');
+        const minutes = String(cstTime.getMinutes()).padStart(2, '0');
+        return `${year}年${month}月${day}日 ${hours}:${minutes}`;
     };
 
     const handleLogout = async () => {

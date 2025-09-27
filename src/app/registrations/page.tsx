@@ -51,6 +51,22 @@ export default function RegistrationsPage() {
         return Math.round(pp).toLocaleString();
     };
 
+    const formatDateTime = (dateString: string | Date) => {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            return '无效日期';
+        }
+        // 转换为东八区时间
+        const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
+        const cstTime = new Date(utcTime + (8 * 3600000));
+        const year = cstTime.getFullYear();
+        const month = String(cstTime.getMonth() + 1).padStart(2, '0');
+        const day = String(cstTime.getDate()).padStart(2, '0');
+        const hours = String(cstTime.getHours()).padStart(2, '0');
+        const minutes = String(cstTime.getMinutes()).padStart(2, '0');
+        return `${year}年${month}月${day}日 ${hours}:${minutes}`;
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-screen py-12">
@@ -144,7 +160,7 @@ export default function RegistrationsPage() {
 
                                     <div className="mt-4 pt-4 border-t border-gray-200">
                                         <p className="text-xs text-gray-500">
-                                            报名时间: {new Date(player.registeredAt).toLocaleString('zh-CN')}
+                                            报名时间: {formatDateTime(player.registeredAt)}
                                         </p>
                                         {player.approved && (
                                             <p className="text-xs text-green-600 mt-1">✓ 审核通过，可以参赛</p>
