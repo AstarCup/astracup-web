@@ -162,7 +162,7 @@ export const mapRatingsStorage = {
         }
     },
 
-    // 添加或更新评分（同一用户对同一谱面只能有一个评分）
+    // 添加或更新评分和评论
     async addRating(
         mapSelectionId: number,
         userId: string,
@@ -176,37 +176,61 @@ export const mapRatingsStorage = {
             const connection = await getPool().getConnection();
             console.log('Database connection established');
 
-            // 检查用户是否已经对该谱面评分过
-            const [existingRows] = await connection.execute(
-                'SELECT id FROM map_ratings WHERE mapSelectionId = ? AND userId = ?',
-                [mapSelectionId, userId]
-            );
+            let success = true;
 
-            const existingRatings = existingRows as any[];
+            // 处理评分（如果提供）
+            if (rating !== null) {
+                console.log('Processing rating');
+                const [existingRatingRows] = await connection.execute(
+                    'SELECT id FROM map_ratings WHERE mapSelectionId = ? AND userId = ? AND rating IS NOT NULL',
+                    [mapSelectionId, userId]
+                );
 
-            if (existingRatings.length > 0) {
-                // 如果已存在评分，则更新
-                console.log('Updating existing rating');
-                const [updateResult] = await connection.execute(
-                    'UPDATE map_ratings SET rating = ?, comment = ?, avatar_url = ?, updatedAt = CURRENT_TIMESTAMP WHERE mapSelectionId = ? AND userId = ?',
-                    [rating, comment, avatar_url, mapSelectionId, userId]
-                );
-                console.log('Update result:', updateResult);
-                connection.release();
-                const updateResultHeader = updateResult as mysql.ResultSetHeader;
-                return updateResultHeader.affectedRows > 0;
-            } else {
-                // 如果不存在，则添加新评分
-                console.log('Adding new rating');
-                const [insertResult] = await connection.execute(
-                    'INSERT INTO map_ratings (mapSelectionId, userId, username, rating, comment, avatar_url) VALUES (?, ?, ?, ?, ?, ?)',
-                    [mapSelectionId, userId, username, rating, comment, avatar_url]
-                );
-                console.log('Insert result:', insertResult);
-                connection.release();
-                const insertResultHeader = insertResult as mysql.ResultSetHeader;
-                return insertResultHeader.affectedRows > 0;
+                const existingRatings = existingRatingRows as any[];
+
+                if (existingRatings.length > 0) {
+                    // 更新现有评分记录
+                    console.log('Updating existing rating');
+                    const [updateResult] = await connection.execute(
+                        'UPDATE map_ratings SET rating = ?, avatar_url = ?, updatedAt = CURRENT_TIMESTAMP WHERE mapSelectionId = ? AND userId = ? AND rating IS NOT NULL',
+                        [rating, avatar_url, mapSelectionId, userId]
+                    );
+                    console.log('Update rating result:', updateResult);
+                    const updateResultHeader = updateResult as mysql.ResultSetHeader;
+                    if (updateResultHeader.affectedRows === 0) {
+                        success = false;
+                    }
+                } else {
+                    // 添加新评分记录
+                    console.log('Adding new rating');
+                    const [insertResult] = await connection.execute(
+                        'INSERT INTO map_ratings (mapSelectionId, userId, username, rating, comment, avatar_url) VALUES (?, ?, ?, ?, ?, ?)',
+                        [mapSelectionId, userId, username, rating, null, avatar_url]
+                    );
+                    console.log('Insert rating result:', insertResult);
+                    const insertResultHeader = insertResult as mysql.ResultSetHeader;
+                    if (insertResultHeader.affectedRows === 0) {
+                        success = false;
+                    }
+                }
             }
+
+            // 处理评论（如果提供且不为空）
+            if (comment && comment.trim()) {
+                console.log('Processing comment');
+                const [insertCommentResult] = await connection.execute(
+                    'INSERT INTO map_ratings (mapSelectionId, userId, username, rating, comment, avatar_url) VALUES (?, ?, ?, ?, ?, ?)',
+                    [mapSelectionId, userId, username, null, comment.trim(), avatar_url]
+                );
+                console.log('Insert comment result:', insertCommentResult);
+                const insertCommentResultHeader = insertCommentResult as mysql.ResultSetHeader;
+                if (insertCommentResultHeader.affectedRows === 0) {
+                    success = false;
+                }
+            }
+
+            connection.release();
+            return success;
         } catch (error) {
             console.error('Error adding/updating rating:', error);
             console.error('Error details:', JSON.stringify(error, null, 2));
