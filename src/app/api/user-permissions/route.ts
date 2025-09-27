@@ -22,12 +22,25 @@ export async function GET(request: NextRequest) {
 
         // 否则从session cookie获取
         const cookieStore = await cookies();
-        const sessionCookie = cookieStore.get('session')?.value;
+        const astraSessionCookie = cookieStore.get('astra_session');
+        const sessionCookie = cookieStore.get('session');
 
-        console.log('[User Permissions API] Session cookie存在:', !!sessionCookie);
+        console.log('[User Permissions API] astra_session cookie存在:', !!astraSessionCookie?.value);
+        console.log('[User Permissions API] session cookie存在:', !!sessionCookie?.value);
 
-        if (!sessionCookie) {
-            console.log('[User Permissions API] 没有session cookie，返回默认权限');
+        let sessionCookieValue = null;
+
+        // 优先使用astra_session cookie
+        if (astraSessionCookie?.value) {
+            sessionCookieValue = astraSessionCookie.value;
+            console.log('[User Permissions API] 使用astra_session cookie');
+        } else if (sessionCookie?.value) {
+            sessionCookieValue = sessionCookie.value;
+            console.log('[User Permissions API] 使用session cookie');
+        }
+
+        if (!sessionCookieValue) {
+            console.log('[User Permissions API] 没有找到有效的session cookie，返回默认权限');
             return NextResponse.json({
                 success: true,
                 permissions: {
@@ -43,7 +56,7 @@ export async function GET(request: NextRequest) {
 
         let session;
         try {
-            session = JSON.parse(sessionCookie);
+            session = JSON.parse(sessionCookieValue);
             console.log('[User Permissions API] Session解析成功，osuId:', session.osuId);
         } catch {
             return NextResponse.json({
@@ -51,7 +64,10 @@ export async function GET(request: NextRequest) {
                 permissions: {
                     isMapSelector: false,
                     isReplayTester: false,
-                    isAdmin: false
+                    isAdmin: false,
+                    isStreamer: false,
+                    isReferee: false,
+                    isCommentator: false
                 }
             });
         }
@@ -63,7 +79,10 @@ export async function GET(request: NextRequest) {
                 permissions: {
                     isMapSelector: false,
                     isReplayTester: false,
-                    isAdmin: false
+                    isAdmin: false,
+                    isStreamer: false,
+                    isReferee: false,
+                    isCommentator: false
                 }
             });
         }
