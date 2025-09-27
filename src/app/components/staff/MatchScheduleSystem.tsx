@@ -86,18 +86,41 @@ interface MatchScheduleSystemProps {
 export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchScheduleSystemProps) {
     // 格式化日期和时间字符串 - 转换为东八区并显示年/月/日 时:分格式
     const formatDateTimeFromStrings = (dateString: string | undefined, timeString: string | undefined) => {
-        if (!dateString || !timeString) return '时间未定';
-        const dateTimeString = `${dateString}T${timeString}`;
-        const date = new Date(dateTimeString);
-        // 转换为东八区时间
-        const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
-        const cstTime = new Date(utcTime + (8 * 3600000));
-        const year = cstTime.getFullYear();
-        const month = String(cstTime.getMonth() + 1).padStart(2, '0');
-        const day = String(cstTime.getDate()).padStart(2, '0');
-        const hours = String(cstTime.getHours()).padStart(2, '0');
-        const minutes = String(cstTime.getMinutes()).padStart(2, '0');
-        return `${year}/${month}/${day} ${hours}:${minutes}`;
+        if (!dateString) return '时间未定';
+
+        let dateTimeString: string;
+
+        // 检查dateString是否已经是完整的ISO字符串格式
+        if (dateString.includes('T') && dateString.includes('Z')) {
+            // 如果是完整的ISO字符串，直接使用
+            dateTimeString = dateString;
+        } else if (timeString) {
+            // 如果是分别的日期和时间字段，组合它们
+            dateTimeString = `${dateString}T${timeString}`;
+        } else {
+            // 如果只有日期字段，假设时间是00:00:00
+            dateTimeString = `${dateString}T00:00:00.000Z`;
+        }
+
+        try {
+            const date = new Date(dateTimeString);
+            if (isNaN(date.getTime())) {
+                return '时间格式错误';
+            }
+
+            // 转换为东八区时间
+            const utcTime = date.getTime();
+            const cstTime = new Date(utcTime + (8 * 3600000));
+            const year = cstTime.getFullYear();
+            const month = String(cstTime.getMonth() + 1).padStart(2, '0');
+            const day = String(cstTime.getDate()).padStart(2, '0');
+            const hours = String(cstTime.getHours()).padStart(2, '0');
+            const minutes = String(cstTime.getMinutes()).padStart(2, '0');
+            return `${year}/${month}/${day} ${hours}:${minutes}`;
+        } catch (error) {
+            console.error('日期格式化错误:', error, dateString, timeString);
+            return '时间格式错误';
+        }
     };
 
     const [schedules, setSchedules] = useState<MatchSchedule[]>([]);
