@@ -206,6 +206,20 @@ export default function RoomManagement({ rooms, roomsLoading, deletingRoomId, on
         }
     };
 
+    // 合并日期和时间格式化函数
+    const formatDateTimeCombined = (dateString: string, timeString: string) => {
+        try {
+            // 如果date是ISO格式，提取日期部分
+            const datePart = dateString.includes('T') ? dateString.split('T')[0] : dateString;
+            // 组合日期和时间
+            const dateTimeString = `${datePart}T${timeString}`;
+            return new Date(dateTimeString).toLocaleString('zh-CN');
+        } catch (error) {
+            console.error('日期时间格式化错误:', error, dateString, timeString);
+            return `${dateString} ${timeString}`;
+        }
+    };
+
     const handleDeleteRoom = async (roomId: number) => {
         if (!confirm('确定要删除这个比赛房间吗？此操作不可撤销。')) {
             return;
@@ -283,12 +297,8 @@ export default function RoomManagement({ rooms, roomsLoading, deletingRoomId, on
                                         <span className="text-white">{room.match_number}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span>日期:</span>
-                                        <span className="text-white">{room.match_date}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>时间:</span>
-                                        <span className="text-white">{room.match_time}</span>
+                                        <span>日期时间:</span>
+                                        <span className="text-white">{formatDateTimeCombined(room.match_date, room.match_time)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span>最大参与者:</span>
