@@ -51,15 +51,13 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout 
 
 export async function getUserData(username: string): Promise<OsuUser | null> {
     try {
-        // 检查是否有API密钥
-        const apiKey = process.env.OSU_CLIENT_SECRET;
-        if (!apiKey) {
-            throw new Error('OSU_CLIENT_SECRET not configured');
-        }
+        // 获取客户端token
+        const { getValidClientToken } = await import('@/lib/osu-auth');
+        const accessToken = await getValidClientToken();
 
         const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/users/${username}`, {
             headers: {
-                'Authorization': `Bearer ${apiKey}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
             },
         });
@@ -115,15 +113,13 @@ export async function getUserData(username: string): Promise<OsuUser | null> {
 // 通过用户ID获取用户信息
 export async function getUserById(userId: number): Promise<OsuUser | null> {
     try {
-        // 检查是否有API密钥
-        const apiKey = process.env.OSU_CLIENT_SECRET;
-        if (!apiKey) {
-            throw new Error('OSU_CLIENT_SECRET not configured');
-        }
+        // 获取客户端token
+        const { getValidClientToken } = await import('@/lib/osu-auth');
+        const accessToken = await getValidClientToken();
 
         const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/users/${userId}`, {
             headers: {
-                'Authorization': `Bearer ${apiKey}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
             },
         });

@@ -149,3 +149,63 @@ export async function verifyOsuToken(accessToken: string): Promise<boolean> {
         return false;
     }
 }
+
+// 使用client_credentials流程获取应用级访问令牌（用于服务器端API调用）
+export async function getOsuClientToken(): Promise<{
+    access_token: string;
+    expires_in: number;
+    token_type: string;
+}> {
+    try {
+        if (!OSU_CLIENT_ID || !OSU_CLIENT_SECRET) {
+            throw new Error('OSU_CLIENT_ID and OSU_CLIENT_SECRET must be configured');
+        }
+
+        const response = await fetch('https://osu.ppy.sh/oauth/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                client_id: OSU_CLIENT_ID,
+                client_secret: OSU_CLIENT_SECRET,
+                grant_type: 'client_credentials',
+                scope: 'public',
+            }),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Client token exchange failed:', response.status, errorText);
+            throw new Error(`Failed to get client access token: ${response.status} - ${errorText}`);
+        }
+
+        const tokenData = await response.json();
+        return tokenData;
+    } catch (error) {
+        console.error('Client token exchange error:', error);
+        throw error;
+    }
+}
+
+// 缓存客户端token
+let clientToken: { token: string; expires: number } | null = null;
+
+// 获取有效的客户端token（带缓存）
+export async function getValidClientToken(): Promise<string> {
+    const now = Date.now() / 1000; // 当前时间戳（秒）
+
+    // 如果有缓存的token且未过期，返回缓存的token
+    if (clientToken && clientToken.expires > now + 60) { // 提前60秒刷新
+        return clientToken.token;
+    }
+
+    // 获取新的token
+    const tokenData = await getOsuClientToken();
+    clientToken = {
+        token: tokenData.access_token,
+        expires: now + tokenData.expires_in,
+    };
+
+    return clientToken.token;
+}
