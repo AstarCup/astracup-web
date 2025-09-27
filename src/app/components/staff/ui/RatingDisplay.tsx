@@ -92,7 +92,7 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId, onRe
                     {/* <span className="font-medium text-gray-700"></span> */}
                     <div className="flex items-center gap-1">
                         {/* {renderStars(averageRating, 'text-sm')} */}
-                        <span className="text-yellow-400 ml-1">({allRatings.length})</span>
+                        <span className="text-orange-500 ml-1 text-2xl font-bold">{allRatings.length}</span>
                     </div>
                 </div>
             ) : (

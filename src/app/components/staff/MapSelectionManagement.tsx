@@ -715,14 +715,15 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     // 切换过审状态
     const toggleApproval = async (selectionId: number, currentApproved: boolean) => {
         try {
-            const response = await fetch('/api/map-selections/approve', {
-                method: 'POST',
+            const response = await fetch('/api/map-selections', {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     id: selectionId,
-                    approved: !currentApproved
+                    approved: !currentApproved,
+                    selectedBy: userForState.id.toString()
                 })
             });
 
@@ -800,6 +801,49 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
+    // 解析 osu beatmap URL
+    const parseOsuUrl = (url: string): { beatmapId?: number; beatmapsetId?: number } | null => {
+        try {
+            // 处理完整的 URL 或缩短的 URL
+            let cleanUrl = url.trim();
+
+            // 如果是完整的 URL，提取路径部分
+            if (cleanUrl.includes('osu.ppy.sh/')) {
+                const urlObj = new URL(cleanUrl);
+                cleanUrl = urlObj.pathname;
+            }
+
+            // 匹配 beatmapsets/{setId}#osu/{mapId} 格式
+            const beatmapsetWithMapMatch = cleanUrl.match(/^\/beatmapsets\/(\d+)#osu\/(\d+)$/);
+            if (beatmapsetWithMapMatch) {
+                return {
+                    beatmapsetId: parseInt(beatmapsetWithMapMatch[1]),
+                    beatmapId: parseInt(beatmapsetWithMapMatch[2])
+                };
+            }
+
+            // 匹配 beatmapsets/{setId} 格式
+            const beatmapsetMatch = cleanUrl.match(/^\/beatmapsets\/(\d+)$/);
+            if (beatmapsetMatch) {
+                return {
+                    beatmapsetId: parseInt(beatmapsetMatch[1])
+                };
+            }
+
+            // 匹配 /b/{mapId} 格式
+            const beatmapMatch = cleanUrl.match(/^\/b\/(\d+)$/);
+            if (beatmapMatch) {
+                return {
+                    beatmapId: parseInt(beatmapMatch[1])
+                };
+            }
+
+            return null;
+        } catch (error) {
+            return null;
+        }
+    };
+
     // 筛选和排序选图
     const filteredSelections = selections
         .filter(selection => {
@@ -811,6 +855,47 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             // 搜索筛选
             if (searchQuery.trim()) {
                 const query = searchQuery.toLowerCase().trim();
+
+                // 检查是否是纯数字 - 直接匹配 beatmap ID 或 beatmapset ID
+                if (/^\d+$/.test(query)) {
+                    const numericQuery = parseInt(query);
+                    return selection.beatmapId === numericQuery || selection.beatmapsetId === numericQuery;
+                }
+
+                // 检查是否是 osu beatmap URL
+                const urlData = parseOsuUrl(searchQuery);
+                if (urlData) {
+                    if (urlData.beatmapId && urlData.beatmapsetId) {
+                        // 如果同时有 beatmapId 和 beatmapsetId，精确匹配两者
+                        return selection.beatmapId === urlData.beatmapId && selection.beatmapsetId === urlData.beatmapsetId;
+                    } else if (urlData.beatmapId) {
+                        // 只匹配 beatmapId
+                        return selection.beatmapId === urlData.beatmapId;
+                    } else if (urlData.beatmapsetId) {
+                        // 只匹配 beatmapsetId
+                        return selection.beatmapsetId === urlData.beatmapsetId;
+                    }
+                }
+
+                // 检查是否是简化属性搜索格式 (属性名+数字，如 ar9, cs5)
+                const simplifiedPropertyMatch = query.match(/^([a-zA-Z]+)(\d+(?:\.\d+)?)$/);
+                if (simplifiedPropertyMatch) {
+                    const [, property, valueStr] = simplifiedPropertyMatch;
+                    const value = parseFloat(valueStr);
+
+                    switch (property.toLowerCase()) {
+                        case 'ar':
+                            return Math.abs(selection.ar - value) < 0.01;
+                        case 'cs':
+                            return Math.abs(selection.cs - value) < 0.01;
+                        case 'od':
+                            return Math.abs(selection.od - value) < 0.01;
+                        case 'hp':
+                            return Math.abs(selection.hp - value) < 0.01;
+                        default:
+                            break;
+                    }
+                }
 
                 // 检查是否是特殊搜索格式 (key:value)
                 const specialSearchMatch = query.match(/^(\w+):(.+)$/);
@@ -923,10 +1008,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         />
 
                         {/* 搜索框 */}
-                        <div className="flex-1 min-w-[200px] text-white">
+                        <div className="flex-1 min-w-[200px] text-gray-700 bg-white">
                             <input
                                 type="text"
-                                placeholder="搜索歌曲、艺术家、作者... 支持 ar:9.5, cs:4, bid:12345, sid:67890, mod:dt"
+                                placeholder="搜索歌曲、艺术家、作者... 支持osu网址、BID/SID、ar9/cs5、mod"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -992,24 +1077,23 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             {/* Beatmap选择 */}
                             {availableBeatmaps.length > 1 && (
                                 <div className="mb-4">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        选择难度
-                                    </label>
-                                    <select
-                                        value={beatmapPreview?.id || ''}
-                                        onChange={(e) => {
-                                            const selected = availableBeatmaps.find(b => b.id.toString() === e.target.value);
+                                    <Dropdown
+                                        label="选择难度"
+                                        options={[
+                                            { value: '', label: '请选择难度...' },
+                                            ...availableBeatmaps.map(beatmap => ({
+                                                value: beatmap.id.toString(),
+                                                label: `${beatmap.version} (${beatmap.star_rating.toFixed(2)}★)`
+                                            }))
+                                        ]}
+                                        value={beatmapPreview?.id?.toString() || ''}
+                                        onChange={(value) => {
+                                            const selected = availableBeatmaps.find(b => b.id.toString() === value);
                                             setBeatmapPreview(selected || null);
                                         }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="">请选择难度...</option>
-                                        {availableBeatmaps.map(beatmap => (
-                                            <option key={beatmap.id} value={beatmap.id}>
-                                                {beatmap.version} ({beatmap.star_rating.toFixed(2)}★)
-                                            </option>
-                                        ))}
-                                    </select>
+                                        placeholder="请选择难度..."
+                                        minWidth="100%"
+                                    />
                                 </div>
                             )}
 
@@ -1042,18 +1126,17 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             {/* Mod选择 */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        MOD
-                                    </label>
-                                    <select
+                                    <Dropdown
+                                        label="MOD"
+                                        options={MOD_OPTIONS.map(mod => ({
+                                            value: mod,
+                                            label: mod
+                                        }))}
                                         value={selectedMods}
-                                        onChange={(e) => setSelectedMods(e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        {MOD_OPTIONS.map(mod => (
-                                            <option key={mod} value={mod}>{mod}</option>
-                                        ))}
-                                    </select>
+                                        onChange={setSelectedMods}
+                                        placeholder="选择MOD"
+                                        minWidth="100%"
+                                    />
                                 </div>
 
                                 <div>
@@ -1077,21 +1160,20 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     <h4 className="font-medium text-blue-800 mb-2">Lazer特有MOD设置</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                MOD名称
-                                            </label>
-                                            <select
+                                            <Dropdown
+                                                label="MOD名称"
+                                                options={[
+                                                    { value: '', label: '选择MOD...' },
+                                                    ...availableLazerMods.map(mod => ({
+                                                        value: mod.name,
+                                                        label: `${mod.name} - ${mod.description}`
+                                                    }))
+                                                ]}
                                                 value={customModName}
-                                                onChange={(e) => setCustomModName(e.target.value)}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            >
-                                                <option value="">选择MOD...</option>
-                                                {availableLazerMods.map(mod => (
-                                                    <option key={mod.name} value={mod.name}>
-                                                        {mod.name} - {mod.description}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                                onChange={setCustomModName}
+                                                placeholder="选择MOD..."
+                                                minWidth="100%"
+                                            />
                                         </div>
                                     </div>
 
@@ -1285,9 +1367,9 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         <Image
                                             src={selection.coverUrl}
                                             alt="Beatmap cover"
-                                            width={64}
-                                            height={64}
-                                            className="w-16 h-16 object-cover rounded"
+                                            width={124}
+                                            height={124}
+                                            className="w-24 h-24 object-cover rounded"
                                         />
                                         {/* 过审状态指示器 */}
                                         {selection.approved && (
@@ -1323,10 +1405,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         <h3 className="font-bold text-sm truncate" title={selection.title}>
                                             {selection.title}
                                         </h3>
-                                        <p className="text-xs text-gray-600 truncate" title={`${selection.artist} - ${selection.creator}`}>
-                                            {selection.artist} - {selection.creator}
+                                        <p className="font-bold text-xs text-gray-600 truncate" title={`${selection.artist}`}>
+                                            {selection.artist}
                                         </p>
-                                        <p className="text-xs text-gray-600">[{selection.version}]</p>
+                                        <p className="font-bold text-xs text-gray-600">[{selection.version}] by {selection.creator}</p>
                                     </div>
                                     <div className="ml-auto">
                                         <RatingDisplay
@@ -1342,17 +1424,16 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 {/* 属性信息 */}
                                 <div className="mb-3 text-xs text-gray-600">
                                     <div className="grid grid-cols-2 gap-2">
-                                        <div>★ {selection.starRating.toFixed(2)}</div>
-                                        <div>{formatLength(selection.totalLength)}</div>
-                                        <div>BPM: {selection.bpm}</div>
-                                        <div>CS: {selection.cs.toFixed(1)} | AR: {selection.ar.toFixed(1)} | OD: {selection.od.toFixed(1)} | HP: {selection.hp.toFixed(1)}</div>
+                                        <div>{selection.starRating.toFixed(2)}★</div>
+                                        <div>Length:{formatLength(selection.totalLength)} | BPM: {selection.bpm}</div>
+                                        <div className='font-bold text-xl'>CS: {selection.cs.toFixed(1)} | AR: {selection.ar.toFixed(1)} | OD: {selection.od.toFixed(1)} | HP: {selection.hp.toFixed(1)}</div>
                                     </div>
                                 </div>
 
                                 {/* 提名者信息 */}
                                 <div className="mb-3 text-xs text-gray-600">
                                     <div className="flex items-center gap-2">
-                                        <span>提名者: {selection.selectedByUsername || '未知'}</span>
+                                        <span>提名者:<Image src={selection.selectedByAvatar || "/default-avatar.png"} alt={selection.selectedByUsername || '未知'} width={16} height={16} className="rounded-full" />{selection.selectedByUsername}</span>
                                         <span>•</span>
                                         <span>{formatDateTime(selection.selectedAt)}</span>
                                     </div>
@@ -1376,7 +1457,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 </div>
 
                                 {/* 操作按钮 */}
-                                <div className="flex gap-2 items-center">
+                                <div className="flex gap-2 items-center justify-end">
                                     {/* 复制BID按钮 */}
                                     <button
                                         onClick={() => copyBeatmapId(selection.beatmapId)}
