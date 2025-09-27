@@ -184,12 +184,12 @@ export default function AdminPage() {
                         setPermissionsLoading(false);
 
                         // 检查是否有staff权限（管理员、裁判员、解说员或主播）
-                        const hasStaffPermission = userPermissions.isAdmin || userPermissions.isReferee || userPermissions.isStreamer || userPermissions.isCommentator;
+                        const hasStaffPermission = userPermissions.permissions.isAdmin || userPermissions.permissions.isReferee || userPermissions.permissions.isStreamer || userPermissions.permissions.isCommentator;
                         console.log('[Staff Dashboard] 权限检查结果:', {
-                            isAdmin: userPermissions.isAdmin,
-                            isReferee: userPermissions.isReferee,
-                            isStreamer: userPermissions.isStreamer,
-                            isCommentator: userPermissions.isCommentator,
+                            isAdmin: userPermissions.permissions.isAdmin,
+                            isReferee: userPermissions.permissions.isReferee,
+                            isStreamer: userPermissions.permissions.isStreamer,
+                            isCommentator: userPermissions.permissions.isCommentator,
                             hasStaffPermission
                         });
 
