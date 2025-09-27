@@ -654,7 +654,14 @@ export default function AdminPage() {
         );
     }
 
-    if (!user || !permissions.isAdmin) {
+    if (!user || !permissions.isAdmin && !permissions.isReferee && !permissions.isStreamer && !permissions.isCommentator) {
+        console.log('[Staff Dashboard] 渲染时权限检查失败:', {
+            user: !!user,
+            isAdmin: permissions.isAdmin,
+            isReferee: permissions.isReferee,
+            isStreamer: permissions.isStreamer,
+            isCommentator: permissions.isCommentator
+        });
         return (
             <div className="flex flex-col items-center justify-center min-h-screen relative">
                 <div className="fixed inset-0 z-0">

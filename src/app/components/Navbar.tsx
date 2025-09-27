@@ -236,7 +236,7 @@ export default function Navbar() {
             ]
         },
         // 管理菜单 - 根据权限动态显示，只有在权限加载完成且有权限时才显示
-        ...(!permissionsLoading && (permissions.isMapSelector || permissions.isReplayTester || permissions.isAdmin) ? [{
+        ...(!permissionsLoading && (permissions.isMapSelector || permissions.isReplayTester || permissions.isAdmin || permissions.isReferee || permissions.isStreamer || permissions.isCommentator) ? [{
             name: '管理',
             svg: '/icons/admin-fill.svg',
             links: [
@@ -282,7 +282,10 @@ export default function Navbar() {
                                     <li className="text-xs text-yellow-300 bg-black/50 px-2 py-1 rounded">
                                         权限加载: {permissionsLoading ? '加载中...' : '完成'} |
                                         用户: {user ? user.osuId : '未登录'} |
-                                        管理员: {permissions.isAdmin ? '是' : '否'}
+                                        管理员: {permissions.isAdmin ? '是' : '否'} |
+                                        裁判: {permissions.isReferee ? '是' : '否'} |
+                                        主播: {permissions.isStreamer ? '是' : '否'} |
+                                        解说: {permissions.isCommentator ? '是' : '否'}
                                     </li>
                                 )}
                                 {navGroups.map((group) => (
