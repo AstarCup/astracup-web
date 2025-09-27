@@ -92,9 +92,16 @@ interface StaffRoomAssignment {
     };
     staff_avatar_url?: string;
     match_info?: {
+        id: number;
         player1_username: string;
         player2_username: string;
         scheduled_time: string;
+        red_score?: number;
+        blue_score?: number;
+        match_link?: string;
+        replay_link?: string;
+        stream_link?: string;
+        status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
     };
 }
 

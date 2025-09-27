@@ -40,6 +40,7 @@ interface MatchSchedule {
     status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
     replay_link?: string;
     match_link?: string;
+    stream_link?: string;
     referee_osuId?: string;
     referee_username?: string;
     commentator_osuId?: string;
@@ -83,6 +84,22 @@ interface MatchScheduleSystemProps {
 }
 
 export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchScheduleSystemProps) {
+    // 格式化日期和时间字符串 - 转换为东八区并显示年/月/日 时:分格式
+    const formatDateTimeFromStrings = (dateString: string | undefined, timeString: string | undefined) => {
+        if (!dateString || !timeString) return '时间未定';
+        const dateTimeString = `${dateString}T${timeString}`;
+        const date = new Date(dateTimeString);
+        // 转换为东八区时间
+        const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
+        const cstTime = new Date(utcTime + (8 * 3600000));
+        const year = cstTime.getFullYear();
+        const month = String(cstTime.getMonth() + 1).padStart(2, '0');
+        const day = String(cstTime.getDate()).padStart(2, '0');
+        const hours = String(cstTime.getHours()).padStart(2, '0');
+        const minutes = String(cstTime.getMinutes()).padStart(2, '0');
+        return `${year}/${month}/${day} ${hours}:${minutes}`;
+    };
+
     const [schedules, setSchedules] = useState<MatchSchedule[]>([]);
     const [rooms, setRooms] = useState<MatchRoom[]>([]);
     const [matchups, setMatchups] = useState<PlayerMatchup[]>([]);
@@ -110,6 +127,19 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
         player2_osuId: '',
         player2_username: ''
     });
+
+    // 编辑比赛相关状态
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingSchedule, setEditingSchedule] = useState<MatchSchedule | null>(null);
+    const [editFormData, setEditFormData] = useState({
+        red_score: '',
+        blue_score: '',
+        match_link: '',
+        replay_link: '',
+        stream_link: '',
+        status: 'pending'
+    });
+    const [updatingSchedule, setUpdatingSchedule] = useState(false);
 
     useEffect(() => {
         fetchSchedules();
@@ -376,12 +406,80 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
         return matchup.player1_osuId === userOsuId || matchup.player2_osuId === userOsuId;
     };
 
+    // 打开编辑模态框
+    const openEditModal = (schedule: MatchSchedule) => {
+        setEditingSchedule(schedule);
+        setEditFormData({
+            red_score: schedule.red_score?.toString() || '',
+            blue_score: schedule.blue_score?.toString() || '',
+            match_link: schedule.match_link || '',
+            replay_link: schedule.replay_link || '',
+            stream_link: schedule.stream_link || '',
+            status: schedule.status
+        });
+        setShowEditModal(true);
+    };
+
+    // 关闭编辑模态框
+    const closeEditModal = () => {
+        setShowEditModal(false);
+        setEditingSchedule(null);
+        setEditFormData({
+            red_score: '',
+            blue_score: '',
+            match_link: '',
+            replay_link: '',
+            stream_link: '',
+            status: 'pending'
+        });
+    };
+
+    // 更新比赛信息
+    const handleUpdateSchedule = async () => {
+        if (!editingSchedule) return;
+
+        setUpdatingSchedule(true);
+        try {
+            const updateData = {
+                id: editingSchedule.id,
+                red_score: editFormData.red_score ? parseInt(editFormData.red_score) : undefined,
+                blue_score: editFormData.blue_score ? parseInt(editFormData.blue_score) : undefined,
+                match_link: editFormData.match_link || undefined,
+                replay_link: editFormData.replay_link || undefined,
+                stream_link: editFormData.stream_link || undefined,
+                status: editFormData.status
+            };
+
+            const response = await fetch('/api/match-schedules/update-details', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updateData),
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                fetchSchedules();
+                closeEditModal();
+            } else {
+                alert('更新失败: ' + result.error);
+            }
+        } catch (error) {
+            console.error('更新比赛信息失败:', error);
+            alert('更新失败，请重试');
+        } finally {
+            setUpdatingSchedule(false);
+        }
+    };
+
     if (loading) {
         return <div className="text-center py-4">加载中...</div>;
     }
 
     return (
-        <div className={`${audiowide.className} space-y-4`}>
+        <div className="space-y-4">
             {/* 比赛预约列表 */}
             <div className="space-y-4">
                 {schedules.length === 0 ? (
@@ -400,7 +498,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                         第{schedule.room?.round_number || '?'}轮 - 场次{schedule.room?.match_number || '?'}
                                     </p>
                                     <p className="text-gray-400">
-                                        {schedule.room?.match_date ? new Date(schedule.room.match_date).toLocaleDateString('zh-CN') : '?'} {schedule.room?.match_time || '?'}
+                                        {formatDateTimeFromStrings(schedule.room?.match_date, schedule.room?.match_time)}
                                     </p>
                                 </div>
                                 <span className={`px-2 py-1 text-sm rounded ${getStatusColor(schedule.status)}`}>
@@ -449,6 +547,22 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                 </div>
                             </div>
 
+                            {/* 比赛详细信息 */}
+                            <div className="text-sm text-gray-400 space-y-2 mb-4">
+                                {(schedule.red_score !== undefined && schedule.blue_score !== undefined) && (
+                                    <div>比分: <span className="text-white font-medium">{schedule.red_score} - {schedule.blue_score}</span></div>
+                                )}
+                                {schedule.match_link && (
+                                    <div>房间链接: <a href={schedule.match_link} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">点击进入</a></div>
+                                )}
+                                {schedule.stream_link && (
+                                    <div>直播链接: <a href={schedule.stream_link} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 underline">观看直播</a></div>
+                                )}
+                                {schedule.replay_link && (
+                                    <div>回放链接: <a href={schedule.replay_link} target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300 underline">观看回放</a></div>
+                                )}
+                            </div>
+
                             {/* 操作按钮 */}
                             <div className="flex gap-2">
                                 {isUserInMatch(schedule) && schedule.status === 'pending' && (
@@ -469,12 +583,20 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                 )}
 
                                 {isAdmin && schedule.status === 'confirmed' && (
-                                    <button
-                                        onClick={() => handleUpdateStatus(schedule.id, 'completed')}
-                                        className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-sm"
-                                    >
-                                        标记完成
-                                    </button>
+                                    <>
+                                        <button
+                                            onClick={() => handleUpdateStatus(schedule.id, 'completed')}
+                                            className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-sm"
+                                        >
+                                            标记完成
+                                        </button>
+                                        <button
+                                            onClick={() => openEditModal(schedule)}
+                                            className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded text-sm"
+                                        >
+                                            编辑比赛信息
+                                        </button>
+                                    </>
                                 )}
 
                                 {isAdmin && (
@@ -490,6 +612,109 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                     ))
                 )}
             </div>
+
+            {/* 编辑比赛信息模态框 */}
+            {showEditModal && editingSchedule && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-6 w-full max-w-md mx-4">
+                        <h3 className="text-xl font-bold text-white mb-4">编辑比赛信息</h3>
+                        <p className="text-gray-400 text-sm mb-4">
+                            {editingSchedule.player1_username} vs {editingSchedule.player2_username}
+                        </p>
+
+                        <div className="space-y-4">
+                            {/* 比分 */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-1">红方比分</label>
+                                    <input
+                                        type="number"
+                                        value={editFormData.red_score}
+                                        onChange={(e) => setEditFormData(prev => ({ ...prev, red_score: e.target.value }))}
+                                        className="w-full bg-[#1a1a1a] border border-gray-600 rounded px-3 py-2 text-white"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-1">蓝方比分</label>
+                                    <input
+                                        type="number"
+                                        value={editFormData.blue_score}
+                                        onChange={(e) => setEditFormData(prev => ({ ...prev, blue_score: e.target.value }))}
+                                        className="w-full bg-[#1a1a1a] border border-gray-600 rounded px-3 py-2 text-white"
+                                        placeholder="0"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* 链接 */}
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-1">osu!房间链接</label>
+                                <input
+                                    type="url"
+                                    value={editFormData.match_link}
+                                    onChange={(e) => setEditFormData(prev => ({ ...prev, match_link: e.target.value }))}
+                                    className="w-full bg-[#1a1a1a] border border-gray-600 rounded px-3 py-2 text-white"
+                                    placeholder="https://osu.ppy.sh/mp/..."
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-1">直播链接</label>
+                                <input
+                                    type="url"
+                                    value={editFormData.stream_link}
+                                    onChange={(e) => setEditFormData(prev => ({ ...prev, stream_link: e.target.value }))}
+                                    className="w-full bg-[#1a1a1a] border border-gray-600 rounded px-3 py-2 text-white"
+                                    placeholder="https://twitch.tv/... 或 https://bilibili.com/..."
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-1">回放链接</label>
+                                <input
+                                    type="url"
+                                    value={editFormData.replay_link}
+                                    onChange={(e) => setEditFormData(prev => ({ ...prev, replay_link: e.target.value }))}
+                                    className="w-full bg-[#1a1a1a] border border-gray-600 rounded px-3 py-2 text-white"
+                                    placeholder="https://..."
+                                />
+                            </div>
+
+                            {/* 状态 */}
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-1">比赛状态</label>
+                                <select
+                                    value={editFormData.status}
+                                    onChange={(e) => setEditFormData(prev => ({ ...prev, status: e.target.value }))}
+                                    className="w-full bg-[#1a1a1a] border border-gray-600 rounded px-3 py-2 text-white"
+                                >
+                                    <option value="pending">待确认</option>
+                                    <option value="confirmed">已确认</option>
+                                    <option value="completed">已完成</option>
+                                    <option value="cancelled">已取消</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end space-x-3 mt-6">
+                            <button
+                                onClick={closeEditModal}
+                                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                            >
+                                取消
+                            </button>
+                            <button
+                                onClick={handleUpdateSchedule}
+                                disabled={updatingSchedule}
+                                className="px-4 py-2 bg-[#E93B66] hover:bg-[#d6335e] text-white rounded transition-colors disabled:opacity-50"
+                            >
+                                {updatingSchedule ? '更新中...' : '保存'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from 'next/image';
+import { useState } from 'react';
 import { UserSession } from '@/lib/permissions';
 import { UserPermissions } from '@/lib/permissions';
 import { StaffRoomAssignment, AvailableRoom } from './types';
@@ -38,6 +39,103 @@ export default function StreamingManagement({
         const hours = String(cstTime.getHours()).padStart(2, '0');
         const minutes = String(cstTime.getMinutes()).padStart(2, '0');
         return `${year}/${month}/${day} ${hours}:${minutes}`;
+    };
+
+    // 格式化日期和时间字符串 - 转换为东八区并显示年/月/日 时:分格式
+    const formatDateTimeFromStrings = (dateString: string | undefined, timeString: string | undefined) => {
+        if (!dateString || !timeString) return '时间未定';
+        const dateTimeString = `${dateString}T${timeString}`;
+        const date = new Date(dateTimeString);
+        // 转换为东八区时间
+        const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
+        const cstTime = new Date(utcTime + (8 * 3600000));
+        const year = cstTime.getFullYear();
+        const month = String(cstTime.getMonth() + 1).padStart(2, '0');
+        const day = String(cstTime.getDate()).padStart(2, '0');
+        const hours = String(cstTime.getHours()).padStart(2, '0');
+        const minutes = String(cstTime.getMinutes()).padStart(2, '0');
+        return `${year}/${month}/${day} ${hours}:${minutes}`;
+    };
+
+    // 编辑相关状态
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingMatch, setEditingMatch] = useState<StaffRoomAssignment | null>(null);
+    const [editFormData, setEditFormData] = useState({
+        red_score: '',
+        blue_score: '',
+        match_link: '',
+        replay_link: '',
+        stream_link: '',
+        status: 'pending'
+    });
+    const [updatingMatch, setUpdatingMatch] = useState(false);
+
+    // 打开编辑模态框
+    const openEditModal = (assignment: StaffRoomAssignment) => {
+        setEditingMatch(assignment);
+        setEditFormData({
+            red_score: assignment.match_info?.red_score?.toString() || '',
+            blue_score: assignment.match_info?.blue_score?.toString() || '',
+            match_link: assignment.match_info?.match_link || '',
+            replay_link: assignment.match_info?.replay_link || '',
+            stream_link: assignment.match_info?.stream_link || '',
+            status: assignment.match_info?.status || 'pending'
+        });
+        setShowEditModal(true);
+    };
+
+    // 关闭编辑模态框
+    const closeEditModal = () => {
+        setShowEditModal(false);
+        setEditingMatch(null);
+        setEditFormData({
+            red_score: '',
+            blue_score: '',
+            match_link: '',
+            replay_link: '',
+            stream_link: '',
+            status: 'pending'
+        });
+    };
+
+    // 更新比赛信息
+    const handleUpdateMatch = async () => {
+        if (!editingMatch || !editingMatch.match_info) return;
+
+        setUpdatingMatch(true);
+        try {
+            const updateData = {
+                id: editingMatch.match_info.id,
+                red_score: editFormData.red_score ? parseInt(editFormData.red_score) : undefined,
+                blue_score: editFormData.blue_score ? parseInt(editFormData.blue_score) : undefined,
+                match_link: editFormData.match_link || undefined,
+                replay_link: editFormData.replay_link || undefined,
+                stream_link: editFormData.stream_link || undefined,
+                status: editFormData.status
+            };
+
+            const response = await fetch('/api/match-schedules/update-details', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updateData),
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // 刷新页面数据
+                window.location.reload();
+            } else {
+                alert('更新失败: ' + result.error);
+            }
+        } catch (error) {
+            console.error('更新比赛信息失败:', error);
+            alert('更新失败，请重试');
+        } finally {
+            setUpdatingMatch(false);
+        }
     };
     return (
         <div className="space-y-6">
@@ -103,14 +201,41 @@ export default function StreamingManagement({
 
                                         {/* 显示比赛信息 */}
                                         {assignment.match_info && (
-                                            <div className="mt-2 text-sm text-gray-400">
-                                                <span>比赛: </span>
-                                                <span className="text-white">
-                                                    {assignment.match_info.player1_username} vs {assignment.match_info.player2_username}
-                                                </span>
-                                                <span className="ml-4 text-xs">
-                                                    {assignment.match_info.scheduled_time ? formatDateTime(assignment.match_info.scheduled_time) : '时间未定'}
-                                                </span>
+                                            <div className="mt-2 space-y-2">
+                                                <div className="text-sm text-gray-400">
+                                                    <span>比赛: </span>
+                                                    <span className="text-white">
+                                                        {assignment.match_info.player1_username} vs {assignment.match_info.player2_username}
+                                                    </span>
+                                                    <span className="ml-4 text-xs">
+                                                        {assignment.match_info.scheduled_time ? formatDateTime(assignment.match_info.scheduled_time) : '时间未定'}
+                                                    </span>
+                                                </div>
+
+                                                {/* 比赛详细信息 */}
+                                                <div className="text-xs text-gray-400 space-y-1">
+                                                    {assignment.match_info.red_score !== undefined && assignment.match_info.blue_score !== undefined && (
+                                                        <div>比分: <span className="text-white">{assignment.match_info.red_score} - {assignment.match_info.blue_score}</span></div>
+                                                    )}
+                                                    {assignment.match_info.match_link && (
+                                                        <div>房间链接: <a href={assignment.match_info.match_link} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">点击进入</a></div>
+                                                    )}
+                                                    {assignment.match_info.stream_link && (
+                                                        <div>直播链接: <a href={assignment.match_info.stream_link} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 underline">观看直播</a></div>
+                                                    )}
+                                                    {assignment.match_info.replay_link && (
+                                                        <div>回放链接: <a href={assignment.match_info.replay_link} target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300 underline">观看回放</a></div>
+                                                    )}
+                                                    <div>比赛状态: <span className={`px-2 py-1 rounded text-xs ${assignment.match_info.status === 'completed' ? 'bg-green-600 text-white' :
+                                                            assignment.match_info.status === 'confirmed' ? 'bg-blue-600 text-white' :
+                                                                assignment.match_info.status === 'cancelled' ? 'bg-red-600 text-white' :
+                                                                    'bg-yellow-600 text-white'
+                                                        }`}>
+                                                        {assignment.match_info.status === 'completed' ? '已完成' :
+                                                            assignment.match_info.status === 'confirmed' ? '已确认' :
+                                                                assignment.match_info.status === 'cancelled' ? '已取消' : '待定'}
+                                                    </span></div>
+                                                </div>
                                             </div>
                                         )}
 
@@ -123,8 +248,16 @@ export default function StreamingManagement({
                                             )}
                                         </div>
 
-                                        {/* 管理员撤销按钮 */}
-                                        <div className="mt-3 flex justify-end">
+                                        {/* 管理员操作按钮 */}
+                                        <div className="mt-3 flex justify-end space-x-2">
+                                            {assignment.match_info && (
+                                                <button
+                                                    onClick={() => openEditModal(assignment)}
+                                                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-3 rounded transition-colors duration-200"
+                                                >
+                                                    编辑比赛信息
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => onRevokeAssignment(assignment.id, assignment.staff_role === 'referee' ? '裁判' : assignment.staff_role === 'streamer' ? '直播' : '解说')}
                                                 className="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-3 rounded transition-colors duration-200"
@@ -180,7 +313,7 @@ export default function StreamingManagement({
 
                                                 <div className="text-xs text-gray-400 space-y-1 mb-4">
                                                     <div>轮次: {room.round_number} | 场次: {room.match_number}</div>
-                                                    <div>日期: {room.match_date} | 时间: {room.match_time}</div>
+                                                    <div>时间: {formatDateTimeFromStrings(room.match_date, room.match_time)}</div>
                                                     <div>选手: {room.player1_username || '待定'} vs {room.player2_username || '待定'}</div>
                                                 </div>
 
@@ -322,7 +455,7 @@ export default function StreamingManagement({
                                                 </div>
                                                 <div className="text-xs text-gray-400 space-y-1">
                                                     <div>轮次: {assignment.room?.round_number} | 场次: {assignment.room?.match_number}</div>
-                                                    <div>日期: {assignment.room?.match_date} | 时间: {assignment.room?.match_time}</div>
+                                                    <div>时间: {assignment.room?.match_date && assignment.room?.match_time ? formatDateTimeFromStrings(assignment.room.match_date, assignment.room.match_time) : '时间未定'}</div>
                                                 </div>
                                                 <div className="mt-3">
                                                     <button
@@ -377,7 +510,7 @@ export default function StreamingManagement({
 
                                                 <div className="text-xs text-gray-400 space-y-1 mb-4">
                                                     <div>轮次: {room.round_number} | 场次: {room.match_number}</div>
-                                                    <div>日期: {room.match_date} | 时间: {room.match_time}</div>
+                                                    <div>时间: {formatDateTimeFromStrings(room.match_date, room.match_time)}</div>
                                                     <div>选手: {room.player1_username || '待定'} vs {room.player2_username || '待定'}</div>
                                                 </div>
 
@@ -509,6 +642,109 @@ export default function StreamingManagement({
                     </div>
                 )}
             </div>
+
+            {/* 编辑比赛信息模态框 */}
+            {showEditModal && editingMatch && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-6 w-full max-w-md mx-4">
+                        <h3 className="text-xl font-bold text-white mb-4">编辑比赛信息</h3>
+                        <p className="text-gray-400 text-sm mb-4">
+                            {editingMatch.match_info?.player1_username} vs {editingMatch.match_info?.player2_username}
+                        </p>
+
+                        <div className="space-y-4">
+                            {/* 比分 */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-1">红方比分</label>
+                                    <input
+                                        type="number"
+                                        value={editFormData.red_score}
+                                        onChange={(e) => setEditFormData(prev => ({ ...prev, red_score: e.target.value }))}
+                                        className="w-full bg-[#1a1a1a] border border-gray-600 rounded px-3 py-2 text-white"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-1">蓝方比分</label>
+                                    <input
+                                        type="number"
+                                        value={editFormData.blue_score}
+                                        onChange={(e) => setEditFormData(prev => ({ ...prev, blue_score: e.target.value }))}
+                                        className="w-full bg-[#1a1a1a] border border-gray-600 rounded px-3 py-2 text-white"
+                                        placeholder="0"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* 链接 */}
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-1">osu!房间链接</label>
+                                <input
+                                    type="url"
+                                    value={editFormData.match_link}
+                                    onChange={(e) => setEditFormData(prev => ({ ...prev, match_link: e.target.value }))}
+                                    className="w-full bg-[#1a1a1a] border border-gray-600 rounded px-3 py-2 text-white"
+                                    placeholder="https://osu.ppy.sh/mp/..."
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-1">直播链接</label>
+                                <input
+                                    type="url"
+                                    value={editFormData.stream_link}
+                                    onChange={(e) => setEditFormData(prev => ({ ...prev, stream_link: e.target.value }))}
+                                    className="w-full bg-[#1a1a1a] border border-gray-600 rounded px-3 py-2 text-white"
+                                    placeholder="https://twitch.tv/... 或 https://bilibili.com/..."
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-1">回放链接</label>
+                                <input
+                                    type="url"
+                                    value={editFormData.replay_link}
+                                    onChange={(e) => setEditFormData(prev => ({ ...prev, replay_link: e.target.value }))}
+                                    className="w-full bg-[#1a1a1a] border border-gray-600 rounded px-3 py-2 text-white"
+                                    placeholder="https://..."
+                                />
+                            </div>
+
+                            {/* 状态 */}
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-1">比赛状态</label>
+                                <select
+                                    value={editFormData.status}
+                                    onChange={(e) => setEditFormData(prev => ({ ...prev, status: e.target.value }))}
+                                    className="w-full bg-[#1a1a1a] border border-gray-600 rounded px-3 py-2 text-white"
+                                >
+                                    <option value="pending">待定</option>
+                                    <option value="confirmed">已确认</option>
+                                    <option value="completed">已完成</option>
+                                    <option value="cancelled">已取消</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end space-x-3 mt-6">
+                            <button
+                                onClick={closeEditModal}
+                                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                            >
+                                取消
+                            </button>
+                            <button
+                                onClick={handleUpdateMatch}
+                                disabled={updatingMatch}
+                                className="px-4 py-2 bg-[#E93B66] hover:bg-[#d6335e] text-white rounded transition-colors disabled:opacity-50"
+                            >
+                                {updatingMatch ? '更新中...' : '保存'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
