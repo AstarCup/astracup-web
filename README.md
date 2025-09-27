@@ -14,29 +14,7 @@ OSU_CLIENT_ID=
 OSU_CLIENT_SECRET=
 OSU_REDIRECT_URI=
 ```
-
-config your edge config
-
-```json
-{
-  "rankConfig": {
-    "maxPpForRegistration": 8100,
-    "minPpForRegistration": 2000,
-    "rankRestrictionEnabled": true
-  },
-  "targetDate": "2025-09-15T00:00:00",
-  "nowSeason": "s1",
-  "mapSelectionTeam": [
-    "6781503"
-  ],
-  "replayAccessUsers": [
-    "6781503"
-  ],
-  "admin": [
-    "6781503"
-  ]
-}
-```
+数据库需要init,还没准备好init页面
 
 First, run the development server:
 
