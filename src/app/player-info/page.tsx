@@ -111,15 +111,12 @@ export default function PlayerInfoPage() {
 
     // 格式化日期函数
     const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        // 转换为东八区时间
-        const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
-        const cstTime = new Date(utcTime + (8 * 3600000));
-        return cstTime.toLocaleDateString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
+        try {
+            return new Date(dateString).toLocaleString('zh-CN');
+        } catch (error) {
+            console.error('日期格式化错误:', error, dateString);
+            return '时间格式错误';
+        }
     };
 
     const formatRank = (rank: number | null) => {

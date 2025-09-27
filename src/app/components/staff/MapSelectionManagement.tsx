@@ -104,18 +104,14 @@ interface MapSelectionManagementProps {
 }
 
 export default function MapSelectionManagement({ user, permissions }: MapSelectionManagementProps) {
-    // 格式化日期时间函数 - 转换为东八区并显示年/月/日 时:分格式
+    // 格式化日期时间函数 - 使用本地化时间显示
     const formatDateTime = (dateTimeString: string) => {
-        const date = new Date(dateTimeString);
-        // 转换为东八区时间
-        const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
-        const cstTime = new Date(utcTime + (8 * 3600000));
-        const year = cstTime.getFullYear();
-        const month = String(cstTime.getMonth() + 1).padStart(2, '0');
-        const day = String(cstTime.getDate()).padStart(2, '0');
-        const hours = String(cstTime.getHours()).padStart(2, '0');
-        const minutes = String(cstTime.getMinutes()).padStart(2, '0');
-        return `${year}/${month}/${day} ${hours}:${minutes}`;
+        try {
+            return new Date(dateTimeString).toLocaleString('zh-CN');
+        } catch (error) {
+            console.error('日期格式化错误:', error, dateTimeString);
+            return '时间格式错误';
+        }
     };
 
     // 转换UserSession为内部使用的User格式

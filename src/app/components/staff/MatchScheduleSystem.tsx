@@ -84,44 +84,6 @@ interface MatchScheduleSystemProps {
 }
 
 export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchScheduleSystemProps) {
-    // 格式化日期和时间字符串 - 转换为东八区并显示年/月/日 时:分格式
-    const formatDateTimeFromStrings = (dateString: string | undefined, timeString: string | undefined) => {
-        if (!dateString) return '时间未定';
-
-        let dateTimeString: string;
-
-        // 检查dateString是否已经是完整的ISO字符串格式
-        if (dateString.includes('T') && dateString.includes('Z')) {
-            // 如果是完整的ISO字符串，直接使用
-            dateTimeString = dateString;
-        } else if (timeString) {
-            // 如果是分别的日期和时间字段，组合它们
-            dateTimeString = `${dateString}T${timeString}`;
-        } else {
-            // 如果只有日期字段，假设时间是00:00:00
-            dateTimeString = `${dateString}T00:00:00.000Z`;
-        }
-
-        try {
-            const date = new Date(dateTimeString);
-            if (isNaN(date.getTime())) {
-                return '时间格式错误';
-            }
-
-            // 转换为东八区时间
-            const utcTime = date.getTime();
-            const cstTime = new Date(utcTime + (8 * 3600000));
-            const year = cstTime.getFullYear();
-            const month = String(cstTime.getMonth() + 1).padStart(2, '0');
-            const day = String(cstTime.getDate()).padStart(2, '0');
-            const hours = String(cstTime.getHours()).padStart(2, '0');
-            const minutes = String(cstTime.getMinutes()).padStart(2, '0');
-            return `${year}/${month}/${day} ${hours}:${minutes}`;
-        } catch (error) {
-            console.error('日期格式化错误:', error, dateString, timeString);
-            return '时间格式错误';
-        }
-    };
 
     const [schedules, setSchedules] = useState<MatchSchedule[]>([]);
     const [rooms, setRooms] = useState<MatchRoom[]>([]);
@@ -521,7 +483,17 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                         第{schedule.room?.round_number || '?'}轮 - 场次{schedule.room?.match_number || '?'}
                                     </p>
                                     <p className="text-gray-400">
-                                        {formatDateTimeFromStrings(schedule.room?.match_date, schedule.room?.match_time)}
+                                        {(() => {
+                                            if (!schedule.room?.match_date) return '时间未定';
+                                            const dateStr = schedule.room.match_date;
+                                            const timeStr = schedule.room?.match_time || '00:00:00';
+                                            const dateTimeStr = dateStr.includes('T') ? dateStr : `${dateStr}T${timeStr}`;
+                                            try {
+                                                return new Date(dateTimeStr).toLocaleString('zh-CN');
+                                            } catch {
+                                                return '时间格式错误';
+                                            }
+                                        })()}
                                     </p>
                                 </div>
                                 <span className={`px-2 py-1 text-sm rounded ${getStatusColor(schedule.status)}`}>
