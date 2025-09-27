@@ -12,6 +12,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { TournamentRegistration } from '@/lib/mysql-registrations';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { showSuccess, showError, showInfo, showWarning, NotificationContainer } from '@/app/components/Notification';
 
 interface MatchRoom {
     id: number;
@@ -482,7 +483,7 @@ export default function AdminPage() {
 
                 // 检查管理员权限
                 if (!userPermissions.isAdmin) {
-                    alert('需要管理员权限');
+                    showError('需要管理员权限');
                     router.push('/player-info');
                     return;
                 }
@@ -541,7 +542,7 @@ export default function AdminPage() {
             setRegistrations(data.registrations || []);
         } catch (error) {
             console.error('Error fetching registrations:', error);
-            alert('获取注册数据失败');
+            showError('获取注册数据失败');
         } finally {
             setRegistrationsLoading(false);
         }
@@ -566,15 +567,15 @@ export default function AdminPage() {
             const data = await response.json();
 
             if (data.success) {
-                alert(data.message);
+                showSuccess(data.message);
                 // 刷新注册列表
                 fetchRegistrations();
             } else {
-                alert(`审核失败: ${data.error}`);
+                showError(`审核失败: ${data.error}`);
             }
         } catch (error) {
             console.error('Error approving registration:', error);
-            alert('审核用户注册信息时发生错误');
+            showError('审核用户注册信息时发生错误');
         } finally {
             setProcessingUser(null);
         }
@@ -599,15 +600,15 @@ export default function AdminPage() {
             const data = await response.json();
 
             if (data.success) {
-                alert(data.message);
+                showSuccess(data.message);
                 // 刷新注册列表
                 fetchRegistrations();
             } else {
-                alert(`删除失败: ${data.error}`);
+                showError(`删除失败: ${data.error}`);
             }
         } catch (error) {
             console.error('Error deleting registration:', error);
-            alert('删除用户注册信息时发生错误');
+            showError('删除用户注册信息时发生错误');
         } finally {
             setProcessingUser(null);
         }
@@ -649,13 +650,13 @@ export default function AdminPage() {
             const data = await response.json();
             if (data.success) {
                 setRooms(rooms.filter(room => room.id !== roomId));
-                alert('房间删除成功');
+                showSuccess('房间删除成功');
             } else {
-                alert('删除失败: ' + data.error);
+                showError('删除失败: ' + data.error);
             }
         } catch (error) {
             console.error('Error deleting room:', error);
-            alert('删除房间时发生错误');
+            showError('删除房间时发生错误');
         } finally {
             setDeletingRoomId(null);
         }
@@ -683,13 +684,13 @@ export default function AdminPage() {
             if (data.success) {
                 setShowCreateRoomModal(false);
                 fetchRooms(); // 重新获取房间列表
-                alert('房间创建成功');
+                showSuccess('房间创建成功');
             } else {
-                alert('创建失败: ' + data.error);
+                showError('创建失败: ' + data.error);
             }
         } catch (error) {
             console.error('Error creating room:', error);
-            alert('创建房间时发生错误');
+            showError('创建房间时发生错误');
         }
     };
 
@@ -729,13 +730,13 @@ export default function AdminPage() {
             const data = await response.json();
             if (data.success) {
                 setMatchups(matchups.filter(matchup => matchup.id !== matchupId));
-                alert('对战删除成功');
+                showSuccess('对战删除成功');
             } else {
-                alert('删除失败: ' + data.error);
+                showError('删除失败: ' + data.error);
             }
         } catch (error) {
             console.error('Error deleting matchup:', error);
-            alert('删除对战时发生错误');
+            showError('删除对战时发生错误');
         } finally {
             setDeletingMatchupId(null);
         }
@@ -760,13 +761,13 @@ export default function AdminPage() {
             if (data.success) {
                 setShowCreateMatchupModal(false);
                 fetchMatchups(); // 重新获取对战列表
-                alert('对战创建成功');
+                showSuccess('对战创建成功');
             } else {
-                alert('创建失败: ' + data.error);
+                showError('创建失败: ' + data.error);
             }
         } catch (error) {
             console.error('Error creating matchup:', error);
-            alert('创建对战时发生错误');
+            showError('创建对战时发生错误');
         }
     };
 
@@ -841,17 +842,17 @@ export default function AdminPage() {
             });
 
             if (response.ok) {
-                alert(`成功申请成为${roleName}！请等待管理员确认。`);
+                showSuccess(`成功申请成为${roleName}！请等待管理员确认。`);
                 // 重新获取数据
                 fetchStaffAssignments();
                 fetchAvailableRooms();
             } else {
                 const errorData = await response.json();
-                alert(`申请失败: ${errorData.error || '未知错误'}`);
+                showError(`申请失败: ${errorData.error || '未知错误'}`);
             }
         } catch (error) {
             console.error('Error applying for room:', error);
-            alert('申请失败，请稍后重试');
+            showError('申请失败，请稍后重试');
         }
     };
 
@@ -1553,17 +1554,6 @@ export default function AdminPage() {
                                 ) : permissions.isAdmin ? (
                                     // 管理员视图 - 显示所有已确认的staff分配（从比赛预约表获取）
                                     <div className="space-y-4">
-                                        {/* 提示信息 */}
-                                        <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
-                                            <div className="flex items-center">
-                                                <svg className="w-5 h-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                                <span className="text-blue-400 text-sm">
-                                                    Staff分配信息现在从比赛预约表自动获取，不支持手动分配
-                                                </span>
-                                            </div>
-                                        </div>
 
                                         {/* Staff分配列表 */}
                                         {staffAssignments.length > 0 ? (
@@ -1639,6 +1629,90 @@ export default function AdminPage() {
                                                 <p>暂无Staff房间分配</p>
                                             </div>
                                         )}
+
+                                        {/* 管理员也可以申请加入房间 */}
+                                        <div className="mt-8 pt-6 border-t border-gray-600">
+                                            <h4 className="text-lg font-medium text-white mb-4 flex items-center">
+                                                <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
+                                                申请加入比赛房间 (直播员)
+                                            </h4>
+
+                                            {availableRoomsLoading ? (
+                                                <div className="flex justify-center items-center py-8">
+                                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E93B66]"></div>
+                                                    <span className="ml-2 text-gray-400">加载房间中...</span>
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                    {availableRooms.map((room) => {
+                                                        // 检查管理员是否已经申请了这个房间
+                                                        const adminApplication = staffAssignments.find(a =>
+                                                            a.staff_osuId === user.osuId &&
+                                                            a.room_id === room.id &&
+                                                            a.status === 'pending'
+                                                        );
+
+                                                        return (
+                                                            <div key={room.id} className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-4 hover:border-[#E93B66] transition-colors duration-200">
+                                                                <div className="flex justify-between items-start mb-3">
+                                                                    <h5 className="text-white font-semibold text-sm truncate flex-1 mr-2">
+                                                                        {room.room_name}
+                                                                    </h5>
+                                                                    <span className={`px-2 py-1 rounded text-xs ${room.status === 'open' ? 'bg-green-600 text-white' :
+                                                                        room.status === 'in_progress' ? 'bg-yellow-600 text-white' :
+                                                                            'bg-red-600 text-white'
+                                                                        }`}>
+                                                                        {room.status === 'open' ? '开放' :
+                                                                            room.status === 'in_progress' ? '进行中' : '关闭'}
+                                                                    </span>
+                                                                </div>
+
+                                                                <div className="text-xs text-gray-400 space-y-1 mb-4">
+                                                                    <div>轮次: {room.round_number} | 场次: {room.match_number}</div>
+                                                                    <div>日期: {room.match_date} | 时间: {room.match_time}</div>
+                                                                    <div>选手: {room.player1_username || '待定'} vs {room.player2_username || '待定'}</div>
+                                                                </div>
+
+                                                                {/* Staff分配情况 */}
+                                                                <div className="text-xs text-gray-400 space-y-1 mb-4">
+                                                                    <div>裁判: {room.staff_counts?.referee || 0}人 {room.referee_username && `(${room.referee_username})`}</div>
+                                                                    <div>解说: {room.staff_counts?.commentator || 0}人 {room.commentator_username && `(${room.commentator_username})`}</div>
+                                                                    <div>直播: {room.staff_counts?.streamer || 0}人</div>
+                                                                </div>
+
+                                                                {room.description && (
+                                                                    <div className="text-xs text-gray-500 mb-4 line-clamp-2">
+                                                                        {room.description}
+                                                                    </div>
+                                                                )}
+
+                                                                {/* 申请按钮 - 管理员默认申请直播员 */}
+                                                                <div className="flex flex-col space-y-2">
+                                                                    {adminApplication ? (
+                                                                        <div className="text-xs text-yellow-400 text-center py-2">
+                                                                            已申请直播员 - 等待确认
+                                                                        </div>
+                                                                    ) : (
+                                                                        <button
+                                                                            onClick={() => handleApplyForRoom(room.id, 'streamer')}
+                                                                            className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm py-2 px-4 rounded transition-colors duration-200"
+                                                                        >
+                                                                            申请直播员
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {!availableRoomsLoading && availableRooms.length === 0 && (
+                                                <div className="text-center py-8 text-gray-400">
+                                                    <p>暂无可申请的比赛房间</p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 ) : (
                                     // Staff视图 - 显示自己的申请和可参加的房间
