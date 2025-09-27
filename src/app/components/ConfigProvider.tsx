@@ -44,23 +44,12 @@ interface ConfigProviderProps {
 
 export function ConfigProvider({ children }: ConfigProviderProps) {
     const [tournamentSettings, setTournamentSettings] = useState<TournamentSettings | null>(null);
-    const [isLoading, setIsLoading] = useState(() => {
-        // 检查是否已经显示过loading动画
-        if (typeof window !== 'undefined') {
-            const hasShownLoading = sessionStorage.getItem('hasShownLoading');
-            return !hasShownLoading;
-        }
-        return true;
-    });
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     const fetchTournamentSettings = async () => {
         try {
-            // 只在第一次加载时显示loading动画
-            const hasShownLoading = typeof window !== 'undefined' ? sessionStorage.getItem('hasShownLoading') : null;
-            if (!hasShownLoading) {
-                setIsLoading(true);
-            }
+            setIsLoading(true);
             setError(null);
 
             const response = await fetch('/api/tournament-settings');
@@ -79,10 +68,6 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
             setError(err instanceof Error ? err.message : 'Unknown error');
         } finally {
             setIsLoading(false);
-            // 标记已经显示过loading动画
-            if (typeof window !== 'undefined') {
-                sessionStorage.setItem('hasShownLoading', 'true');
-            }
         }
     };
 
