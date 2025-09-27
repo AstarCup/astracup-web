@@ -13,27 +13,25 @@ function LoadingScreen({ isLoading }: { isLoading: boolean }) {
     return (
         <div className={`fixed inset-0 z-50 bg-black transition-opacity duration-1000 ${isLoading ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}>
-            <div className="flex items-center justify-center h-full">
-                {/* 左边2/3大小的image */}
-                <div className={`flex-1 flex justify-end pr-4 transition-transform duration-1000 ${isLoading ? 'translate-x-0' : '-translate-x-full'
+            <div className="relative w-full h-full">
+                {/* 下边图片（原来右边的）- 全屏显示 */}
+                <div className={`absolute inset-0 transition-transform duration-1000 ${isLoading ? 'translate-x-0' : 'translate-x-full'
                     }`}>
                     <Image
-                        src="/icons/1.svg"
-                        alt="Loading icon 1"
-                        width={120}
-                        height={120}
-                        className="filter brightness-0 invert opacity-80"
+                        src="/loading-right.svg"
+                        alt="Loading icon 2"
+                        fill
+                        className="object-cover"
                     />
                 </div>
-                {/* 右边1/3大小的image */}
-                <div className={`flex-1 flex justify-start pl-4 transition-transform duration-1000 ${isLoading ? 'translate-x-0' : 'translate-x-full'
+                {/* 上边图片（原来左边的）- 全屏显示 */}
+                <div className={`absolute inset-0 transition-transform duration-1000 ${isLoading ? 'translate-x-0' : '-translate-x-full'
                     }`}>
                     <Image
-                        src="/icons/2.svg"
-                        alt="Loading icon 2"
-                        width={60}
-                        height={60}
-                        className="filter brightness-0 invert opacity-80"
+                        src="/loading-left.svg"
+                        alt="Loading icon 1"
+                        fill
+                        className="object-cover"
                     />
                 </div>
             </div>

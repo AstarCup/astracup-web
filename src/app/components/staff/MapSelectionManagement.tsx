@@ -100,6 +100,10 @@ interface MapSelectionManagementProps {
     permissions: {
         isAdmin: boolean;
         isMapSelector: boolean;
+        isReplayTester: boolean;
+        isStreamer: boolean;
+        isReferee: boolean;
+        isCommentator: boolean;
     };
 }
 
@@ -695,7 +699,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ id: selectionId })
+                body: JSON.stringify({
+                    id: selectionId,
+                    selectedBy: userForState.id.toString()
+                })
             });
 
             const data = await response.json();
@@ -1040,7 +1047,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         )}
 
                         {/* 批量过审按钮 */}
-                        {permissions.isAdmin && tempApprovedSelections.size > 0 && (
+                        {(permissions.isAdmin || permissions.isMapSelector) && tempApprovedSelections.size > 0 && (
                             <button
                                 onClick={() => setShowBulkApprovalModal(true)}
                                 className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors"
@@ -1416,7 +1423,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             selectedBy={selection.selectedBy}
                                             currentUserId={userForState.id.toString()}
                                             compact={true}
-                                            isAdmin={permissions.isAdmin}
+                                            isAdmin={permissions.isAdmin || permissions.isMapSelector}
                                         />
                                     </div>
                                 </div>
@@ -1600,7 +1607,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         查看谱面
                     </button>
 
-                    {permissions.isAdmin && (
+                    {permissions.isAdmin || permissions.isMapSelector && (
                         <button
                             onClick={() => {
                                 toggleApproval(contextMenu.selection!.id, contextMenu.selection!.approved);
