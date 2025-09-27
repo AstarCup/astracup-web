@@ -169,9 +169,10 @@ export default function AdminPage() {
                         setPermissions(userPermissions);
                         setPermissionsLoading(false);
 
-                        // 等待权限加载完成后检查管理员权限
-                        if (!permissionsLoading && !userPermissions.isAdmin) {
-                            showError('需要管理员权限');
+                        // 检查是否有staff权限（管理员、裁判员、解说员或主播）
+                        const hasStaffPermission = userPermissions.isAdmin || userPermissions.isReferee || userPermissions.isStreamer || userPermissions.isCommentator;
+                        if (!hasStaffPermission) {
+                            showError('需要工作人员权限');
                             router.push('/player-info');
                             return;
                         }
@@ -201,11 +202,14 @@ export default function AdminPage() {
 
     // 权限验证：等待权限加载完成后进行验证
     useEffect(() => {
-        if (!permissionsLoading && user && !permissions.isAdmin) {
-            showError('需要管理员权限');
-            router.push('/player-info');
+        if (!permissionsLoading && user) {
+            const hasStaffPermission = permissions.isAdmin || permissions.isReferee || permissions.isStreamer || permissions.isCommentator;
+            if (!hasStaffPermission) {
+                showError('需要工作人员权限');
+                router.push('/player-info');
+            }
         }
-    }, [permissionsLoading, permissions.isAdmin, user, router]);
+    }, [permissionsLoading, permissions, user, router]);
 
     // 当切换到房间管理选项卡时获取房间列表
     useEffect(() => {
@@ -648,6 +652,18 @@ export default function AdminPage() {
 
     return (
         <div className="flex h-screen bg-[#1a1a1a]">
+            {/* 开发环境调试信息 */}
+            {process.env.NODE_ENV === 'development' && (
+                <div className="fixed top-0 left-0 bg-black text-white p-2 text-xs z-50 rounded-br">
+                    权限加载: {permissionsLoading ? '加载中' : '完成'} |
+                    用户: {user?.osuId || '未知'} |
+                    管理员: {permissions.isAdmin ? '是' : '否'} |
+                    裁判: {permissions.isReferee ? '是' : '否'} |
+                    主播: {permissions.isStreamer ? '是' : '否'} |
+                    解说: {permissions.isCommentator ? '是' : '否'}
+                </div>
+            )}
+
             {/* 侧边栏 */}
             <div className="w-64 bg-[#2d2d2d] border-r border-[#404040] flex flex-col">
                 {/* 头部信息 */}

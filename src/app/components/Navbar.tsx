@@ -23,7 +23,10 @@ export default function Navbar() {
     const [permissions, setPermissions] = useState({
         isMapSelector: false,
         isReplayTester: false,
-        isAdmin: false
+        isAdmin: false,
+        isStreamer: false,
+        isReferee: false,
+        isCommentator: false
     });
     const [permissionsLoading, setPermissionsLoading] = useState(true);
     const [versionInfo, setVersionInfo] = useState<string>('');
@@ -274,6 +277,14 @@ export default function Navbar() {
                         <div className="flex items-center space-x-4">
                             {/* Desktop Menu */}
                             <ul className="hidden xl:flex space-x-8 text-[#FFFFFF] p-2 m-2 navbar-menu">
+                                {/* 调试信息 - 仅开发环境显示 */}
+                                {process.env.NODE_ENV === 'development' && (
+                                    <li className="text-xs text-yellow-300 bg-black/50 px-2 py-1 rounded">
+                                        权限加载: {permissionsLoading ? '加载中...' : '完成'} |
+                                        用户: {user ? user.osuId : '未登录'} |
+                                        管理员: {permissions.isAdmin ? '是' : '否'}
+                                    </li>
+                                )}
                                 {navGroups.map((group) => (
                                     <li key={group.name} className="relative">
                                         <div
