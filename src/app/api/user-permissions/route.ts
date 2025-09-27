@@ -1,10 +1,22 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getUserPermissions } from '@/lib/permissions';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
-        // 获取用户session
+        const { searchParams } = new URL(request.url);
+        const osuIdParam = searchParams.get('osuId');
+
+        // 如果提供了URL参数，直接使用
+        if (osuIdParam) {
+            const permissions = await getUserPermissions(osuIdParam);
+            return NextResponse.json({
+                success: true,
+                permissions
+            });
+        }
+
+        // 否则从session cookie获取
         const cookieStore = await cookies();
         const sessionCookie = cookieStore.get('session')?.value;
 
