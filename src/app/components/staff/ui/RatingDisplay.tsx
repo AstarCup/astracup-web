@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 interface MapRating {
     id: number;
@@ -109,9 +110,11 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId, onRe
                                 >
                                     {/* 头像 */}
                                     <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-300 bg-gray-200 flex items-center justify-center">
-                                        <img
+                                        <Image
                                             src={rating.avatar_url}
                                             alt={rating.username}
+                                            width={40}
+                                            height={40}
                                             className="w-full h-full object-cover"
                                             onError={(e) => {
                                                 e.currentTarget.style.display = 'none';

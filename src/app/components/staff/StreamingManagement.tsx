@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { UserSession } from '@/lib/permissions';
 import { UserPermissions } from '@/lib/permissions';
 import { StaffRoomAssignment, AvailableRoom } from './types';
@@ -49,9 +50,11 @@ export default function StreamingManagement({
                                     <div key={assignment.id} className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-4 hover:border-[#E93B66] transition-colors duration-200">
                                         <div className="flex justify-between items-start mb-3">
                                             <div className="flex items-center space-x-3">
-                                                <img
+                                                <Image
                                                     src={assignment.staff_avatar_url || '/unknow.svg'}
                                                     alt={`${assignment.staff_username} avatar`}
+                                                    width={40}
+                                                    height={40}
                                                     className="w-10 h-10 rounded-full"
                                                     onError={(e) => {
                                                         e.currentTarget.src = '/unknow.svg';
@@ -181,10 +184,10 @@ export default function StreamingManagement({
                                                                 <div className="flex flex-wrap gap-2">
                                                                     {referees.map(referee => (
                                                                         <div key={referee.id} className="flex items-center space-x-1 bg-blue-900/30 px-2 py-1 rounded">
-                                                                            <img
+                                                                            <Image
                                                                                 src={referee.staff_avatar_url || '/unknow.svg'}
                                                                                 alt={referee.staff_username}
-                                                                                className="w-4 h-4 rounded-full"
+                                                                                width={16} height={16} className="w-4 h-4 rounded-full"
                                                                                 onError={(e) => {
                                                                                     e.currentTarget.src = '/unknow.svg';
                                                                                 }}
@@ -208,10 +211,10 @@ export default function StreamingManagement({
                                                                 <div className="flex flex-wrap gap-2">
                                                                     {commentators.map(commentator => (
                                                                         <div key={commentator.id} className="flex items-center space-x-1 bg-green-900/30 px-2 py-1 rounded">
-                                                                            <img
+                                                                            <Image
                                                                                 src={commentator.staff_avatar_url || '/unknow.svg'}
                                                                                 alt={commentator.staff_username}
-                                                                                className="w-4 h-4 rounded-full"
+                                                                                width={16} height={16} className="w-4 h-4 rounded-full"
                                                                                 onError={(e) => {
                                                                                     e.currentTarget.src = '/unknow.svg';
                                                                                 }}
@@ -235,10 +238,10 @@ export default function StreamingManagement({
                                                                 <div className="flex flex-wrap gap-2">
                                                                     {streamers.map(streamer => (
                                                                         <div key={streamer.id} className="flex items-center space-x-1 bg-purple-900/30 px-2 py-1 rounded">
-                                                                            <img
+                                                                            <Image
                                                                                 src={streamer.staff_avatar_url || '/unknow.svg'}
                                                                                 alt={streamer.staff_username}
-                                                                                className="w-4 h-4 rounded-full"
+                                                                                width={16} height={16} className="w-4 h-4 rounded-full"
                                                                                 onError={(e) => {
                                                                                     e.currentTarget.src = '/unknow.svg';
                                                                                 }}
@@ -387,10 +390,10 @@ export default function StreamingManagement({
                                                                 <div className="flex flex-wrap gap-2">
                                                                     {referees.map(referee => (
                                                                         <div key={referee.id} className="flex items-center space-x-1 bg-blue-900/30 px-2 py-1 rounded">
-                                                                            <img
+                                                                            <Image
                                                                                 src={referee.staff_avatar_url || '/unknow.svg'}
                                                                                 alt={referee.staff_username}
-                                                                                className="w-4 h-4 rounded-full"
+                                                                                width={16} height={16} className="w-4 h-4 rounded-full"
                                                                                 onError={(e) => {
                                                                                     e.currentTarget.src = '/unknow.svg';
                                                                                 }}
@@ -414,10 +417,10 @@ export default function StreamingManagement({
                                                                 <div className="flex flex-wrap gap-2">
                                                                     {commentators.map(commentator => (
                                                                         <div key={commentator.id} className="flex items-center space-x-1 bg-green-900/30 px-2 py-1 rounded">
-                                                                            <img
+                                                                            <Image
                                                                                 src={commentator.staff_avatar_url || '/unknow.svg'}
                                                                                 alt={commentator.staff_username}
-                                                                                className="w-4 h-4 rounded-full"
+                                                                                width={16} height={16} className="w-4 h-4 rounded-full"
                                                                                 onError={(e) => {
                                                                                     e.currentTarget.src = '/unknow.svg';
                                                                                 }}
@@ -441,10 +444,10 @@ export default function StreamingManagement({
                                                                 <div className="flex flex-wrap gap-2">
                                                                     {streamers.map(streamer => (
                                                                         <div key={streamer.id} className="flex items-center space-x-1 bg-purple-900/30 px-2 py-1 rounded">
-                                                                            <img
+                                                                            <Image
                                                                                 src={streamer.staff_avatar_url || '/unknow.svg'}
                                                                                 alt={streamer.staff_username}
-                                                                                className="w-4 h-4 rounded-full"
+                                                                                width={16} height={16} className="w-4 h-4 rounded-full"
                                                                                 onError={(e) => {
                                                                                     e.currentTarget.src = '/unknow.svg';
                                                                                 }}

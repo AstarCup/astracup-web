@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { TournamentRegistration } from '@/lib/mysql-registrations';
 
 interface UserManagementProps {
@@ -60,7 +61,7 @@ export default function UserManagement({
                                     <div key={player.osuId} className="bg-[#3D3D3D80] border border-gray-600 p-4 hover:border-[#3BE9D8] transition-colors duration-200">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center space-x-3">
-                                                <img
+                                                <Image
                                                     src={player.avatar_url}
                                                     alt={player.username}
                                                     width={40}

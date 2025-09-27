@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { UserSession } from '@/lib/permissions';
 import { UserPermissions } from '@/lib/permissions';
@@ -239,9 +240,11 @@ export default function PlayerInfoPage() {
             {/* 玩家cover */}
             {user.cover && (
                 <div className="mb-6 relative w-full max-w-4xl">
-                    <img
+                    <Image
                         src={user.cover.custom_url || user.cover.url}
                         alt={`${user.username}的封面`}
+                        width={1024}
+                        height={320}
                         className="w-full h-80 object-cover"
                         onError={(e) => {
                             // 如果cover加载失败，隐藏这个元素
@@ -259,7 +262,7 @@ export default function PlayerInfoPage() {
 
                             {/* 头像和用户名在一行 */}
                             <div className="flex items-center mb-4">
-                                <img
+                                <Image
                                     src={user.avatar_url}
                                     alt={user.username}
                                     width={80}
@@ -336,7 +339,7 @@ export default function PlayerInfoPage() {
                                     <div className="flex items-center justify-center space-x-8">
                                         {/* 当前玩家 */}
                                         <div className="text-center">
-                                            <img
+                                            <Image
                                                 src={user.avatar_url}
                                                 alt={user.username}
                                                 width={60}
@@ -355,7 +358,7 @@ export default function PlayerInfoPage() {
 
                                         {/* 对手 */}
                                         <div className="text-center">
-                                            <img
+                                            <Image
                                                 src={nextMatch.opponent.avatar_url || '/default-avatar.png'}
                                                 alt={nextMatch.opponent.username}
                                                 width={60}

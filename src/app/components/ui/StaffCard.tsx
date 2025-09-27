@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 interface StaffMember {
     name: string;
@@ -37,9 +38,11 @@ export default function StaffCard({ member }: StaffCardProps) {
             <div className="relative z-10 flex flex-col items-center">
                 {/* 头像 */}
                 <div className="relative mb-4">
-                    <img
+                    <Image
                         src={member.avatarUrl}
                         alt={member.name}
+                        width={80}
+                        height={80}
                         className="w-20 h-20 rounded-full border-4 border-gray-600 group-hover:border-[#3BE9D8] transition-colors duration-300"
                         onError={(e) => {
                             // 如果头像加载失败，使用默认头像

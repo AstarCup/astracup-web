@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import localFont from "next/font/local";
 
 const audiowide = localFont({
@@ -412,9 +413,11 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                     <p className="text-sm text-gray-400">红方</p>
                                     <div className="flex items-center gap-3 mt-2">
                                         {schedule.player1_avatar_url && (
-                                            <img
+                                            <Image
                                                 src={schedule.player1_avatar_url}
                                                 alt={`${schedule.player1_username} avatar`}
+                                                width={40}
+                                                height={40}
                                                 className="w-10 h-10 rounded-full border-2 border-red-500"
                                                 onError={(e) => {
                                                     e.currentTarget.style.display = 'none';
@@ -431,9 +434,11 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                     <p className="text-sm text-gray-400">蓝方</p>
                                     <div className="flex items-center gap-3 mt-2">
                                         {schedule.player2_avatar_url && (
-                                            <img
+                                            <Image
                                                 src={schedule.player2_avatar_url}
                                                 alt={`${schedule.player2_username} avatar`}
+                                                width={40}
+                                                height={40}
                                                 className="w-10 h-10 rounded-full border-2 border-blue-500"
                                                 onError={(e) => {
                                                     e.currentTarget.style.display = 'none';

@@ -619,7 +619,7 @@ export default function AdminPage() {
                 {/* 头部信息 */}
                 <div className="p-6 border-b border-[#404040]">
                     <div className="flex items-center mb-4">
-                        <img
+                        <Image
                             src={user.avatar_url}
                             alt={user.username}
                             width={40}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from 'next/image';
 import { TournamentRegistration } from "@/lib/mysql-registrations";
 import localFont from "next/font/local";
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -105,7 +106,7 @@ export default function RegistrationsPage() {
                             <div key={player.osuId} className="bg-white shadow-md overflow-hidden">
                                 <div className="p-6">
                                     <div className="flex items-center space-x-4 mb-4">
-                                        <img
+                                        <Image
                                             src={player.avatar_url}
                                             alt={player.username}
                                             width={64}

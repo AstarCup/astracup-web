@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 
 interface Winner {
     rank: number;
@@ -84,7 +85,7 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
             >
                 {/* 排名徽章 */}
                 <div className={`absolute -top-4 -right-4 w-12 h-12 bg-gradient-to-br ${rankStyle.bgGradient} rounded-full flex items-center justify-center border-4 border-[#1A1A1A] shadow-lg`}>
-                    <span className="text-2xl"><img src={rankStyle.icon} alt={rankStyle.title} /></span>
+                    <span className="text-2xl"><Image src={rankStyle.icon} alt={rankStyle.title} width={24} height={24} /></span>
                 </div>
 
                 {/* 排名标题 */}
@@ -101,9 +102,11 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
                 <div className="flex flex-col items-center mb-6">
                     {/* 头像 */}
                     <div className={`relative mb-4 p-1 rounded-full bg-gradient-to-br ${rankStyle.bgGradient}`}>
-                        <img
+                        <Image
                             src={isPending ? '/icons/unknow.svg' : (winner.avatarUrl || '/icons/unknow.svg')}
                             alt={winner.playerName}
+                            width={96}
+                            height={96}
                             className="w-24 h-24 rounded-full border-4 border-[#1A1A1A]"
                             onError={(e) => {
                                 (e.target as HTMLImageElement).src = '/icons/unknow.svg';
@@ -195,9 +198,11 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
 
                             {/* 返图 */}
                             <div className="flex justify-center">
-                                <img
+                                <Image
                                     src={winner.resultImage}
                                     alt={`${winner.playerName} 的返图`}
+                                    width={800}
+                                    height={600}
                                     className="max-w-full max-h-[70vh]  shadow-lg"
                                     onError={(e) => {
                                         (e.target as HTMLImageElement).style.display = 'none';

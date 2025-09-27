@@ -2,6 +2,7 @@
 
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { showSuccess, showError } from '../../ui/Notification';
 
 interface CommentComponentProps {
@@ -132,9 +133,11 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                                 <div key={c.id} className="relative group inline-flex items-center gap-2 p-2 bg-gray-50  border border-gray-200 max-w-xs hover:bg-gray-100 transition-colors">
                                     {/* 头像 */}
                                     <div className="w-5 h-5 rounded-full overflow-hidden border border-gray-300 flex-shrink-0">
-                                        <img
+                                        <Image
                                             src={c.avatar_url}
                                             alt={c.username}
+                                            width={20}
+                                            height={20}
                                             className="w-full h-full object-cover"
                                             onError={(e) => {
                                                 e.currentTarget.style.display = 'none';

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { PlayerMatchup, ApprovedPlayer } from './types';
 
 interface MatchupManagementProps {
@@ -248,9 +249,11 @@ export default function MatchupManagement({ matchups, matchupsLoading, deletingM
                                             <span className="text-xs text-gray-400">红方</span>
                                         </div>
                                         <div className="flex items-center">
-                                            <img
+                                            <Image
                                                 src={matchup.player1_avatar_url}
                                                 alt={`${matchup.player1_username} avatar`}
+                                                width={32}
+                                                height={32}
                                                 className="w-8 h-8 rounded-full mr-3"
                                                 onError={(e) => {
                                                     e.currentTarget.src = '/unknow.svg'; // fallback to default avatar
@@ -275,9 +278,11 @@ export default function MatchupManagement({ matchups, matchupsLoading, deletingM
                                             <span className="text-xs text-gray-400">蓝方</span>
                                         </div>
                                         <div className="flex items-center">
-                                            <img
+                                            <Image
                                                 src={matchup.player2_avatar_url}
                                                 alt={`${matchup.player2_username} avatar`}
+                                                width={32}
+                                                height={32}
                                                 className="w-8 h-8 rounded-full mr-3"
                                                 onError={(e) => {
                                                     e.currentTarget.src = '/unknow.svg'; // fallback to default avatar

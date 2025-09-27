@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { showSuccess, showError } from '../ui/Notification';
 import Dropdown from '../ui/Dropdown';
 import RatingDisplay from './ui/RatingDisplay';
@@ -903,9 +904,11 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             {beatmapPreview && (
                                 <div className="mb-4 p-3 bg-white border border-gray-300 rounded-md">
                                     <div className="flex items-start gap-4">
-                                        <img
+                                        <Image
                                             src={beatmapPreview.cover_url}
                                             alt="Beatmap cover"
+                                            width={64}
+                                            height={64}
                                             className="w-16 h-16 object-cover rounded"
                                         />
                                         <div className="flex-1">
@@ -1165,9 +1168,11 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 {/* 头部：封面和基本信息 */}
                                 <div className="flex items-start gap-3 mb-3">
                                     <div className="relative">
-                                        <img
+                                        <Image
                                             src={selection.coverUrl}
                                             alt="Beatmap cover"
+                                            width={64}
+                                            height={64}
                                             className="w-16 h-16 object-cover rounded"
                                         />
                                         {/* 过审状态指示器 */}

@@ -17,7 +17,6 @@ const audiowide = localFont({
 export default function Navbar() {
     const pathname = usePathname();
     const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [_activeLink, setActiveLink] = useState<string>(pathname);
     const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
     const [clickedGroup, setClickedGroup] = useState<string | null>(null);
     const [user, setUser] = useState<UserSession | null>(null);
@@ -26,48 +25,9 @@ export default function Navbar() {
         isReplayTester: false,
         isAdmin: false
     });
-    const [_versionInfo, setVersionInfo] = useState<string>('');
+    const [versionInfo, setVersionInfo] = useState<string>('');
     const [iconCache, setIconCache] = useState<Map<string, boolean>>(new Map());
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-    // 预加载图标函数
-    const preloadIcons = async () => {
-        const allIcons = [
-            // 主导航图标
-            '/icons/home.svg',
-            '/icons/news.svg',
-            '/icons/tournament.svg',
-            '/icons/guide-sm.svg',
-            '/icons/table-fill.svg',
-            '/icons/mapool-sm.svg',
-            '/icons/register.svg',
-            '/icons/others.svg',
-            '/icons/contacts.svg',
-            '/icons/photos.svg',
-            '/icons/admin-fill.svg',
-            '/icons/upload.svg',
-            '/icons/debug.svg'
-        ];
-
-        const newCache = new Map(iconCache);
-
-        for (const iconPath of allIcons) {
-            if (!newCache.has(iconPath)) {
-                try {
-                    // 预加载图标
-                    const response = await fetch(iconPath);
-                    if (response.ok) {
-                        newCache.set(iconPath, true);
-                    }
-                } catch (error) {
-                    console.warn(`Failed to preload icon: ${iconPath}`, error);
-                    newCache.set(iconPath, false);
-                }
-            }
-        }
-
-        setIconCache(newCache);
-    };
 
     useEffect(() => {
         const handleDocumentClick = (event: MouseEvent) => {
@@ -143,8 +103,58 @@ export default function Navbar() {
 
     // 预加载图标
     useEffect(() => {
-        preloadIcons();
-    }, [preloadIcons]);
+        const preloadIconsAsync = async () => {
+            const allIcons = [
+                // 主导航图标
+                '/icons/home.svg',
+                '/icons/news.svg',
+                '/icons/tournament.svg',
+                '/icons/guide-sm.svg',
+                '/icons/table-fill.svg',
+                '/icons/mapool-sm.svg',
+                '/icons/register.svg',
+                '/icons/others.svg',
+                '/icons/contacts.svg',
+                '/icons/photos.svg',
+                '/icons/admin-fill.svg',
+                '/icons/upload.svg',
+                '/icons/debug.svg'
+            ];
+
+            for (const iconPath of allIcons) {
+                setIconCache(prevCache => {
+                    if (prevCache.has(iconPath)) {
+                        return prevCache; // 已缓存，跳过
+                    }
+
+                    // 异步预加载
+                    fetch(iconPath)
+                        .then(response => {
+                            setIconCache(prevCache => {
+                                const newCache = new Map(prevCache);
+                                newCache.set(iconPath, response.ok);
+                                return newCache;
+                            });
+                        })
+                        .catch(error => {
+                            console.warn(`Failed to preload icon: ${iconPath}`, error);
+                            setIconCache(prevCache => {
+                                const newCache = new Map(prevCache);
+                                newCache.set(iconPath, false);
+                                return newCache;
+                            });
+                        });
+
+                    // 立即标记为正在加载
+                    const newCache = new Map(prevCache);
+                    newCache.set(iconPath, false);
+                    return newCache;
+                });
+            }
+        };
+
+        preloadIconsAsync();
+    }, []); // 只在组件挂载时执行一次
 
     const handleMouseEnter = (groupName: string) => {
         if (hoverTimeoutRef.current) {
@@ -229,7 +239,7 @@ export default function Navbar() {
 
 
 
-                <img src="/NavbarBackground.svg" alt="Background" className="absolute inset-0 object-cover bg-center bg-repeat-x" style={{ zIndex: -2 }} />
+                <Image src="/NavbarBackground.svg" alt="Background" fill className="absolute inset-0 object-cover bg-center bg-repeat-x" style={{ zIndex: -2 }} />
 
 
                 <div className="max-w-7xl mx-auto px-2">
@@ -243,7 +253,7 @@ export default function Navbar() {
                         <div className="flex items-center space-x-4">
                             {/* Desktop Menu */}
                             <ul className="hidden xl:flex space-x-8 text-[#FFFFFF] p-2 m-2 navbar-menu">
-                                {navGroups.map((group, _groupIndex) => (
+                                {navGroups.map((group) => (
                                     <li key={group.name} className="relative">
                                         <div
                                             className="flex flex-col items-center relative text-shadow-lg cursor-pointer hover:text-[#E93B66] transition duration-200"
@@ -281,11 +291,6 @@ export default function Navbar() {
                                                             <Link
                                                                 href={link.href}
                                                                 className={`flex-1 p-3 text-left text-sm font-medium flex items-center gap-2 relative text-gray-800 ${isActive(link.href) ? 'bg-[#3BE9D8] font-bold' : ''}`}
-                                                                onClick={() => {
-                                                                    setActiveLink(link.href);
-                                                                    setHoveredGroup(null);
-                                                                    setClickedGroup(null);
-                                                                }}
                                                             >
                                                                 {link.svg ? (
                                                                     <Image
@@ -319,7 +324,7 @@ export default function Navbar() {
                                 <MessageNotification />
                                 {user ? (
                                     <Link href="/player-info">
-                                        <img
+                                        <Image
                                             src={user.avatar_url}
                                             alt={user.username}
                                             width={40}
@@ -346,7 +351,7 @@ export default function Navbar() {
                             {/* Mobile User Profile */}
                             <div className="flex items-center">
                                 {user ? (
-                                    <img
+                                    <Image
                                         src={user.avatar_url}
                                         alt={user.username}
                                         width={32}
@@ -413,10 +418,7 @@ export default function Navbar() {
                                                     <Link
                                                         href={link.href}
                                                         className={`flex-1 p-3 text-left text-sm font-medium flex items-center gap-2 relative ${isActive(link.href) ? 'bg-[#3BE9D8] font-bold' : 'text-gray-800'}`}
-                                                        onClick={() => {
-                                                            setActiveLink(link.href);
-                                                            setMobileMenuOpen(false);
-                                                        }}
+                                                        onClick={() => setMobileMenuOpen(false)}
                                                     >
                                                         {link.svg ? (
                                                             <Image
@@ -447,7 +449,7 @@ export default function Navbar() {
                                 <div className="mt-4 pt-4 border-t border-gray-300">
                                     <Link href="/player-info" onClick={() => setMobileMenuOpen(false)}>
                                         <div className="flex items-center gap-3 p-3 bg-[#3d3d3d] rounded-md cursor-pointer hover:bg-[#4d4d4d] transition-colors duration-200">
-                                            <img
+                                            <Image
                                                 src={user.avatar_url}
                                                 alt={user.username}
                                                 width={40}

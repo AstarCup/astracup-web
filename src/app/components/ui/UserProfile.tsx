@@ -2,6 +2,7 @@
 
 import { UserSession } from "@/lib/permissions";
 import { useState, useEffect } from "react";
+import Image from 'next/image';
 import localFont from "next/font/local";
 
 const audiowide = localFont({
@@ -37,7 +38,7 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
     return (
         <div className="p-2 w-full">
             <div className="flex items-left m-2">
-                <img
+                <Image
                     src={user.avatar_url}
                     alt={user.username}
                     width={64}

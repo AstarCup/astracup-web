@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { UserSession } from '@/lib/permissions';
 import { UserPermissions } from '@/lib/permissions';
 import { TournamentRegistration } from '@/lib/mysql-registrations';
@@ -16,7 +17,7 @@ export default function OverviewManagement({ user, permissions, registrations }:
             {/* 管理员信息卡片 */}
             <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
                 <div className="flex items-center mb-4">
-                    <img
+                    <Image
                         src={user.avatar_url}
                         alt={user.username}
                         width={60}

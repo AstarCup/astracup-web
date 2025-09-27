@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 interface ScheduleItem {
     round: string;
     date: string;
@@ -94,9 +96,11 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
                                     {/* Player 1 */}
                                     <div className="flex items-center space-x-2">
                                         {item.player1Avatar ? (
-                                            <img
+                                            <Image
                                                 src={item.player1Avatar}
                                                 alt="Player 1 Avatar"
+                                                width={32}
+                                                height={32}
                                                 className="w-8 h-8 rounded-full"
                                             />
                                         ) : (
@@ -122,9 +126,11 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
                                             {item.players.split(' vs ')[1] || '未知选手'}
                                         </span>
                                         {item.player2Avatar ? (
-                                            <img
+                                            <Image
                                                 src={item.player2Avatar}
                                                 alt="Player 2 Avatar"
+                                                width={32}
+                                                height={32}
                                                 className="w-8 h-8 rounded-full"
                                             />
                                         ) : (
@@ -148,7 +154,7 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center px-3 py-1 text-xs font-medium text-white transition-colors"
                                     >
-                                        <img src="/icons/bilibili-live-sm.svg" alt="BilibiliLive" width={48} height={48} />
+                                        <Image src="/icons/bilibili-live-sm.svg" alt="BilibiliLive" width={48} height={48} />
                                     </a>
                                 ) : (
                                     <span className="text-gray-400 text-xs">暂无</span>
@@ -162,7 +168,7 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center px-3 py-1 text-xs font-medium text-white transition-colors"
                                     >
-                                        <img src="/icons/osu-match-sm.svg" alt="osu" width={48} height={48} />
+                                        <Image src="/icons/osu-match-sm.svg" alt="osu" width={48} height={48} />
                                     </a>
                                 ) : (
                                     <span className="text-gray-400 text-xs">暂无</span>

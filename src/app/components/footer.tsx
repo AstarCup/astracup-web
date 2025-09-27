@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from "react";
+import Image from 'next/image';
 
 export default function Footer() {
     const [version, setVersion] = useState('loading...');
@@ -153,7 +154,7 @@ export default function Footer() {
                 onMouseOver={e => (e.currentTarget.style.background = '#3BE9D8')}
                 onMouseOut={e => (e.currentTarget.style.background = '#E93B66')}
             >
-                <img src="/icons/returnTop.svg" alt="返回顶部" width={60} height={60} />
+                <Image src="/icons/returnTop.svg" alt="返回顶部" width={60} height={60} />
             </button>
             <style jsx>{`
                     @media (min-width: 768px) {
