@@ -5,7 +5,8 @@ import {
     deleteMapSelection,
     updateMapSelection,
     verifyAdminAuth,
-    getPool
+    getPool,
+    initMapSelectionDatabase
 } from '@/lib/map-selection';
 import { getBeatmapInfo, getBeatmapsetInfo, parseBeatmapUrl } from '@/lib/osu-api';
 import { get } from '@vercel/edge-config';
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
         // 如果只是获取已过审的图，则不需要权限验证（公开访问）
         if (approved === 'true') {
             // 初始化数据库（如果需要）
-            // 数据库已初始化，跳过此步骤
+            await initMapSelectionDatabase();
 
             // 获取选图列表
             const selections = await getMapSelections(season, category, padding);
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
         }
 
         // 初始化数据库（如果需要）
-        // 数据库已初始化，跳过此步骤
+        await initMapSelectionDatabase();
 
         // 获取选图列表
         const selections = await getMapSelections(season, category, padding);
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 初始化数据库
-        // 数据库已初始化，跳过此步骤
+        await initMapSelectionDatabase();
 
         // 获取用户的access token
         let accessToken: string | undefined;

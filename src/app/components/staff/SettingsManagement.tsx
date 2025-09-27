@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { showSuccess, showError } from '@/app/components/ui/Notification';
+import Dropdown from '@/app/components/ui/Dropdown';
 
 interface TournamentSettings {
     id?: number;
@@ -288,15 +289,16 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
                             <label className="block text-sm font-medium text-gray-300 mb-2">
                                 当前赛季
                             </label>
-                            <select
+                            <Dropdown
+                                options={[
+                                    { value: "s1", label: "Season 1" },
+                                    { value: "s2", label: "Season 2" },
+                                    { value: "s3", label: "Season 3" }
+                                ]}
                                 value={formData.current_season}
-                                onChange={(e) => setFormData(prev => ({ ...prev, current_season: e.target.value }))}
-                                className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
-                            >
-                                <option value="s1">Season 1</option>
-                                <option value="s2">Season 2</option>
-                                <option value="s3">Season 3</option>
-                            </select>
+                                onChange={(value) => setFormData(prev => ({ ...prev, current_season: value }))}
+                                darkMode={true}
+                            />
                         </div>
                     </div>
 
@@ -337,18 +339,19 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
                             <label className="block text-sm font-medium text-gray-300 mb-2">
                                 当前赛季阶段
                             </label>
-                            <select
+                            <Dropdown
+                                options={[
+                                    { value: "registration", label: "报名阶段" },
+                                    { value: "qualification", label: "资格赛阶段" },
+                                    { value: "group_stage", label: "小组赛阶段" },
+                                    { value: "playoffs", label: "淘汰赛阶段" },
+                                    { value: "finals", label: "决赛阶段" },
+                                    { value: "completed", label: "已结束" }
+                                ]}
                                 value={formData.current_season_stage}
-                                onChange={(e) => setFormData(prev => ({ ...prev, current_season_stage: e.target.value }))}
-                                className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
-                            >
-                                <option value="registration">报名阶段</option>
-                                <option value="qualification">资格赛阶段</option>
-                                <option value="group_stage">小组赛阶段</option>
-                                <option value="playoffs">淘汰赛阶段</option>
-                                <option value="finals">决赛阶段</option>
-                                <option value="completed">已结束</option>
-                            </select>
+                                onChange={(value) => setFormData(prev => ({ ...prev, current_season_stage: value }))}
+                                darkMode={true}
+                            />
                         </div>
 
                         <div className="space-y-3">
@@ -381,7 +384,7 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
                     </div>
 
                     {/* 人员分组设置 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-6">
                         {renderUserList('admin_group', formData.admin_group)}
                         {renderUserList('map_selection_group', formData.map_selection_group)}
                         {renderUserList('map_testing_group', formData.map_testing_group)}

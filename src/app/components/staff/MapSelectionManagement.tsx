@@ -570,6 +570,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     url: beatmapPreview.url,
                     coverUrl: beatmapPreview.cover_url,
                     selectedBy: userForState.id.toString(),
+                    selectedByUsername: userForState.username,
+                    selectedByAvatar: userForState.avatar_url,
                     customSettings
                 })
             });
@@ -733,12 +735,43 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
             // 搜索筛选
             if (searchQuery.trim()) {
-                const query = searchQuery.toLowerCase();
+                const query = searchQuery.toLowerCase().trim();
+
+                // 检查是否是特殊搜索格式 (key:value)
+                const specialSearchMatch = query.match(/^(\w+):(.+)$/);
+                if (specialSearchMatch) {
+                    const [, key, value] = specialSearchMatch;
+
+                    switch (key.toLowerCase()) {
+                        case 'ar':
+                            return Math.abs(selection.ar - parseFloat(value)) < 0.01;
+                        case 'cs':
+                            return Math.abs(selection.cs - parseFloat(value)) < 0.01;
+                        case 'od':
+                            return Math.abs(selection.od - parseFloat(value)) < 0.01;
+                        case 'hp':
+                            return Math.abs(selection.hp - parseFloat(value)) < 0.01;
+                        case 'bid':
+                            return selection.beatmapId.toString() === value;
+                        case 'sid':
+                            return selection.beatmapsetId.toString() === value;
+                        case 'mod':
+                            return selection.selectedMods.toLowerCase() === value.toLowerCase();
+                        default:
+                            // 如果不是特殊格式，回退到普通文本搜索
+                            break;
+                    }
+                }
+
+                // 普通文本搜索
                 return (
                     selection.title.toLowerCase().includes(query) ||
                     selection.artist.toLowerCase().includes(query) ||
                     selection.creator.toLowerCase().includes(query) ||
                     selection.version.toLowerCase().includes(query) ||
+                    selection.selectedMods.toLowerCase().includes(query) ||
+                    selection.beatmapId.toString().includes(query) ||
+                    selection.beatmapsetId.toString().includes(query) ||
                     (selection.selectedByUsername && selection.selectedByUsername.toLowerCase().includes(query))
                 );
             }
@@ -787,11 +820,11 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
     return (
         <div className="max-w-9xl mx-auto p-6">
-            <h2 className="text-2xl font-bold mb-4">选图管理</h2>
+            <h2 className="text-2xl font-bold mb-4 text-white">选图管理</h2>
 
             {isLoading ? (
                 <div className="text-center py-8">
-                    <div className="text-lg">正在加载...</div>
+                    <div className="text-lg text-white">正在加载...</div>
                 </div>
             ) : (
                 <>
@@ -820,10 +853,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         />
 
                         {/* 搜索框 */}
-                        <div className="flex-1 min-w-[200px]">
+                        <div className="flex-1 min-w-[200px] text-white">
                             <input
                                 type="text"
-                                placeholder="搜索歌曲、艺术家、作者..."
+                                placeholder="搜索歌曲、艺术家、作者... 支持 ar:9.5, cs:4, bid:12345, sid:67890, mod:dt"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -838,7 +871,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 onChange={(e) => setSortByRating(e.target.checked)}
                                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                             />
-                            <span className="text-sm text-gray-700">按评分排序</span>
+                            <span className="text-sm text-white">按评分排序</span>
                         </label>
 
                         {/* 添加选图按钮 */}
@@ -917,9 +950,9 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         <Image
                                             src={beatmapPreview.cover_url}
                                             alt="Beatmap cover"
-                                            width={64}
-                                            height={64}
-                                            className="w-16 h-16 object-cover rounded"
+                                            width={128}
+                                            height={128}
+                                            className="w-32 h-32 object-cover rounded"
                                         />
                                         <div className="flex-1">
                                             <h4 className="font-bold">{beatmapPreview.title}</h4>
