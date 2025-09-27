@@ -18,7 +18,11 @@ export default function Guide() {
     const fetchGuideContent = async () => {
         try {
             setIsLoading(true);
-            const response = await fetch(`/api/guide?season=s${tournamentSettings?.current_season}`);
+            // 检查current_season是否已经是字符串格式（如"s1"），如果是则直接使用，否则添加"s"前缀
+            const currentSeason = String(tournamentSettings?.current_season || '');
+            const seasonParam = currentSeason.startsWith('s') ? currentSeason : `s${currentSeason}`;
+
+            const response = await fetch(`/api/guide?season=${seasonParam}`);
 
             if (response.ok) {
                 const data = await response.json();
