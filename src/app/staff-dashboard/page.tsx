@@ -149,48 +149,66 @@ export default function AdminPage() {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
+                console.log('[Staff Dashboard] 开始获取用户数据');
+
                 // 获取用户session
                 const sessionResponse = await fetch('/api/session/get');
                 const sessionData = await sessionResponse.json();
 
                 if (!sessionData.success || !sessionData.session) {
+                    console.log('[Staff Dashboard] Session获取失败:', sessionData);
                     router.push('/register');
                     return;
                 }
 
+                console.log('[Staff Dashboard] Session获取成功，用户ID:', sessionData.session.osuId);
                 setUser(sessionData.session);
 
                 // 获取用户权限
                 setPermissionsLoading(true);
+                console.log('[Staff Dashboard] 开始获取用户权限');
                 try {
                     const permissionsResponse = await fetch(`/api/user-permissions?osuId=${sessionData.session.osuId}`);
                     if (permissionsResponse.ok) {
                         const userPermissions = await permissionsResponse.json();
+                        console.log('[Staff Dashboard] 权限获取成功:', userPermissions);
                         setPermissions(userPermissions);
                         setPermissionsLoading(false);
 
                         // 检查是否有staff权限（管理员、裁判员、解说员或主播）
                         const hasStaffPermission = userPermissions.isAdmin || userPermissions.isReferee || userPermissions.isStreamer || userPermissions.isCommentator;
+                        console.log('[Staff Dashboard] 权限检查结果:', {
+                            isAdmin: userPermissions.isAdmin,
+                            isReferee: userPermissions.isReferee,
+                            isStreamer: userPermissions.isStreamer,
+                            isCommentator: userPermissions.isCommentator,
+                            hasStaffPermission
+                        });
+
                         if (!hasStaffPermission) {
+                            console.log('[Staff Dashboard] 权限不足，重定向到player-info');
                             showError('需要工作人员权限');
                             router.push('/player-info');
                             return;
                         }
+
+                        console.log('[Staff Dashboard] 权限验证通过，继续加载页面');
                     } else {
+                        console.log('[Staff Dashboard] 权限API请求失败:', permissionsResponse.status);
                         setPermissionsLoading(false);
                         showError('获取权限失败');
                         router.push('/player-info');
                         return;
                     }
                 } catch (error) {
-                    console.error('Failed to fetch user permissions:', error);
+                    console.error('[Staff Dashboard] 获取权限时发生错误:', error);
                     setPermissionsLoading(false);
                     showError('获取权限失败');
                     router.push('/player-info');
                     return;
                 }
             } catch (error) {
-                console.error('Failed to fetch user data:', error);
+                console.error('[Staff Dashboard] 获取用户数据时发生错误:', error);
                 router.push('/register');
             } finally {
                 setLoading(false);
@@ -202,12 +220,31 @@ export default function AdminPage() {
 
     // 权限验证：等待权限加载完成后进行验证
     useEffect(() => {
+        console.log('[Staff Dashboard] 权限验证useEffect触发:', {
+            permissionsLoading,
+            user: user ? user.osuId : null,
+            permissions
+        });
+
         if (!permissionsLoading && user) {
             const hasStaffPermission = permissions.isAdmin || permissions.isReferee || permissions.isStreamer || permissions.isCommentator;
+            console.log('[Staff Dashboard] 执行权限验证:', {
+                hasStaffPermission,
+                isAdmin: permissions.isAdmin,
+                isReferee: permissions.isReferee,
+                isStreamer: permissions.isStreamer,
+                isCommentator: permissions.isCommentator
+            });
+
             if (!hasStaffPermission) {
+                console.log('[Staff Dashboard] 权限验证失败，重定向');
                 showError('需要工作人员权限');
                 router.push('/player-info');
+            } else {
+                console.log('[Staff Dashboard] 权限验证通过');
             }
+        } else {
+            console.log('[Staff Dashboard] 权限验证跳过 - 权限加载中或用户未加载');
         }
     }, [permissionsLoading, permissions, user, router]);
 

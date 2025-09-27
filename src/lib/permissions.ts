@@ -28,13 +28,17 @@ export interface UserPermissions {
 
 export async function getUserPermissions(osuId: string, tournamentSettings?: TournamentSettings): Promise<UserPermissions> {
     try {
+        console.log('[Permissions] 开始获取用户权限，osuId:', osuId);
+
         // 如果没有提供配置，则从数据库获取
         let settings = tournamentSettings;
         if (!settings) {
+            console.log('[Permissions] 从数据库获取tournament settings');
             settings = await getTournamentSettings();
         }
 
         if (!settings) {
+            console.log('[Permissions] 未找到tournament settings，返回默认权限');
             return {
                 isAdmin: false,
                 isMapSelector: false,
@@ -45,8 +49,11 @@ export async function getUserPermissions(osuId: string, tournamentSettings?: Tou
             };
         }
 
+        console.log('[Permissions] Tournament settings获取成功');
+
         // 检查是否为管理员
         const isAdmin = settings.admin_group?.includes(osuId) || false;
+        console.log('[Permissions] 管理员检查结果:', isAdmin, 'admin_group:', settings.admin_group);
 
         // 检查是否为图池选择者
         const isMapSelector = settings.map_selection_group?.includes(osuId) || false;
@@ -63,7 +70,7 @@ export async function getUserPermissions(osuId: string, tournamentSettings?: Tou
         // 检查是否为解说员
         const isCommentator = settings.commentator_group?.includes(osuId) || false;
 
-        return {
+        const result = {
             isAdmin,
             isMapSelector,
             isReplayTester,
@@ -72,8 +79,12 @@ export async function getUserPermissions(osuId: string, tournamentSettings?: Tou
             isCommentator
         };
 
+        console.log('[Permissions] 权限检查完成:', result);
+
+        return result;
+
     } catch (error) {
-        console.error('Error getting user permissions:', error);
+        console.error('[Permissions] 获取用户权限时发生错误:', error);
         return {
             isAdmin: false,
             isMapSelector: false,
