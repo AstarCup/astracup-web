@@ -689,10 +689,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
     // 删除选图
     const deleteSelection = async (selectionId: number) => {
-        if (!confirm('确定要删除这个选图吗？此操作不可撤销。')) {
-            return;
-        }
-
         try {
             const response = await fetch('/api/map-selections', {
                 method: 'DELETE',
@@ -701,7 +697,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 },
                 body: JSON.stringify({
                     id: selectionId,
-                    selectedBy: userForState.id.toString()
+                    selectedBy: userForState.id
                 })
             });
 
@@ -1430,10 +1426,21 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                                 {/* 属性信息 */}
                                 <div className="mb-3 text-xs text-gray-600">
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div>{selection.starRating.toFixed(2)}★</div>
-                                        <div>Length:{formatLength(selection.totalLength)} | BPM: {selection.bpm}</div>
-                                        <div className='font-bold text-xl col-span-2'>CS: {selection.cs.toFixed(1)} | AR: {selection.ar.toFixed(1)} | OD: {selection.od.toFixed(1)} | HP: {selection.hp.toFixed(1)}</div>
+                                    <div className="grid grid-cols-4 gap-1">
+                                        <div className="text-center font-medium">CS</div>
+                                        <div className="text-center font-medium">AR</div>
+                                        <div className="text-center font-medium">OD</div>
+                                        <div className="text-center font-medium">HP</div>
+                                        <div className="text-center font-bold text-lg">{selection.cs.toFixed(1)}</div>
+                                        <div className="text-center font-bold text-lg">{selection.ar.toFixed(1)}</div>
+                                        <div className="text-center font-bold text-lg">{selection.od.toFixed(1)}</div>
+                                        <div className="text-center font-bold text-lg">{selection.hp.toFixed(1)}</div>
+                                        <div className="text-center font-medium col-span-2">Length</div>
+                                        <div className="text-center font-medium">BPM</div>
+                                        <div className="text-center font-medium">★</div>
+                                        <div className="text-center font-bold text-base col-span-2">{formatLength(selection.totalLength)}</div>
+                                        <div className="text-center font-bold text-base">{selection.bpm}</div>
+                                        <div className="text-center font-bold text-base">{selection.starRating.toFixed(2)}</div>
                                     </div>
                                 </div>
 
@@ -1622,7 +1629,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         </button>
                     )}
 
-                    {(contextMenu.selection!.selectedBy === userForState.id.toString() || permissions.isAdmin) && (
+                    {(contextMenu.selection!.selectedBy === userForState.id.toString() || permissions.isAdmin || permissions.isMapSelector) && (
                         <button
                             onClick={() => {
                                 if (confirm('确定要删除这个选图吗？此操作不可撤销。')) {
