@@ -17,6 +17,15 @@ interface TournamentSettings {
     mappool_visible: boolean;
 }
 
+interface UserInfo {
+    id: number;
+    username: string;
+    avatar_url: string;
+    country_code: string;
+    pp: number;
+    global_rank: number | null;
+}
+
 interface SettingsManagementProps {
     userOsuId: string;
     isAdmin: boolean;
@@ -38,6 +47,13 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
         registration_enabled: true,
         mappool_visible: false
     });
+
+    // 模态框状态
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [currentGroupType, setCurrentGroupType] = useState<'admin_group' | 'map_selection_group' | 'map_testing_group' | null>(null);
+    const [userIdInput, setUserIdInput] = useState('');
+    const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+    const [fetchingUser, setFetchingUser] = useState(false);
 
     useEffect(() => {
         fetchSettings();
@@ -95,16 +111,126 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
         }
     };
 
-    const handleGroupChange = (groupType: 'admin_group' | 'map_selection_group' | 'map_testing_group', value: string) => {
-        const users = value.split('\n').map(user => user.trim()).filter(user => user.length > 0);
+    const handleRemoveUser = (groupType: 'admin_group' | 'map_selection_group' | 'map_testing_group', userId: string) => {
         setFormData(prev => ({
             ...prev,
-            [groupType]: users
+            [groupType]: prev[groupType].filter(id => id !== userId)
         }));
     };
 
-    const getGroupText = (group: string[]) => {
-        return group.join('\n');
+    const handleAddUser = () => {
+        if (!userInfo || !currentGroupType) return;
+
+        const userId = userInfo.id.toString();
+        if (formData[currentGroupType].includes(userId)) {
+            showError('该用户已在组中');
+            return;
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            [currentGroupType]: [...prev[currentGroupType], userId]
+        }));
+
+        // 关闭模态框并重置状态
+        setShowAddModal(false);
+        setUserIdInput('');
+        setUserInfo(null);
+        setCurrentGroupType(null);
+        showSuccess('用户添加成功');
+    };
+
+    const handleFetchUser = async () => {
+        if (!userIdInput.trim()) {
+            showError('请输入用户ID');
+            return;
+        }
+
+        try {
+            setFetchingUser(true);
+            const response = await fetch('/api/get-user-info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId: userIdInput.trim() }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setUserInfo(data.user);
+            } else {
+                showError(data.error || '获取用户信息失败');
+                setUserInfo(null);
+            }
+        } catch (error) {
+            console.error('Error fetching user info:', error);
+            showError('获取用户信息失败');
+            setUserInfo(null);
+        } finally {
+            setFetchingUser(false);
+        }
+    };
+
+    const openAddModal = (groupType: 'admin_group' | 'map_selection_group' | 'map_testing_group') => {
+        setCurrentGroupType(groupType);
+        setShowAddModal(true);
+        setUserIdInput('');
+        setUserInfo(null);
+    };
+
+    const closeAddModal = () => {
+        setShowAddModal(false);
+        setCurrentGroupType(null);
+        setUserIdInput('');
+        setUserInfo(null);
+    };
+
+    const getGroupName = (groupType: 'admin_group' | 'map_selection_group' | 'map_testing_group') => {
+        switch (groupType) {
+            case 'admin_group': return '管理员组';
+            case 'map_selection_group': return '选图组';
+            case 'map_testing_group': return '测图组';
+        }
+    };
+
+    const renderUserList = (groupType: 'admin_group' | 'map_selection_group' | 'map_testing_group', users: string[]) => {
+        return (
+            <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                    <label className="block text-sm font-medium text-gray-300">
+                        {getGroupName(groupType)}
+                    </label>
+                    <button
+                        onClick={() => openAddModal(groupType)}
+                        className="px-3 py-1 bg-[#E93B66] text-white text-xs rounded hover:bg-[#d32f5a] flex items-center"
+                    >
+                        <span className="mr-1">+</span>
+                        添加
+                    </button>
+                </div>
+                <div className="bg-[#1a1a1a] border border-gray-600 rounded-md min-h-[100px] p-3">
+                    {users.length === 0 ? (
+                        <p className="text-gray-500 text-sm">暂无成员</p>
+                    ) : (
+                        <div className="space-y-2">
+                            {users.map((userId) => (
+                                <div key={userId} className="flex items-center justify-between bg-[#2a2a2a] p-2 rounded">
+                                    <span className="text-white text-sm">ID: {userId}</span>
+                                    <button
+                                        onClick={() => handleRemoveUser(groupType, userId)}
+                                        className="text-red-400 hover:text-red-300 text-sm px-2 py-1"
+                                    >
+                                        删除
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
     };
 
     if (loading) {
@@ -247,44 +373,9 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
 
                     {/* 人员分组设置 */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-2">
-                                管理员组
-                            </label>
-                            <textarea
-                                value={getGroupText(formData.admin_group)}
-                                onChange={(e) => handleGroupChange('admin_group', e.target.value)}
-                                rows={4}
-                                className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none resize-none"
-                                placeholder="每行一个用户名"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-2">
-                                选图组
-                            </label>
-                            <textarea
-                                value={getGroupText(formData.map_selection_group)}
-                                onChange={(e) => handleGroupChange('map_selection_group', e.target.value)}
-                                rows={4}
-                                className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none resize-none"
-                                placeholder="每行一个用户名"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-2">
-                                测图组
-                            </label>
-                            <textarea
-                                value={getGroupText(formData.map_testing_group)}
-                                onChange={(e) => handleGroupChange('map_testing_group', e.target.value)}
-                                rows={4}
-                                className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none resize-none"
-                                placeholder="每行一个用户名"
-                            />
-                        </div>
+                        {renderUserList('admin_group', formData.admin_group)}
+                        {renderUserList('map_selection_group', formData.map_selection_group)}
+                        {renderUserList('map_testing_group', formData.map_testing_group)}
                     </div>
 
                     {/* 保存按钮 */}
@@ -302,6 +393,89 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
                     </div>
                 </div>
             </div>
+
+            {/* 添加用户模态框 */}
+            {showAddModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-[#3D3D3D] border border-gray-600 rounded-lg p-6 w-full max-w-md mx-4">
+                        <h3 className="text-xl font-bold text-white mb-4">
+                            添加用户到 {currentGroupType && getGroupName(currentGroupType)}
+                        </h3>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    osu! 用户ID
+                                </label>
+                                <input
+                                    type="text"
+                                    value={userIdInput}
+                                    onChange={(e) => setUserIdInput(e.target.value)}
+                                    className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
+                                    placeholder="输入用户ID"
+                                    onKeyPress={(e) => {
+                                        if (e.key === 'Enter') {
+                                            handleFetchUser();
+                                        }
+                                    }}
+                                />
+                            </div>
+
+                            <div className="flex space-x-2">
+                                <button
+                                    onClick={handleFetchUser}
+                                    disabled={fetchingUser || !userIdInput.trim()}
+                                    className="flex-1 px-4 py-2 bg-[#E93B66] text-white rounded-md hover:bg-[#d32f5a] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                                >
+                                    {fetchingUser && (
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b border-white mr-2"></div>
+                                    )}
+                                    获取信息
+                                </button>
+                                <button
+                                    onClick={closeAddModal}
+                                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-500"
+                                >
+                                    取消
+                                </button>
+                            </div>
+
+                            {userInfo && (
+                                <div className="bg-[#2a2a2a] p-4 rounded-md border border-gray-600">
+                                    <div className="flex items-center space-x-3">
+                                        <img
+                                            src={userInfo.avatar_url}
+                                            alt={userInfo.username}
+                                            className="w-12 h-12 rounded-full"
+                                        />
+                                        <div className="flex-1">
+                                            <p className="text-white font-medium">{userInfo.username}</p>
+                                            <p className="text-gray-400 text-sm">
+                                                {userInfo.country_code} • {userInfo.pp.toFixed(0)}pp
+                                                {userInfo.global_rank && ` • #${userInfo.global_rank}`}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 flex space-x-2">
+                                        <button
+                                            onClick={handleAddUser}
+                                            className="flex-1 px-4 py-2 bg-[#E93B66] text-white rounded-md hover:bg-[#d32f5a]"
+                                        >
+                                            确认添加
+                                        </button>
+                                        <button
+                                            onClick={() => setUserInfo(null)}
+                                            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-500"
+                                        >
+                                            重新输入
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
