@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { get } from '@vercel/edge-config';
+import { getTournamentSettings } from '@/lib/mysql-registrations';
 
 export async function POST(request: NextRequest) {
     try {
@@ -14,13 +15,29 @@ export async function POST(request: NextRequest) {
 
         let adminList: string[] = [];
 
-        // 优先尝试从Edge Config获取管理员列表
-        if (process.env.EDGE_CONFIG) {
-            const adminConfig = await get('admin');
-            if (adminConfig && Array.isArray(adminConfig)) {
-                adminList = adminConfig.filter((id): id is string =>
+        // 优先尝试从数据库获取管理员列表
+        try {
+            const tournamentSettings = await getTournamentSettings();
+            if (tournamentSettings?.admin_group && Array.isArray(tournamentSettings.admin_group)) {
+                adminList = tournamentSettings.admin_group.filter((id: any): id is string =>
                     typeof id === 'string' && id.trim() !== ''
                 );
+            }
+        } catch (dbError) {
+            console.warn('Failed to fetch admin list from database:', dbError);
+        }
+
+        // 如果数据库没有数据，尝试从Edge Config获取管理员列表
+        if (adminList.length === 0 && process.env.EDGE_CONFIG) {
+            try {
+                const adminConfig = await get('admin');
+                if (adminConfig && Array.isArray(adminConfig)) {
+                    adminList = adminConfig.filter((id): id is string =>
+                        typeof id === 'string' && id.trim() !== ''
+                    );
+                }
+            } catch (edgeError) {
+                console.warn('Failed to fetch admin list from Edge Config:', edgeError);
             }
         }
 

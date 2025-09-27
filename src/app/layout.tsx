@@ -1,3 +1,5 @@
+'use client';
+
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -7,7 +9,7 @@ import Footer from '@/app/components/footer';
 import NoiseBackground from './components/ui/NoiseBackground';
 import ParallaxBackground from './components/ui/ParallaxBackground';
 import { NotificationContainer } from './components/ui/Notification';
-import { ConfigProvider } from './components/ConfigProvider';
+import { ConfigProvider, useConfig } from './components/ConfigProvider';
 import Image from "next/image";
 
 // 页面标题映射
@@ -25,59 +27,49 @@ const pageTitles: Record<string, string> = {
   '/replay-collection': '回放收集',
 };
 
-// 生成页面metadata的工具函数 - 在页面组件中使用
-export function generatePageMetadata(pathname: string): Metadata {
-  const title = pageTitles[pathname] || 'AstraCup 星域杯';
 
-  return {
-    title: title === 'AstraCup 星域杯' ? title : `${title} | AstraCup 星域杯`,
-    description: "AstraCup 是一场专为广大 osu!lazer std 玩家 打造的线上赛事。",
-    icons: {
-      icon: "/favicon.ico",
-    },
-  };
+// Loading组件
+function LoadingScreen({ isLoading }: { isLoading: boolean }) {
+  return (
+    <div className={`fixed inset-0 z-50 bg-black transition-opacity duration-1000 ${isLoading ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}>
+      <div className="flex items-center justify-center h-full">
+        {/* 左边2/3大小的image */}
+        <div className={`flex-1 flex justify-end pr-4 transition-transform duration-1000 ${isLoading ? 'translate-x-0' : '-translate-x-full'
+          }`}>
+          <Image
+            src="/icons/1.svg"
+            alt="Loading icon 1"
+            width={120}
+            height={120}
+            className="filter brightness-0 invert opacity-80"
+          />
+        </div>
+        {/* 右边1/3大小的image */}
+        <div className={`flex-1 flex justify-start pl-4 transition-transform duration-1000 ${isLoading ? 'translate-x-0' : 'translate-x-full'
+          }`}>
+          <Image
+            src="/icons/2.svg"
+            alt="Loading icon 2"
+            width={60}
+            height={60}
+            className="filter brightness-0 invert opacity-80"
+          />
+        </div>
+      </div>
+    </div>
+  );
 }
 
-// 示例：在页面中使用
-// import { generatePageMetadata } from '@/app/layout';
-// export const metadata = generatePageMetadata('/news'); // 会生成 "新闻 | AstraCup 星域杯"
-
-export const metadata: Metadata = {
-  title: "AstraCup 星域杯",
-  description: "AstraCup 是一场专为广大 osu!lazer std 玩家 打造的线上赛事。",
-  icons: {
-    icon: "/favicon.ico",
-  },
-}
-
-import "./globals.css";
-
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+// 应用内容组件
+function AppContent({ children }: { children: React.ReactNode }) {
+  const { isLoading } = useConfig();
 
   return (
-    <html lang="zh">
-      <head>
-        <meta name="theme-color" content="#3d3d3d" />
-        <meta name="msapplication-TileColor" content="#3d3d3d" />
-      </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ConfigProvider>
+    <>
+      <LoadingScreen isLoading={isLoading} />
+      {!isLoading && (
+        <>
           <NoiseBackground />
           <ParallaxBackground />
           <Image
@@ -96,6 +88,29 @@ export default function RootLayout({
           </main>
           <Footer />
           <NotificationContainer />
+        </>
+      )}
+    </>
+  );
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+
+  return (
+    <html lang="zh">
+      <head>
+        <meta name="theme-color" content="#3d3d3d" />
+        <meta name="msapplication-TileColor" content="#3d3d3d" />
+      </head>
+      <body className={`antialiased`}>
+        <ConfigProvider>
+          <AppContent>
+            {children}
+          </AppContent>
         </ConfigProvider>
       </body>
     </html>
