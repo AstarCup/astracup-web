@@ -838,7 +838,7 @@ export default function AdminPage() {
                     )}
 
                     {/* 选图管理页面 */}
-                    {activeTab === 'map-selection' && (
+                    {activeTab === 'map-selection' && user && (
                         <MapSelectionManagement
                             user={user}
                             permissions={permissions}

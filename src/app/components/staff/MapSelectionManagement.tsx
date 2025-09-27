@@ -116,10 +116,22 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
     // 转换UserSession为内部使用的User格式
     const userForState: User = {
-        id: parseInt(user.osuId),
+        id: parseInt(user.osuId) || 0,
         username: user.username,
         avatar_url: user.avatar_url
     };
+
+    // 验证用户数据
+    if (!userForState.id || isNaN(userForState.id)) {
+        return (
+            <div className="space-y-6">
+                <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
+                    <h3 className="text-xl font-bold text-white mb-4">选图管理</h3>
+                    <p className="text-red-400">用户数据无效，请重新登录</p>
+                </div>
+            </div>
+        );
+    }
 
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthorized, setIsAuthorized] = useState(false);
@@ -482,8 +494,13 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
     // 提交评分
     const submitRating = async (selectionId: number, rating: number) => {
-        if (!userForState?.id) {
-            showError('请先登录');
+        if (!userForState?.id || isNaN(userForState.id)) {
+            showError('用户数据无效，请重新登录');
+            return;
+        }
+
+        if (!selectionId || isNaN(selectionId)) {
+            showError('无效的选图ID');
             return;
         }
 
