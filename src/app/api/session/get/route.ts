@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 
 export async function GET(_request: NextRequest) {
     try {
+        console.log('[Session Get API] 开始处理session获取请求');
+
         const cookieStore = await cookies();
         const sessionCookie = cookieStore.get('astra_session');
 
@@ -37,8 +39,6 @@ export async function GET(_request: NextRequest) {
             });
         }
 
-        // console.log('Session cookie found:', sessionCookie.value);
-
         try {
             const session = JSON.parse(sessionCookie.value);
             console.log('[Session Get API] astra_session cookie解析成功:', session.osuId);
@@ -54,7 +54,7 @@ export async function GET(_request: NextRequest) {
             });
         }
     } catch (error) {
-        console.error('Error retrieving session:', error);
+        console.error('[Session Get API] 处理请求时发生错误:', error);
         return NextResponse.json({
             success: false,
             error: 'Failed to retrieve session'

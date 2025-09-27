@@ -125,6 +125,14 @@ export default function AdminPage() {
     const [processingUser, setProcessingUser] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('overview');
 
+    console.log('[Staff Dashboard] 组件初始化，当前环境:', process.env.NODE_ENV);
+    console.log('[Staff Dashboard] 初始状态:', {
+        user: !!user,
+        permissionsLoading,
+        loading,
+        permissions
+    });
+
     // 房间管理状态
     const [rooms, setRooms] = useState<MatchRoom[]>([]);
     const [roomsLoading, setRoomsLoading] = useState(false);
@@ -636,6 +644,7 @@ export default function AdminPage() {
     };
 
     if (loading) {
+        console.log('[Staff Dashboard] 显示加载页面');
         return (
             <div className="flex flex-col items-center justify-center min-h-screen relative">
                 <div className="fixed inset-0 z-0">
@@ -693,6 +702,12 @@ export default function AdminPage() {
             </div>
         );
     }
+
+    console.log('[Staff Dashboard] 开始渲染主界面，用户信息:', {
+        userId: user?.osuId,
+        username: user?.username,
+        permissions
+    });
 
     return (
         <div className="flex h-screen bg-[#1a1a1a]">
