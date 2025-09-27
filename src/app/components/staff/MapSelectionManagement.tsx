@@ -1426,13 +1426,13 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     <div className="grid grid-cols-2 gap-2">
                                         <div>{selection.starRating.toFixed(2)}★</div>
                                         <div>Length:{formatLength(selection.totalLength)} | BPM: {selection.bpm}</div>
-                                        <div className='font-bold text-xl'>CS: {selection.cs.toFixed(1)} | AR: {selection.ar.toFixed(1)} | OD: {selection.od.toFixed(1)} | HP: {selection.hp.toFixed(1)}</div>
+                                        <div className='font-bold text-xl col-span-2'>CS: {selection.cs.toFixed(1)} | AR: {selection.ar.toFixed(1)} | OD: {selection.od.toFixed(1)} | HP: {selection.hp.toFixed(1)}</div>
                                     </div>
                                 </div>
 
                                 {/* 提名者信息 */}
-                                <div className="mb-3 text-xs text-gray-600">
-                                    <div className="flex items-center gap-2">
+                                <div className="mb-3 text-xs text-gray-600 col-span-2">
+                                    <div className="flex items-center gap-3 w-full">
                                         <span>提名者:<Image src={selection.selectedByAvatar || "/default-avatar.png"} alt={selection.selectedByUsername || '未知'} width={16} height={16} className="rounded-full" />{selection.selectedByUsername}</span>
                                         <span>•</span>
                                         <span>{formatDateTime(selection.selectedAt)}</span>

@@ -87,12 +87,12 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId, onRe
     return (
         <div className={compact ? "flex items-center gap-1" : "space-y-3"}>
             {compact ? (
-                // 紧凑模式：只显示平均分和评分人数
+                // 紧凑模式：只显示平均分和评分
                 <div className="flex items-center gap-2 text-sm">
                     {/* <span className="font-medium text-gray-700"></span> */}
                     <div className="flex items-center gap-1">
                         {/* {renderStars(averageRating, 'text-sm')} */}
-                        <span className="text-orange-500 ml-1 text-2xl font-bold">{allRatings.length}</span>
+                        <span className="text-orange-500 ml-1 text-2xl font-bold">{averageRating.toFixed(2)}</span>
                     </div>
                 </div>
             ) : (
