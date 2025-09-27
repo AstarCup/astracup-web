@@ -196,6 +196,20 @@ function CreateRoomModal({ onClose, onCreate }: {
 export default function RoomManagement({ rooms, roomsLoading, deletingRoomId, onDeleteRoom, onCreateRoom }: RoomManagementProps) {
     const [showCreateRoomModal, setShowCreateRoomModal] = useState(false);
 
+    // 格式化日期时间函数 - 转换为东八区并显示年/月/日 时:分格式
+    const formatDateTime = (dateTimeString: string) => {
+        const date = new Date(dateTimeString);
+        // 转换为东八区时间
+        const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
+        const cstTime = new Date(utcTime + (8 * 3600000));
+        const year = cstTime.getFullYear();
+        const month = String(cstTime.getMonth() + 1).padStart(2, '0');
+        const day = String(cstTime.getDate()).padStart(2, '0');
+        const hours = String(cstTime.getHours()).padStart(2, '0');
+        const minutes = String(cstTime.getMinutes()).padStart(2, '0');
+        return `${year}/${month}/${day} ${hours}:${minutes}`;
+    };
+
     const handleDeleteRoom = async (roomId: number) => {
         if (!confirm('确定要删除这个比赛房间吗？此操作不可撤销。')) {
             return;
@@ -328,7 +342,7 @@ export default function RoomManagement({ rooms, roomsLoading, deletingRoomId, on
                                                     </div>
                                                     <div className="flex justify-between items-center">
                                                         <span className="text-xs text-gray-400">
-                                                            {new Date(schedule.scheduled_time).toLocaleString('zh-CN')}
+                                                            {schedule.scheduled_time ? formatDateTime(schedule.scheduled_time) : '时间未定'}
                                                         </span>
                                                         <span className={`px-2 py-1 rounded text-xs ${schedule.status === 'scheduled' ? 'bg-blue-600 text-white' :
                                                             schedule.status === 'in_progress' ? 'bg-yellow-600 text-white' :

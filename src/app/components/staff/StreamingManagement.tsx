@@ -26,6 +26,19 @@ export default function StreamingManagement({
     onApplyForRoom,
     onRevokeAssignment
 }: StreamingManagementProps) {
+    // 格式化日期时间函数 - 转换为东八区并显示年/月/日 时:分格式
+    const formatDateTime = (dateTimeString: string) => {
+        const date = new Date(dateTimeString);
+        // 转换为东八区时间
+        const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
+        const cstTime = new Date(utcTime + (8 * 3600000));
+        const year = cstTime.getFullYear();
+        const month = String(cstTime.getMonth() + 1).padStart(2, '0');
+        const day = String(cstTime.getDate()).padStart(2, '0');
+        const hours = String(cstTime.getHours()).padStart(2, '0');
+        const minutes = String(cstTime.getMinutes()).padStart(2, '0');
+        return `${year}/${month}/${day} ${hours}:${minutes}`;
+    };
     return (
         <div className="space-y-6">
             <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
@@ -96,7 +109,7 @@ export default function StreamingManagement({
                                                     {assignment.match_info.player1_username} vs {assignment.match_info.player2_username}
                                                 </span>
                                                 <span className="ml-4 text-xs">
-                                                    {new Date(assignment.match_info.scheduled_time).toLocaleString('zh-CN')}
+                                                    {assignment.match_info.scheduled_time ? formatDateTime(assignment.match_info.scheduled_time) : '时间未定'}
                                                 </span>
                                             </div>
                                         )}

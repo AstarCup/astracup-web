@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { UserSession } from '@/lib/permissions';
 import { UserPermissions } from '@/lib/permissions';
 import { getUserPermissions } from '@/lib/permissions';
-import MatchScheduleSystem from '@/app/components/ui/MatchScheduleSystem';
+import MatchScheduleSystem from '@/app/components/staff/MatchScheduleSystem';
 import localFont from "next/font/local";
 import { MatchRoom } from '@/lib/mysql-registrations';
 

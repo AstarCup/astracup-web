@@ -400,7 +400,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                         第{schedule.room?.round_number || '?'}轮 - 场次{schedule.room?.match_number || '?'}
                                     </p>
                                     <p className="text-gray-400">
-                                        {schedule.room?.match_date || '?'} {schedule.room?.match_time || '?'}
+                                        {schedule.room?.match_date ? new Date(schedule.room.match_date).toLocaleDateString('zh-CN') : '?'} {schedule.room?.match_time || '?'}
                                     </p>
                                 </div>
                                 <span className={`px-2 py-1 text-sm rounded ${getStatusColor(schedule.status)}`}>
