@@ -10,7 +10,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { TournamentRegistration } from '@/lib/mysql-registrations';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { showSuccess, showError, showInfo, showWarning, NotificationContainer } from '@/app/components/Notification';
+import { showSuccess, showError, showInfo, showWarning, NotificationContainer } from '@/app/components/ui/Notification';
 import OverviewManagement from '@/app/components/staff/OverviewManagement';
 import RoomManagement from '@/app/components/staff/RoomManagement';
 import MatchupManagement from '@/app/components/staff/MatchupManagement';
@@ -19,6 +19,7 @@ import UserManagement from '@/app/components/staff/UserManagement';
 import MatchManagement from '@/app/components/staff/MatchManagement';
 import SettingsManagement from '@/app/components/staff/SettingsManagement';
 import ReplayCollectionManagement from '@/app/components/staff/ReplayCollectionManagement';
+import MapSelectionManagement from '@/app/components/staff/MapSelectionManagement';
 
 interface MatchRoom {
     id: number;
@@ -683,21 +684,20 @@ export default function AdminPage() {
                             对战列表管理
                         </button>
 
-                        {(permissions?.isStreamer || permissions?.isReferee || permissions?.isAdmin) && (
-                            <button
-                                onClick={() => setActiveTab('streaming')}
-                                className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'streaming'
-                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
-                                    }`}
-                            >
-                                <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.414-1.414A1 1 0 0010.586 3H7.414a1 1 0 00-.707.293L5.293 4.707A1 1 0 014.586 5H4zm12 12H4a4 4 0 01-4-4V7a4 4 0 014-4h1.586a1 1 0 01.707.293L7.707 5.707A1 1 0 008.414 6h3.172a1 1 0 01.707.293l1.414 1.414A1 1 0 0014.414 8H16a4 4 0 014 4v6a4 4 0 01-4 4z" clipRule="evenodd" />
-                                    <path fillRule="evenodd" d="M8 11a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
-                                </svg>
-                                直播裁判
-                            </button>
-                        )}
+                        <button
+                            onClick={() => setActiveTab('streaming')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'streaming'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.414-1.414A1 1 0 0010.586 3H7.414a1 1 0 00-.707.293L5.293 4.707A1 1 0 014.586 5H4zm12 12H4a4 4 0 01-4-4V7a4 4 0 014-4h1.586a1 1 0 01.707.293L7.707 5.707A1 1 0 008.414 6h3.172a1 1 0 01.707.293l1.414 1.414A1 1 0 0014.414 8H16a4 4 0 014 4v6a4 4 0 01-4 4z" clipRule="evenodd" />
+                                <path fillRule="evenodd" d="M8 11a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
+                            </svg>
+                            直播裁判
+                        </button>
+
                         <button
                             onClick={() => setActiveTab('matches')}
                             className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'matches'
@@ -735,6 +735,19 @@ export default function AdminPage() {
                                 <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h4a2 2 0 012 2v2a2 2 0 01-2 2H8a2 2 0 01-2-2v-2z" clipRule="evenodd" />
                             </svg>
                             回放收集
+                        </button>
+
+                        <button
+                            onClick={() => setActiveTab('map-selection')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'map-selection'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd" />
+                            </svg>
+                            选图管理
                         </button>
 
                         <button
@@ -780,6 +793,7 @@ export default function AdminPage() {
                         {activeTab === 'streaming' && '直播裁判'}
                         {activeTab === 'users' && '用户管理'}
                         {activeTab === 'replays' && '回放收集管理'}
+                        {activeTab === 'map-selection' && '选图管理'}
                         {activeTab === 'settings' && '系统设置'}
                     </h1>
                 </header>
@@ -818,6 +832,14 @@ export default function AdminPage() {
                     {/* 回放收集管理页面 */}
                     {activeTab === 'replays' && (
                         <ReplayCollectionManagement
+                            user={user}
+                            permissions={permissions}
+                        />
+                    )}
+
+                    {/* 选图管理页面 */}
+                    {activeTab === 'map-selection' && (
+                        <MapSelectionManagement
                             user={user}
                             permissions={permissions}
                         />

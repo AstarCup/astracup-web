@@ -2,7 +2,7 @@
 
 
 import { useState, useEffect } from 'react';
-import { showSuccess, showError } from './Notification';
+import { showSuccess, showError } from '../../ui/Notification';
 
 interface CommentComponentProps {
     mapSelectionId: number;

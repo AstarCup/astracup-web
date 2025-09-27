@@ -7,7 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 import localFont from "next/font/local";
 import { UserSession } from '@/lib/permissions';
 import { getUserPermissions } from '@/lib/permissions';
-import MessageNotification from './MessageNotification';
+import MessageNotification from './ui/MessageNotification';
 
 const audiowide = localFont({
     src: "./font/Audiowide-Regular.ttf",

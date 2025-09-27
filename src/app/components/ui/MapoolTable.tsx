@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useState } from "react";
-import { showSuccess, showError, showInfo } from '../components/Notification';
+import { showSuccess, showError, showInfo } from './Notification';
 import ContextMenu from './ContextMenu';
 import BulkDownloadManager from './BulkDownloadManager';
 import JSZip from 'jszip';

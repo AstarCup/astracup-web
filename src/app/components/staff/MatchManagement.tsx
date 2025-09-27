@@ -1,6 +1,6 @@
 "use client";
 
-import MatchScheduleSystem from '@/app/components/MatchScheduleSystem';
+import MatchScheduleSystem from '@/app/components/ui/MatchScheduleSystem';
 
 interface MatchManagementProps {
     userOsuId: string;

@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import MapoolTable from '../MapoolTable';
-import Dropdown from '../Dropdown';
-import { showError, showSuccess } from '../Notification';
+import MapoolTable from '../ui/MapoolTable';
+import Dropdown from '../ui/Dropdown';
+import { showError, showSuccess } from '../ui/Notification';
 import { getUserPermissions, UserSession } from '@/lib/permissions';
 
 interface User {
@@ -382,7 +382,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
 
     return (
         <div className="max-w-9xl mx-auto p-6">
-            <h2 className="text-2xl font-bold mb-4">回放文件收集系统</h2>
+            <h2 className="text-2xl font-bold mb-4 text-white">回放文件收集系统</h2>
 
             {isLoading ? (
                 <div className="text-center py-8">
@@ -554,9 +554,9 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                     </div>
 
                     {/* 下载全部回放功能 */}
-                    <div className="mt-8 border-t pt-6">
+                    <div className="mt-8 border-t pt-6 bg-[#3d3d3d]">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold">下载全部回放</h3>
+                            <h3 className="text-xl font-bold text-white">下载全部回放</h3>
                             <button
                                 onClick={handleDownloadAllReplays}
                                 className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white  transition-colors flex items-center gap-2"
