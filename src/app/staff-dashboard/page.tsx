@@ -118,6 +118,7 @@ export default function AdminPage() {
         isReferee: false,
         isCommentator: false
     });
+    const [permissionsLoading, setPermissionsLoading] = useState(true);
     const [loading, setLoading] = useState(true);
     const [registrations, setRegistrations] = useState<TournamentRegistration[]>([]);
     const [registrationsLoading, setRegistrationsLoading] = useState(false);
@@ -160,25 +161,29 @@ export default function AdminPage() {
                 setUser(sessionData.session);
 
                 // 获取用户权限
+                setPermissionsLoading(true);
                 try {
                     const permissionsResponse = await fetch(`/api/user-permissions?osuId=${sessionData.session.osuId}`);
                     if (permissionsResponse.ok) {
                         const userPermissions = await permissionsResponse.json();
                         setPermissions(userPermissions);
+                        setPermissionsLoading(false);
 
-                        // 检查管理员权限
-                        if (!userPermissions.isAdmin) {
+                        // 等待权限加载完成后检查管理员权限
+                        if (!permissionsLoading && !userPermissions.isAdmin) {
                             showError('需要管理员权限');
                             router.push('/player-info');
                             return;
                         }
                     } else {
+                        setPermissionsLoading(false);
                         showError('获取权限失败');
                         router.push('/player-info');
                         return;
                     }
                 } catch (error) {
                     console.error('Failed to fetch user permissions:', error);
+                    setPermissionsLoading(false);
                     showError('获取权限失败');
                     router.push('/player-info');
                     return;
@@ -193,6 +198,14 @@ export default function AdminPage() {
 
         fetchUserData();
     }, [router]);
+
+    // 权限验证：等待权限加载完成后进行验证
+    useEffect(() => {
+        if (!permissionsLoading && user && !permissions.isAdmin) {
+            showError('需要管理员权限');
+            router.push('/player-info');
+        }
+    }, [permissionsLoading, permissions.isAdmin, user, router]);
 
     // 当切换到房间管理选项卡时获取房间列表
     useEffect(() => {

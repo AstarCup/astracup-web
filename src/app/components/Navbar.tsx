@@ -25,6 +25,7 @@ export default function Navbar() {
         isReplayTester: false,
         isAdmin: false
     });
+    const [permissionsLoading, setPermissionsLoading] = useState(true);
     const [versionInfo, setVersionInfo] = useState<string>('');
     const [iconCache, setIconCache] = useState<Map<string, boolean>>(new Map());
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -94,6 +95,7 @@ export default function Navbar() {
 
                     // 通过API获取用户权限
                     if (sessionData.session?.osuId) {
+                        setPermissionsLoading(true);
                         try {
                             const permissionsResponse = await fetch(`/api/user-permissions?osuId=${sessionData.session.osuId}`);
                             if (permissionsResponse.ok) {
@@ -102,11 +104,18 @@ export default function Navbar() {
                             }
                         } catch (error) {
                             console.error('Failed to fetch user permissions:', error);
+                        } finally {
+                            setPermissionsLoading(false);
                         }
+                    } else {
+                        setPermissionsLoading(false);
                     }
+                } else {
+                    setPermissionsLoading(false);
                 }
             } catch (error) {
                 console.error('Failed to fetch user data:', error);
+                setPermissionsLoading(false);
             }
         };
 
@@ -223,8 +232,8 @@ export default function Navbar() {
                 { name: 'PHOTOS', href: `/photos`, tip: '历届荣誉展示', svg: '/icons/photos.svg' }
             ]
         },
-        // 管理菜单 - 根据权限动态显示
-        ...(permissions.isMapSelector || permissions.isReplayTester || permissions.isAdmin ? [{
+        // 管理菜单 - 根据权限动态显示，只有在权限加载完成且有权限时才显示
+        ...(!permissionsLoading && (permissions.isMapSelector || permissions.isReplayTester || permissions.isAdmin) ? [{
             name: '管理',
             svg: '/icons/admin-fill.svg',
             links: [
