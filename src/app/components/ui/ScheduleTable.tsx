@@ -36,19 +36,29 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
         }
     };
 
+    const formatDateTime = (dateString: string, timeString: string) => {
+        try {
+            // 如果date是ISO格式，提取日期部分
+            const datePart = dateString.includes('T') ? dateString.split('T')[0] : dateString;
+            // 组合日期和时间
+            const dateTimeString = `${datePart}T${timeString}`;
+            return new Date(dateTimeString).toLocaleString('zh-CN');
+        } catch (error) {
+            console.error('日期时间格式化错误:', error, dateString, timeString);
+            return `${dateString} ${timeString}`;
+        }
+    };
+
     return (
         <div className="overflow-x-auto">
-            <table className="min-w-[1400px] bg-white">
+            <table className="min-w-[1300px] bg-white">
                 <thead>
                     <tr className="bg-gray-50 text-center">
                         <th className="px-6 py-4 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">
                             轮次
                         </th>
                         <th className="px-6 py-4 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">
-                            日期
-                        </th>
-                        <th className="px-6 py-4 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">
-                            时间
+                            日期时间
                         </th>
                         <th className="px-6 py-4 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">
                             比赛场次
@@ -83,10 +93,7 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
                                 {item.round}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {item.date}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {item.time}
+                                {formatDateTime(item.date, item.time)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {item.match}
