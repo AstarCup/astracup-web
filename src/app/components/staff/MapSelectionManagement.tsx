@@ -121,18 +121,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         avatar_url: user.avatar_url
     };
 
-    // 验证用户数据
-    if (!userForState.id || isNaN(userForState.id)) {
-        return (
-            <div className="space-y-6">
-                <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
-                    <h3 className="text-xl font-bold text-white mb-4">选图管理</h3>
-                    <p className="text-red-400">用户数据无效，请重新登录</p>
-                </div>
-            </div>
-        );
-    }
-
+    // 状态定义 - 必须在任何条件逻辑之前
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [_isAdmin, setIsAdmin] = useState(false);
@@ -228,6 +217,18 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         y: 0,
         selection: null
     });
+
+    // 验证用户数据
+    if (!userForState.id || isNaN(userForState.id)) {
+        return (
+            <div className="space-y-6">
+                <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
+                    <h3 className="text-xl font-bold text-white mb-4">选图管理</h3>
+                    <p className="text-red-400">用户数据无效，请重新登录</p>
+                </div>
+            </div>
+        );
+    }
 
     // 右键菜单处理函数
     const handleContextMenu = (e: React.MouseEvent, selection: MapSelection) => {
