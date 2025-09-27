@@ -269,18 +269,23 @@ export function parseBeatmapUrl(url: string): { beatmapId?: number; beatmapsetId
 // 获取单个beatmap信息
 export async function getBeatmapInfo(beatmapId: number): Promise<BeatmapInfo | null> {
     try {
+        console.log('Getting client token for beatmap info...');
         // 获取客户端token
         const { getValidClientToken } = await import('@/lib/osu-auth');
         const accessToken = await getValidClientToken();
+        console.log('Client token obtained:', !!accessToken);
 
         const headers: HeadersInit = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${accessToken}`,
         };
 
+        console.log('Fetching beatmap info for ID:', beatmapId);
         const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/beatmaps/${beatmapId}`, {
             headers,
         });
+
+        console.log('Beatmap API response status:', response.status);
 
         if (!response.ok) {
             if (response.status === 404) {

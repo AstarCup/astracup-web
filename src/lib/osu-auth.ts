@@ -157,10 +157,12 @@ export async function getOsuClientToken(): Promise<{
     token_type: string;
 }> {
     try {
+        console.log('Checking OSU_CLIENT_ID and OSU_CLIENT_SECRET...');
         if (!OSU_CLIENT_ID || !OSU_CLIENT_SECRET) {
             throw new Error('OSU_CLIENT_ID and OSU_CLIENT_SECRET must be configured');
         }
 
+        console.log('Requesting client token from osu API...');
         const response = await fetch('https://osu.ppy.sh/oauth/token', {
             method: 'POST',
             headers: {
@@ -170,20 +172,22 @@ export async function getOsuClientToken(): Promise<{
                 client_id: OSU_CLIENT_ID,
                 client_secret: OSU_CLIENT_SECRET,
                 grant_type: 'client_credentials',
-                scope: 'public',
+                scope: 'public'
             }),
         });
 
+        console.log('Token request response status:', response.status);
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Client token exchange failed:', response.status, errorText);
-            throw new Error(`Failed to get client access token: ${response.status} - ${errorText}`);
+            console.error('Token request failed:', errorText);
+            throw new Error(`Failed to get client token: ${response.status} ${errorText}`);
         }
 
-        const tokenData = await response.json();
-        return tokenData;
+        const data = await response.json();
+        console.log('Token obtained successfully');
+        return data;
     } catch (error) {
-        console.error('Client token exchange error:', error);
+        console.error('Error getting client token:', error);
         throw error;
     }
 }
@@ -195,13 +199,17 @@ let clientToken: { token: string; expires: number } | null = null;
 export async function getValidClientToken(): Promise<string> {
     const now = Date.now() / 1000; // 当前时间戳（秒）
 
+    console.log('Checking client token cache...');
     // 如果有缓存的token且未过期，返回缓存的token
     if (clientToken && clientToken.expires > now + 60) { // 提前60秒刷新
+        console.log('Using cached client token');
         return clientToken.token;
     }
 
+    console.log('Getting new client token...');
     // 获取新的token
     const tokenData = await getOsuClientToken();
+    console.log('New token obtained, expires in:', tokenData.expires_in, 'seconds');
     clientToken = {
         token: tokenData.access_token,
         expires: now + tokenData.expires_in,
