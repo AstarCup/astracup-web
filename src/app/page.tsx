@@ -11,11 +11,13 @@ import UserProfile from './components/ui/UserProfile';
 import RegistrationButton from './components/ui/RegistrationButton';
 import NewsListWithPagination from "./components/ui/NewsListWithPagination";
 import AnimatedLogo from './components/ui/AnimatedLogo';
+import { useConfig } from './components/ConfigProvider';
 
 
 export default function Home() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { tournamentSettings } = useConfig();
 
   const handleLogout = async () => {
     try {
@@ -77,8 +79,8 @@ export default function Home() {
           <AnimatedLogo />
         </div>
         <div className="relative flex flex-col items-start">
-          <span className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 z-2 relative text-gray-800 drop-shadow-lg -translate-y-25 bg-[#ffffff] px-2 py-1 w-fit border-b-4 border-[#E93B66]">星域杯</span>
-          <span className="text-sm sm:text-base z-10 relative text-gray-800 drop-shadow-md -translate-y-25 bg-[#ffffff] px-2 py-1 w-fit border-b-4 border-[#E93B66]">这里是OSU!Lazer星域杯，面向中国大陆 8100pp 分段的 1v1 比赛。</span>
+          <span className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 z-2 relative text-gray-800 drop-shadow-lg -translate-y-25 bg-[#ffffff] px-2 py-1 w-fit border-b-4 border-[#E93B66]">{tournamentSettings?.tournament_name || '星域杯'}</span>
+          <span className="text-sm sm:text-base z-10 relative text-gray-800 drop-shadow-md -translate-y-25 bg-[#ffffff] px-2 py-1 w-fit border-b-4 border-[#E93B66]">这里是OSU!Lazer{tournamentSettings?.tournament_name || '星域杯'}，面向中国大陆 {tournamentSettings?.min_pp_for_registration || 0}pp - {tournamentSettings?.max_pp_for_registration || 9999}pp 分段的 1v1 比赛。</span>
         </div>
       </div>
       {/* 导航按钮区域 */}

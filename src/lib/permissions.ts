@@ -1,4 +1,4 @@
-import { get } from '@vercel/edge-config';
+import { getTournamentSettings } from '@/lib/mysql-registrations';
 
 // 会话管理接口定义
 export interface UserSession {
@@ -24,134 +24,94 @@ export interface UserPermissions {
     isReferee: boolean;
 }
 
-/**
- * 统一的权限验证函数
- * 从Edge Config获取用户的权限信息
- */
 export async function getUserPermissions(osuId: string): Promise<UserPermissions> {
     try {
 
         // 在客户端环境中，通过API路由获取权限数据
         if (typeof window !== 'undefined') {
             try {
-                // 并行获取所有权限数据
-                const [adminResponse, mapSelectionResponse, replayResponse] = await Promise.all([
-                    fetch('/api/admin-check', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ osuId }),
-                    }),
-                    fetch('/api/map-selection-auth', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ osuId }),
-                    }),
-                    fetch('/api/replay-check', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ osuId }),
-                    })
-                ]);
+                // 获取完整的用户权限
+                const permissionsResponse = await fetch('/api/user-permissions');
 
-                if (adminResponse.ok && mapSelectionResponse.ok && replayResponse.ok) {
-                    const [adminData, mapData, replayData] = await Promise.all([
-                        adminResponse.json(),
-                        mapSelectionResponse.json(),
-                        replayResponse.json()
-                    ]);
-
-                    const permissions = {
-                        isMapSelector: mapData.isMapSelector || false,
-                        isReplayTester: replayData.isReplayTester || false,
-                        isAdmin: adminData.isAdmin || false,
-                        isStreamer: false, // TODO: 实现直播员权限检查
-                        isReferee: false  // TODO: 实现裁判员权限检查
-                    };
-
-                    return permissions;
+                if (permissionsResponse.ok) {
+                    const data = await permissionsResponse.json();
+                    if (data.success && data.permissions) {
+                        return data.permissions;
+                    }
                 }
             } catch (apiError) {
                 console.warn('Failed to fetch permissions via API:', apiError);
             }
         }
 
-        // 服务端环境或API调用失败时的fallback
+        // 从 MySQL 获取比赛设置中的权限组信息
+        const tournamentSettings = await getTournamentSettings();
 
         // 检查是否为管理员
         const isAdmin = await verifyAdminAuth(osuId);
 
         // 检查是否为选图组成员
         let isMapSelector = false;
-        try {
-            let mapSelectionTeam: string[] = [];
-
-            if (process.env.EDGE_CONFIG) {
-                const teamConfig = await get('mapSelectionTeam');
-                if (teamConfig && Array.isArray(teamConfig)) {
-                    mapSelectionTeam = teamConfig.filter((id): id is string =>
-                        typeof id === 'string' && id.trim() !== ''
-                    );
-                }
-            }
-
-            if (mapSelectionTeam.length === 0 && process.env.MAP_SELECTION_TEAM_IDS) {
-                mapSelectionTeam = process.env.MAP_SELECTION_TEAM_IDS
-                    .split(',')
-                    .map(id => id.trim())
-                    .filter(id => id !== '');
-            }
-
+        if (tournamentSettings?.map_selection_group) {
+            const mapSelectionTeam = tournamentSettings.map_selection_group;
             const userIdStr = osuId.toString();
             const userIdNum = parseInt(osuId);
 
-            isMapSelector = mapSelectionTeam.some(teamId => {
+            isMapSelector = mapSelectionTeam.some((teamId: string | number) => {
                 const teamIdStr = teamId.toString();
-                const teamIdNum = parseInt(teamId);
+                const teamIdNum = typeof teamId === 'string' ? parseInt(teamId) : teamId;
                 return userIdStr === teamIdStr || userIdNum === teamIdNum;
             });
-        } catch (error) {
-            console.warn('Error checking map selector permissions:', error);
         }
 
         // 检查是否为测图组成员（上传replay权限）
         let isReplayTester = false;
-        try {
-            let replayAccessUsers: string[] = [];
-
-            if (process.env.EDGE_CONFIG) {
-                const replayConfig = await get('replayAccessUsers');
-                if (replayConfig && Array.isArray(replayConfig)) {
-                    replayAccessUsers = replayConfig.filter((id): id is string =>
-                        typeof id === 'string' && id.trim() !== ''
-                    );
-                }
-            }
-
-            if (replayAccessUsers.length === 0 && process.env.REPLAY_ACCESS_USER_IDS) {
-                replayAccessUsers = process.env.REPLAY_ACCESS_USER_IDS
-                    .split(',')
-                    .map(id => id.trim())
-                    .filter(id => id !== '');
-            }
-
+        if (tournamentSettings?.map_testing_group) {
+            const replayAccessUsers = tournamentSettings.map_testing_group;
             const userIdStr = osuId.toString();
             const userIdNum = parseInt(osuId);
 
-            isReplayTester = replayAccessUsers.some(userId => {
+            isReplayTester = replayAccessUsers.some((userId: string | number) => {
                 const userIdStr2 = userId.toString();
-                const userIdNum2 = parseInt(userId);
+                const userIdNum2 = typeof userId === 'string' ? parseInt(userId) : userId;
                 return userIdStr === userIdStr2 || userIdNum === userIdNum2;
             });
-        } catch (error) {
-            console.warn('Error checking replay tester permissions:', error);
+        }
+
+        // 检查是否为直播员
+        let isStreamer = false;
+        if (tournamentSettings?.streamer_group) {
+            const streamerGroup = tournamentSettings.streamer_group;
+            const userIdStr = osuId.toString();
+            const userIdNum = parseInt(osuId);
+
+            isStreamer = streamerGroup.some((userId: string | number) => {
+                const userIdStr2 = userId.toString();
+                const userIdNum2 = typeof userId === 'string' ? parseInt(userId) : userId;
+                return userIdStr === userIdStr2 || userIdNum === userIdNum2;
+            });
+        }
+
+        // 检查是否为裁判员
+        let isReferee = false;
+        if (tournamentSettings?.referee_group) {
+            const refereeGroup = tournamentSettings.referee_group;
+            const userIdStr = osuId.toString();
+            const userIdNum = parseInt(osuId);
+
+            isReferee = refereeGroup.some((userId: string | number) => {
+                const userIdStr2 = userId.toString();
+                const userIdNum2 = typeof userId === 'string' ? parseInt(userId) : userId;
+                return userIdStr === userIdStr2 || userIdNum === userIdNum2;
+            });
         }
 
         const result = {
             isMapSelector,
             isReplayTester,
             isAdmin,
-            isStreamer: false, // TODO: 实现直播员权限检查
-            isReferee: false   // TODO: 实现裁判员权限检查
+            isStreamer,
+            isReferee
         };
         return result;
     } catch (error) {
@@ -211,17 +171,13 @@ export async function verifyAdminAuth(osuId: string): Promise<boolean> {
         // 服务端环境或API调用失败时的fallback
         let adminList: string[] = [];
 
-        // 优先尝试从Edge Config获取管理员列表
-        if (process.env.EDGE_CONFIG) {
-            const adminConfig = await get('admin');
-            if (adminConfig && Array.isArray(adminConfig)) {
-                adminList = adminConfig.filter((id): id is string =>
-                    typeof id === 'string' && id.trim() !== ''
-                );
-            }
+        // 从 MySQL 获取比赛设置中的管理员组信息
+        const tournamentSettings = await getTournamentSettings();
+        if (tournamentSettings?.admin_group) {
+            adminList = tournamentSettings.admin_group;
         }
 
-        // 如果Edge Config没有数据，尝试从环境变量获取
+        // 如果MySQL没有数据，尝试从环境变量获取
         if (adminList.length === 0 && process.env.ADMIN_IDS) {
             adminList = process.env.ADMIN_IDS
                 .split(',')
@@ -231,15 +187,6 @@ export async function verifyAdminAuth(osuId: string): Promise<boolean> {
 
         console.log('adminList after env var:', adminList);
 
-        // 如果都没有数据，使用默认测试ID（开发环境）
-        if (adminList.length === 0) {
-            if (process.env.NODE_ENV === 'development') {
-                adminList = ['2']; // peppy的ID作为示例
-            } else {
-                // 在生产环境中，如果没有配置，不允许任何用户作为管理员
-                return false;
-            }
-        }
 
         // 检查osu ID是否在管理员列表中
         const userIdStr = osuId.toString();

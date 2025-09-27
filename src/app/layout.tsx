@@ -7,6 +7,7 @@ import Footer from '@/app/components/footer';
 import NoiseBackground from './components/ui/NoiseBackground';
 import ParallaxBackground from './components/ui/ParallaxBackground';
 import { NotificationContainer } from './components/ui/Notification';
+import { ConfigProvider } from './components/ConfigProvider';
 import Image from "next/image";
 
 // 页面标题映射
@@ -76,24 +77,26 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#3d3d3d" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <NoiseBackground />
-        <ParallaxBackground />
-        <Image
-          src="/background-top.svg"
-          alt="Background"
-          className="object-cover object-center z-0 select-none pointer-events-none opacity-50"
-          style={{ position: 'fixed', zIndex: -9999, width: '100%', height: '100%', top: 0, left: 0 }}
-          width={1000}
-          height={500}
-        />
-        <Navbar />
-        <Analytics />
-        <SpeedInsights />
-        <main className={`pt-20`}>
-          {children}
-        </main>
-        <Footer />
-        <NotificationContainer />
+        <ConfigProvider>
+          <NoiseBackground />
+          <ParallaxBackground />
+          <Image
+            src="/background-top.svg"
+            alt="Background"
+            className="object-cover object-center z-0 select-none pointer-events-none opacity-50"
+            style={{ position: 'fixed', zIndex: -9999, width: '100%', height: '100%', top: 0, left: 0 }}
+            width={1000}
+            height={500}
+          />
+          <Navbar />
+          <Analytics />
+          <SpeedInsights />
+          <main className={`pt-20`}>
+            {children}
+          </main>
+          <Footer />
+          <NotificationContainer />
+        </ConfigProvider>
       </body>
     </html>
   );

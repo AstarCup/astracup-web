@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { UserSession } from "@/lib/permissions";
 import { TournamentRegistration } from "@/lib/mysql-registrations";
+import { useConfig } from "@/app/components/ConfigProvider";
 
 interface RegistrationModalProps {
     user: UserSession;
@@ -12,6 +13,7 @@ interface RegistrationModalProps {
 }
 
 export default function RegistrationModal({ user, isOpen, onClose, onRegister }: RegistrationModalProps) {
+    const { tournamentSettings } = useConfig();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
@@ -23,8 +25,6 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
         rankRestrictionEnabled: false
     });
     const [configLoading, setConfigLoading] = useState(true);
-    const [edgeConfig, setEdgeConfig] = useState<any>(null);
-    const [edgeConfigLoading, setEdgeConfigLoading] = useState(true);
 
     // 重置状态函数
     const resetModalState = () => {
@@ -43,33 +43,22 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
         }
     }, [isOpen]);
 
-    // 从API获取rank配置和edge config
+    // 从API获取rank配置
     const fetchConfigs = async () => {
         try {
             setConfigLoading(true);
-            setEdgeConfigLoading(true);
 
-            // 并行获取rank配置和edge config
-            const [rankResponse, edgeResponse] = await Promise.all([
-                fetch('/api/rank-config'),
-                fetch('/api/edge-registrations')
-            ]);
+            const rankResponse = await fetch('/api/rank-config');
 
             if (rankResponse.ok) {
                 const config = await rankResponse.json();
                 setRankConfig(config);
-            }
-
-            if (edgeResponse.ok) {
-                const edgeData = await edgeResponse.json();
-                setEdgeConfig(edgeData);
             }
         } catch (error) {
             console.error('Failed to fetch configs:', error);
             // 出错时使用默认配置
         } finally {
             setConfigLoading(false);
-            setEdgeConfigLoading(false);
         }
     };
 
@@ -155,8 +144,11 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
     // 检查PP限制
     const isPpTooHigh = rankConfig.rankRestrictionEnabled && user.pp > rankConfig.maxPpForRegistration;
 
+    // 检查报名是否启用
+    const isRegistrationEnabled = tournamentSettings?.registration_enabled ?? false;
+
     // 如果还在加载配置，显示加载状态
-    if (configLoading || edgeConfigLoading) {
+    if (configLoading) {
         return (
             <div className="fixed inset-0 bg-black bg-opacity-100 flex items-center justify-center z-50 p-4">
                 <div className="bg-white  max-w-2xl w-full p-6 text-center">
@@ -195,6 +187,25 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                                     <div className="mt-2 text-sm text-yellow-700">
                                         <p>很抱歉，您的PP值 ({Math.round(user.pp)}) 超过了{rankConfig.maxPpForRegistration}点的报名限制。</p>
                                         <p className="mt-1">本次比赛面向PP值在{rankConfig.maxPpForRegistration}点以下的玩家，感谢您的理解。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {!isRegistrationEnabled && (
+                        <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+                            <div className="flex">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div className="ml-3 text-left">
+                                    <h3 className="text-sm font-medium text-red-800">报名已关闭</h3>
+                                    <div className="mt-2 text-sm text-red-700">
+                                        <p>很抱歉，目前报名功能已关闭。</p>
+                                        <p className="mt-1">请关注官方公告获取最新信息。</p>
                                     </div>
                                 </div>
                             </div>
@@ -357,7 +368,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                         </button>
                         <button
                             onClick={handleRegister}
-                            disabled={isLoading || !agreedToTerms || isPpTooHigh}
+                            disabled={isLoading || !agreedToTerms || isPpTooHigh || !isRegistrationEnabled}
                             className="px-6 py-2 bg-[#F38181] text-white rounded-md hover:bg-[#95E1D3] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? "报名中..." : "确认报名"}

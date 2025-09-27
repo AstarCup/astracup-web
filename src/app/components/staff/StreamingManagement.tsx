@@ -82,7 +82,7 @@ export default function StreamingManagement({
 
                         {/* Staff分配列表 */}
                         {staffAssignments.length > 0 ? (
-                            <div className="space-y-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {staffAssignments.map((assignment) => (
                                     <div key={assignment.id} className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-4 hover:border-[#E93B66] transition-colors duration-200">
                                         <div className="flex justify-between items-start mb-3">
