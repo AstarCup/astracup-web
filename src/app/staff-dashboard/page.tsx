@@ -847,7 +847,10 @@ export default function AdminPage() {
 
                     {/* 系统设置页面 */}
                     {activeTab === 'settings' && (
-                        <SettingsManagement />
+                        <SettingsManagement
+                            userOsuId={user?.osuId || ''}
+                            isAdmin={permissions.isAdmin}
+                        />
                     )}
 
                     {activeTab === 'rooms' && (
