@@ -28,18 +28,13 @@ export interface UserPermissions {
 
 export async function getUserPermissions(osuId: string, tournamentSettings?: TournamentSettings): Promise<UserPermissions> {
     try {
-        console.log('[Permissions] 开始获取用户权限，osuId:', osuId, '类型:', typeof osuId);
-
         // 如果没有提供配置，则从数据库获取
         let settings = tournamentSettings;
         if (!settings) {
-            console.log('[Permissions] 从数据库获取tournament settings');
             settings = await getTournamentSettings();
-            console.log('[Permissions] 数据库返回的settings:', settings);
         }
 
         if (!settings) {
-            console.log('[Permissions] 未找到tournament settings，返回默认权限');
             return {
                 isAdmin: false,
                 isMapSelector: false,
@@ -50,13 +45,8 @@ export async function getUserPermissions(osuId: string, tournamentSettings?: Tou
             };
         }
 
-        console.log('[Permissions] Tournament settings获取成功');
-        console.log('[Permissions] admin_group类型:', typeof settings.admin_group, '值:', settings.admin_group);
-        console.log('[Permissions] admin_group包含检查:', settings.admin_group?.includes(osuId), 'osuId:', osuId);
-
         // 检查是否为管理员
         const isAdmin = settings.admin_group?.includes(osuId) || false;
-        console.log('[Permissions] 管理员检查结果:', isAdmin, 'admin_group:', settings.admin_group);
 
         // 检查是否为图池选择者
         const isMapSelector = settings.map_selection_group?.includes(osuId) || false;
@@ -81,8 +71,6 @@ export async function getUserPermissions(osuId: string, tournamentSettings?: Tou
             isReferee,
             isCommentator
         };
-
-        console.log('[Permissions] 权限检查完成:', result);
 
         return result;
 

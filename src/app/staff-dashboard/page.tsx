@@ -125,14 +125,6 @@ export default function AdminPage() {
     const [processingUser, setProcessingUser] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('overview');
 
-    console.log('[Staff Dashboard] 组件初始化，当前环境:', process.env.NODE_ENV);
-    console.log('[Staff Dashboard] 初始状态:', {
-        user: !!user,
-        permissionsLoading,
-        loading,
-        permissions
-    });
-
     // 房间管理状态
     const [rooms, setRooms] = useState<MatchRoom[]>([]);
     const [roomsLoading, setRoomsLoading] = useState(false);
@@ -164,17 +156,14 @@ export default function AdminPage() {
                 const sessionData = await sessionResponse.json();
 
                 if (!sessionData.success || !sessionData.session) {
-                    console.log('[Staff Dashboard] Session获取失败:', sessionData);
                     router.push('/register');
                     return;
                 }
 
-                console.log('[Staff Dashboard] Session获取成功，用户ID:', sessionData.session.osuId);
                 setUser(sessionData.session);
 
                 // 获取用户权限
                 setPermissionsLoading(true);
-                console.log('[Staff Dashboard] 开始获取用户权限');
                 try {
                     const permissionsResponse = await fetch(`/api/user-permissions?osuId=${sessionData.session.osuId}`);
                     if (permissionsResponse.ok) {
@@ -185,24 +174,14 @@ export default function AdminPage() {
 
                         // 检查是否有staff权限（管理员、裁判员、解说员或主播）
                         const hasStaffPermission = userPermissions.permissions.isAdmin || userPermissions.permissions.isReferee || userPermissions.permissions.isStreamer || userPermissions.permissions.isCommentator;
-                        console.log('[Staff Dashboard] 权限检查结果:', {
-                            isAdmin: userPermissions.permissions.isAdmin,
-                            isReferee: userPermissions.permissions.isReferee,
-                            isStreamer: userPermissions.permissions.isStreamer,
-                            isCommentator: userPermissions.permissions.isCommentator,
-                            hasStaffPermission
-                        });
 
                         if (!hasStaffPermission) {
-                            console.log('[Staff Dashboard] 权限不足，重定向到player-info');
                             showError('需要工作人员权限');
                             router.push('/player-info');
                             return;
                         }
 
-                        console.log('[Staff Dashboard] 权限验证通过，继续加载页面');
                     } else {
-                        console.log('[Staff Dashboard] 权限API请求失败:', permissionsResponse.status);
                         setPermissionsLoading(false);
                         showError('获取权限失败');
                         router.push('/player-info');
@@ -228,31 +207,13 @@ export default function AdminPage() {
 
     // 权限验证：等待权限加载完成后进行验证
     useEffect(() => {
-        console.log('[Staff Dashboard] 权限验证useEffect触发:', {
-            permissionsLoading,
-            user: user ? user.osuId : null,
-            permissions
-        });
-
         if (!permissionsLoading && user) {
             const hasStaffPermission = permissions.isAdmin || permissions.isReferee || permissions.isStreamer || permissions.isCommentator;
-            console.log('[Staff Dashboard] 执行权限验证:', {
-                hasStaffPermission,
-                isAdmin: permissions.isAdmin,
-                isReferee: permissions.isReferee,
-                isStreamer: permissions.isStreamer,
-                isCommentator: permissions.isCommentator
-            });
 
             if (!hasStaffPermission) {
-                console.log('[Staff Dashboard] 权限验证失败，重定向');
                 showError('需要工作人员权限');
                 router.push('/player-info');
-            } else {
-                console.log('[Staff Dashboard] 权限验证通过');
             }
-        } else {
-            console.log('[Staff Dashboard] 权限验证跳过 - 权限加载中或用户未加载');
         }
     }, [permissionsLoading, permissions, user, router]);
 
@@ -644,7 +605,6 @@ export default function AdminPage() {
     };
 
     if (loading) {
-        console.log('[Staff Dashboard] 显示加载页面');
         return (
             <div className="flex flex-col items-center justify-center min-h-screen relative">
                 <div className="fixed inset-0 z-0">
@@ -664,13 +624,6 @@ export default function AdminPage() {
     }
 
     if (!user || !permissions.isAdmin && !permissions.isReferee && !permissions.isStreamer && !permissions.isCommentator) {
-        console.log('[Staff Dashboard] 渲染时权限检查失败:', {
-            user: !!user,
-            isAdmin: permissions.isAdmin,
-            isReferee: permissions.isReferee,
-            isStreamer: permissions.isStreamer,
-            isCommentator: permissions.isCommentator
-        });
         return (
             <div className="flex flex-col items-center justify-center min-h-screen relative">
                 <div className="fixed inset-0 z-0">
@@ -702,12 +655,6 @@ export default function AdminPage() {
             </div>
         );
     }
-
-    console.log('[Staff Dashboard] 开始渲染主界面，用户信息:', {
-        userId: user?.osuId,
-        username: user?.username,
-        permissions
-    });
 
     return (
         <div className="flex h-screen bg-[#1a1a1a]">
