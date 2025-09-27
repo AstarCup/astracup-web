@@ -5,8 +5,7 @@ import {
     deleteMapSelection,
     updateMapSelection,
     verifyAdminAuth,
-    getPool,
-    initMapSelectionDatabase
+    getPool
 } from '@/lib/map-selection';
 import { getBeatmapInfo, getBeatmapsetInfo, parseBeatmapUrl } from '@/lib/osu-api';
 import { get } from '@vercel/edge-config';
@@ -27,7 +26,7 @@ export async function GET(request: NextRequest) {
         // 如果只是获取已过审的图，则不需要权限验证（公开访问）
         if (approved === 'true') {
             // 初始化数据库（如果需要）
-            await initMapSelectionDatabase();
+            // 数据库已初始化，跳过此步骤
 
             // 获取选图列表
             const selections = await getMapSelections(season, category, padding);
@@ -70,7 +69,7 @@ export async function GET(request: NextRequest) {
         }
 
         // 初始化数据库（如果需要）
-        await initMapSelectionDatabase();
+        // 数据库已初始化，跳过此步骤
 
         // 获取选图列表
         const selections = await getMapSelections(season, category, padding);
@@ -126,7 +125,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 初始化数据库
-        await initMapSelectionDatabase();
+        // 数据库已初始化，跳过此步骤
 
         // 获取用户的access token
         let accessToken: string | undefined;
@@ -158,10 +157,10 @@ export async function POST(request: NextRequest) {
         try {
             if (parsedUrl.beatmapId) {
                 // 如果有具体的beatmap ID，直接获取
-                beatmapInfo = await getBeatmapInfo(parsedUrl.beatmapId, accessToken);
+                beatmapInfo = await getBeatmapInfo(parsedUrl.beatmapId);
             } else if (parsedUrl.beatmapsetId) {
                 // 如果只有beatmapset ID，获取所有难度并让用户选择第一个
-                const beatmaps = await getBeatmapsetInfo(parsedUrl.beatmapsetId, accessToken);
+                const beatmaps = await getBeatmapsetInfo(parsedUrl.beatmapsetId);
                 if (beatmaps.length === 0) {
                     throw new Error('该beatmapset中没有找到任何beatmap');
                 }

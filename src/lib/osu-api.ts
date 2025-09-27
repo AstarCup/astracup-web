@@ -171,176 +171,6 @@ export async function getUserById(userId: number): Promise<OsuUser | null> {
     }
 }
 
-// osu! Match 相关类型定义
-export interface MatchScore {
-    slot: number;
-    team: number;
-    user_id: number;
-    username?: string;
-    score: number;
-    accuracy: number;
-    max_combo: number;
-    perfect: boolean;
-    statistics: {
-        count_50: number;
-        count_100: number;
-        count_300: number;
-        count_miss: number;
-    };
-    pass: boolean;
-    mods: string[];
-}
-
-export interface MatchBeatmap {
-    id: number;
-    beatmapset_id: number;
-    difficulty_name: string;
-    version: string;
-    title: string;
-    artist: string;
-    creator: string;
-    star_rating: number;
-    bpm: number;
-    total_length: number;
-    url: string;
-}
-
-export interface MatchGame {
-    id: number;
-    start_time: string;
-    end_time: string;
-    mode: string;
-    scoring_type: string;
-    team_type: string;
-    mods: string[];
-    beatmap: MatchBeatmap;
-    scores: MatchScore[];
-}
-
-export interface MatchUser {
-    id: number;
-    username: string;
-    avatar_url: string;
-    country_code: string;
-}
-
-export interface MatchData {
-    match: {
-        id: number;
-        name: string;
-        start_time: string;
-        end_time: string | null;
-    };
-    events: any[];
-    users: MatchUser[];
-    first_event_id: number;
-    latest_event_id: number;
-    current_game_id: number | null;
-    games: MatchGame[];
-}
-
-// 获取比赛数据的函数（不需要认证，使用公开方法）
-export async function getMatchDataPublic(matchId: string): Promise<MatchData | null> {
-    try {
-        // 尝试通过代理或直接访问获取比赛数据
-        const matchUrl = `https://osu.ppy.sh/community/matches/${matchId}`;
-        const response = await fetchWithTimeout(matchUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-        });
-
-        if (!response.ok) {
-            if (response.status === 404) {
-                throw new Error('比赛不存在');
-            }
-            throw new Error(`无法访问比赛页面 (状态码: ${response.status})`);
-        }
-
-        const html = await response.text();
-
-        // 尝试从页面中提取JSON数据
-        const jsonMatch = html.match(/<script id="json-match" type="application\/json">(.+?)<\/script>/);
-
-        if (jsonMatch && jsonMatch[1]) {
-            try {
-                const matchData = JSON.parse(jsonMatch[1]);
-
-                // 标准化数据结构
-                return {
-                    match: {
-                        id: matchData.match?.id || parseInt(matchId),
-                        name: matchData.match?.name || '',
-                        start_time: matchData.match?.start_time || new Date().toISOString(),
-                        end_time: matchData.match?.end_time || null,
-                    },
-                    events: matchData.events || [],
-                    users: matchData.users || [],
-                    first_event_id: matchData.first_event_id || 0,
-                    latest_event_id: matchData.latest_event_id || 0,
-                    current_game_id: matchData.current_game_id || null,
-                    games: (matchData.games || []).map((game: any) => ({
-                        id: game.id,
-                        start_time: game.start_time,
-                        end_time: game.end_time,
-                        mode: game.mode || 'osu',
-                        scoring_type: game.scoring_type || 'score',
-                        team_type: game.team_type || 'head-to-head',
-                        mods: game.mods || [],
-                        beatmap: {
-                            id: game.beatmap?.id || 0,
-                            beatmapset_id: game.beatmap?.beatmapset_id || 0,
-                            difficulty_name: game.beatmap?.difficulty_name || game.beatmap?.version || '',
-                            version: game.beatmap?.version || '',
-                            title: game.beatmap?.title || '',
-                            artist: game.beatmap?.artist || '',
-                            creator: game.beatmap?.creator || '',
-                            star_rating: game.beatmap?.star_rating || 0,
-                            bpm: game.beatmap?.bpm || 0,
-                            total_length: game.beatmap?.total_length || 0,
-                            url: game.beatmap?.url || `https://osu.ppy.sh/b/${game.beatmap?.id}`,
-                        },
-                        scores: (game.scores || []).map((score: any) => ({
-                            slot: score.slot || 0,
-                            team: score.team || 0,
-                            user_id: score.user_id,
-                            score: score.score || 0,
-                            accuracy: score.accuracy || 0,
-                            max_combo: score.max_combo || 0,
-                            perfect: score.perfect || false,
-                            statistics: {
-                                count_50: score.statistics?.count_50 || 0,
-                                count_100: score.statistics?.count_100 || 0,
-                                count_300: score.statistics?.count_300 || 0,
-                                count_miss: score.statistics?.count_miss || 0,
-                            },
-                            pass: score.pass !== false, // 默认为通过，除非明确标记为失败
-                            mods: score.mods || [],
-                        })),
-                    })),
-                };
-            } catch (parseError) {
-                console.error('解析比赛数据失败:', parseError);
-                throw new Error('解析比赛数据失败');
-            }
-        }
-
-        throw new Error('无法获取比赛数据');
-    } catch (error) {
-        console.error('获取比赛数据失败:', error);
-
-        if (error instanceof Error && (
-            error.name === 'AbortError' ||
-            error.message.includes('NetworkError') ||
-            error.message.includes('Failed to fetch')
-        )) {
-            throw new Error('网络连接失败，请检查网络连接后重试');
-        }
-
-        throw error;
-    }
-}
-
 // 图池数据类型定义
 export interface MapPoolItem {
     mod: string;
@@ -437,16 +267,16 @@ export function parseBeatmapUrl(url: string): { beatmapId?: number; beatmapsetId
 }
 
 // 获取单个beatmap信息
-export async function getBeatmapInfo(beatmapId: number, accessToken?: string): Promise<BeatmapInfo | null> {
+export async function getBeatmapInfo(beatmapId: number): Promise<BeatmapInfo | null> {
     try {
+        // 获取客户端token
+        const { getValidClientToken } = await import('@/lib/osu-auth');
+        const accessToken = await getValidClientToken();
+
         const headers: HeadersInit = {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
         };
-
-        // 如果提供了访问令牌，使用它进行认证
-        if (accessToken) {
-            headers['Authorization'] = `Bearer ${accessToken}`;
-        }
 
         const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/beatmaps/${beatmapId}`, {
             headers,
@@ -485,16 +315,16 @@ export async function getBeatmapInfo(beatmapId: number, accessToken?: string): P
 }
 
 // 获取beatmapset中的所有beatmap
-export async function getBeatmapsetInfo(beatmapsetId: number, accessToken?: string): Promise<BeatmapInfo[]> {
+export async function getBeatmapsetInfo(beatmapsetId: number): Promise<BeatmapInfo[]> {
     try {
+        // 获取客户端token
+        const { getValidClientToken } = await import('@/lib/osu-auth');
+        const accessToken = await getValidClientToken();
+
         const headers: HeadersInit = {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
         };
-
-        // 如果提供了访问令牌，使用它进行认证
-        if (accessToken) {
-            headers['Authorization'] = `Bearer ${accessToken}`;
-        }
 
         const response = await fetchWithTimeout(`https://osu.ppy.sh/api/v2/beatmapsets/${beatmapsetId}`, {
             headers,

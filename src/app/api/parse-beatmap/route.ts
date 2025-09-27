@@ -54,14 +54,14 @@ export async function POST(request: NextRequest) {
         try {
             if (parsedUrl.beatmapId) {
                 // 如果有具体的beatmap ID，直接获取
-                const beatmapInfo = await getBeatmapInfo(parsedUrl.beatmapId, accessToken);
+                const beatmapInfo = await getBeatmapInfo(parsedUrl.beatmapId);
                 result = {
                     type: 'single',
                     beatmap: beatmapInfo
                 };
             } else if (parsedUrl.beatmapsetId) {
                 // 如果只有beatmapset ID，获取所有难度
-                const beatmaps = await getBeatmapsetInfo(parsedUrl.beatmapsetId, accessToken);
+                const beatmaps = await getBeatmapsetInfo(parsedUrl.beatmapsetId);
                 if (beatmaps.length === 0) {
                     throw new Error('该beatmapset中没有找到任何beatmap');
                 }
