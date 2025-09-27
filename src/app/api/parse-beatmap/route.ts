@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBeatmapInfo, getBeatmapsetInfo, parseBeatmapUrl } from '@/lib/osu-api';
-import { cookies } from 'next/headers';
 import { verifyMapSelectionAuth } from '@/lib/permissions';
 
 // POST - 解析beatmap URL并返回beatmap信息
@@ -22,22 +21,6 @@ export async function POST(request: NextRequest) {
                 { error: '您没有权限访问选图系统' },
                 { status: 403 }
             );
-        }
-
-        // 获取用户的access token
-        let accessToken: string | undefined;
-        try {
-            const cookieStore = await cookies();
-            const sessionCookie = cookieStore.get('astra_session');
-
-            if (sessionCookie?.value) {
-                const session = JSON.parse(sessionCookie.value);
-                accessToken = session.access_token;
-                console.log('Using user access token for beatmap API');
-            }
-        } catch (error) {
-            console.error('Error getting user session for access token:', error);
-            // 继续执行，不使用token
         }
 
         // 解析URL

@@ -8,8 +8,6 @@ import {
     getPool
 } from '@/lib/map-selection';
 import { getBeatmapInfo, getBeatmapsetInfo, parseBeatmapUrl } from '@/lib/osu-api';
-import { get } from '@vercel/edge-config';
-import { cookies } from 'next/headers';
 import { verifyMapSelectionAuth, verifyReplayAuth } from '@/lib/permissions';
 
 // GET - 获取选图列表
@@ -126,22 +124,6 @@ export async function POST(request: NextRequest) {
 
         // 初始化数据库
         // 数据库已初始化，跳过此步骤
-
-        // 获取用户的access token
-        let accessToken: string | undefined;
-        try {
-            const cookieStore = await cookies();
-            const sessionCookie = cookieStore.get('astra_session');
-
-            if (sessionCookie?.value) {
-                const session = JSON.parse(sessionCookie.value);
-                accessToken = session.access_token;
-                console.log('Using user access token for beatmap API');
-            }
-        } catch (error) {
-            console.error('Error getting user session for access token:', error);
-            // 继续执行，不使用token
-        }
 
         // 解析URL
         const parsedUrl = parseBeatmapUrl(url);
