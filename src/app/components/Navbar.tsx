@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import localFont from "next/font/local";
 import { UserSession } from '@/lib/permissions';
-import { getUserPermissions } from '@/lib/permissions';
 import MessageNotification from './ui/MessageNotification';
 
 const audiowide = localFont({
@@ -24,8 +23,12 @@ export default function Navbar() {
     const [permissions, setPermissions] = useState({
         isMapSelector: false,
         isReplayTester: false,
-        isAdmin: false
+        isAdmin: false,
+        isStreamer: false,
+        isReferee: false,
+        isCommentator: false
     });
+    const [permissionsLoading, setPermissionsLoading] = useState(true);
     const [versionInfo, setVersionInfo] = useState<string>('');
     const [iconCache, setIconCache] = useState<Map<string, boolean>>(new Map());
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -93,14 +96,29 @@ export default function Navbar() {
                     setUser(sessionData.session);
                     setAvatarSrc(sessionData.session?.avatar_url || '');
 
-                    // 直接从permissions库获取用户权限
+                    // 通过API获取用户权限
                     if (sessionData.session?.osuId) {
-                        const userPermissions = await getUserPermissions(sessionData.session.osuId.toString());
-                        setPermissions(userPermissions);
+                        setPermissionsLoading(true);
+                        try {
+                            const permissionsResponse = await fetch(`/api/user-permissions?osuId=${sessionData.session.osuId}`);
+                            if (permissionsResponse.ok) {
+                                const permissionsData = await permissionsResponse.json();
+                                setPermissions(permissionsData.permissions);
+                            }
+                        } catch (error) {
+                            console.error('Failed to fetch user permissions:', error);
+                        } finally {
+                            setPermissionsLoading(false);
+                        }
+                    } else {
+                        setPermissionsLoading(false);
                     }
+                } else {
+                    setPermissionsLoading(false);
                 }
             } catch (error) {
                 console.error('Failed to fetch user data:', error);
+                setPermissionsLoading(false);
             }
         };
 
@@ -217,8 +235,8 @@ export default function Navbar() {
                 { name: 'PHOTOS', href: `/photos`, tip: '历届荣誉展示', svg: '/icons/photos.svg' }
             ]
         },
-        // 管理菜单 - 根据权限动态显示
-        ...(permissions.isMapSelector || permissions.isReplayTester || permissions.isAdmin ? [{
+        // 管理菜单 - 根据权限动态显示，只有在权限加载完成且有权限时才显示
+        ...(!permissionsLoading && (permissions.isMapSelector || permissions.isReplayTester || permissions.isAdmin || permissions.isReferee || permissions.isStreamer || permissions.isCommentator) ? [{
             name: '管理',
             svg: '/icons/admin-fill.svg',
             links: [
@@ -259,6 +277,17 @@ export default function Navbar() {
                         <div className="flex items-center space-x-4">
                             {/* Desktop Menu */}
                             <ul className="hidden xl:flex space-x-8 text-[#FFFFFF] p-2 m-2 navbar-menu">
+                                {/* 调试信息 - 仅开发环境显示 */}
+                                {process.env.NODE_ENV === 'development' && (
+                                    <li className="text-xs text-yellow-300 bg-black/50 px-2 py-1 rounded">
+                                        权限加载: {permissionsLoading ? '加载中...' : '完成'} |
+                                        用户: {user ? user.osuId : '未登录'} |
+                                        管理员: {permissions.isAdmin ? '是' : '否'} |
+                                        裁判: {permissions.isReferee ? '是' : '否'} |
+                                        主播: {permissions.isStreamer ? '是' : '否'} |
+                                        解说: {permissions.isCommentator ? '是' : '否'}
+                                    </li>
+                                )}
                                 {navGroups.map((group) => (
                                     <li key={group.name} className="relative">
                                         <div

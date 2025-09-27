@@ -235,6 +235,71 @@ export const initDatabase = async (): Promise<void> => {
             // 继续处理，不中断整个初始化过程
         }
 
+        // 创建比赛设置表（如果不存在）
+        await connection.execute(`
+            CREATE TABLE IF NOT EXISTS tournament_settings (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                tournament_name VARCHAR(255) NOT NULL COMMENT '比赛名称',
+                max_pp_for_registration FLOAT DEFAULT 7000 COMMENT '报名最高PP限制',
+                min_pp_for_registration FLOAT DEFAULT 0 COMMENT '报名最低PP限制',
+                current_season VARCHAR(50) DEFAULT 's1' COMMENT '当前赛季',
+                current_season_stage VARCHAR(50) DEFAULT 'registration' COMMENT '当前赛季阶段',
+                admin_group TEXT COMMENT '管理员组（JSON格式）',
+                map_selection_group TEXT COMMENT '选图组（JSON格式）',
+                map_testing_group TEXT COMMENT '测图组（JSON格式）',
+                streamer_group TEXT COMMENT '直播员组（JSON格式）',
+                referee_group TEXT COMMENT '裁判员组（JSON格式）',
+                commentator_group TEXT COMMENT '解说员组（JSON格式）',
+                registration_enabled BOOLEAN DEFAULT TRUE COMMENT '当前阶段是否可报名',
+                mappool_visible BOOLEAN DEFAULT FALSE COMMENT '当前阶段是否可展示图池',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_current_season (current_season),
+                INDEX idx_current_stage (current_season_stage)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        // 检查tournament_settings表是否有数据，如果没有则插入默认数据
+        const [settingsRows] = await connection.execute(
+            `SELECT COUNT(*) as count FROM tournament_settings`
+        );
+
+        if ((settingsRows as any[])[0].count === 0) {
+            console.log('Inserting default tournament settings');
+            await connection.execute(`
+                INSERT INTO tournament_settings (
+                    tournament_name,
+                    max_pp_for_registration,
+                    min_pp_for_registration,
+                    current_season,
+                    current_season_stage,
+                    admin_group,
+                    map_selection_group,
+                    map_testing_group,
+                    streamer_group,
+                    referee_group,
+                    commentator_group,
+                    registration_enabled,
+                    mappool_visible
+                ) VALUES (
+                    'Astra Cup',
+                    7000,
+                    0,
+                    's1',
+                    'registration',
+                    '[]',
+                    '[]',
+                    '[]',
+                    '[]',
+                    '[]',
+                    '[]',
+                    TRUE,
+                    FALSE
+                )
+            `);
+            console.log('✅ Default tournament settings inserted');
+        }
+
         connection.release();
         console.log('Database initialized and upgraded successfully');
     } catch (error) {
@@ -1517,6 +1582,131 @@ const mysqlStorage = {
             console.error('Error getting room staff assignments:', error);
             return [];
         }
+    },
+
+    // 获取比赛设置
+    getTournamentSettings: async (): Promise<any> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [rows] = await connection.execute(`
+                SELECT * FROM tournament_settings ORDER BY id DESC LIMIT 1
+            `);
+
+            connection.release();
+
+            if ((rows as any[]).length === 0) {
+                return null;
+            }
+
+            const row = (rows as any[])[0];
+            return {
+                id: row.id,
+                tournament_name: row.tournament_name,
+                max_pp_for_registration: row.max_pp_for_registration,
+                min_pp_for_registration: row.min_pp_for_registration,
+                current_season: row.current_season,
+                current_season_stage: row.current_season_stage,
+                admin_group: row.admin_group ? JSON.parse(row.admin_group) : [],
+                map_selection_group: row.map_selection_group ? JSON.parse(row.map_selection_group) : [],
+                map_testing_group: row.map_testing_group ? JSON.parse(row.map_testing_group) : [],
+                streamer_group: row.streamer_group ? JSON.parse(row.streamer_group) : [],
+                referee_group: row.referee_group ? JSON.parse(row.referee_group) : [],
+                commentator_group: row.commentator_group ? JSON.parse(row.commentator_group) : [],
+                registration_enabled: row.registration_enabled,
+                mappool_visible: row.mappool_visible,
+                created_at: row.created_at,
+                updated_at: row.updated_at
+            };
+        } catch (error) {
+            console.error('Error getting tournament settings:', error);
+            return null;
+        }
+    },
+
+    // 更新比赛设置
+    updateTournamentSettings: async (settings: any): Promise<boolean> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const updateData = {
+                tournament_name: settings.tournament_name,
+                max_pp_for_registration: settings.max_pp_for_registration,
+                min_pp_for_registration: settings.min_pp_for_registration,
+                current_season: settings.current_season,
+                current_season_stage: settings.current_season_stage,
+                admin_group: JSON.stringify(settings.admin_group || []),
+                map_selection_group: JSON.stringify(settings.map_selection_group || []),
+                map_testing_group: JSON.stringify(settings.map_testing_group || []),
+                streamer_group: JSON.stringify(settings.streamer_group || []),
+                referee_group: JSON.stringify(settings.referee_group || []),
+                commentator_group: JSON.stringify(settings.commentator_group || []),
+                registration_enabled: settings.registration_enabled,
+                mappool_visible: settings.mappool_visible
+            };
+
+            // 检查是否存在设置记录
+            const [existingRows] = await connection.execute(
+                `SELECT id FROM tournament_settings ORDER BY id DESC LIMIT 1`
+            );
+
+            if ((existingRows as any[]).length === 0) {
+                // 插入新记录
+                await connection.execute(`
+                    INSERT INTO tournament_settings (
+                        tournament_name, max_pp_for_registration, min_pp_for_registration,
+                        current_season, current_season_stage, admin_group, map_selection_group,
+                        map_testing_group, streamer_group, referee_group, commentator_group,
+                        registration_enabled, mappool_visible
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `, [
+                    updateData.tournament_name,
+                    updateData.max_pp_for_registration,
+                    updateData.min_pp_for_registration,
+                    updateData.current_season,
+                    updateData.current_season_stage,
+                    updateData.admin_group,
+                    updateData.map_selection_group,
+                    updateData.map_testing_group,
+                    updateData.streamer_group,
+                    updateData.referee_group,
+                    updateData.commentator_group,
+                    updateData.registration_enabled,
+                    updateData.mappool_visible
+                ]);
+            } else {
+                // 更新现有记录
+                await connection.execute(`
+                    UPDATE tournament_settings SET
+                        tournament_name = ?, max_pp_for_registration = ?, min_pp_for_registration = ?,
+                        current_season = ?, current_season_stage = ?, admin_group = ?,
+                        map_selection_group = ?, map_testing_group = ?, streamer_group = ?,
+                        referee_group = ?, commentator_group = ?, registration_enabled = ?,
+                        mappool_visible = ?, updated_at = CURRENT_TIMESTAMP
+                    ORDER BY id DESC LIMIT 1
+                `, [
+                    updateData.tournament_name,
+                    updateData.max_pp_for_registration,
+                    updateData.min_pp_for_registration,
+                    updateData.current_season,
+                    updateData.current_season_stage,
+                    updateData.admin_group,
+                    updateData.map_selection_group,
+                    updateData.map_testing_group,
+                    updateData.streamer_group,
+                    updateData.referee_group,
+                    updateData.commentator_group,
+                    updateData.registration_enabled,
+                    updateData.mappool_visible
+                ]);
+            }
+
+            connection.release();
+            return true;
+        } catch (error) {
+            console.error('Error updating tournament settings:', error);
+            return false;
+        }
     }
 };
 
@@ -1618,3 +1808,7 @@ export const updateStaffRoomAssignmentStatus = mysqlStorage.updateStaffRoomAssig
 export const deleteStaffRoomAssignment = mysqlStorage.deleteStaffRoomAssignment;
 export const getRoomStaffAssignments = mysqlStorage.getRoomStaffAssignments;
 export const getMatchRoomsWithSchedules = mysqlStorage.getMatchRoomsWithSchedules;
+
+// 比赛设置相关函数
+export const getTournamentSettings = mysqlStorage.getTournamentSettings;
+export const updateTournamentSettings = mysqlStorage.updateTournamentSettings;

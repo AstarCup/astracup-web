@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePageTitle } from '@/lib/usePageTitle';
-import { getUserPermissions } from '@/lib/permissions';
 
 export default function DebugPage() {
     usePageTitle('/debug');
@@ -48,9 +47,16 @@ export default function DebugPage() {
                 // console.log('Debug session data:', data);
                 if (data.success && data.session) {
                     setUserSession(data.session);
-                    // 使用permissions库检查管理员权限
-                    const permissions = await getUserPermissions(data.session.osuId.toString());
-                    setIsAdmin(permissions.isAdmin);
+                    // 使用API检查管理员权限
+                    try {
+                        const permissionsResponse = await fetch(`/api/user-permissions?osuId=${data.session.osuId}`);
+                        if (permissionsResponse.ok) {
+                            const permissions = await permissionsResponse.json();
+                            setIsAdmin(permissions.isAdmin);
+                        }
+                    } catch (error) {
+                        console.error('Failed to fetch permissions:', error);
+                    }
                 } else {
                     // 未登录，重定向到首页
                     router.push('/');

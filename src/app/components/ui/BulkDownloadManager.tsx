@@ -30,31 +30,138 @@ export default function BulkDownloadManager({
 }: BulkDownloadManagerProps) {
     const [overallProgress, setOverallProgress] = useState(0);
     const [downloadSource, setDownloadSource] = useState<'sayobot' | 'osu'>('sayobot');
+    const [isMinimized, setIsMinimized] = useState(false);
+    const [downloadSpeed, setDownloadSpeed] = useState(0);
+    const [eta, setEta] = useState<number | null>(null);
+    const [startTime, setStartTime] = useState<number | null>(null);
+    const [lastProgressUpdate, setLastProgressUpdate] = useState<number>(0);
 
     const completedCount = items.filter(item => item.status === 'completed').length;
     const failedCount = items.filter(item => item.status === 'failed').length;
+    const downloadingCount = items.filter(item => item.status === 'downloading').length;
     const totalCount = items.length;
 
     useEffect(() => {
-        if (totalCount > 0) {
-            const progress = (completedCount / totalCount) * 100;
-            setOverallProgress(progress);
+        if (!isDownloading) {
+            // 下载停止时重置速度和ETA
+            setDownloadSpeed(0);
+            setEta(null);
+            setStartTime(null);
+            setLastProgressUpdate(0);
         }
-    }, [completedCount, totalCount]);
+    }, [isDownloading]);
+
+    const formatSpeed = (speed: number) => {
+        if (speed < 1) {
+            return `${(speed * 60).toFixed(1)}%/min`;
+        } else {
+            return `${speed.toFixed(1)}%/s`;
+        }
+    };
+
+    const formatEta = (etaSeconds: number) => {
+        if (etaSeconds < 60) {
+            return `${Math.round(etaSeconds)}s`;
+        } else if (etaSeconds < 3600) {
+            return `${Math.round(etaSeconds / 60)}m`;
+        } else {
+            return `${Math.round(etaSeconds / 3600)}h`;
+        }
+    };
 
     if (!isOpen) return null;
 
+    // 最小化视图
+    if (isMinimized) {
+        return (
+            <div className="fixed bottom-4 right-4 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 min-w-80 max-w-xs">
+                <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-800 truncate">批量下载进行中</span>
+                    <div className="flex space-x-1 flex-shrink-0">
+                        <button
+                            onClick={() => setIsMinimized(false)}
+                            className="text-gray-500 hover:text-gray-700 text-lg leading-none"
+                            title="恢复"
+                        >
+                            ⬜
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="text-gray-500 hover:text-gray-700 text-lg leading-none ml-1"
+                            title="关闭"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center text-xs text-gray-600">
+                        <span>进度: {completedCount}/{totalCount}</span>
+                        <span>{Math.round(overallProgress)}%</span>
+                        {failedCount > 0 && (
+                            <span className="text-red-600">失败: {failedCount}</span>
+                        )}
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                            className={`h-2 rounded-full transition-all duration-300 ${overallProgress === 100 ? 'bg-green-500' : 'bg-[#E93B66]'
+                                }`}
+                            style={{ width: `${overallProgress}%` }}
+                        ></div>
+                    </div>
+                    {isDownloading && downloadSpeed > 0 && (
+                        <div className="flex justify-between items-center text-xs text-gray-500">
+                            <span>速度: {formatSpeed(downloadSpeed)}</span>
+                            {eta && <span>剩余: {formatEta(eta)}</span>}
+                        </div>
+                    )}
+                    {overallProgress === 100 ? (
+                        <div className="text-center">
+                            <span className="text-xs text-green-600 font-medium">下载完成</span>
+                        </div>
+                    ) : isDownloading ? (
+                        <div className="flex justify-between items-center">
+                            <button
+                                onClick={onCancelDownload}
+                                className="px-3 py-1 text-xs text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+                            >
+                                取消下载
+                            </button>
+                            <span className="text-xs text-gray-500">
+                                {downloadSource === 'sayobot' ? 'Sayobot' : 'osu官方'}
+                            </span>
+                        </div>
+                    ) : (
+                        <div className="text-center">
+                            <span className="text-xs text-gray-500">等待开始</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // 完整视图
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white  p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold text-gray-800">批量下载管理器</h2>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-500 hover:text-gray-700 text-2xl"
-                    >
-                        ×
-                    </button>
+                    <div className="flex items-center space-x-2">
+                        <button
+                            onClick={() => setIsMinimized(true)}
+                            className="text-gray-500 hover:text-gray-700 text-lg"
+                            title="最小化"
+                        >
+                            ⬜
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="text-gray-500 hover:text-gray-700 text-2xl"
+                        >
+                            ×
+                        </button>
+                    </div>
                 </div>
 
                 {/* 总体进度 */}
@@ -75,6 +182,12 @@ export default function BulkDownloadManager({
                             style={{ width: `${overallProgress}%` }}
                         ></div>
                     </div>
+                    {isDownloading && downloadSpeed > 0 && (
+                        <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
+                            <span>下载速度: {formatSpeed(downloadSpeed)}</span>
+                            {eta && <span>预计剩余时间: {formatEta(eta)}</span>}
+                        </div>
+                    )}
                 </div>
 
                 {/* 下载列表 */}

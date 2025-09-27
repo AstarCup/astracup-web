@@ -1,9 +1,14 @@
 import { getNewsBySlug, getNewsSlugs, createSafeSlug } from '@/lib/utils';
 import Link from 'next/link';
-import { generatePageMetadata } from '../layout';
 import { Metadata } from 'next';
 
-export const metadata: Metadata = generatePageMetadata('/news');
+export const metadata: Metadata = {
+    title: "新闻 | AstraCup 星域杯",
+    description: "AstraCup 是一场专为广大 osu!lazer std 玩家 打造的线上赛事。",
+    icons: {
+        icon: "/favicon.ico",
+    },
+};
 
 export default async function NewsList() {
     const slugs = await getNewsSlugs();

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import MapoolTable from '@/app/components/ui/MapoolTable';
 import Dropdown from '@/app/components/ui/Dropdown';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { useConfig } from '@/app/components/ConfigProvider';
 
 interface MapSelection {
     id: number;
@@ -37,14 +38,27 @@ const MOD_ORDER = ['NM', 'HD', 'HR', 'DT', 'FM', 'LZ', 'TB'];
 export default function Mapool() {
     usePageTitle('/mappool');
 
+    const { tournamentSettings } = useConfig();
+
     const [mapPoolData, setMapPoolData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [availableSeasons, setAvailableSeasons] = useState([
-        { value: 's1', label: '第一赛季' }
+        { value: 's1', label: '第1赛季' }
     ]);
     const [currentSeason, setCurrentSeason] = useState('s1');
     const [selectedCategory, setSelectedCategory] = useState('qualification');
+
+    // 当config加载完成后，更新赛季信息
+    useEffect(() => {
+        if (tournamentSettings?.current_season) {
+            const seasonValue = `s${tournamentSettings.current_season}`;
+            const seasonLabel = `第${tournamentSettings.current_season}赛季`;
+
+            setAvailableSeasons([{ value: seasonValue, label: seasonLabel }]);
+            setCurrentSeason(seasonValue);
+        }
+    }, [tournamentSettings]);
 
     const CATEGORY_OPTIONS = [
         { value: 'qualification', label: 'QUA' },
@@ -55,10 +69,6 @@ export default function Mapool() {
         { value: 'finals', label: 'F' },
         { value: 'grandfinals', label: 'GF' }
     ];
-
-    useEffect(() => {
-        loadSeasonConfig();
-    }, []);
 
     useEffect(() => {
         if (currentSeason) {
@@ -158,6 +168,18 @@ export default function Mapool() {
             <div className="max-w-9xl mx-auto p-6">
                 <div className="bg-red-500/20 border border-red-500  p-4 mb-6">
                     <p className="text-white">{error}</p>
+                </div>
+            </div>
+        );
+    }
+
+    // 检查图池是否可见
+    if (!tournamentSettings?.mappool_visible) {
+        return (
+            <div className="max-w-9xl mx-auto pt-60 pb-60">
+                <div className="text-center text-white">
+                    <div className="text-xl mb-4">图池暂未开放</div>
+                    <p className="text-gray-400">请关注官方公告获取最新信息</p>
                 </div>
             </div>
         );

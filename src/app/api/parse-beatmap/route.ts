@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBeatmapInfo, getBeatmapsetInfo, parseBeatmapUrl } from '@/lib/osu-api';
-import { cookies } from 'next/headers';
 import { verifyMapSelectionAuth } from '@/lib/permissions';
 
 // POST - 解析beatmap URL并返回beatmap信息
@@ -18,30 +17,18 @@ export async function POST(request: NextRequest) {
         // 验证权限
         const isAuthorized = await verifyMapSelectionAuth(osuId);
         if (!isAuthorized) {
+            console.log('Permission denied for osuId:', osuId);
             return NextResponse.json(
                 { error: '您没有权限访问选图系统' },
                 { status: 403 }
             );
         }
 
-        // 获取用户的access token
-        let accessToken: string | undefined;
-        try {
-            const cookieStore = await cookies();
-            const sessionCookie = cookieStore.get('astra_session');
-
-            if (sessionCookie?.value) {
-                const session = JSON.parse(sessionCookie.value);
-                accessToken = session.access_token;
-                console.log('Using user access token for beatmap API');
-            }
-        } catch (error) {
-            console.error('Error getting user session for access token:', error);
-            // 继续执行，不使用token
-        }
+        console.log('Permission granted for osuId:', osuId);
 
         // 解析URL
         const parsedUrl = parseBeatmapUrl(url);
+        console.log('Parsed URL:', url, '->', parsedUrl);
         if (!parsedUrl.beatmapId && !parsedUrl.beatmapsetId) {
             return NextResponse.json(
                 { error: '无效的osu! beatmap URL' },
@@ -54,14 +41,14 @@ export async function POST(request: NextRequest) {
         try {
             if (parsedUrl.beatmapId) {
                 // 如果有具体的beatmap ID，直接获取
-                const beatmapInfo = await getBeatmapInfo(parsedUrl.beatmapId, accessToken);
+                const beatmapInfo = await getBeatmapInfo(parsedUrl.beatmapId);
                 result = {
                     type: 'single',
                     beatmap: beatmapInfo
                 };
             } else if (parsedUrl.beatmapsetId) {
                 // 如果只有beatmapset ID，获取所有难度
-                const beatmaps = await getBeatmapsetInfo(parsedUrl.beatmapsetId, accessToken);
+                const beatmaps = await getBeatmapsetInfo(parsedUrl.beatmapsetId);
                 if (beatmaps.length === 0) {
                     throw new Error('该beatmapset中没有找到任何beatmap');
                 }

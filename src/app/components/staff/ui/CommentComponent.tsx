@@ -130,18 +130,23 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                     ) : (
                         <div className="flex flex-wrap gap-2">
                             {comments.map((c) => (
-                                <div key={c.id} className="relative group inline-flex items-center gap-2 p-2 bg-gray-50  border border-gray-200 max-w-xs hover:bg-gray-100 transition-colors">
+                                <div key={c.id} className="rounded-full relative group inline-flex items-center gap-2 p-2 bg-gray-50  max-w-xs hover:bg-gray-100 transition-colors">
                                     {/* 头像 */}
-                                    <div className="w-5 h-5 rounded-full overflow-hidden border border-gray-300 flex-shrink-0">
+                                    <div className="w-5 h-5 rounded-full overflow-hidden border border-gray-300 flex-shrink-0 relative">
                                         <Image
-                                            src={c.avatar_url}
+                                            src={c.avatar_url || '/default-avatar.png'}
                                             alt={c.username}
                                             width={20}
                                             height={20}
                                             className="w-full h-full object-cover"
-                                            onError={() => { }}
+                                            onError={(e) => {
+                                                // 隐藏Image，显示fallback
+                                                e.currentTarget.style.display = 'none';
+                                                const fallback = e.currentTarget.parentElement?.querySelector('.avatar-fallback') as HTMLElement;
+                                                if (fallback) fallback.style.display = 'flex';
+                                            }}
                                         />
-                                        <div className="w-full h-full bg-gray-300 rounded-full flex items-center justify-center absolute inset-0">
+                                        <div className="avatar-fallback w-full h-full bg-gray-300 rounded-full flex items-center justify-center absolute inset-0" style={{ display: 'none' }}>
                                             <span className="text-xs text-gray-600">
                                                 {c.username?.charAt(0).toUpperCase() || 'U'}
                                             </span>

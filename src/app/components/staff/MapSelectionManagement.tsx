@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { showSuccess, showError } from '../ui/Notification';
 import Dropdown from '../ui/Dropdown';
@@ -116,14 +116,14 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
     // 转换UserSession为内部使用的User格式
     const userForState: User = {
-        id: parseInt(user.osuId),
+        id: parseInt(user.osuId) || 0,
         username: user.username,
         avatar_url: user.avatar_url
     };
 
+    // 状态定义 - 必须在任何条件逻辑之前
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthorized, setIsAuthorized] = useState(false);
-    const [_isAdmin, setIsAdmin] = useState(false);
 
     // Season configuration
     const [availableSeasons, setAvailableSeasons] = useState([
@@ -204,6 +204,19 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     const [showBulkApprovalModal, setShowBulkApprovalModal] = useState(false);
     const [isBulkApproving, setIsBulkApproving] = useState(false);
 
+    // 右键菜单状态
+    const [contextMenu, setContextMenu] = useState<{
+        show: boolean;
+        x: number;
+        y: number;
+        selection: MapSelection | null;
+    }>({
+        show: false,
+        x: 0,
+        y: 0,
+        selection: null
+    });
+
     // 检查权限并加载数据
     useEffect(() => {
         const checkAccessAndLoadData = async () => {
@@ -217,7 +230,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             }
 
             setIsAuthorized(true);
-            setIsAdmin(permissions.isAdmin);
 
             // 获取赛季配置
             await loadSeasonConfig();
@@ -228,6 +240,181 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             checkAccessAndLoadData();
         }
     }, [user, permissions]); // 当用户或权限改变时执行
+
+    // 获取地图评分
+    const fetchMapRatings = useCallback(async (selectionId: number) => {
+        try {
+            const response = await fetch(`/api/map-ratings?mapSelectionId=${selectionId}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    setMapRatings(prev => ({
+                        ...prev,
+                        [selectionId]: data.ratings
+                    }));
+
+                    // 设置当前用户的评分
+                    const userRating = data.ratings.find((rating: MapRating) => rating.userId === userForState.id.toString());
+                    if (userRating) {
+                        setUserRatings(prev => ({
+                            ...prev,
+                            [selectionId]: userRating.rating
+                        }));
+                    }
+                }
+            } else {
+                console.error('Failed to fetch map ratings');
+            }
+        } catch (error) {
+            console.error('Error fetching map ratings:', error);
+        }
+    }, [userForState.id]);
+
+    const fetchSelections = useCallback(async () => {
+        if (!userForState?.id) {
+            console.warn('fetchSelections called without user ID');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/map-selections?season=${season}&category=${category}&osuId=${userForState.id}`);
+            if (response.ok) {
+                const data = await response.json();
+                setSelections(data.selections || []);
+
+                // 获取所有选图的评分数据
+                if (data.selections && data.selections.length > 0) {
+                    for (const selection of data.selections) {
+                        fetchMapRatings(selection.id);
+                    }
+                }
+            } else {
+                const errorData = await response.json();
+                showError(errorData.error || '获取选图列表失败');
+            }
+        } catch (error) {
+            console.error('Failed to fetch selections:', error);
+            showError('获取选图列表时出错');
+        }
+    }, [season, category, userForState?.id, fetchMapRatings]);
+
+    // 计算mod后的属性
+    interface CustomSettings {
+        customModName?: string;
+        customDASettings?: {
+            cs: number | null;
+            ar: number | null;
+            od: number | null;
+            hp: number | null;
+        } | null;
+        customDTRate?: number | null;
+    }
+
+    const calculateModdedStatsAPI = useCallback(async (beatmap: BeatmapInfo, mods: string, customSettings: CustomSettings) => {
+        try {
+            const response = await fetch('/api/calculate-mod-stats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    beatmap,
+                    mods,
+                    customSettings
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return data.stats;
+            } else {
+                console.error('Failed to calculate modded stats');
+                return null;
+            }
+        } catch (error) {
+            console.error('Error calculating modded stats:', error);
+            return null;
+        }
+    }, []);
+
+    // Get selection list
+    useEffect(() => {
+        if (isAuthorized && user) {
+            fetchSelections();
+        }
+    }, [isAuthorized, user, fetchSelections]);
+
+    // Calculate modded stats when beatmap or mods change
+    useEffect(() => {
+        const updateModdedStats = async () => {
+            if (beatmapPreview && user) {
+                const customSettings = {
+                    customModName: selectedMods === 'LZ' ? customModName : undefined,
+                    customDASettings: customModName === 'DA' && selectedMods === 'LZ' ? {
+                        cs: customCS !== '' ? customCS : null,
+                        ar: customAR !== '' ? customAR : null,
+                        od: customOD !== '' ? customOD : null,
+                        hp: customHP !== '' ? customHP : null,
+                    } : null,
+                    customDTRate: selectedMods === 'DT' && customDTRate !== '' ? customDTRate : null,
+                };
+                const stats = await calculateModdedStatsAPI(beatmapPreview, selectedMods, customSettings);
+                setModdedStats(stats);
+            } else {
+                setModdedStats(null);
+            }
+        };
+
+        updateModdedStats();
+    }, [beatmapPreview, selectedMods, customModName, customCS, customAR, customOD, customHP, customDTRate, user, calculateModdedStatsAPI]);
+
+    // 初始化
+    useEffect(() => {
+        fetchAvailableLazerMods();
+    }, []);
+
+    // 验证用户数据
+    if (!userForState.id || isNaN(userForState.id)) {
+        return (
+            <div className="space-y-6">
+                <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
+                    <h3 className="text-xl font-bold text-white mb-4">选图管理</h3>
+                    <p className="text-red-400">用户数据无效，请重新登录</p>
+                </div>
+            </div>
+        );
+    }
+
+    // 右键菜单处理函数
+    const handleContextMenu = (e: React.MouseEvent, selection: MapSelection) => {
+        e.preventDefault();
+        setContextMenu({
+            show: true,
+            x: e.clientX,
+            y: e.clientY,
+            selection
+        });
+    };
+
+    const closeContextMenu = () => {
+        setContextMenu({
+            show: false,
+            x: 0,
+            y: 0,
+            selection: null
+        });
+    };
+
+    // 复制BID到剪贴板
+    const copyBeatmapId = async (beatmapId: number) => {
+        try {
+            await navigator.clipboard.writeText(beatmapId.toString());
+            showSuccess('Beatmap ID已复制到剪贴板');
+        } catch (error) {
+            console.error('复制失败:', error);
+            showError('复制失败');
+        }
+    };
 
     // 获取可用的Lazer特有mod
     const fetchAvailableLazerMods = async () => {
@@ -269,37 +456,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
     };
 
-    // Get selection list
-    useEffect(() => {
-        if (isAuthorized && user) {
-            fetchSelections();
-        }
-    }, [isAuthorized, user, season, category]);
-
-    // Calculate modded stats when beatmap or mods change
-    useEffect(() => {
-        const updateModdedStats = async () => {
-            if (beatmapPreview && user) {
-                const customSettings = {
-                    customModName: selectedMods === 'LZ' ? customModName : undefined,
-                    customDASettings: customModName === 'DA' && selectedMods === 'LZ' ? {
-                        cs: customCS !== '' ? customCS : null,
-                        ar: customAR !== '' ? customAR : null,
-                        od: customOD !== '' ? customOD : null,
-                        hp: customHP !== '' ? customHP : null,
-                    } : null,
-                    customDTRate: selectedMods === 'DT' && customDTRate !== '' ? customDTRate : null,
-                };
-                const stats = await calculateModdedStatsAPI(beatmapPreview, selectedMods, customSettings);
-                setModdedStats(stats);
-            } else {
-                setModdedStats(null);
-            }
-        };
-
-        updateModdedStats();
-    }, [beatmapPreview, selectedMods, customModName, customCS, customAR, customOD, customHP, customDTRate, user]);
-
     const loadSeasonConfig = async () => {
         try {
             const response = await fetch('/api/season-config');
@@ -327,34 +483,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         if (e.key === 'Enter' && !isSubmitting && urlInput.trim()) {
             e.preventDefault();
             parseBeatmapUrl();
-        }
-    };
-
-    const fetchSelections = async () => {
-        if (!userForState?.id) {
-            console.warn('fetchSelections called without user ID');
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/map-selections?season=${season}&category=${category}&osuId=${userForState.id}`);
-            if (response.ok) {
-                const data = await response.json();
-                setSelections(data.selections || []);
-
-                // 获取所有选图的评分数据
-                if (data.selections && data.selections.length > 0) {
-                    for (const selection of data.selections) {
-                        fetchMapRatings(selection.id);
-                    }
-                }
-            } else {
-                const errorData = await response.json();
-                showError(errorData.error || '获取选图列表失败');
-            }
-        } catch (error) {
-            console.error('Failed to fetch selections:', error);
-            showError('获取选图列表时出错');
         }
     };
 
@@ -388,11 +516,18 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             const data = await response.json();
 
             if (data.success) {
-                if (data.beatmaps && data.beatmaps.length > 0) {
-                    setAvailableBeatmaps(data.beatmaps);
-                    // 如果只有一个谱面，直接预览
-                    if (data.beatmaps.length === 1) {
-                        setBeatmapPreview(data.beatmaps[0]);
+                if (data.data) {
+                    if (data.data.type === 'multiple' && data.data.beatmaps && data.data.beatmaps.length > 0) {
+                        setAvailableBeatmaps(data.data.beatmaps);
+                        // 如果只有一个谱面，直接预览
+                        if (data.data.beatmaps.length === 1) {
+                            setBeatmapPreview(data.data.beatmaps[0]);
+                        }
+                    } else if (data.data.type === 'single' && data.data.beatmap) {
+                        setAvailableBeatmaps([data.data.beatmap]);
+                        setBeatmapPreview(data.data.beatmap);
+                    } else {
+                        showError('未找到有效的beatmap数据');
                     }
                 } else {
                     showError('未找到有效的beatmap数据');
@@ -408,75 +543,15 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
     };
 
-    // 计算mod后的属性
-    interface CustomSettings {
-        customDASettings: {
-            cs: number | null;
-            ar: number | null;
-            od: number | null;
-            hp: number | null;
-        } | null;
-        customDTRate: number | null;
-    }
-
-    const calculateModdedStatsAPI = async (beatmap: BeatmapInfo, mods: string, customSettings: CustomSettings) => {
-        try {
-            const response = await fetch('/api/calculate-mod-stats', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    beatmap,
-                    mods,
-                    customSettings
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                return data.stats;
-            } else {
-                console.error('Failed to calculate modded stats');
-                return null;
-            }
-        } catch (error) {
-            console.error('Error calculating modded stats:', error);
-            return null;
-        }
-    };
-
-    // 获取地图评分
-    const fetchMapRatings = async (selectionId: number) => {
-        try {
-            const response = await fetch(`/api/map-ratings?selectionId=${selectionId}`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    setMapRatings(prev => ({
-                        ...prev,
-                        [selectionId]: data.ratings
-                    }));
-
-                    // 设置当前用户的评分
-                    const userRating = data.ratings.find((rating: MapRating) => rating.userId === userForState.id.toString());
-                    if (userRating) {
-                        setUserRatings(prev => ({
-                            ...prev,
-                            [selectionId]: userRating.rating
-                        }));
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Failed to fetch map ratings:', error);
-        }
-    };
-
     // 提交评分
     const submitRating = async (selectionId: number, rating: number) => {
-        if (!userForState?.id) {
-            showError('请先登录');
+        if (!userForState?.id || isNaN(userForState.id)) {
+            showError('用户数据无效，请重新登录');
+            return;
+        }
+
+        if (!selectionId || isNaN(selectionId)) {
+            showError('无效的选图ID');
             return;
         }
 
@@ -488,7 +563,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    selectionId,
+                    mapSelectionId: selectionId,
                     userId: userForState.id.toString(),
                     rating
                 })
@@ -570,6 +645,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     url: beatmapPreview.url,
                     coverUrl: beatmapPreview.cover_url,
                     selectedBy: userForState.id.toString(),
+                    selectedByUsername: userForState.username,
+                    selectedByAvatar: userForState.avatar_url,
                     customSettings
                 })
             });
@@ -638,14 +715,15 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     // 切换过审状态
     const toggleApproval = async (selectionId: number, currentApproved: boolean) => {
         try {
-            const response = await fetch('/api/map-selections/approve', {
-                method: 'POST',
+            const response = await fetch('/api/map-selections', {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     id: selectionId,
-                    approved: !currentApproved
+                    approved: !currentApproved,
+                    selectedBy: userForState.id.toString()
                 })
             });
 
@@ -723,6 +801,49 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
+    // 解析 osu beatmap URL
+    const parseOsuUrl = (url: string): { beatmapId?: number; beatmapsetId?: number } | null => {
+        try {
+            // 处理完整的 URL 或缩短的 URL
+            let cleanUrl = url.trim();
+
+            // 如果是完整的 URL，提取路径部分
+            if (cleanUrl.includes('osu.ppy.sh/')) {
+                const urlObj = new URL(cleanUrl);
+                cleanUrl = urlObj.pathname;
+            }
+
+            // 匹配 beatmapsets/{setId}#osu/{mapId} 格式
+            const beatmapsetWithMapMatch = cleanUrl.match(/^\/beatmapsets\/(\d+)#osu\/(\d+)$/);
+            if (beatmapsetWithMapMatch) {
+                return {
+                    beatmapsetId: parseInt(beatmapsetWithMapMatch[1]),
+                    beatmapId: parseInt(beatmapsetWithMapMatch[2])
+                };
+            }
+
+            // 匹配 beatmapsets/{setId} 格式
+            const beatmapsetMatch = cleanUrl.match(/^\/beatmapsets\/(\d+)$/);
+            if (beatmapsetMatch) {
+                return {
+                    beatmapsetId: parseInt(beatmapsetMatch[1])
+                };
+            }
+
+            // 匹配 /b/{mapId} 格式
+            const beatmapMatch = cleanUrl.match(/^\/b\/(\d+)$/);
+            if (beatmapMatch) {
+                return {
+                    beatmapId: parseInt(beatmapMatch[1])
+                };
+            }
+
+            return null;
+        } catch (error) {
+            return null;
+        }
+    };
+
     // 筛选和排序选图
     const filteredSelections = selections
         .filter(selection => {
@@ -733,12 +854,84 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
             // 搜索筛选
             if (searchQuery.trim()) {
-                const query = searchQuery.toLowerCase();
+                const query = searchQuery.toLowerCase().trim();
+
+                // 检查是否是纯数字 - 直接匹配 beatmap ID 或 beatmapset ID
+                if (/^\d+$/.test(query)) {
+                    const numericQuery = parseInt(query);
+                    return selection.beatmapId === numericQuery || selection.beatmapsetId === numericQuery;
+                }
+
+                // 检查是否是 osu beatmap URL
+                const urlData = parseOsuUrl(searchQuery);
+                if (urlData) {
+                    if (urlData.beatmapId && urlData.beatmapsetId) {
+                        // 如果同时有 beatmapId 和 beatmapsetId，精确匹配两者
+                        return selection.beatmapId === urlData.beatmapId && selection.beatmapsetId === urlData.beatmapsetId;
+                    } else if (urlData.beatmapId) {
+                        // 只匹配 beatmapId
+                        return selection.beatmapId === urlData.beatmapId;
+                    } else if (urlData.beatmapsetId) {
+                        // 只匹配 beatmapsetId
+                        return selection.beatmapsetId === urlData.beatmapsetId;
+                    }
+                }
+
+                // 检查是否是简化属性搜索格式 (属性名+数字，如 ar9, cs5)
+                const simplifiedPropertyMatch = query.match(/^([a-zA-Z]+)(\d+(?:\.\d+)?)$/);
+                if (simplifiedPropertyMatch) {
+                    const [, property, valueStr] = simplifiedPropertyMatch;
+                    const value = parseFloat(valueStr);
+
+                    switch (property.toLowerCase()) {
+                        case 'ar':
+                            return Math.abs(selection.ar - value) < 0.01;
+                        case 'cs':
+                            return Math.abs(selection.cs - value) < 0.01;
+                        case 'od':
+                            return Math.abs(selection.od - value) < 0.01;
+                        case 'hp':
+                            return Math.abs(selection.hp - value) < 0.01;
+                        default:
+                            break;
+                    }
+                }
+
+                // 检查是否是特殊搜索格式 (key:value)
+                const specialSearchMatch = query.match(/^(\w+):(.+)$/);
+                if (specialSearchMatch) {
+                    const [, key, value] = specialSearchMatch;
+
+                    switch (key.toLowerCase()) {
+                        case 'ar':
+                            return Math.abs(selection.ar - parseFloat(value)) < 0.01;
+                        case 'cs':
+                            return Math.abs(selection.cs - parseFloat(value)) < 0.01;
+                        case 'od':
+                            return Math.abs(selection.od - parseFloat(value)) < 0.01;
+                        case 'hp':
+                            return Math.abs(selection.hp - parseFloat(value)) < 0.01;
+                        case 'bid':
+                            return selection.beatmapId.toString() === value;
+                        case 'sid':
+                            return selection.beatmapsetId.toString() === value;
+                        case 'mod':
+                            return selection.selectedMods.toLowerCase() === value.toLowerCase();
+                        default:
+                            // 如果不是特殊格式，回退到普通文本搜索
+                            break;
+                    }
+                }
+
+                // 普通文本搜索
                 return (
                     selection.title.toLowerCase().includes(query) ||
                     selection.artist.toLowerCase().includes(query) ||
                     selection.creator.toLowerCase().includes(query) ||
                     selection.version.toLowerCase().includes(query) ||
+                    selection.selectedMods.toLowerCase().includes(query) ||
+                    selection.beatmapId.toString().includes(query) ||
+                    selection.beatmapsetId.toString().includes(query) ||
                     (selection.selectedByUsername && selection.selectedByUsername.toLowerCase().includes(query))
                 );
             }
@@ -780,18 +973,13 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         return options;
     };
 
-    // 初始化
-    useEffect(() => {
-        fetchAvailableLazerMods();
-    }, []);
-
     return (
         <div className="max-w-9xl mx-auto p-6">
-            <h2 className="text-2xl font-bold mb-4">选图管理</h2>
+            <h2 className="text-2xl font-bold mb-4 text-white">选图管理</h2>
 
             {isLoading ? (
                 <div className="text-center py-8">
-                    <div className="text-lg">正在加载...</div>
+                    <div className="text-lg text-white">正在加载...</div>
                 </div>
             ) : (
                 <>
@@ -820,10 +1008,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         />
 
                         {/* 搜索框 */}
-                        <div className="flex-1 min-w-[200px]">
+                        <div className="flex-1 min-w-[200px] text-gray-700 bg-white">
                             <input
                                 type="text"
-                                placeholder="搜索歌曲、艺术家、作者..."
+                                placeholder="搜索歌曲、艺术家、作者... 支持osu网址、BID/SID、ar9/cs5、mod"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -838,7 +1026,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 onChange={(e) => setSortByRating(e.target.checked)}
                                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                             />
-                            <span className="text-sm text-gray-700">按评分排序</span>
+                            <span className="text-sm text-white">按评分排序</span>
                         </label>
 
                         {/* 添加选图按钮 */}
@@ -889,24 +1077,23 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             {/* Beatmap选择 */}
                             {availableBeatmaps.length > 1 && (
                                 <div className="mb-4">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        选择难度
-                                    </label>
-                                    <select
-                                        value={beatmapPreview?.id || ''}
-                                        onChange={(e) => {
-                                            const selected = availableBeatmaps.find(b => b.id.toString() === e.target.value);
+                                    <Dropdown
+                                        label="选择难度"
+                                        options={[
+                                            { value: '', label: '请选择难度...' },
+                                            ...availableBeatmaps.map(beatmap => ({
+                                                value: beatmap.id.toString(),
+                                                label: `${beatmap.version} (${beatmap.star_rating.toFixed(2)}★)`
+                                            }))
+                                        ]}
+                                        value={beatmapPreview?.id?.toString() || ''}
+                                        onChange={(value) => {
+                                            const selected = availableBeatmaps.find(b => b.id.toString() === value);
                                             setBeatmapPreview(selected || null);
                                         }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="">请选择难度...</option>
-                                        {availableBeatmaps.map(beatmap => (
-                                            <option key={beatmap.id} value={beatmap.id}>
-                                                {beatmap.version} ({beatmap.star_rating.toFixed(2)}★)
-                                            </option>
-                                        ))}
-                                    </select>
+                                        placeholder="请选择难度..."
+                                        minWidth="100%"
+                                    />
                                 </div>
                             )}
 
@@ -917,9 +1104,9 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         <Image
                                             src={beatmapPreview.cover_url}
                                             alt="Beatmap cover"
-                                            width={64}
-                                            height={64}
-                                            className="w-16 h-16 object-cover rounded"
+                                            width={128}
+                                            height={128}
+                                            className="w-32 h-32 object-cover rounded"
                                         />
                                         <div className="flex-1">
                                             <h4 className="font-bold">{beatmapPreview.title}</h4>
@@ -939,18 +1126,17 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             {/* Mod选择 */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        MOD
-                                    </label>
-                                    <select
+                                    <Dropdown
+                                        label="MOD"
+                                        options={MOD_OPTIONS.map(mod => ({
+                                            value: mod,
+                                            label: mod
+                                        }))}
                                         value={selectedMods}
-                                        onChange={(e) => setSelectedMods(e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        {MOD_OPTIONS.map(mod => (
-                                            <option key={mod} value={mod}>{mod}</option>
-                                        ))}
-                                    </select>
+                                        onChange={setSelectedMods}
+                                        placeholder="选择MOD"
+                                        minWidth="100%"
+                                    />
                                 </div>
 
                                 <div>
@@ -974,21 +1160,20 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     <h4 className="font-medium text-blue-800 mb-2">Lazer特有MOD设置</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                MOD名称
-                                            </label>
-                                            <select
+                                            <Dropdown
+                                                label="MOD名称"
+                                                options={[
+                                                    { value: '', label: '选择MOD...' },
+                                                    ...availableLazerMods.map(mod => ({
+                                                        value: mod.name,
+                                                        label: `${mod.name} - ${mod.description}`
+                                                    }))
+                                                ]}
                                                 value={customModName}
-                                                onChange={(e) => setCustomModName(e.target.value)}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            >
-                                                <option value="">选择MOD...</option>
-                                                {availableLazerMods.map(mod => (
-                                                    <option key={mod.name} value={mod.name}>
-                                                        {mod.name} - {mod.description}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                                onChange={setCustomModName}
+                                                placeholder="选择MOD..."
+                                                minWidth="100%"
+                                            />
                                         </div>
                                     </div>
 
@@ -1174,6 +1359,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 key={selection.id}
                                 className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 ${selection.approved ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'
                                     }`}
+                                onContextMenu={(e) => handleContextMenu(e, selection)}
                             >
                                 {/* 头部：封面和基本信息 */}
                                 <div className="flex items-start gap-3 mb-3">
@@ -1181,14 +1367,14 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         <Image
                                             src={selection.coverUrl}
                                             alt="Beatmap cover"
-                                            width={64}
-                                            height={64}
-                                            className="w-16 h-16 object-cover rounded"
+                                            width={124}
+                                            height={124}
+                                            className="w-24 h-24 object-cover rounded"
                                         />
                                         {/* 过审状态指示器 */}
                                         {selection.approved && (
-                                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                                                <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <div className="absolute -top-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                                <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                 </svg>
                                             </div>
@@ -1211,7 +1397,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             </span>
                                             {selection.padding && (
                                                 <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded">
-                                                    Padding
+                                                    提交测图中
                                                 </span>
                                             )}
                                         </div>
@@ -1219,27 +1405,35 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         <h3 className="font-bold text-sm truncate" title={selection.title}>
                                             {selection.title}
                                         </h3>
-                                        <p className="text-xs text-gray-600 truncate" title={`${selection.artist} - ${selection.creator}`}>
-                                            {selection.artist} - {selection.creator}
+                                        <p className="font-bold text-xs text-gray-600 truncate" title={`${selection.artist}`}>
+                                            {selection.artist}
                                         </p>
-                                        <p className="text-xs text-gray-600">[{selection.version}]</p>
+                                        <p className="font-bold text-xs text-gray-600">[{selection.version}] by {selection.creator}</p>
+                                    </div>
+                                    <div className="ml-auto">
+                                        <RatingDisplay
+                                            ratings={mapRatings[selection.id] || []}
+                                            selectedBy={selection.selectedBy}
+                                            currentUserId={userForState.id.toString()}
+                                            compact={true}
+                                            isAdmin={permissions.isAdmin}
+                                        />
                                     </div>
                                 </div>
 
                                 {/* 属性信息 */}
                                 <div className="mb-3 text-xs text-gray-600">
                                     <div className="grid grid-cols-2 gap-2">
-                                        <div>★ {selection.starRating.toFixed(2)}</div>
-                                        <div>{formatLength(selection.totalLength)}</div>
-                                        <div>BPM: {selection.bpm}</div>
-                                        <div>CS: {selection.cs.toFixed(1)} | AR: {selection.ar.toFixed(1)}</div>
+                                        <div>{selection.starRating.toFixed(2)}★</div>
+                                        <div>Length:{formatLength(selection.totalLength)} | BPM: {selection.bpm}</div>
+                                        <div className='font-bold text-xl col-span-2'>CS: {selection.cs.toFixed(1)} | AR: {selection.ar.toFixed(1)} | OD: {selection.od.toFixed(1)} | HP: {selection.hp.toFixed(1)}</div>
                                     </div>
                                 </div>
 
                                 {/* 提名者信息 */}
                                 <div className="mb-3 text-xs text-gray-600">
-                                    <div className="flex items-center gap-2">
-                                        <span>提名者: {selection.selectedByUsername || '未知'}</span>
+                                    <div className="flex items-center gap-3 w-full">
+                                        <span className="flex items-center gap-1">提名者:<Image src={selection.selectedByAvatar || "/default-avatar.png"} alt={selection.selectedByUsername || '未知'} width={16} height={16} className="rounded-full" />{selection.selectedByUsername}</span>
                                         <span>•</span>
                                         <span>{formatDateTime(selection.selectedAt)}</span>
                                     </div>
@@ -1260,38 +1454,18 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         isSubmitting={isRatingSubmitting}
                                         userId={userForState.id.toString()}
                                     />
-                                    <RatingDisplay
-                                        ratings={mapRatings[selection.id] || []}
-                                        selectedBy={selection.selectedBy}
-                                        currentUserId={userForState.id.toString()}
-                                        compact={true}
-                                        isAdmin={permissions.isAdmin}
-                                    />
                                 </div>
 
                                 {/* 操作按钮 */}
-                                <div className="flex gap-2">
-                                    <a
-                                        href={selection.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex-1 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded text-center transition-colors"
+                                <div className="flex gap-2 items-center justify-end">
+                                    {/* 复制BID按钮 */}
+                                    <button
+                                        onClick={() => copyBeatmapId(selection.beatmapId)}
+                                        className="px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors"
+                                        title="复制Beatmap ID"
                                     >
-                                        查看谱面
-                                    </a>
-
-                                    {/* 过审按钮 - 仅管理员可见 */}
-                                    {permissions.isAdmin && (
-                                        <button
-                                            onClick={() => toggleApproval(selection.id, selection.approved)}
-                                            className={`px-3 py-2 text-xs rounded transition-colors ${selection.approved
-                                                ? 'bg-green-500 hover:bg-green-600 text-white'
-                                                : 'bg-gray-500 hover:bg-gray-600 text-white'
-                                                }`}
-                                        >
-                                            {selection.approved ? '取消过审' : '过审'}
-                                        </button>
-                                    )}
+                                        复制BID
+                                    </button>
 
                                     {/* 批量选择复选框 - 仅管理员可见 */}
                                     {permissions.isAdmin && !selection.approved && (
@@ -1311,16 +1485,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                                             />
                                         </label>
-                                    )}
-
-                                    {/* 删除按钮 - 仅提名者或管理员可见 */}
-                                    {(selection.selectedBy === userForState.id.toString() || permissions.isAdmin) && (
-                                        <button
-                                            onClick={() => deleteSelection(selection.id)}
-                                            className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-xs rounded transition-colors"
-                                        >
-                                            删除
-                                        </button>
                                     )}
                                 </div>
 
@@ -1411,6 +1575,75 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* 右键菜单 */}
+            {contextMenu.show && contextMenu.selection && (
+                <div
+                    className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg py-2 min-w-[160px]"
+                    style={{
+                        left: contextMenu.x,
+                        top: contextMenu.y,
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <button
+                        onClick={() => {
+                            window.open(contextMenu.selection!.url, '_blank');
+                            closeContextMenu();
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        查看谱面
+                    </button>
+
+                    {permissions.isAdmin && (
+                        <button
+                            onClick={() => {
+                                toggleApproval(contextMenu.selection!.id, contextMenu.selection!.approved);
+                                closeContextMenu();
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {contextMenu.selection!.approved ? '取消过审' : '过审'}
+                        </button>
+                    )}
+
+                    {(contextMenu.selection!.selectedBy === userForState.id.toString() || permissions.isAdmin) && (
+                        <button
+                            onClick={() => {
+                                if (confirm('确定要删除这个选图吗？此操作不可撤销。')) {
+                                    deleteSelection(contextMenu.selection!.id);
+                                }
+                                closeContextMenu();
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 transition-colors flex items-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            删除
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {/* 点击其他地方关闭右键菜单 */}
+            {contextMenu.show && (
+                <div
+                    className="fixed inset-0 z-40"
+                    onClick={closeContextMenu}
+                    onContextMenu={(e) => {
+                        e.preventDefault();
+                        closeContextMenu();
+                    }}
+                />
             )}
         </div>
     );

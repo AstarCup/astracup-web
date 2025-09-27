@@ -25,6 +25,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+    minimumCacheTTL: 86400, // 1天 = 86400秒
   },
 };
 

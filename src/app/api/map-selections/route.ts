@@ -8,8 +8,6 @@ import {
     getPool
 } from '@/lib/map-selection';
 import { getBeatmapInfo, getBeatmapsetInfo, parseBeatmapUrl } from '@/lib/osu-api';
-import { get } from '@vercel/edge-config';
-import { cookies } from 'next/headers';
 import { verifyMapSelectionAuth, verifyReplayAuth } from '@/lib/permissions';
 
 // GET - 获取选图列表
@@ -127,22 +125,6 @@ export async function POST(request: NextRequest) {
         // 初始化数据库
         // 数据库已初始化，跳过此步骤
 
-        // 获取用户的access token
-        let accessToken: string | undefined;
-        try {
-            const cookieStore = await cookies();
-            const sessionCookie = cookieStore.get('astra_session');
-
-            if (sessionCookie?.value) {
-                const session = JSON.parse(sessionCookie.value);
-                accessToken = session.access_token;
-                console.log('Using user access token for beatmap API');
-            }
-        } catch (error) {
-            console.error('Error getting user session for access token:', error);
-            // 继续执行，不使用token
-        }
-
         // 解析URL
         const parsedUrl = parseBeatmapUrl(url);
         if (!parsedUrl.beatmapId && !parsedUrl.beatmapsetId) {
@@ -157,10 +139,10 @@ export async function POST(request: NextRequest) {
         try {
             if (parsedUrl.beatmapId) {
                 // 如果有具体的beatmap ID，直接获取
-                beatmapInfo = await getBeatmapInfo(parsedUrl.beatmapId, accessToken);
+                beatmapInfo = await getBeatmapInfo(parsedUrl.beatmapId);
             } else if (parsedUrl.beatmapsetId) {
                 // 如果只有beatmapset ID，获取所有难度并让用户选择第一个
-                const beatmaps = await getBeatmapsetInfo(parsedUrl.beatmapsetId, accessToken);
+                const beatmaps = await getBeatmapsetInfo(parsedUrl.beatmapsetId);
                 if (beatmaps.length === 0) {
                     throw new Error('该beatmapset中没有找到任何beatmap');
                 }
@@ -333,11 +315,15 @@ export async function PUT(request: NextRequest) {
         }
 
         // 权限检查逻辑：
-        // 1. 如果只更新padding字段，允许选图者本人或选图团队成员
-        // 2. 如果更新其他字段，只允许选图团队成员
+        // 1. 如果更新approved字段，只允许管理员
+        // 2. 如果只更新padding字段，允许选图者本人或选图团队成员
+        // 3. 如果更新其他字段，只允许选图团队成员
         let isAuthorized = false;
 
-        if (Object.keys(updates).length === 1 && updates.padding !== undefined) {
+        if (updates.approved !== undefined) {
+            // 更新approved字段：只允许管理员
+            isAuthorized = await verifyAdminAuth(selectedBy);
+        } else if (Object.keys(updates).length === 1 && updates.padding !== undefined) {
             // 只更新padding字段：检查是否为选图者本人或选图团队成员
             const isMapSelector = await verifyMapSelectionAuth(selectedBy);
 
