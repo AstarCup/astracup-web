@@ -115,7 +115,8 @@ export default function AdminPage() {
         isReplayTester: false,
         isAdmin: false,
         isStreamer: false,
-        isReferee: false
+        isReferee: false,
+        isCommentator: false
     });
     const [loading, setLoading] = useState(true);
     const [registrations, setRegistrations] = useState<TournamentRegistration[]>([]);

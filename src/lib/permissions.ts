@@ -1,4 +1,5 @@
 import { getTournamentSettings } from '@/lib/mysql-registrations';
+import type { TournamentSettings } from '@/app/components/ConfigProvider';
 
 // 会话管理接口定义
 export interface UserSession {
@@ -22,106 +23,64 @@ export interface UserPermissions {
     isAdmin: boolean;
     isStreamer: boolean;
     isReferee: boolean;
+    isCommentator: boolean;
 }
 
-export async function getUserPermissions(osuId: string): Promise<UserPermissions> {
+export async function getUserPermissions(osuId: string, tournamentSettings?: TournamentSettings): Promise<UserPermissions> {
     try {
-
-        // 在客户端环境中，通过API路由获取权限数据
-        if (typeof window !== 'undefined') {
-            try {
-                // 获取完整的用户权限
-                const permissionsResponse = await fetch('/api/user-permissions');
-
-                if (permissionsResponse.ok) {
-                    const data = await permissionsResponse.json();
-                    if (data.success && data.permissions) {
-                        return data.permissions;
-                    }
-                }
-            } catch (apiError) {
-                console.warn('Failed to fetch permissions via API:', apiError);
-            }
+        // 如果没有提供配置，则从数据库获取
+        let settings = tournamentSettings;
+        if (!settings) {
+            settings = await getTournamentSettings();
         }
 
-        // 从 MySQL 获取比赛设置中的权限组信息
-        const tournamentSettings = await getTournamentSettings();
+        if (!settings) {
+            return {
+                isAdmin: false,
+                isMapSelector: false,
+                isReplayTester: false,
+                isStreamer: false,
+                isReferee: false,
+                isCommentator: false
+            };
+        }
 
         // 检查是否为管理员
-        const isAdmin = await verifyAdminAuth(osuId);
+        const isAdmin = settings.admin_group?.includes(osuId) || false;
 
-        // 检查是否为选图组成员
-        let isMapSelector = false;
-        if (tournamentSettings?.map_selection_group) {
-            const mapSelectionTeam = tournamentSettings.map_selection_group;
-            const userIdStr = osuId.toString();
-            const userIdNum = parseInt(osuId);
+        // 检查是否为图池选择者
+        const isMapSelector = settings.map_selection_group?.includes(osuId) || false;
 
-            isMapSelector = mapSelectionTeam.some((teamId: string | number) => {
-                const teamIdStr = teamId.toString();
-                const teamIdNum = typeof teamId === 'string' ? parseInt(teamId) : teamId;
-                return userIdStr === teamIdStr || userIdNum === teamIdNum;
-            });
-        }
-
-        // 检查是否为测图组成员（上传replay权限）
-        let isReplayTester = false;
-        if (tournamentSettings?.map_testing_group) {
-            const replayAccessUsers = tournamentSettings.map_testing_group;
-            const userIdStr = osuId.toString();
-            const userIdNum = parseInt(osuId);
-
-            isReplayTester = replayAccessUsers.some((userId: string | number) => {
-                const userIdStr2 = userId.toString();
-                const userIdNum2 = typeof userId === 'string' ? parseInt(userId) : userId;
-                return userIdStr === userIdStr2 || userIdNum === userIdNum2;
-            });
-        }
+        // 检查是否为回放测试员
+        const isReplayTester = settings.map_testing_group?.includes(osuId) || false;
 
         // 检查是否为直播员
-        let isStreamer = false;
-        if (tournamentSettings?.streamer_group) {
-            const streamerGroup = tournamentSettings.streamer_group;
-            const userIdStr = osuId.toString();
-            const userIdNum = parseInt(osuId);
+        const isStreamer = settings.streamer_group?.includes(osuId) || false;
 
-            isStreamer = streamerGroup.some((userId: string | number) => {
-                const userIdStr2 = userId.toString();
-                const userIdNum2 = typeof userId === 'string' ? parseInt(userId) : userId;
-                return userIdStr === userIdStr2 || userIdNum === userIdNum2;
-            });
-        }
+        // 检查是否为裁判
+        const isReferee = settings.referee_group?.includes(osuId) || false;
 
-        // 检查是否为裁判员
-        let isReferee = false;
-        if (tournamentSettings?.referee_group) {
-            const refereeGroup = tournamentSettings.referee_group;
-            const userIdStr = osuId.toString();
-            const userIdNum = parseInt(osuId);
+        // 检查是否为解说员
+        const isCommentator = settings.commentator_group?.includes(osuId) || false;
 
-            isReferee = refereeGroup.some((userId: string | number) => {
-                const userIdStr2 = userId.toString();
-                const userIdNum2 = typeof userId === 'string' ? parseInt(userId) : userId;
-                return userIdStr === userIdStr2 || userIdNum === userIdNum2;
-            });
-        }
-
-        const result = {
+        return {
+            isAdmin,
             isMapSelector,
             isReplayTester,
-            isAdmin,
             isStreamer,
-            isReferee
+            isReferee,
+            isCommentator
         };
-        return result;
+
     } catch (error) {
         console.error('Error getting user permissions:', error);
         return {
+            isAdmin: false,
             isMapSelector: false,
             isReplayTester: false,
-            isAdmin: false,
             isStreamer: false,
-            isReferee: false
+            isReferee: false,
+            isCommentator: false
         };
     }
 }
@@ -147,7 +106,6 @@ export async function verifyReplayAuth(osuId: string): Promise<boolean> {
  */
 export async function verifyAdminAuth(osuId: string): Promise<boolean> {
     try {
-
         // 在客户端环境中，通过API路由获取权限数据
         if (typeof window !== 'undefined') {
             try {
@@ -169,38 +127,24 @@ export async function verifyAdminAuth(osuId: string): Promise<boolean> {
         }
 
         // 服务端环境或API调用失败时的fallback
-        let adminList: string[] = [];
-
-        // 从 MySQL 获取比赛设置中的管理员组信息
         const tournamentSettings = await getTournamentSettings();
         if (tournamentSettings?.admin_group) {
-            adminList = tournamentSettings.admin_group;
+            return tournamentSettings.admin_group.includes(osuId);
         }
 
         // 如果MySQL没有数据，尝试从环境变量获取
-        if (adminList.length === 0 && process.env.ADMIN_IDS) {
-            adminList = process.env.ADMIN_IDS
+        if (process.env.ADMIN_IDS) {
+            const adminList = process.env.ADMIN_IDS
                 .split(',')
                 .map(id => id.trim())
                 .filter(id => id !== '');
+            return adminList.includes(osuId);
         }
 
-        console.log('adminList after env var:', adminList);
-
-
-        // 检查osu ID是否在管理员列表中
-        const userIdStr = osuId.toString();
-        const userIdNum = parseInt(osuId);
-
-        const isAdmin = adminList.some(adminId => {
-            const adminIdStr = adminId.toString();
-            const adminIdNum = parseInt(adminId);
-            return adminIdStr === userIdStr || adminIdNum === userIdNum;
-        });
-
-
-        return isAdmin;
-    } finally {
+        return false;
+    } catch (error) {
+        console.error('Error verifying admin auth:', error);
+        return false;
     }
 }
 

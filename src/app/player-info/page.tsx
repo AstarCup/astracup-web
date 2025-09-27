@@ -57,7 +57,8 @@ export default function PlayerInfoPage() {
         isReplayTester: false,
         isAdmin: false,
         isStreamer: false,
-        isReferee: false
+        isReferee: false,
+        isCommentator: false
     });
     const [registration, setRegistration] = useState<Registration | null>(null);
     const [nextMatch, setNextMatch] = useState<NextMatch | null>(null);
