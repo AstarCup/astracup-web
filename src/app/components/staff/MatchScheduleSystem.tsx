@@ -578,20 +578,21 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                 )}
 
                                 {isAdmin && schedule.status === 'confirmed' && (
-                                    <>
-                                        <button
-                                            onClick={() => handleUpdateStatus(schedule.id, 'completed')}
-                                            className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-sm"
-                                        >
-                                            标记完成
-                                        </button>
-                                        <button
-                                            onClick={() => openEditModal(schedule)}
-                                            className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded text-sm"
-                                        >
-                                            编辑比赛信息
-                                        </button>
-                                    </>
+                                    <button
+                                        onClick={() => handleUpdateStatus(schedule.id, 'completed')}
+                                        className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-sm"
+                                    >
+                                        标记完成
+                                    </button>
+                                )}
+
+                                {isAdmin && (
+                                    <button
+                                        onClick={() => openEditModal(schedule)}
+                                        className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded text-sm"
+                                    >
+                                        编辑比赛信息
+                                    </button>
                                 )}
 
                                 {isAdmin && (
