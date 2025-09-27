@@ -13,6 +13,9 @@ interface TournamentSettings {
     admin_group: string[];
     map_selection_group: string[];
     map_testing_group: string[];
+    streamer_group: string[];
+    referee_group: string[];
+    commentator_group: string[];
     registration_enabled: boolean;
     mappool_visible: boolean;
 }
@@ -44,13 +47,16 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
         admin_group: [],
         map_selection_group: [],
         map_testing_group: [],
+        streamer_group: [],
+        referee_group: [],
+        commentator_group: [],
         registration_enabled: true,
         mappool_visible: false
     });
 
     // 模态框状态
     const [showAddModal, setShowAddModal] = useState(false);
-    const [currentGroupType, setCurrentGroupType] = useState<'admin_group' | 'map_selection_group' | 'map_testing_group' | null>(null);
+    const [currentGroupType, setCurrentGroupType] = useState<'admin_group' | 'map_selection_group' | 'map_testing_group' | 'streamer_group' | 'referee_group' | 'commentator_group' | null>(null);
     const [userIdInput, setUserIdInput] = useState('');
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
     const [fetchingUser, setFetchingUser] = useState(false);
@@ -111,7 +117,7 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
         }
     };
 
-    const handleRemoveUser = (groupType: 'admin_group' | 'map_selection_group' | 'map_testing_group', userId: string) => {
+    const handleRemoveUser = (groupType: 'admin_group' | 'map_selection_group' | 'map_testing_group' | 'streamer_group' | 'referee_group' | 'commentator_group', userId: string) => {
         setFormData(prev => ({
             ...prev,
             [groupType]: prev[groupType].filter(id => id !== userId)
@@ -173,7 +179,7 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
         }
     };
 
-    const openAddModal = (groupType: 'admin_group' | 'map_selection_group' | 'map_testing_group') => {
+    const openAddModal = (groupType: 'admin_group' | 'map_selection_group' | 'map_testing_group' | 'streamer_group' | 'referee_group' | 'commentator_group') => {
         setCurrentGroupType(groupType);
         setShowAddModal(true);
         setUserIdInput('');
@@ -187,15 +193,18 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
         setUserInfo(null);
     };
 
-    const getGroupName = (groupType: 'admin_group' | 'map_selection_group' | 'map_testing_group') => {
+    const getGroupName = (groupType: 'admin_group' | 'map_selection_group' | 'map_testing_group' | 'streamer_group' | 'referee_group' | 'commentator_group') => {
         switch (groupType) {
             case 'admin_group': return '管理员组';
             case 'map_selection_group': return '选图组';
             case 'map_testing_group': return '测图组';
+            case 'streamer_group': return '直播组';
+            case 'referee_group': return '裁判组';
+            case 'commentator_group': return '解说组';
         }
     };
 
-    const renderUserList = (groupType: 'admin_group' | 'map_selection_group' | 'map_testing_group', users: string[]) => {
+    const renderUserList = (groupType: 'admin_group' | 'map_selection_group' | 'map_testing_group' | 'streamer_group' | 'referee_group' | 'commentator_group', users: string[]) => {
         return (
             <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -372,10 +381,13 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
                     </div>
 
                     {/* 人员分组设置 */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {renderUserList('admin_group', formData.admin_group)}
                         {renderUserList('map_selection_group', formData.map_selection_group)}
                         {renderUserList('map_testing_group', formData.map_testing_group)}
+                        {renderUserList('streamer_group', formData.streamer_group)}
+                        {renderUserList('referee_group', formData.referee_group)}
+                        {renderUserList('commentator_group', formData.commentator_group)}
                     </div>
 
                     {/* 保存按钮 */}
