@@ -180,7 +180,7 @@ export default function AdminPage() {
                     if (permissionsResponse.ok) {
                         const userPermissions = await permissionsResponse.json();
                         console.log('[Staff Dashboard] 权限获取成功:', userPermissions);
-                        setPermissions(userPermissions);
+                        setPermissions(userPermissions.permissions);
                         setPermissionsLoading(false);
 
                         // 检查是否有staff权限（管理员、裁判员、解说员或主播）

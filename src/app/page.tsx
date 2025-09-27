@@ -47,7 +47,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center relative">
+    <div className="flex flex-col items-center justify-center relative pt-20">
 
       <div className="relative w-full max-w-5xl flex flex-col items-left justify-center px-4 sm:px-6" style={{ minHeight: '400px' }}>
         <BackgroundSVG
