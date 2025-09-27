@@ -216,30 +216,49 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     const [showBulkApprovalModal, setShowBulkApprovalModal] = useState(false);
     const [isBulkApproving, setIsBulkApproving] = useState(false);
 
-    // 检查权限并加载数据
-    useEffect(() => {
-        const checkAccessAndLoadData = async () => {
-            if (!user) return;
+    // 右键菜单状态
+    const [contextMenu, setContextMenu] = useState<{
+        show: boolean;
+        x: number;
+        y: number;
+        selection: MapSelection | null;
+    }>({
+        show: false,
+        x: 0,
+        y: 0,
+        selection: null
+    });
 
-            const hasAccess = permissions.isMapSelector || permissions.isAdmin;
-            if (!hasAccess) {
-                showError('无权限访问选图系统');
-                setIsLoading(false);
-                return;
-            }
+    // 右键菜单处理函数
+    const handleContextMenu = (e: React.MouseEvent, selection: MapSelection) => {
+        e.preventDefault();
+        setContextMenu({
+            show: true,
+            x: e.clientX,
+            y: e.clientY,
+            selection
+        });
+    };
 
-            setIsAuthorized(true);
-            setIsAdmin(permissions.isAdmin);
+    const closeContextMenu = () => {
+        setContextMenu({
+            show: false,
+            x: 0,
+            y: 0,
+            selection: null
+        });
+    };
 
-            // 获取赛季配置
-            await loadSeasonConfig();
-            setIsLoading(false);
-        };
-
-        if (user) {
-            checkAccessAndLoadData();
+    // 复制BID到剪贴板
+    const copyBeatmapId = async (beatmapId: number) => {
+        try {
+            await navigator.clipboard.writeText(beatmapId.toString());
+            showSuccess('Beatmap ID已复制到剪贴板');
+        } catch (error) {
+            console.error('复制失败:', error);
+            showError('复制失败');
         }
-    }, [user, permissions]); // 当用户或权限改变时执行
+    };
 
     // 获取可用的Lazer特有mod
     const fetchAvailableLazerMods = async () => {
@@ -1231,6 +1250,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 key={selection.id}
                                 className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 ${selection.approved ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'
                                     }`}
+                                onContextMenu={(e) => handleContextMenu(e, selection)}
                             >
                                 {/* 头部：封面和基本信息 */}
                                 <div className="flex items-start gap-3 mb-3">
@@ -1281,6 +1301,15 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         </p>
                                         <p className="text-xs text-gray-600">[{selection.version}]</p>
                                     </div>
+                                    <div className="ml-auto">
+                                        <RatingDisplay
+                                            ratings={mapRatings[selection.id] || []}
+                                            selectedBy={selection.selectedBy}
+                                            currentUserId={userForState.id.toString()}
+                                            compact={true}
+                                            isAdmin={permissions.isAdmin}
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* 属性信息 */}
@@ -1289,7 +1318,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         <div>★ {selection.starRating.toFixed(2)}</div>
                                         <div>{formatLength(selection.totalLength)}</div>
                                         <div>BPM: {selection.bpm}</div>
-                                        <div>CS: {selection.cs.toFixed(1)} | AR: {selection.ar.toFixed(1)}</div>
+                                        <div>CS: {selection.cs.toFixed(1)} | AR: {selection.ar.toFixed(1)} | OD: {selection.od.toFixed(1)} | HP: {selection.hp.toFixed(1)}</div>
                                     </div>
                                 </div>
 
@@ -1317,38 +1346,18 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         isSubmitting={isRatingSubmitting}
                                         userId={userForState.id.toString()}
                                     />
-                                    <RatingDisplay
-                                        ratings={mapRatings[selection.id] || []}
-                                        selectedBy={selection.selectedBy}
-                                        currentUserId={userForState.id.toString()}
-                                        compact={true}
-                                        isAdmin={permissions.isAdmin}
-                                    />
                                 </div>
 
                                 {/* 操作按钮 */}
-                                <div className="flex gap-2">
-                                    <a
-                                        href={selection.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex-1 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded text-center transition-colors"
+                                <div className="flex gap-2 items-center">
+                                    {/* 复制BID按钮 */}
+                                    <button
+                                        onClick={() => copyBeatmapId(selection.beatmapId)}
+                                        className="px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors"
+                                        title="复制Beatmap ID"
                                     >
-                                        查看谱面
-                                    </a>
-
-                                    {/* 过审按钮 - 仅管理员可见 */}
-                                    {permissions.isAdmin && (
-                                        <button
-                                            onClick={() => toggleApproval(selection.id, selection.approved)}
-                                            className={`px-3 py-2 text-xs rounded transition-colors ${selection.approved
-                                                ? 'bg-green-500 hover:bg-green-600 text-white'
-                                                : 'bg-gray-500 hover:bg-gray-600 text-white'
-                                                }`}
-                                        >
-                                            {selection.approved ? '取消过审' : '过审'}
-                                        </button>
-                                    )}
+                                        复制BID
+                                    </button>
 
                                     {/* 批量选择复选框 - 仅管理员可见 */}
                                     {permissions.isAdmin && !selection.approved && (
@@ -1368,16 +1377,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                 className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                                             />
                                         </label>
-                                    )}
-
-                                    {/* 删除按钮 - 仅提名者或管理员可见 */}
-                                    {(selection.selectedBy === userForState.id.toString() || permissions.isAdmin) && (
-                                        <button
-                                            onClick={() => deleteSelection(selection.id)}
-                                            className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-xs rounded transition-colors"
-                                        >
-                                            删除
-                                        </button>
                                     )}
                                 </div>
 
@@ -1468,6 +1467,75 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* 右键菜单 */}
+            {contextMenu.show && contextMenu.selection && (
+                <div
+                    className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg py-2 min-w-[160px]"
+                    style={{
+                        left: contextMenu.x,
+                        top: contextMenu.y,
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <button
+                        onClick={() => {
+                            window.open(contextMenu.selection!.url, '_blank');
+                            closeContextMenu();
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        查看谱面
+                    </button>
+
+                    {permissions.isAdmin && (
+                        <button
+                            onClick={() => {
+                                toggleApproval(contextMenu.selection!.id, contextMenu.selection!.approved);
+                                closeContextMenu();
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {contextMenu.selection!.approved ? '取消过审' : '过审'}
+                        </button>
+                    )}
+
+                    {(contextMenu.selection!.selectedBy === userForState.id.toString() || permissions.isAdmin) && (
+                        <button
+                            onClick={() => {
+                                if (confirm('确定要删除这个选图吗？此操作不可撤销。')) {
+                                    deleteSelection(contextMenu.selection!.id);
+                                }
+                                closeContextMenu();
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 transition-colors flex items-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            删除
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {/* 点击其他地方关闭右键菜单 */}
+            {contextMenu.show && (
+                <div
+                    className="fixed inset-0 z-40"
+                    onClick={closeContextMenu}
+                    onContextMenu={(e) => {
+                        e.preventDefault();
+                        closeContextMenu();
+                    }}
+                />
             )}
         </div>
     );

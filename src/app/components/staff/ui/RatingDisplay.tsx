@@ -89,10 +89,10 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId, onRe
             {compact ? (
                 // 紧凑模式：只显示平均分和评分人数
                 <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium text-gray-700">评分:</span>
+                    {/* <span className="font-medium text-gray-700"></span> */}
                     <div className="flex items-center gap-1">
-                        {renderStars(averageRating, 'text-sm')}
-                        {/* <span className="text-gray-600 ml-1">({allRatings.length})</span> */}
+                        {/* {renderStars(averageRating, 'text-sm')} */}
+                        <span className="text-yellow-400 ml-1">({allRatings.length})</span>
                     </div>
                 </div>
             ) : (
