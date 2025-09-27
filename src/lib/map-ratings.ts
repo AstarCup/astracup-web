@@ -55,8 +55,8 @@ export const initMapRatingsDatabase = async (): Promise<void> => {
             console.log('Removed unique constraint from map_ratings table');
         } catch (error: any) {
             // 如果约束不存在，忽略错误
-            if (error.code !== 'ER_CANT_DROP_FIELD_OR_KEY') {
-                console.log('Error removing unique constraint:', error.message);
+            if ((error as any).code !== 'ER_CANT_DROP_FIELD_OR_KEY') {
+                console.log('Error removing unique constraint:', (error as any).message);
             }
         }
 
@@ -68,8 +68,8 @@ export const initMapRatingsDatabase = async (): Promise<void> => {
             console.log('Removed unique_user_rating constraint from map_ratings table');
         } catch (error: any) {
             // 如果约束不存在，忽略错误
-            if (error.code !== 'ER_CANT_DROP_FIELD_OR_KEY') {
-                console.log('Error removing unique_user_rating constraint:', error.message);
+            if ((error as any).code !== 'ER_CANT_DROP_FIELD_OR_KEY') {
+                console.log('Error removing unique_user_rating constraint:', (error as any).message);
             }
         }
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { get } from '@vercel/edge-config';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     try {
         let nowSeason = 's1'; // 默认赛季
 

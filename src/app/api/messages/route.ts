@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { getUserMessages, updateMessageStatus, updatePlayerMatchupStatus, getPlayerMatchups } from '@/lib/mysql-registrations';
+import { getUserMessages, updateMessageStatus, updatePlayerMatchupStatus } from '@/lib/mysql-registrations';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     try {
         // 获取用户session
         const cookieStore = await cookies();

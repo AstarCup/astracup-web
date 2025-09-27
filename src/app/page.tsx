@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Image from 'next/image';
-import BackgroundSVG from './components/BackgroundSVG';
+import BackgroundSVG from './components/ui/BackgroundSVG';
 import GuideIcon from './components/icons/GuideIcon';
 import ScheduleIcon from './components/icons/ScheduleIcon';
 import MapoolIcon from './components/icons/MapoolIcon';
 import ContactIcon from './components/icons/ContactIcon';
-import UserProfile from './components/UserProfile';
-import RegistrationButton from './components/RegistrationButton';
-import NewsListWithPagination from "./components/NewsListWithPagination";
-import AnimatedLogo from './components/AnimatedLogo';
+import UserProfile from './components/ui/UserProfile';
+import RegistrationButton from './components/ui/RegistrationButton';
+import NewsListWithPagination from "./components/ui/NewsListWithPagination";
+import AnimatedLogo from './components/ui/AnimatedLogo';
 
 
 export default function Home() {

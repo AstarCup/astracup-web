@@ -104,10 +104,11 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
                 ALTER TABLE map_selections DROP INDEX unique_beatmap_season_category
             `);
             console.log('Removed unique constraint to allow duplicate beatmaps');
-        } catch (error: any) {
+        } catch (error: unknown) {
             // 如果约束不存在，忽略错误
-            if (error.code !== 'ER_CANT_DROP_FIELD_OR_KEY') {
-                console.log('Unique constraint removal:', error.message);
+            const mysqlError = error as { code?: string; message?: string };
+            if (mysqlError.code !== 'ER_CANT_DROP_FIELD_OR_KEY') {
+                console.log('Unique constraint removal:', mysqlError.message);
             }
         }
 
@@ -115,8 +116,9 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
         try {
             // 检查ar字段是否存在
             await connection.execute(`SELECT ar FROM map_selections LIMIT 1`);
-        } catch (error: any) {
-            if (error.code === 'ER_BAD_FIELD_ERROR') {
+        } catch (error: unknown) {
+            const mysqlError = error as { code?: string };
+            if (mysqlError.code === 'ER_BAD_FIELD_ERROR') {
                 console.log('Adding new difficulty fields to existing table...');
 
                 // 添加AR字段
@@ -150,8 +152,9 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
         // 检查并添加modPosition字段
         try {
             await connection.execute(`SELECT modPosition FROM map_selections LIMIT 1`);
-        } catch (error: any) {
-            if (error.code === 'ER_BAD_FIELD_ERROR') {
+        } catch (error: unknown) {
+            const mysqlError = error as { code?: string };
+            if (mysqlError.code === 'ER_BAD_FIELD_ERROR') {
                 console.log('Adding modPosition field...');
                 await connection.execute(`
                     ALTER TABLE map_selections 
@@ -164,8 +167,9 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
         // 检查并添加padding字段
         try {
             await connection.execute(`SELECT padding FROM map_selections LIMIT 1`);
-        } catch (error: any) {
-            if (error.code === 'ER_BAD_FIELD_ERROR') {
+        } catch (error: unknown) {
+            const mysqlError = error as { code?: string };
+            if (mysqlError.code === 'ER_BAD_FIELD_ERROR') {
                 console.log('Adding padding field...');
                 await connection.execute(`
                     ALTER TABLE map_selections 
@@ -178,8 +182,9 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
         // 检查并添加coverUrl字段
         try {
             await connection.execute(`SELECT coverUrl FROM map_selections LIMIT 1`);
-        } catch (error: any) {
-            if (error.code === 'ER_BAD_FIELD_ERROR') {
+        } catch (error: unknown) {
+            const mysqlError = error as { code?: string };
+            if (mysqlError.code === 'ER_BAD_FIELD_ERROR') {
                 console.log('Adding coverUrl field...');
                 await connection.execute(`
                     ALTER TABLE map_selections 
@@ -192,8 +197,9 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
         // 检查并添加approved字段
         try {
             await connection.execute(`SELECT approved FROM map_selections LIMIT 1`);
-        } catch (error: any) {
-            if (error.code === 'ER_BAD_FIELD_ERROR') {
+        } catch (error: unknown) {
+            const mysqlError = error as { code?: string };
+            if (mysqlError.code === 'ER_BAD_FIELD_ERROR') {
                 console.log('Adding approved field...');
                 await connection.execute(`
                     ALTER TABLE map_selections 
@@ -206,8 +212,9 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
         // 检查并添加selectedByUsername字段
         try {
             await connection.execute(`SELECT selectedByUsername FROM map_selections LIMIT 1`);
-        } catch (error: any) {
-            if (error.code === 'ER_BAD_FIELD_ERROR') {
+        } catch (error: unknown) {
+            const mysqlError = error as { code?: string };
+            if (mysqlError.code === 'ER_BAD_FIELD_ERROR') {
                 console.log('Adding selectedByUsername field...');
                 await connection.execute(`
                     ALTER TABLE map_selections 
@@ -220,8 +227,9 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
         // 检查并添加selectedByAvatar字段
         try {
             await connection.execute(`SELECT selectedByAvatar FROM map_selections LIMIT 1`);
-        } catch (error: any) {
-            if (error.code === 'ER_BAD_FIELD_ERROR') {
+        } catch (error: unknown) {
+            const mysqlError = error as { code?: string };
+            if (mysqlError.code === 'ER_BAD_FIELD_ERROR') {
                 console.log('Adding selectedByAvatar field...');
                 await connection.execute(`
                     ALTER TABLE map_selections 
@@ -234,8 +242,9 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
         // 检查并添加customDTRate字段
         try {
             await connection.execute(`SELECT customDTRate FROM map_selections LIMIT 1`);
-        } catch (error: any) {
-            if (error.code === 'ER_BAD_FIELD_ERROR') {
+        } catch (error: unknown) {
+            const mysqlError = error as { code?: string };
+            if (mysqlError.code === 'ER_BAD_FIELD_ERROR') {
                 console.log('Adding customDTRate field...');
                 await connection.execute(`
                     ALTER TABLE map_selections 
@@ -248,8 +257,9 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
         // 检查并添加customModName字段
         try {
             await connection.execute(`SELECT customModName FROM map_selections LIMIT 1`);
-        } catch (error: any) {
-            if (error.code === 'ER_BAD_FIELD_ERROR') {
+        } catch (error: unknown) {
+            const mysqlError = error as { code?: string };
+            if (mysqlError.code === 'ER_BAD_FIELD_ERROR') {
                 console.log('Adding customModName field...');
                 await connection.execute(`
                     ALTER TABLE map_selections 
@@ -274,7 +284,7 @@ export const mapSelectionStorage = {
         try {
             const connection = await getPool().getConnection();
             let query = 'SELECT * FROM map_selections WHERE season = ?';
-            const params: any[] = [season];
+            const params: (string | boolean | undefined)[] = [season];
 
             if (category) {
                 query += ' AND category = ?';
@@ -383,7 +393,7 @@ export const mapSelectionStorage = {
             const connection = await getPool().getConnection();
 
             let query = 'DELETE FROM map_selections WHERE id = ?';
-            let params: any[] = [id];
+            const params: (number | string)[] = [id];
 
             // 如果提供了selectedBy，则添加用户权限检查
             if (selectedBy) {
@@ -456,7 +466,7 @@ export const mapSelectionStorage = {
 
             // 对于padding字段，任何有权限的用户都可以修改；其他字段只有创建者可以修改
             let whereClause = 'WHERE id = ?';
-            let queryParams = [...params, id];
+            const queryParams = [...params, id];
 
             // 检查是否只更新padding字段
             const isOnlyPaddingUpdate = Object.keys(updates).length === 1 && updates.padding !== undefined;

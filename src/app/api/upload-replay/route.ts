@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
             token: process.env.BLOB_READ_WRITE_TOKEN
         });
         return NextResponse.json({ success: true, url: blob.url });
-    } catch (e) {
+    } catch (_e) {
         return NextResponse.json({ error: '上传失败' }, { status: 500 });
     }
 }

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import WinnerCard from '@/app/components/WinnerCard';
+import Image from 'next/image';
+import WinnerCard from '../components/ui/WinnerCard';
 import winnersData from '@/config/winners.json';
 import { usePageTitle } from '@/lib/usePageTitle';
 
@@ -168,13 +169,13 @@ export default function Photos() {
                         </p>
                         <div className="flex justify-center space-x-8">
                             <div className="text-center">
-                                <div className="text-3xl text-yellow-400 mb-2"><img src="/icons/1.svg" alt="1" width={48} height={48} /></div>
+                                <div className="text-3xl text-yellow-400 mb-2"><Image src="/icons/1.svg" alt="1" width={48} height={48} /></div>
                             </div>
                             <div className="text-center">
-                                <div className="text-3xl text-gray-400 mb-2"><img src="/icons/2.svg" alt="2" width={48} height={48} /></div>
+                                <div className="text-3xl text-gray-400 mb-2"><Image src="/icons/2.svg" alt="2" width={48} height={48} /></div>
                             </div>
                             <div className="text-center">
-                                <div className="text-3xl text-amber-600 mb-2"><img src="/icons/3.svg" alt="3" width={48} height={48} /></div>
+                                <div className="text-3xl text-amber-600 mb-2"><Image src="/icons/3.svg" alt="3" width={48} height={48} /></div>
                             </div>
                         </div>
                     </div>

@@ -4,9 +4,9 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Metadata } from "next";
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/footer';
-import NoiseBackground from './components/NoiseBackground';
-import ParallaxBackground from './components/ParallaxBackground';
-import { NotificationContainer } from './components/Notification';
+import NoiseBackground from './components/ui/NoiseBackground';
+import ParallaxBackground from './components/ui/ParallaxBackground';
+import { NotificationContainer } from './components/ui/Notification';
 import Image from "next/image";
 
 // 页面标题映射

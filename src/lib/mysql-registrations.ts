@@ -153,6 +153,30 @@ export const initDatabase = async (): Promise<void> => {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
 
+        // 创建staff房间分配表（如果不存在）
+        await connection.execute(`
+            CREATE TABLE IF NOT EXISTS staff_room_assignments (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                room_id INT NOT NULL COMMENT '房间ID',
+                staff_osuId VARCHAR(255) NOT NULL COMMENT 'staff osuId',
+                staff_username VARCHAR(255) NOT NULL COMMENT 'staff 用户名',
+                staff_role ENUM('referee', 'streamer', 'commentator') NOT NULL COMMENT 'staff角色：referee-裁判，streamer-直播，commentator-解说',
+                status ENUM('pending', 'confirmed', 'declined') DEFAULT 'pending' COMMENT '分配状态：pending-待确认，confirmed-已确认，declined-已拒绝',
+                assigned_by VARCHAR(255) NOT NULL COMMENT '分配者osuId',
+                assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                responded_at DATETIME NULL COMMENT '响应时间',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (room_id) REFERENCES match_rooms(id) ON DELETE CASCADE,
+                UNIQUE KEY unique_staff_room (room_id, staff_osuId, staff_role),
+                INDEX idx_room (room_id),
+                INDEX idx_staff (staff_osuId),
+                INDEX idx_role (staff_role),
+                INDEX idx_status (status),
+                INDEX idx_assigned_by (assigned_by)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
         // 检查并添加缺失的字段（表结构升级）
         const requiredColumns = [
             { name: 'approved', type: 'BOOLEAN DEFAULT FALSE COMMENT \'审核状态：0-待审核，1-审核通过\'' },
@@ -238,8 +262,10 @@ export interface PlayerMatchup {
     id: number;
     player1_osuId: string;
     player1_username: string;
+    player1_avatar_url?: string;
     player2_osuId: string;
     player2_username: string;
+    player2_avatar_url?: string;
     status: 'available' | 'scheduled' | 'completed';
     created_by: string;
     created_at: string;
@@ -251,8 +277,10 @@ export interface MatchSchedule {
     room_id: number;
     player1_osuId: string;
     player1_username: string;
+    player1_avatar_url?: string;
     player2_osuId: string;
     player2_username: string;
+    player2_avatar_url?: string;
     red_player_osuId?: string;
     blue_player_osuId?: string;
     red_score: number;
@@ -287,6 +315,29 @@ export interface Message {
     updated_at: string;
 }
 
+export interface StaffRoomAssignment {
+    id: number;
+    room_id: number;
+    staff_osuId: string;
+    staff_username: string;
+    staff_role: 'referee' | 'streamer' | 'commentator';
+    status: 'pending' | 'confirmed' | 'declined';
+    assigned_by: string;
+    assigned_at: string;
+    responded_at?: string | null;
+    created_at: string;
+    updated_at: string;
+    room?: {
+        id: number;
+        room_name: string;
+        round_number: number;
+        match_date: string;
+        match_time: string;
+        match_number: number;
+    };
+    staff_avatar_url?: string;
+}
+
 export interface Registration {
     osuId: string;
     username: string;
@@ -301,6 +352,23 @@ export interface Registration {
     country: string;
     approved: boolean;
     approvedAt: string | null;
+}
+
+// 锦标赛报名接口
+export interface TournamentRegistration {
+    osuId: string;
+    username: string;
+    avatar_url: string;
+    pp: number;
+    global_rank: number | null;
+    country_rank: number | null;
+    country: string;
+    teamName: string; // 队伍名，初始为空
+    seedPosition: number | null; // seed位，初始为null
+    agreedToTerms: boolean; // 是否同意条款
+    approved: boolean; // 审核状态
+    approvedAt: string | null; // 审核通过时间
+    registeredAt: string;
 }
 
 // MySQL 存储实现
@@ -404,6 +472,72 @@ const mysqlStorage = {
             await connection.rollback();
             console.error('Error writing to database:', error);
             throw error;
+        } finally {
+            connection.release();
+        }
+    },
+
+    // 添加锦标赛报名
+    addTournamentRegistration: async (registration: Omit<TournamentRegistration, 'registeredAt'>): Promise<boolean> => {
+        const connection = await getPool().getConnection();
+
+        try {
+            await connection.beginTransaction();
+
+            // 检查是否已存在
+            const [existingRows] = await connection.execute(
+                'SELECT osuId FROM registrations WHERE osuId = ?',
+                [registration.osuId]
+            );
+
+            const existing = (existingRows as any[]).length > 0;
+
+            if (existing) {
+                // 更新现有用户信息
+                await connection.execute(`
+                    UPDATE registrations SET
+                        username = ?, timezone = ?, availability = ?,
+                        avatar_url = ?, pp = ?, global_rank = ?, country_rank = ?, country = ?, updatedAt = CURRENT_TIMESTAMP
+                    WHERE osuId = ?
+                `, [
+                    registration.username,
+                    '', // timezone - TournamentRegistration 没有这个字段
+                    '', // availability - TournamentRegistration 没有这个字段
+                    registration.avatar_url,
+                    registration.pp,
+                    registration.global_rank,
+                    registration.country_rank,
+                    registration.country || '',
+                    registration.osuId
+                ]);
+            } else {
+                // 插入新用户
+                await connection.execute(`
+                    INSERT INTO registrations
+                    (osuId, username, inGameName, timezone, availability, registeredAt, avatar_url, pp, global_rank, country_rank, country)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `, [
+                    registration.osuId,
+                    registration.username,
+                    registration.username, // inGameName 默认为 username
+                    '', // timezone
+                    '', // availability
+                    new Date(),
+                    registration.avatar_url,
+                    registration.pp,
+                    registration.global_rank,
+                    registration.country_rank,
+                    registration.country || ''
+                ]);
+            }
+
+            await connection.commit();
+            return true;
+
+        } catch (error) {
+            await connection.rollback();
+            console.error('Error writing tournament registration to database:', error);
+            return false;
         } finally {
             connection.release();
         }
@@ -579,6 +713,88 @@ const mysqlStorage = {
         }
     },
 
+    // 获取所有比赛房间（包含比赛预约信息）
+    getMatchRoomsWithSchedules: async (): Promise<any[]> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [rows] = await connection.execute(`
+                SELECT
+                    mr.*,
+                    ms.id as schedule_id,
+                    ms.player1_osuId,
+                    ms.player1_username,
+                    ms.player2_osuId,
+                    ms.player2_username,
+                    ms.red_player_osuId,
+                    ms.blue_player_osuId,
+                    ms.red_score,
+                    ms.blue_score,
+                    ms.status as match_status,
+                    ms.match_link,
+                    ms.replay_link,
+                    r1.avatar_url as player1_avatar_url,
+                    r2.avatar_url as player2_avatar_url
+                FROM match_rooms mr
+                LEFT JOIN match_schedules ms ON mr.id = ms.room_id
+                LEFT JOIN registrations r1 ON ms.player1_osuId = r1.osuId COLLATE utf8mb4_unicode_ci
+                LEFT JOIN registrations r2 ON ms.player2_osuId = r2.osuId COLLATE utf8mb4_unicode_ci
+                ORDER BY mr.match_date DESC, mr.match_time DESC, mr.id ASC
+            `);
+
+            connection.release();
+
+            // 按房间分组，返回每个房间及其比赛信息
+            const roomMap = new Map();
+
+            (rows as any[]).forEach(row => {
+                const roomId = row.id;
+                if (!roomMap.has(roomId)) {
+                    roomMap.set(roomId, {
+                        id: row.id,
+                        room_name: row.room_name,
+                        round_number: row.round_number,
+                        match_date: row.match_date,
+                        match_time: row.match_time,
+                        match_number: row.match_number,
+                        max_participants: row.max_participants,
+                        status: row.status,
+                        description: row.description,
+                        created_by: row.created_by,
+                        created_at: row.created_at,
+                        updated_at: row.updated_at,
+                        schedules: []
+                    });
+                }
+
+                // 如果有比赛预约，添加到房间的schedules数组中
+                if (row.schedule_id) {
+                    roomMap.get(roomId).schedules.push({
+                        id: row.schedule_id,
+                        player1_osuId: row.player1_osuId,
+                        player1_username: row.player1_username,
+                        player1_avatar_url: row.player1_avatar_url,
+                        player2_osuId: row.player2_osuId,
+                        player2_username: row.player2_username,
+                        player2_avatar_url: row.player2_avatar_url,
+                        red_player_osuId: row.red_player_osuId,
+                        blue_player_osuId: row.blue_player_osuId,
+                        red_score: row.red_score,
+                        blue_score: row.blue_score,
+                        status: row.match_status,
+                        match_link: row.match_link,
+                        replay_link: row.replay_link
+                    });
+                }
+            });
+
+            return Array.from(roomMap.values());
+        } catch (error) {
+            console.error('Error getting match rooms with schedules:', error);
+            return [];
+        }
+    },
+
     // 获取单个比赛房间
     getMatchRoom: async (id: number): Promise<MatchRoom | null> => {
         try {
@@ -682,7 +898,13 @@ const mysqlStorage = {
             const connection = await getPool().getConnection();
 
             const [rows] = await connection.execute(
-                'SELECT * FROM player_matchups ORDER BY created_at ASC'
+                `SELECT pm.*,
+                        r1.avatar_url as player1_avatar_url,
+                        r2.avatar_url as player2_avatar_url
+                 FROM player_matchups pm
+                 LEFT JOIN registrations r1 ON pm.player1_osuId = r1.osuId COLLATE utf8mb4_unicode_ci
+                 LEFT JOIN registrations r2 ON pm.player2_osuId = r2.osuId COLLATE utf8mb4_unicode_ci
+                 ORDER BY pm.created_at ASC`
             );
 
             connection.release();
@@ -691,8 +913,10 @@ const mysqlStorage = {
                 id: row.id,
                 player1_osuId: row.player1_osuId,
                 player1_username: row.player1_username,
+                player1_avatar_url: row.player1_avatar_url,
                 player2_osuId: row.player2_osuId,
                 player2_username: row.player2_username,
+                player2_avatar_url: row.player2_avatar_url,
                 status: row.status,
                 created_by: row.created_by,
                 created_at: row.created_at,
@@ -807,7 +1031,7 @@ const mysqlStorage = {
             const connection = await getPool().getConnection();
 
             let query = 'UPDATE messages SET status = ?, updated_at = CURRENT_TIMESTAMP';
-            let params: any[] = [status];
+            const params: any[] = [status];
 
             if (response_action) {
                 query += ', response_action = ?, response_time = CURRENT_TIMESTAMP';
@@ -834,9 +1058,12 @@ const mysqlStorage = {
             const connection = await getPool().getConnection();
 
             const [rows] = await connection.execute(`
-                SELECT ms.*, mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number
+                SELECT ms.*, mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number,
+                       r1.avatar_url as player1_avatar_url, r2.avatar_url as player2_avatar_url
                 FROM match_schedules ms
                 JOIN match_rooms mr ON ms.room_id = mr.id
+                LEFT JOIN registrations r1 ON ms.player1_osuId = r1.osuId COLLATE utf8mb4_unicode_ci
+                LEFT JOIN registrations r2 ON ms.player2_osuId = r2.osuId COLLATE utf8mb4_unicode_ci
                 WHERE ms.player1_osuId = ? OR ms.player2_osuId = ?
                 ORDER BY mr.match_date DESC, mr.match_time DESC
             `, [osuId, osuId]);
@@ -848,8 +1075,10 @@ const mysqlStorage = {
                 room_id: row.room_id,
                 player1_osuId: row.player1_osuId,
                 player1_username: row.player1_username,
+                player1_avatar_url: row.player1_avatar_url,
                 player2_osuId: row.player2_osuId,
                 player2_username: row.player2_username,
+                player2_avatar_url: row.player2_avatar_url,
                 red_player_osuId: row.red_player_osuId,
                 blue_player_osuId: row.blue_player_osuId,
                 red_score: row.red_score,
@@ -890,8 +1119,28 @@ const mysqlStorage = {
         try {
             const connection = await getPool().getConnection();
 
+            // 如果状态被设置为取消，需要将对应的对战重新设置为可预约
+            if (status === 'cancelled') {
+                // 获取预约信息
+                const [scheduleRows] = await connection.execute(
+                    'SELECT player1_osuId, player2_osuId FROM match_schedules WHERE id = ?',
+                    [id]
+                );
+
+                if ((scheduleRows as any[]).length > 0) {
+                    const schedule = (scheduleRows as any[])[0];
+                    const { player1_osuId, player2_osuId } = schedule;
+
+                    // 查找对应的对战并将其状态设置为available
+                    await connection.execute(
+                        'UPDATE player_matchups SET status = ? WHERE player1_osuId = ? AND player2_osuId = ? AND status = ?',
+                        ['available', player1_osuId, player2_osuId, 'scheduled']
+                    );
+                }
+            }
+
             let query = 'UPDATE match_schedules SET status = ?';
-            let params: any[] = [status];
+            const params: any[] = [status];
 
             if (additionalData) {
                 const updates: string[] = [];
@@ -926,9 +1175,12 @@ const mysqlStorage = {
             const connection = await getPool().getConnection();
 
             const [rows] = await connection.execute(`
-                SELECT ms.*, mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number
+                SELECT ms.*, mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number,
+                       r1.avatar_url as player1_avatar_url, r2.avatar_url as player2_avatar_url
                 FROM match_schedules ms
                 JOIN match_rooms mr ON ms.room_id = mr.id
+                LEFT JOIN registrations r1 ON ms.player1_osuId = r1.osuId COLLATE utf8mb4_unicode_ci
+                LEFT JOIN registrations r2 ON ms.player2_osuId = r2.osuId COLLATE utf8mb4_unicode_ci
                 ORDER BY mr.match_date DESC, mr.match_time DESC
             `);
 
@@ -939,8 +1191,10 @@ const mysqlStorage = {
                 room_id: row.room_id,
                 player1_osuId: row.player1_osuId,
                 player1_username: row.player1_username,
+                player1_avatar_url: row.player1_avatar_url,
                 player2_osuId: row.player2_osuId,
                 player2_username: row.player2_username,
+                player2_avatar_url: row.player2_avatar_url,
                 red_player_osuId: row.red_player_osuId,
                 blue_player_osuId: row.blue_player_osuId,
                 red_score: row.red_score,
@@ -1006,6 +1260,263 @@ const mysqlStorage = {
             console.error('Error creating match schedule:', error);
             throw error;
         }
+    },
+
+    // 获取staff房间分配列表 - 从match_schedules表获取裁判和解说员信息
+    getStaffRoomAssignments: async (): Promise<StaffRoomAssignment[]> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [rows] = await connection.execute(`
+                SELECT
+                    sra.id,
+                    sra.room_id,
+                    sra.staff_osuId,
+                    sra.staff_username,
+                    sra.staff_role,
+                    sra.status,
+                    sra.assigned_by,
+                    sra.assigned_at,
+                    sra.responded_at,
+                    sra.created_at,
+                    sra.updated_at,
+                    mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number,
+                    r.avatar_url as staff_avatar_url,
+                    ms.player1_username, ms.player2_username
+                FROM staff_room_assignments sra
+                JOIN match_rooms mr ON sra.room_id = mr.id
+                LEFT JOIN registrations r ON sra.staff_osuId = r.osuId COLLATE utf8mb4_unicode_ci
+                LEFT JOIN match_schedules ms ON sra.room_id = ms.room_id
+                ORDER BY mr.room_name ASC, sra.staff_role ASC, sra.created_at DESC
+            `);
+
+            connection.release();
+
+            return (rows as any[]).map(row => ({
+                id: row.id,
+                room_id: row.room_id,
+                staff_osuId: row.staff_osuId,
+                staff_username: row.staff_username,
+                staff_role: row.staff_role,
+                status: row.status,
+                assigned_by: row.assigned_by,
+                assigned_at: row.assigned_at,
+                responded_at: row.responded_at,
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+                room: {
+                    id: row.room_id,
+                    room_name: row.room_name,
+                    round_number: row.round_number,
+                    match_date: row.match_date,
+                    match_time: row.match_time,
+                    match_number: row.match_number
+                },
+                staff_avatar_url: row.staff_avatar_url,
+                // 添加比赛信息
+                match_info: {
+                    player1_username: row.player1_username,
+                    player2_username: row.player2_username
+                }
+            }));
+        } catch (error) {
+            console.error('Error getting staff room assignments:', error);
+            return [];
+        }
+    },
+
+    // 获取可供staff选择的房间列表
+    getAvailableRoomsForStaff: async (): Promise<any[]> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [rows] = await connection.execute(`
+                SELECT
+                    mr.id,
+                    mr.room_name,
+                    mr.round_number,
+                    mr.match_date,
+                    mr.match_time,
+                    mr.match_number,
+                    mr.status,
+                    mr.max_participants,
+                    mr.description,
+                    ms.player1_username,
+                    ms.player2_username,
+                    ms.referee_username,
+                    ms.commentator_username,
+                    -- 统计每个房间的staff数量
+                    COUNT(DISTINCT CASE WHEN sra.staff_role = 'referee' AND sra.status = 'confirmed' THEN sra.id END) as referee_count,
+                    COUNT(DISTINCT CASE WHEN sra.staff_role = 'commentator' AND sra.status = 'confirmed' THEN sra.id END) as commentator_count,
+                    COUNT(DISTINCT CASE WHEN sra.staff_role = 'streamer' AND sra.status = 'confirmed' THEN sra.id END) as streamer_count
+                FROM match_rooms mr
+                LEFT JOIN match_schedules ms ON mr.id = ms.room_id
+                LEFT JOIN staff_room_assignments sra ON mr.id = sra.room_id AND sra.status = 'confirmed'
+                WHERE mr.status IN ('open', 'in_progress')
+                GROUP BY mr.id, mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number, mr.status, mr.max_participants, mr.description, ms.player1_username, ms.player2_username, ms.referee_username, ms.commentator_username
+                ORDER BY mr.match_date ASC, mr.match_time ASC, mr.room_name ASC
+            `);
+
+            connection.release();
+
+            return (rows as any[]).map(row => ({
+                id: row.id,
+                room_name: row.room_name,
+                round_number: row.round_number,
+                match_date: row.match_date,
+                match_time: row.match_time,
+                match_number: row.match_number,
+                status: row.status,
+                max_participants: row.max_participants,
+                description: row.description,
+                player1_username: row.player1_username,
+                player2_username: row.player2_username,
+                referee_username: row.referee_username,
+                commentator_username: row.commentator_username,
+                staff_counts: {
+                    referee: row.referee_count || 0,
+                    commentator: row.commentator_count || 0,
+                    streamer: row.streamer_count || 0
+                }
+            }));
+        } catch (error) {
+            console.error('Error getting available rooms for staff:', error);
+            return [];
+        }
+    },
+
+    // 创建staff房间分配
+    createStaffRoomAssignment: async (assignment: Omit<StaffRoomAssignment, 'id' | 'assigned_at' | 'created_at' | 'updated_at'>): Promise<number> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(
+                `INSERT INTO staff_room_assignments (
+                    room_id, staff_osuId, staff_username, staff_role, status, assigned_by
+                ) VALUES (?, ?, ?, ?, ?, ?)`,
+                [
+                    assignment.room_id, assignment.staff_osuId, assignment.staff_username,
+                    assignment.staff_role, assignment.status || 'pending', assignment.assigned_by
+                ]
+            );
+
+            connection.release();
+
+            return (result as any).insertId;
+        } catch (error) {
+            console.error('Error creating staff room assignment:', error);
+            throw error;
+        }
+    },
+
+    // 更新staff房间分配状态
+    updateStaffRoomAssignmentStatus: async (id: number, status: StaffRoomAssignment['status']): Promise<boolean> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(
+                'UPDATE staff_room_assignments SET status = ?, responded_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                [status, id]
+            );
+
+            connection.release();
+
+            return (result as any).affectedRows > 0;
+        } catch (error) {
+            console.error('Error updating staff room assignment status:', error);
+            return false;
+        }
+    },
+
+    // 删除staff房间分配
+    deleteStaffRoomAssignment: async (id: number): Promise<boolean> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [result] = await connection.execute(
+                'DELETE FROM staff_room_assignments WHERE id = ?',
+                [id]
+            );
+
+            connection.release();
+
+            return (result as any).affectedRows > 0;
+        } catch (error) {
+            console.error('Error deleting staff room assignment:', error);
+            return false;
+        }
+    },
+
+    // 获取指定房间的staff分配 - 从match_schedules表获取裁判和解说员信息
+    getRoomStaffAssignments: async (roomId: number): Promise<StaffRoomAssignment[]> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [rows] = await connection.execute(`
+                SELECT
+                    CONCAT('referee_', ms.id) as id,
+                    ms.room_id,
+                    ms.referee_osuId as staff_osuId,
+                    ms.referee_username as staff_username,
+                    'referee' as staff_role,
+                    'confirmed' as status,
+                    ms.created_by as assigned_by,
+                    ms.created_at as assigned_at,
+                    NULL as responded_at,
+                    ms.created_at,
+                    ms.updated_at,
+                    r1.avatar_url as staff_avatar_url,
+                    ms.player1_username, ms.player2_username, ms.scheduled_time
+                FROM match_schedules ms
+                LEFT JOIN registrations r1 ON ms.referee_osuId = r1.osuId COLLATE utf8mb4_unicode_ci
+                WHERE ms.room_id = ? AND ms.referee_osuId IS NOT NULL AND ms.referee_username IS NOT NULL
+                UNION ALL
+                SELECT
+                    CONCAT('commentator_', ms.id) as id,
+                    ms.room_id,
+                    ms.commentator_osuId as staff_osuId,
+                    ms.commentator_username as staff_username,
+                    'commentator' as staff_role,
+                    'confirmed' as status,
+                    ms.created_by as assigned_by,
+                    ms.created_at as assigned_at,
+                    NULL as responded_at,
+                    ms.created_at,
+                    ms.updated_at,
+                    r2.avatar_url as staff_avatar_url,
+                    ms.player1_username, ms.player2_username, ms.scheduled_time
+                FROM match_schedules ms
+                LEFT JOIN registrations r2 ON ms.commentator_osuId = r2.osuId COLLATE utf8mb4_unicode_ci
+                WHERE ms.room_id = ? AND ms.commentator_osuId IS NOT NULL AND ms.commentator_username IS NOT NULL
+                ORDER BY staff_role ASC
+            `, [roomId, roomId]);
+
+            connection.release();
+
+            return (rows as any[]).map(row => ({
+                id: row.id,
+                room_id: row.room_id,
+                staff_osuId: row.staff_osuId,
+                staff_username: row.staff_username,
+                staff_role: row.staff_role,
+                status: row.status,
+                assigned_by: row.assigned_by,
+                assigned_at: row.assigned_at,
+                responded_at: row.responded_at,
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+                staff_avatar_url: row.staff_avatar_url,
+                // 添加比赛信息
+                match_info: {
+                    player1_username: row.player1_username,
+                    player2_username: row.player2_username,
+                    scheduled_time: row.scheduled_time
+                }
+            }));
+        } catch (error) {
+            console.error('Error getting room staff assignments:', error);
+            return [];
+        }
     }
 };
 
@@ -1013,6 +1524,7 @@ const mysqlStorage = {
 export const getRegistrations = mysqlStorage.getRegistrations;
 export const isUserRegistered = mysqlStorage.isUserRegistered;
 export const addRegistration = mysqlStorage.addRegistration;
+export const addTournamentRegistration = mysqlStorage.addTournamentRegistration;
 export const getUserRegistration = mysqlStorage.getUserRegistration;
 export const getRegistrationCount = mysqlStorage.getRegistrationCount;
 export const deleteRegistration = mysqlStorage.deleteRegistration;
@@ -1044,3 +1556,65 @@ export const updateMessageStatus = mysqlStorage.updateMessageStatus;
 
 // 默认导出初始化函数
 export default initDatabase;
+
+// 获取锦标赛报名数据（转换 Registration 为 TournamentRegistration）
+export const getTournamentRegistrations = async (): Promise<TournamentRegistration[]> => {
+    const registrations = await getRegistrations();
+    return registrations.map(reg => ({
+        osuId: reg.osuId,
+        username: reg.username,
+        avatar_url: reg.avatar_url,
+        pp: reg.pp,
+        global_rank: reg.global_rank,
+        country_rank: reg.country_rank,
+        country: reg.country,
+        teamName: '', // 默认空值
+        seedPosition: null, // 默认 null
+        agreedToTerms: true, // 假设已同意条款
+        approved: reg.approved,
+        approvedAt: reg.approvedAt,
+        registeredAt: reg.registeredAt
+    }));
+};
+
+// 检查用户是否已报名（锦标赛报名）
+export const isTournamentUserRegistered = async (osuId: string): Promise<boolean> => {
+    try {
+        const registrations = await getTournamentRegistrations();
+        return registrations.some(reg => reg.osuId === osuId);
+    } catch (error) {
+        console.error('Error checking tournament user registration:', error);
+        return false;
+    }
+};
+
+// 获取用户报名信息（锦标赛报名）
+export const getTournamentUserRegistration = async (osuId: string): Promise<TournamentRegistration | null> => {
+    try {
+        const registrations = await getTournamentRegistrations();
+        return registrations.find(reg => reg.osuId === osuId) || null;
+    } catch (error) {
+        console.error('Error getting tournament user registration:', error);
+        return null;
+    }
+};
+
+// 获取报名总数（锦标赛报名）
+export const getTournamentRegistrationCount = async (): Promise<number> => {
+    try {
+        const registrations = await getTournamentRegistrations();
+        return registrations.length;
+    } catch (error) {
+        console.error('Error getting tournament registration count:', error);
+        return 0;
+    }
+};
+
+// Staff房间分配相关函数
+export const getStaffRoomAssignments = mysqlStorage.getStaffRoomAssignments;
+export const getAvailableRoomsForStaff = mysqlStorage.getAvailableRoomsForStaff;
+export const createStaffRoomAssignment = mysqlStorage.createStaffRoomAssignment;
+export const updateStaffRoomAssignmentStatus = mysqlStorage.updateStaffRoomAssignmentStatus;
+export const deleteStaffRoomAssignment = mysqlStorage.deleteStaffRoomAssignment;
+export const getRoomStaffAssignments = mysqlStorage.getRoomStaffAssignments;
+export const getMatchRoomsWithSchedules = mysqlStorage.getMatchRoomsWithSchedules;

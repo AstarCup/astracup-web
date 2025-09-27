@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { getUserMatchSchedules, getAllMatchSchedules } from '@/lib/mysql-registrations';
 import { getUserPermissions } from '@/lib/permissions';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     try {
         // 获取用户session
         const cookieStore = await cookies();

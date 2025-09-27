@@ -5,22 +5,22 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import localFont from "next/font/local";
-import { UserSession } from '@/lib/session';
+import { UserSession } from '@/lib/permissions';
 import { getUserPermissions } from '@/lib/permissions';
-import MessageNotification from './MessageNotification';
+import MessageNotification from './ui/MessageNotification';
 
 const audiowide = localFont({
-    src: "./font/Audiowide-Regular.ttf",
+    src: "../font/Audiowide-Regular.ttf",
     display: "auto",
 });
 
 export default function Navbar() {
     const pathname = usePathname();
     const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [activeLink, setActiveLink] = useState<string>(pathname);
     const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
     const [clickedGroup, setClickedGroup] = useState<string | null>(null);
     const [user, setUser] = useState<UserSession | null>(null);
+    const [avatarSrc, setAvatarSrc] = useState<string>('');
     const [permissions, setPermissions] = useState({
         isMapSelector: false,
         isReplayTester: false,
@@ -30,43 +30,8 @@ export default function Navbar() {
     const [iconCache, setIconCache] = useState<Map<string, boolean>>(new Map());
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // 预加载图标函数
-    const preloadIcons = async () => {
-        const allIcons = [
-            // 主导航图标
-            '/icons/home.svg',
-            '/icons/news.svg',
-            '/icons/tournament.svg',
-            '/icons/guide-sm.svg',
-            '/icons/table-fill.svg',
-            '/icons/mapool-sm.svg',
-            '/icons/register.svg',
-            '/icons/others.svg',
-            '/icons/contacts.svg',
-            '/icons/photos.svg',
-            '/icons/admin-fill.svg',
-            '/icons/upload.svg',
-            '/icons/debug.svg'
-        ];
-
-        const newCache = new Map(iconCache);
-
-        for (const iconPath of allIcons) {
-            if (!newCache.has(iconPath)) {
-                try {
-                    // 预加载图标
-                    const response = await fetch(iconPath);
-                    if (response.ok) {
-                        newCache.set(iconPath, true);
-                    }
-                } catch (error) {
-                    console.warn(`Failed to preload icon: ${iconPath}`, error);
-                    newCache.set(iconPath, false);
-                }
-            }
-        }
-
-        setIconCache(newCache);
+    const handleAvatarError = () => {
+        setAvatarSrc('/default-avatar.png');
     };
 
     useEffect(() => {
@@ -126,6 +91,7 @@ export default function Navbar() {
                 const sessionData = await sessionResponse.json();
                 if (sessionData.success) {
                     setUser(sessionData.session);
+                    setAvatarSrc(sessionData.session?.avatar_url || '');
 
                     // 直接从permissions库获取用户权限
                     if (sessionData.session?.osuId) {
@@ -143,19 +109,58 @@ export default function Navbar() {
 
     // 预加载图标
     useEffect(() => {
-        preloadIcons();
-    }, []);
+        const preloadIconsAsync = async () => {
+            const allIcons = [
+                // 主导航图标
+                '/icons/home.svg',
+                '/icons/news.svg',
+                '/icons/tournament.svg',
+                '/icons/guide-sm.svg',
+                '/icons/table-fill.svg',
+                '/icons/mapool-sm.svg',
+                '/icons/register.svg',
+                '/icons/others.svg',
+                '/icons/contacts.svg',
+                '/icons/photos.svg',
+                '/icons/admin-fill.svg',
+                '/icons/upload.svg',
+                '/icons/debug.svg'
+            ];
 
-    const handleLogout = async () => {
-        try {
-            await fetch('/api/auth/logout', { method: 'POST' });
-            setUser(null);
-            // 可以添加页面刷新或重定向
-            window.location.reload();
-        } catch (error) {
-            console.error('Failed to logout:', error);
-        }
-    };
+            for (const iconPath of allIcons) {
+                setIconCache(prevCache => {
+                    if (prevCache.has(iconPath)) {
+                        return prevCache; // 已缓存，跳过
+                    }
+
+                    // 异步预加载
+                    fetch(iconPath)
+                        .then(response => {
+                            setIconCache(prevCache => {
+                                const newCache = new Map(prevCache);
+                                newCache.set(iconPath, response.ok);
+                                return newCache;
+                            });
+                        })
+                        .catch(error => {
+                            console.warn(`Failed to preload icon: ${iconPath}`, error);
+                            setIconCache(prevCache => {
+                                const newCache = new Map(prevCache);
+                                newCache.set(iconPath, false);
+                                return newCache;
+                            });
+                        });
+
+                    // 立即标记为正在加载
+                    const newCache = new Map(prevCache);
+                    newCache.set(iconPath, false);
+                    return newCache;
+                });
+            }
+        };
+
+        preloadIconsAsync();
+    }, []); // 只在组件挂载时执行一次
 
     const handleMouseEnter = (groupName: string) => {
         if (hoverTimeoutRef.current) {
@@ -217,16 +222,8 @@ export default function Navbar() {
             name: '管理',
             svg: '/icons/admin-fill.svg',
             links: [
-                ...(permissions.isMapSelector || permissions.isAdmin ? [
-                    { name: 'MAP SELECTION', href: '/map-selection', tip: '图池管理', svg: '/icons/table-fill.svg' }
-                ] : []),
-                ...(permissions.isReplayTester || permissions.isAdmin ? [
-                    { name: 'UPLOAD REPLAY', href: '/replay-collection', tip: '测图上传', svg: '/icons/upload.svg' }
-                ] : []),
-                ...(permissions.isAdmin ? [
-                    { name: 'ADMIN PANEL', href: '/admin', tip: '管理员面板', svg: '/icons/admin-fill.svg' }
-                ] : [])
-            ].filter(Boolean)
+                { name: 'STAFF PANEL', href: '/staff-dashboard', tip: '管理比赛安排', svg: '/icons/admin-fill.svg' }
+            ]
         }] : [])
     ];
 
@@ -248,7 +245,7 @@ export default function Navbar() {
 
 
 
-                <img src="/NavbarBackground.svg" alt="Background" className="absolute inset-0 object-cover bg-center bg-repeat-x" style={{ zIndex: -2 }} />
+                <Image src="/NavbarBackground.svg" alt="Background" fill className="absolute inset-0 object-cover bg-center bg-repeat-x" style={{ zIndex: -2 }} />
 
 
                 <div className="max-w-7xl mx-auto px-2">
@@ -262,7 +259,7 @@ export default function Navbar() {
                         <div className="flex items-center space-x-4">
                             {/* Desktop Menu */}
                             <ul className="hidden xl:flex space-x-8 text-[#FFFFFF] p-2 m-2 navbar-menu">
-                                {navGroups.map((group, groupIndex) => (
+                                {navGroups.map((group) => (
                                     <li key={group.name} className="relative">
                                         <div
                                             className="flex flex-col items-center relative text-shadow-lg cursor-pointer hover:text-[#E93B66] transition duration-200"
@@ -300,11 +297,6 @@ export default function Navbar() {
                                                             <Link
                                                                 href={link.href}
                                                                 className={`flex-1 p-3 text-left text-sm font-medium flex items-center gap-2 relative text-gray-800 ${isActive(link.href) ? 'bg-[#3BE9D8] font-bold' : ''}`}
-                                                                onClick={() => {
-                                                                    setActiveLink(link.href);
-                                                                    setHoveredGroup(null);
-                                                                    setClickedGroup(null);
-                                                                }}
                                                             >
                                                                 {link.svg ? (
                                                                     <Image
@@ -338,15 +330,13 @@ export default function Navbar() {
                                 <MessageNotification />
                                 {user ? (
                                     <Link href="/player-info">
-                                        <img
-                                            src={user.avatar_url}
+                                        <Image
+                                            src={avatarSrc}
                                             alt={user.username}
                                             width={40}
                                             height={40}
                                             className="rounded-full outline outline-2 outline-[#E93B66] cursor-pointer hover:outline-[#3BE9D8] hover:scale-110 hover:shadow-lg hover:shadow-[#E93B66]/50 transition-all duration-200"
-                                            onError={(e) => {
-                                                e.currentTarget.src = '/default-avatar.png';
-                                            }}
+                                            onError={handleAvatarError}
                                         />
                                     </Link>
                                 ) : (
@@ -365,15 +355,13 @@ export default function Navbar() {
                             {/* Mobile User Profile */}
                             <div className="flex items-center">
                                 {user ? (
-                                    <img
-                                        src={user.avatar_url}
+                                    <Image
+                                        src={avatarSrc}
                                         alt={user.username}
                                         width={32}
                                         height={32}
                                         className="rounded-full outline outline-2 outline-[#E93B66]"
-                                        onError={(e) => {
-                                            e.currentTarget.src = '/default-avatar.png';
-                                        }}
+                                        onError={handleAvatarError}
                                     />
                                 ) : (
                                     <button
@@ -432,10 +420,7 @@ export default function Navbar() {
                                                     <Link
                                                         href={link.href}
                                                         className={`flex-1 p-3 text-left text-sm font-medium flex items-center gap-2 relative ${isActive(link.href) ? 'bg-[#3BE9D8] font-bold' : 'text-gray-800'}`}
-                                                        onClick={() => {
-                                                            setActiveLink(link.href);
-                                                            setMobileMenuOpen(false);
-                                                        }}
+                                                        onClick={() => setMobileMenuOpen(false)}
                                                     >
                                                         {link.svg ? (
                                                             <Image
@@ -466,15 +451,13 @@ export default function Navbar() {
                                 <div className="mt-4 pt-4 border-t border-gray-300">
                                     <Link href="/player-info" onClick={() => setMobileMenuOpen(false)}>
                                         <div className="flex items-center gap-3 p-3 bg-[#3d3d3d] rounded-md cursor-pointer hover:bg-[#4d4d4d] transition-colors duration-200">
-                                            <img
-                                                src={user.avatar_url}
+                                            <Image
+                                                src={avatarSrc}
                                                 alt={user.username}
                                                 width={40}
                                                 height={40}
                                                 className="rounded-full outline outline-2 outline-[#E93B66]"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = '/default-avatar.png';
-                                                }}
+                                                onError={handleAvatarError}
                                             />
                                             <div className="flex-1">
                                                 <div className="text-white font-bold text-sm">{user.username}</div>

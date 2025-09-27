@@ -11,9 +11,7 @@ const pageTitles: Record<string, string> = {
     '/contact': '联系我们',
     '/photos': '历届荣誉展示',
     '/register': '注册登录',
-    '/s1': 'Season 1',
-    '/map-selection': '地图选择',
-    '/replay-collection': '回放收集',
+    '/staff-dashboard': '工作人员仪表板',
 };
 
 // Hook for setting page title in client components

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getPlayerMatchups, getUserRegistration } from '@/lib/mysql-registrations';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     try {
         // 获取用户session
         const cookieStore = await cookies();

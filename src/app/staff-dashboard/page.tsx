@@ -1,580 +1,894 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { UserSession } from '@/lib/permissions';
+import { UserPermissions } from '@/lib/permissions';
+import { getUserPermissions } from '@/lib/permissions';
+import localFont from "next/font/local";
+import Link from 'next/link';
+import Image from 'next/image';
+import { TournamentRegistration } from '@/lib/mysql-registrations';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { showSuccess, showError } from '@/app/components/ui/Notification';
+import OverviewManagement from '@/app/components/staff/OverviewManagement';
+import RoomManagement from '@/app/components/staff/RoomManagement';
+import MatchupManagement from '@/app/components/staff/MatchupManagement';
+import StreamingManagement from '@/app/components/staff/StreamingManagement';
+import UserManagement from '@/app/components/staff/UserManagement';
+import MatchManagement from '@/app/components/staff/MatchManagement';
+import SettingsManagement from '@/app/components/staff/SettingsManagement';
+import ReplayCollectionManagement from '@/app/components/staff/ReplayCollectionManagement';
+import MapSelectionManagement from '@/app/components/staff/MapSelectionManagement';
 
-interface Match {
-    id: string;
-    round: string;
-    date: string;
-    time: string;
-    matchNumber: string;
-    player1Id?: string;
-    player2Id?: string;
-    player1Name?: string;
-    player2Name?: string;
-    redScore?: number;
-    blueScore?: number;
-    status: 'pending' | 'ongoing' | 'completed' | 'cancelled';
-    streamLink?: string;
-    replayLink?: string;
-    matchLink?: string;
-    referee?: string;
-    streamer?: string;
-    createdAt: string;
-    updatedAt: string;
+interface MatchRoom {
+    id: number;
+    room_name: string;
+    round_number: number;
+    match_date: string;
+    match_time: string;
+    match_number: number;
+    max_participants: number;
+    status: 'open' | 'closed' | 'in_progress';
+    description: string;
+    created_by: number;
+    created_at: string;
+    schedules?: {
+        id: number;
+        player1_osuId: number;
+        player1_username: string;
+        player1_avatar_url: string;
+        player2_osuId: number;
+        player2_username: string;
+        player2_avatar_url: string;
+        status: 'scheduled' | 'in_progress' | 'completed';
+        scheduled_time: string;
+    }[];
 }
 
-interface Appointment {
-    id: string;
-    matchId: string;
-    playerId: string;
-    playerName: string;
-    opponentId?: string;
-    opponentName?: string;
-    status: 'pending' | 'accepted' | 'rejected';
-    createdAt: string;
-    updatedAt: string;
+interface PlayerMatchup {
+    id: number;
+    player1_osuId: number;
+    player1_username: string;
+    player1_avatar_url: string;
+    player2_osuId: number;
+    player2_username: string;
+    player2_avatar_url: string;
+    status: 'available' | 'in_progress' | 'completed';
+    created_by: number;
+    created_at: string;
 }
 
-interface StaffMember {
-    id: string;
+interface ApprovedPlayer {
+    osuId: string;
     username: string;
-    role: 'referee' | 'streamer' | 'admin';
+    inGameName: string;
+    avatar_url: string;
+    pp: number;
+    global_rank: number;
+    country_rank: number;
+    country: string;
 }
 
-export default function StaffDashboardPage() {
-    usePageTitle('/staff-dashboard');
+interface StaffRoomAssignment {
+    id: number;
+    room_id: number;
+    staff_osuId: string;
+    staff_username: string;
+    staff_role: 'referee' | 'streamer' | 'commentator';
+    status: 'pending' | 'confirmed' | 'declined';
+    assigned_by: string;
+    assigned_at: string;
+    responded_at?: string | null;
+    created_at: string;
+    updated_at: string;
+    room?: {
+        id: number;
+        room_name: string;
+        round_number: number;
+        match_date: string;
+        match_time: string;
+        match_number: number;
+    };
+    staff_avatar_url?: string;
+    match_info?: {
+        id: number;
+        player1_username: string;
+        player2_username: string;
+        scheduled_time: string;
+        red_score?: number;
+        blue_score?: number;
+        match_link?: string;
+        replay_link?: string;
+        stream_link?: string;
+        status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+    };
+}
 
-    const [currentUser, setCurrentUser] = useState<any>(null);
-    const [userPermissions, setUserPermissions] = useState<any>(null);
-    const [isStaff, setIsStaff] = useState(false);
-    const [activeTab, setActiveTab] = useState<'matches' | 'appointments' | 'staff' | 'schedule'>('matches');
-    const [matches, setMatches] = useState<Match[]>([]);
-    const [appointments, setAppointments] = useState<Appointment[]>([]);
-    const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [editForm, setEditForm] = useState({
-        referee: '',
-        streamer: '',
-        streamLink: '',
-        replayLink: '',
-        matchLink: '',
-        status: 'pending' as Match['status'],
-        redScore: '',
-        blueScore: ''
+// 创建对战模态框组件
+
+export default function AdminPage() {
+    const router = useRouter();
+    usePageTitle('/staff-dashboard');
+    const [user, setUser] = useState<UserSession | null>(null);
+    const [permissions, setPermissions] = useState<UserPermissions>({
+        isMapSelector: false,
+        isReplayTester: false,
+        isAdmin: false,
+        isStreamer: false,
+        isReferee: false
     });
+    const [loading, setLoading] = useState(true);
+    const [registrations, setRegistrations] = useState<TournamentRegistration[]>([]);
+    const [registrationsLoading, setRegistrationsLoading] = useState(false);
+    const [processingUser, setProcessingUser] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState('overview');
+
+    // 房间管理状态
+    const [rooms, setRooms] = useState<MatchRoom[]>([]);
+    const [roomsLoading, setRoomsLoading] = useState(false);
+    const [deletingRoomId, setDeletingRoomId] = useState<number | null>(null);
+
+    // 对战管理状态
+    const [matchups, setMatchups] = useState<PlayerMatchup[]>([]);
+    const [matchupsLoading, setMatchupsLoading] = useState(false);
+    const [deletingMatchupId, setDeletingMatchupId] = useState<number | null>(null);
+
+    // 已过审玩家状态
+    const [approvedPlayers, setApprovedPlayers] = useState<ApprovedPlayer[]>([]);
+
+    // Staff房间分配状态
+    const [staffAssignments, setStaffAssignments] = useState<StaffRoomAssignment[]>([]);
+    const [staffAssignmentsLoading, setStaffAssignmentsLoading] = useState(false);
+
+    // 可供staff选择的房间状态
+    const [availableRooms, setAvailableRooms] = useState<any[]>([]);
+    const [availableRoomsLoading, setAvailableRoomsLoading] = useState(false);
 
     useEffect(() => {
-        initializeDashboard();
-    }, []);
+        const fetchUserData = async () => {
+            try {
+                // 获取用户session
+                const sessionResponse = await fetch('/api/session/get');
+                const sessionData = await sessionResponse.json();
 
-    const initializeDashboard = async () => {
-        try {
-            setLoading(true);
-
-            // 获取当前用户信息
-            const sessionResponse = await fetch('/api/session/get');
-            const sessionData = await sessionResponse.json();
-
-            if (sessionData.session?.osuId) {
-                setCurrentUser(sessionData.session);
-
-                // 检查用户权限
-                const permissionsResponse = await fetch('/api/user-permissions');
-                const permissionsData = await permissionsResponse.json();
-
-                if (permissionsData.success && (permissionsData.permissions.isAdmin || permissionsData.permissions.isMapSelector || permissionsData.permissions.isReplayTester || permissionsData.permissions.isReferee || permissionsData.permissions.isStreamer)) {
-                    setUserPermissions(permissionsData.permissions);
-                    setIsStaff(true);
-                    await loadDashboardData();
-                } else {
-                    setError('您没有工作人员权限，无法访问管理面板');
+                if (!sessionData.success || !sessionData.session) {
+                    router.push('/register');
+                    return;
                 }
-            } else {
-                setError('请先登录');
+
+                setUser(sessionData.session);
+
+                // 获取用户权限
+                const userPermissions = await getUserPermissions(sessionData.session.osuId.toString());
+                setPermissions(userPermissions);
+
+                // 检查管理员权限
+                if (!userPermissions.isAdmin) {
+                    showError('需要管理员权限');
+                    router.push('/player-info');
+                    return;
+                }
+            } catch (error) {
+                console.error('Failed to fetch user data:', error);
+                router.push('/register');
+            } finally {
+                setLoading(false);
             }
+        };
+
+        fetchUserData();
+    }, [router]);
+
+    // 当切换到房间管理选项卡时获取房间列表
+    useEffect(() => {
+        if (activeTab === 'rooms' && permissions.isAdmin) {
+            fetchRooms();
+        }
+    }, [activeTab, permissions.isAdmin]);
+
+    // 当切换到对战管理选项卡时获取对战列表和已过审玩家
+    useEffect(() => {
+        if (activeTab === 'matchups' && permissions.isAdmin) {
+            fetchMatchups();
+            fetchApprovedPlayers();
+        }
+    }, [activeTab, permissions.isAdmin]);
+
+    // 当切换到用户管理选项卡时获取用户列表
+    useEffect(() => {
+        if (activeTab === 'users' && permissions.isAdmin) {
+            fetchRegistrations();
+        }
+    }, [activeTab, permissions.isAdmin]);
+
+    // 当切换到直播裁判选项卡时获取staff分配列表和可用房间
+    useEffect(() => {
+        if (activeTab === 'streaming' && (permissions.isAdmin || permissions.isReferee || permissions.isStreamer)) {
+            fetchStaffAssignments();
+            fetchAvailableRooms();
+        }
+    }, [activeTab, permissions.isAdmin, permissions.isReferee, permissions.isStreamer]);
+
+    // 获取注册用户列表
+    const fetchRegistrations = async () => {
+        try {
+            setRegistrationsLoading(true);
+            const response = await fetch('/api/edge-registrations');
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch registrations');
+            }
+
+            const data = await response.json();
+            setRegistrations(data.registrations || []);
         } catch (error) {
-            setError('初始化失败，请刷新页面重试');
-            console.error('Failed to initialize dashboard:', error);
+            console.error('Error fetching registrations:', error);
+            showError('获取注册数据失败');
         } finally {
-            setLoading(false);
+            setRegistrationsLoading(false);
         }
     };
 
-    const loadDashboardData = async () => {
-        try {
-            // 并行获取数据
-            const [matchesResponse, appointmentsResponse] = await Promise.all([
-                fetch('/api/matches'),
-                fetch('/api/appointments')
-            ]);
-
-            const [matchesData, appointmentsData] = await Promise.all([
-                matchesResponse.json(),
-                appointmentsResponse.json()
-            ]);
-
-            if (matchesData.success) {
-                setMatches(matchesData.matches);
-            }
-
-            if (appointmentsData.success) {
-                setAppointments(appointmentsData.appointments);
-            }
-
-            // 获取工作人员数据
-            const staffResponse = await fetch('/api/staff-members');
-            const staffData = await staffResponse.json();
-
-            if (staffData.success) {
-                setStaffMembers(staffData.staffMembers);
-            }
-        } catch (error) {
-            console.error('Failed to load dashboard data:', error);
+    // 审核通过用户注册
+    const handleApproveRegistration = async (osuId: string, username: string) => {
+        if (!confirm(`确定要审核通过用户 ${username} (ID: ${osuId}) 的注册信息吗？`)) {
+            return;
         }
-    };
-
-    const updateMatch = async () => {
-        if (!selectedMatch) return;
 
         try {
-            const updateData = {
-                ...editForm,
-                redScore: editForm.redScore ? parseInt(editForm.redScore) : undefined,
-                blueScore: editForm.blueScore ? parseInt(editForm.blueScore) : undefined
-            };
-
-            const response = await fetch(`/api/matches/${selectedMatch.id}`, {
-                method: 'PUT',
+            setProcessingUser(osuId);
+            const response = await fetch('/api/admin/approve-registration', {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(updateData),
+                body: JSON.stringify({ osuId }),
             });
 
             const data = await response.json();
 
             if (data.success) {
-                setShowEditModal(false);
-                setSelectedMatch(null);
-                await loadDashboardData();
-                alert('比赛信息已更新！');
+                showSuccess(data.message);
+                // 刷新注册列表
+                fetchRegistrations();
             } else {
-                setError(data.error || '更新失败');
+                showError(`审核失败: ${data.error}`);
             }
         } catch (error) {
-            setError('网络错误，请稍后重试');
-            console.error('Failed to update match:', error);
+            console.error('Error approving registration:', error);
+            showError('审核用户注册信息时发生错误');
+        } finally {
+            setProcessingUser(null);
         }
     };
 
-    const updateAppointmentStatus = async (appointmentId: string, status: string) => {
+    // 删除用户注册
+    const handleDeleteRegistration = async (osuId: string, username: string) => {
+        if (!confirm(`确定要删除用户 ${username} (ID: ${osuId}) 的注册信息吗？此操作不可撤销！`)) {
+            return;
+        }
+
         try {
-            const response = await fetch(`/api/appointments/${appointmentId}`, {
-                method: 'PUT',
+            setProcessingUser(osuId);
+            const response = await fetch('/api/admin/delete-registration', {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ status }),
+                body: JSON.stringify({ osuId }),
             });
 
             const data = await response.json();
 
             if (data.success) {
-                await loadDashboardData();
-                alert(`预约已${status === 'accepted' ? '接受' : '拒绝'}！`);
+                showSuccess(data.message);
+                // 刷新注册列表
+                fetchRegistrations();
             } else {
-                setError(data.error || '更新预约状态失败');
+                showError(`删除失败: ${data.error}`);
             }
         } catch (error) {
-            setError('网络错误，请稍后重试');
-            console.error('Failed to update appointment:', error);
+            console.error('Error deleting registration:', error);
+            showError('删除用户注册信息时发生错误');
+        } finally {
+            setProcessingUser(null);
         }
     };
 
-    const openEditModal = (match: Match) => {
-        setSelectedMatch(match);
-        setEditForm({
-            referee: match.referee || '',
-            streamer: match.streamer || '',
-            streamLink: match.streamLink || '',
-            replayLink: match.replayLink || '',
-            matchLink: match.matchLink || '',
-            status: match.status,
-            redScore: match.redScore?.toString() || '',
-            blueScore: match.blueScore?.toString() || ''
-        });
-        setShowEditModal(true);
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'pending': return 'bg-yellow-100 text-yellow-800';
-            case 'ongoing': return 'bg-blue-100 text-blue-800';
-            case 'completed': return 'bg-green-100 text-green-800';
-            case 'cancelled': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
+    // 房间管理函数
+    const fetchRooms = async () => {
+        setRoomsLoading(true);
+        try {
+            const response = await fetch('/api/match-rooms?withSchedules=true');
+            const data = await response.json();
+            if (data.success) {
+                setRooms(data.rooms);
+            } else {
+                console.error('Failed to fetch rooms:', data.error);
+            }
+        } catch (error) {
+            console.error('Error fetching rooms:', error);
+        } finally {
+            setRoomsLoading(false);
         }
     };
 
-    const getStatusText = (status: string) => {
-        switch (status) {
-            case 'pending': return '等待中';
-            case 'ongoing': return '进行中';
-            case 'completed': return '已完成';
-            case 'cancelled': return '已取消';
-            default: return status;
+    const handleDeleteRoom = async (roomId: number) => {
+        if (!confirm('确定要删除这个比赛房间吗？此操作不可撤销。')) {
+            return;
+        }
+
+        setDeletingRoomId(roomId);
+        try {
+            const response = await fetch('/api/match-rooms/delete', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: roomId }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setRooms(rooms.filter(room => room.id !== roomId));
+                showSuccess('房间删除成功');
+            } else {
+                showError('删除失败: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error deleting room:', error);
+            showError('删除房间时发生错误');
+        } finally {
+            setDeletingRoomId(null);
+        }
+    };
+
+    const handleCreateRoom = async (roomData: {
+        room_name: string;
+        round_number: number;
+        match_date: string;
+        match_time: string;
+        match_number: number;
+        max_participants: number;
+        description: string;
+    }) => {
+        try {
+            const response = await fetch('/api/match-rooms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(roomData),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                fetchRooms(); // 重新获取房间列表
+                showSuccess('房间创建成功');
+            } else {
+                showError('创建失败: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error creating room:', error);
+            showError('创建房间时发生错误');
+        }
+    };
+
+    // 对战管理函数
+    const fetchMatchups = async () => {
+        setMatchupsLoading(true);
+        try {
+            const response = await fetch('/api/player-matchups');
+            const data = await response.json();
+            if (data.success) {
+                setMatchups(data.matchups);
+            } else {
+                console.error('Failed to fetch matchups:', data.error);
+            }
+        } catch (error) {
+            console.error('Error fetching matchups:', error);
+        } finally {
+            setMatchupsLoading(false);
+        }
+    };
+
+    const handleDeleteMatchup = async (matchupId: number) => {
+        if (!confirm('确定要删除这个玩家对战吗？此操作不可撤销。')) {
+            return;
+        }
+
+        setDeletingMatchupId(matchupId);
+        try {
+            const response = await fetch('/api/player-matchups/delete', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: matchupId }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setMatchups(matchups.filter(matchup => matchup.id !== matchupId));
+                showSuccess('对战删除成功');
+            } else {
+                showError('删除失败: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error deleting matchup:', error);
+            showError('删除对战时发生错误');
+        } finally {
+            setDeletingMatchupId(null);
+        }
+    };
+
+    const handleCreateMatchup = async (matchupData: {
+        player1_osuId: number;
+        player1_username: string;
+        player2_osuId: number;
+        player2_username: string;
+    }) => {
+        try {
+            const response = await fetch('/api/player-matchups', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(matchupData),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                fetchMatchups(); // 重新获取对战列表
+                showSuccess('对战创建成功');
+            } else {
+                showError('创建失败: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error creating matchup:', error);
+            showError('创建对战时发生错误');
+        }
+    };
+
+    // 获取已过审玩家
+    const fetchApprovedPlayers = async () => {
+        try {
+            const response = await fetch('/api/approved-players');
+            if (response.ok) {
+                const data = await response.json();
+                setApprovedPlayers(data.players || []);
+            }
+        } catch (error) {
+            console.error('Error fetching approved players:', error);
+        }
+    };
+
+    // 获取staff房间分配列表
+    const fetchStaffAssignments = async () => {
+        try {
+            setStaffAssignmentsLoading(true);
+            const response = await fetch('/api/staff-room-assignments');
+            if (response.ok) {
+                const data = await response.json();
+                setStaffAssignments(data.assignments || []);
+            }
+        } catch (error) {
+            console.error('Error fetching staff assignments:', error);
+        } finally {
+            setStaffAssignmentsLoading(false);
+        }
+    };
+
+    // 获取可供staff选择的房间列表
+    const fetchAvailableRooms = async () => {
+        try {
+            setAvailableRoomsLoading(true);
+            const response = await fetch('/api/available-rooms-for-staff');
+            if (response.ok) {
+                const data = await response.json();
+                setAvailableRooms(data.rooms || []);
+            }
+        } catch (error) {
+            console.error('Error fetching available rooms:', error);
+        } finally {
+            setAvailableRoomsLoading(false);
+        }
+    };
+
+    // Staff申请加入房间
+    const handleApplyForRoom = async (roomId: number, role: 'referee' | 'streamer' | 'commentator') => {
+        if (!user) return;
+
+        const roleName = role === 'referee' ? '裁判' : role === 'streamer' ? '直播' : '解说';
+
+        try {
+            const response = await fetch('/api/staff-room-assignments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    room_id: roomId,
+                    staff_osuId: user.osuId,
+                    staff_username: user.username,
+                    staff_role: role,
+                    assigned_by: user.osuId // 自己申请，所以assigned_by也是自己
+                }),
+            });
+
+            if (response.ok) {
+                showSuccess(`成功加入房间成为${roleName}！`);
+                // 重新获取数据
+                fetchStaffAssignments();
+                fetchAvailableRooms();
+            } else {
+                const errorData = await response.json();
+                showError(`申请失败: ${errorData.error || '未知错误'}`);
+            }
+        } catch (error) {
+            console.error('Error applying for room:', error);
+            showError('申请失败，请稍后重试');
+        }
+    };
+
+    const handleRevokeAssignment = async (assignmentId: number, roleName: string) => {
+        if (!confirm(`确定要撤销${roleName}分配吗？`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/staff-room-assignments?assignmentId=${assignmentId}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                showSuccess(`已撤销${roleName}分配`);
+                // 重新获取数据
+                fetchStaffAssignments();
+                fetchAvailableRooms();
+            } else {
+                const errorData = await response.json();
+                showError(`撤销失败: ${errorData.error || '未知错误'}`);
+            }
+        } catch (error) {
+            console.error('Error revoking assignment:', error);
+            showError('撤销失败，请稍后重试');
+        }
+    };
+
+    // Staff加入房间
+    const handleLogout = async () => {
+        try {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            router.push('/');
+        } catch (error) {
+            console.error('Logout failed:', error);
         }
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen py-12">
-                <div className="max-w-6xl mx-auto p-6">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F38181] mx-auto"></div>
-                        <p className="mt-4 text-gray-300">加载中...</p>
-                    </div>
+            <div className="flex flex-col items-center justify-center min-h-screen relative">
+                <div className="fixed inset-0 z-0">
+                    <Image
+                        src="/background-parallax.svg"
+                        alt="background"
+                        fill
+                        className="object-cover opacity-20"
+                    />
+                </div>
+                <div className="relative z-10 bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-8 text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#E93B66] mx-auto mb-4"></div>
+                    <div className="text-white text-xl font-medium">加载中...</div>
                 </div>
             </div>
         );
     }
 
-    if (!isStaff) {
+    if (!user || !permissions.isAdmin) {
         return (
-            <div className="min-h-screen py-12">
-                <div className="max-w-2xl mx-auto p-6">
-                    <div className="bg-red-50 border border-red-200 p-6 text-center">
-                        <h2 className="text-xl font-bold text-red-800 mb-2">访问受限</h2>
-                        <p className="text-red-600">{error || '您没有工作人员权限，无法访问管理面板'}</p>
-                    </div>
+            <div className="flex flex-col items-center justify-center min-h-screen relative">
+                <div className="fixed inset-0 z-0">
+                    <Image
+                        src="/background-parallax.svg"
+                        alt="background"
+                        fill
+                        className="object-cover opacity-20"
+                    />
+                </div>
+                <div className="relative z-10 bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-8 text-center max-w-md">
+                    <div className="text-red-400 text-2xl mb-4">⚠️</div>
+                    <h1 className="text-2xl font-bold text-white mb-4">
+                        {!user ? '请先登录' : '权限不足'}
+                    </h1>
+                    <p className="text-gray-300 mb-6">
+                        {!user
+                            ? '您需要登录后才能访问此页面'
+                            : '您没有权限访问管理比赛安排页面'
+                        }
+                    </p>
+                    <Link
+                        href="/"
+                        className="inline-block bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3  transition-colors duration-200 font-medium"
+                    >
+                        返回首页
+                    </Link>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen py-12">
-            <div className="max-w-6xl mx-auto p-6">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-white mb-2">工作人员管理面板</h1>
-                    <p className="text-gray-300">管理比赛、预约、工作人员和赛程安排</p>
-                </div>
-
-                {error && (
-                    <div className="bg-red-50 border border-red-200 p-4 mb-6">
-                        <p className="text-sm text-red-600">{error}</p>
-                    </div>
-                )}
-
-                {/* 标签页导航 */}
-                <div className="mb-6">
-                    <div className="flex space-x-1 bg-gray-800 p-1 ">
-                        {[
-                            { id: 'matches', label: '比赛管理' },
-                            { id: 'appointments', label: '预约管理' },
-                            { id: 'staff', label: '工作人员' },
-                            { id: 'schedule', label: '赛程安排' }
-                        ].map((tab) => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id as any)}
-                                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${activeTab === tab.id
-                                    ? 'bg-[#F38181] text-white'
-                                    : 'text-gray-300 hover:text-white hover:bg-gray-700'
-                                    }`}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
+        <div className="flex h-screen bg-[#1a1a1a]">
+            {/* 侧边栏 */}
+            <div className="w-64 bg-[#2d2d2d] border-r border-[#404040] flex flex-col">
+                {/* 头部信息 */}
+                <div className="p-6 border-b border-[#404040]">
+                    <div className="flex items-center mb-4">
+                        <Image
+                            src={user.avatar_url}
+                            alt={user.username}
+                            width={40}
+                            height={40}
+                            className="rounded-full outline outline-2 outline-[#E93B66] mr-3"
+                            onError={(e) => {
+                                e.currentTarget.src = '/default-avatar.png';
+                            }}
+                        />
+                        <div>
+                            <h3 className="text-white font-medium text-sm">{user.username}</h3>
+                            <p className="text-gray-400 text-xs">管理员</p>
+                        </div>
                     </div>
                 </div>
 
-                {/* 标签页内容 */}
-                <div className="bg-gray-800  shadow-md overflow-hidden">
-                    {activeTab === 'matches' && (
-                        <div className="p-6">
-                            <h2 className="text-xl font-semibold text-white mb-4">比赛管理</h2>
+                {/* 导航菜单 */}
+                <nav className="flex-1 p-4">
+                    <div className="space-y-2">
+                        <button
+                            onClick={() => setActiveTab('overview')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'overview'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                            </svg>
+                            概览
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('rooms')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'rooms'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                            </svg>
+                            比赛房间管理
+                        </button>
 
-                            {matches.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <p className="text-gray-400">暂无比赛数据</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {matches.map((match) => (
-                                        <div key={match.id} className="bg-gray-700  p-4">
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div>
-                                                    <h3 className="text-lg font-medium text-white">
-                                                        {match.round} - {match.matchNumber}
-                                                    </h3>
-                                                    <p className="text-gray-300 text-sm">
-                                                        {match.date} {match.time}
-                                                    </p>
-                                                    <p className="text-gray-400 text-sm">
-                                                        对阵: {match.player1Name || '待定'} vs {match.player2Name || '待定'}
-                                                    </p>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(match.status)}`}>
-                                                        {getStatusText(match.status)}
-                                                    </span>
-                                                    <button
-                                                        onClick={() => openEditModal(match)}
-                                                        className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
-                                                    >
-                                                        编辑
-                                                    </button>
-                                                </div>
-                                            </div>
+                        <button
+                            onClick={() => setActiveTab('matchups')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'matchups'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
+                            </svg>
+                            对战列表管理
+                        </button>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                                <div>
-                                                    <span className="text-gray-400">裁判员:</span>
-                                                    <span className="text-white ml-2">{match.referee || '未分配'}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-gray-400">直播员:</span>
-                                                    <span className="text-white ml-2">{match.streamer || '未分配'}</span>
-                                                </div>
-                                            </div>
+                        <button
+                            onClick={() => setActiveTab('streaming')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'streaming'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.414-1.414A1 1 0 0010.586 3H7.414a1 1 0 00-.707.293L5.293 4.707A1 1 0 014.586 5H4zm12 12H4a4 4 0 01-4-4V7a4 4 0 014-4h1.586a1 1 0 01.707.293L7.707 5.707A1 1 0 008.414 6h3.172a1 1 0 01.707.293l1.414 1.414A1 1 0 0014.414 8H16a4 4 0 014 4v6a4 4 0 01-4 4z" clipRule="evenodd" />
+                                <path fillRule="evenodd" d="M8 11a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
+                            </svg>
+                            直播裁判
+                        </button>
 
-                                            {match.status === 'completed' && (match.redScore !== undefined || match.blueScore !== undefined) && (
-                                                <div className="mt-3 p-3 bg-gray-600 rounded">
-                                                    <p className="text-white text-sm">
-                                                        比分: {match.redScore || 0} - {match.blueScore || 0}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
+                        <button
+                            onClick={() => setActiveTab('matches')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'matches'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                            </svg>
+                            比赛管理
+                        </button>
 
-                    {activeTab === 'appointments' && (
-                        <div className="p-6">
-                            <h2 className="text-xl font-semibold text-white mb-4">预约管理</h2>
+                        <button
+                            onClick={() => setActiveTab('users')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'users'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            用户管理
+                        </button>
 
-                            {appointments.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <p className="text-gray-400">暂无预约申请</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {appointments.map((appointment) => {
-                                        const match = matches.find(m => m.id === appointment.matchId);
-                                        return (
-                                            <div key={appointment.id} className="bg-gray-700  p-4">
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <div>
-                                                        <h3 className="text-lg font-medium text-white">
-                                                            {appointment.playerName} 挑战 {appointment.opponentName}
-                                                        </h3>
-                                                        {match && (
-                                                            <p className="text-gray-300 text-sm">
-                                                                比赛: {match.round} - {match.matchNumber} ({match.date} {match.time})
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(appointment.status)}`}>
-                                                        {appointment.status === 'pending' ? '等待确认' :
-                                                            appointment.status === 'accepted' ? '已接受' : '已拒绝'}
-                                                    </span>
-                                                </div>
+                        <button
+                            onClick={() => setActiveTab('replays')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'replays'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h4a2 2 0 012 2v2a2 2 0 01-2 2H8a2 2 0 01-2-2v-2z" clipRule="evenodd" />
+                            </svg>
+                            回放收集
+                        </button>
 
-                                                <p className="text-gray-400 text-sm mb-3">
-                                                    申请时间: {new Date(appointment.createdAt).toLocaleString('zh-CN')}
-                                                </p>
+                        <button
+                            onClick={() => setActiveTab('map-selection')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'map-selection'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd" />
+                            </svg>
+                            选图管理
+                        </button>
 
-                                                {appointment.status === 'pending' && (
-                                                    <div className="flex space-x-2">
-                                                        <button
-                                                            onClick={() => updateAppointmentStatus(appointment.id, 'accepted')}
-                                                            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors text-sm"
-                                                        >
-                                                            接受预约
-                                                        </button>
-                                                        <button
-                                                            onClick={() => updateAppointmentStatus(appointment.id, 'rejected')}
-                                                            className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors text-sm"
-                                                        >
-                                                            拒绝预约
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    )}
+                        <button
+                            onClick={() => setActiveTab('settings')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'settings'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                            </svg>
+                            系统设置
+                        </button>
 
-                    {activeTab === 'staff' && (
-                        <div className="p-6">
-                            <h2 className="text-xl font-semibold text-white mb-4">工作人员管理</h2>
 
-                            <div className="space-y-4">
-                                {staffMembers.map((staff) => (
-                                    <div key={staff.id} className="bg-gray-700  p-4">
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <h3 className="text-lg font-medium text-white">{staff.username}</h3>
-                                                <p className="text-gray-400 text-sm">
-                                                    角色: {staff.role === 'referee' ? '裁判员' : staff.role === 'streamer' ? '直播员' : '管理员'}
-                                                </p>
-                                            </div>
-                                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${staff.role === 'admin' ? 'bg-red-100 text-red-800' :
-                                                staff.role === 'referee' ? 'bg-blue-100 text-blue-800' :
-                                                    'bg-purple-100 text-purple-800'
-                                                }`}>
-                                                {staff.role === 'referee' ? '裁判员' : staff.role === 'streamer' ? '直播员' : '管理员'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'schedule' && (
-                        <div className="p-6">
-                            <h2 className="text-xl font-semibold text-white mb-4">赛程安排</h2>
-                            <div className="text-center py-8">
-                                <p className="text-gray-400">赛程安排功能即将上线</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* 编辑比赛模态框 */}
-                {showEditModal && selectedMatch && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-gray-800  p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
-                            <h3 className="text-xl font-bold text-white mb-4">编辑比赛信息</h3>
-
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">裁判员</label>
-                                        <input
-                                            type="text"
-                                            value={editForm.referee}
-                                            onChange={(e) => setEditForm({ ...editForm, referee: e.target.value })}
-                                            className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F38181]"
-                                            placeholder="输入裁判员姓名"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">直播员</label>
-                                        <input
-                                            type="text"
-                                            value={editForm.streamer}
-                                            onChange={(e) => setEditForm({ ...editForm, streamer: e.target.value })}
-                                            className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F38181]"
-                                            placeholder="输入直播员姓名"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-1">直播链接</label>
-                                    <input
-                                        type="url"
-                                        value={editForm.streamLink}
-                                        onChange={(e) => setEditForm({ ...editForm, streamLink: e.target.value })}
-                                        className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F38181]"
-                                        placeholder="https://..."
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-1">回放链接</label>
-                                    <input
-                                        type="url"
-                                        value={editForm.replayLink}
-                                        onChange={(e) => setEditForm({ ...editForm, replayLink: e.target.value })}
-                                        className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F38181]"
-                                        placeholder="https://..."
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-1">比赛链接</label>
-                                    <input
-                                        type="url"
-                                        value={editForm.matchLink}
-                                        onChange={(e) => setEditForm({ ...editForm, matchLink: e.target.value })}
-                                        className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F38181]"
-                                        placeholder="https://..."
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">状态</label>
-                                        <select
-                                            value={editForm.status}
-                                            onChange={(e) => setEditForm({ ...editForm, status: e.target.value as Match['status'] })}
-                                            className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F38181]"
-                                        >
-                                            <option value="pending">等待中</option>
-                                            <option value="ongoing">进行中</option>
-                                            <option value="completed">已完成</option>
-                                            <option value="cancelled">已取消</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">红方分数</label>
-                                        <input
-                                            type="number"
-                                            value={editForm.redScore}
-                                            onChange={(e) => setEditForm({ ...editForm, redScore: e.target.value })}
-                                            className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F38181]"
-                                            placeholder="0"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">蓝方分数</label>
-                                        <input
-                                            type="number"
-                                            value={editForm.blueScore}
-                                            onChange={(e) => setEditForm({ ...editForm, blueScore: e.target.value })}
-                                            className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F38181]"
-                                            placeholder="0"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex space-x-3 mt-6">
-                                <button
-                                    onClick={() => {
-                                        setShowEditModal(false);
-                                        setSelectedMatch(null);
-                                    }}
-                                    className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-500 transition-colors"
-                                >
-                                    取消
-                                </button>
-                                <button
-                                    onClick={updateMatch}
-                                    className="flex-1 bg-[#F38181] text-white px-4 py-2 rounded-md hover:bg-[#95E1D3] transition-colors"
-                                >
-                                    保存修改
-                                </button>
-                            </div>
-                        </div>
                     </div>
-                )}
+                </nav>
+
+                {/* 底部登出按钮 */}
+                <div className="p-4 border-t border-[#404040]">
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center px-4 py-3 text-left text-gray-300 hover:bg-[#3a3a3a] hover:text-white transition-colors duration-200"
+                    >
+                        <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+                        </svg>
+                        登出
+                    </button>
+                </div>
             </div>
+
+            {/* 主内容区域 */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+                {/* 顶部标题栏 */}
+                <header className="bg-[#2d2d2d] border-b border-[#404040] px-6 py-4">
+                    <h1 className="text-2xl font-bold text-white">
+                        {activeTab === 'overview' && '管理概览'}
+                        {activeTab === 'matchups' && '对战列表管理'}
+                        {activeTab === 'rooms' && '比赛房间管理'}
+                        {activeTab === 'matches' && '比赛管理'}
+                        {activeTab === 'streaming' && '直播裁判'}
+                        {activeTab === 'users' && '用户管理'}
+                        {activeTab === 'replays' && '回放收集管理'}
+                        {activeTab === 'map-selection' && '选图管理'}
+                        {activeTab === 'settings' && '系统设置'}
+                    </h1>
+                </header>
+
+                {/* 内容区域 */}
+                <main className="flex-1 overflow-y-auto p-6 bg-[#1a1a1a]">
+                    {/* 概览页面 */}
+                    {activeTab === 'overview' && (
+                        <OverviewManagement
+                            user={user}
+                            permissions={permissions}
+                            registrations={registrations}
+                        />
+                    )}
+
+                    {/* 比赛管理页面 */}
+                    {activeTab === 'matches' && (
+                        <MatchManagement
+                            userOsuId={user.osuId}
+                            isAdmin={permissions.isAdmin}
+                        />
+                    )}
+
+                    {/* 用户管理页面 */}
+                    {activeTab === 'users' && (
+                        <UserManagement
+                            registrations={registrations}
+                            registrationsLoading={registrationsLoading}
+                            processingUser={processingUser}
+                            onFetchRegistrations={fetchRegistrations}
+                            onApproveRegistration={handleApproveRegistration}
+                            onDeleteRegistration={handleDeleteRegistration}
+                        />
+                    )}
+
+                    {/* 回放收集管理页面 */}
+                    {activeTab === 'replays' && (
+                        <ReplayCollectionManagement
+                            user={user}
+                            permissions={permissions}
+                        />
+                    )}
+
+                    {/* 选图管理页面 */}
+                    {activeTab === 'map-selection' && (
+                        <MapSelectionManagement
+                            user={user}
+                            permissions={permissions}
+                        />
+                    )}
+
+                    {/* 系统设置页面 */}
+                    {activeTab === 'settings' && (
+                        <SettingsManagement />
+                    )}
+
+                    {activeTab === 'rooms' && (
+                        <RoomManagement
+                            rooms={rooms}
+                            roomsLoading={roomsLoading}
+                            deletingRoomId={deletingRoomId}
+                            onDeleteRoom={handleDeleteRoom}
+                            onCreateRoom={handleCreateRoom}
+                        />
+                    )}
+
+                    {activeTab === 'matchups' && (
+                        <MatchupManagement
+                            matchups={matchups}
+                            matchupsLoading={matchupsLoading}
+                            deletingMatchupId={deletingMatchupId}
+                            approvedPlayers={approvedPlayers}
+                            onDeleteMatchup={handleDeleteMatchup}
+                            onCreateMatchup={handleCreateMatchup}
+                        />
+                    )}
+
+                    {activeTab === 'streaming' && (
+                        <StreamingManagement
+                            user={user}
+                            permissions={permissions}
+                            staffAssignments={staffAssignments}
+                            staffAssignmentsLoading={staffAssignmentsLoading}
+                            availableRooms={availableRooms}
+                            availableRoomsLoading={availableRoomsLoading}
+                            onApplyForRoom={handleApplyForRoom}
+                            onRevokeAssignment={handleRevokeAssignment}
+                        />
+                    )}
+                </main>
+            </div>
+
+
+
+
         </div>
     );
 }

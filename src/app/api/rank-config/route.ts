@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { get } from '@vercel/edge-config';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     try {
         // 检查是否在生产环境且有Edge Config连接字符串
         if (process.env.NODE_ENV === 'production' && process.env.EDGE_CONFIG) {

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBeatmapInfo, getBeatmapsetInfo, parseBeatmapUrl } from '@/lib/osu-api';
-import { get } from '@vercel/edge-config';
 import { cookies } from 'next/headers';
 import { verifyMapSelectionAuth } from '@/lib/permissions';
 

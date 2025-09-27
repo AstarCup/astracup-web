@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
         // 设置会话cookie
         const isProduction = process.env.NODE_ENV === 'production';
-        const cookieOptions: any = {
+        const cookieOptions: Record<string, string | number | boolean> = {
             httpOnly: false,
             secure: isProduction,
             sameSite: isProduction ? 'none' : 'lax',
@@ -47,6 +47,11 @@ export async function GET(request: NextRequest) {
             global_rank: userInfo.statistics?.global_rank || null,
             country_rank: userInfo.statistics?.country_rank || null,
             country: userInfo.country_code || '',
+            cover: userInfo.cover ? {
+                custom_url: userInfo.cover.custom_url || null,
+                url: userInfo.cover.url || '',
+                id: userInfo.cover.id || null,
+            } : undefined,
             access_token: access_token, // 保存访问令牌用于API调用
         }), cookieOptions);
 
