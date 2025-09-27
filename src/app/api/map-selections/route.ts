@@ -315,14 +315,16 @@ export async function PUT(request: NextRequest) {
         }
 
         // 权限检查逻辑：
-        // 1. 如果更新approved字段，只允许管理员
+        // 1. 如果更新approved字段，允许管理员或图池选择者
         // 2. 如果只更新padding字段，允许选图者本人或选图团队成员
         // 3. 如果更新其他字段，只允许选图团队成员
         let isAuthorized = false;
 
         if (updates.approved !== undefined) {
-            // 更新approved字段：只允许管理员
-            isAuthorized = await verifyAdminAuth(selectedBy);
+            // 更新approved字段：允许管理员或图池选择者
+            const isAdmin = await verifyAdminAuth(selectedBy);
+            const isMapSelector = await verifyMapSelectionAuth(selectedBy);
+            isAuthorized = isAdmin || isMapSelector;
         } else if (Object.keys(updates).length === 1 && updates.padding !== undefined) {
             // 只更新padding字段：检查是否为选图者本人或选图团队成员
             const isMapSelector = await verifyMapSelectionAuth(selectedBy);

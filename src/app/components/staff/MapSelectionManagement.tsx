@@ -699,7 +699,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ id: selectionId })
+                body: JSON.stringify({
+                    id: selectionId,
+                    selectedBy: userForState.id.toString()
+                })
             });
 
             const data = await response.json();
