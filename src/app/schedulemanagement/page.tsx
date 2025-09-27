@@ -1642,6 +1642,16 @@ export default function AdminPage() {
                                                                 </span>
                                                             )}
                                                         </div>
+
+                                                        {/* 管理员撤销按钮 */}
+                                                        <div className="mt-3 flex justify-end">
+                                                            <button
+                                                                onClick={() => handleRevokeAssignment(assignment.id, assignment.staff_role === 'referee' ? '裁判' : assignment.staff_role === 'streamer' ? '直播' : '解说')}
+                                                                className="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-3 rounded transition-colors duration-200"
+                                                            >
+                                                                撤销分配
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>
@@ -1695,10 +1705,87 @@ export default function AdminPage() {
                                                                 </div>
 
                                                                 {/* Staff分配情况 */}
-                                                                <div className="text-xs text-gray-400 space-y-1 mb-4">
-                                                                    <div>裁判: {room.staff_counts?.referee || 0}人 {room.referee_username && `(${room.referee_username})`}</div>
-                                                                    <div>解说: {room.staff_counts?.commentator || 0}人 {room.commentator_username && `(${room.commentator_username})`}</div>
-                                                                    <div>直播: {room.staff_counts?.streamer || 0}人</div>
+                                                                <div className="mb-4">
+                                                                    {/* 裁判 */}
+                                                                    {(() => {
+                                                                        const referees = staffAssignments.filter(a => a.room_id === room.id && a.staff_role === 'referee' && a.status === 'confirmed');
+                                                                        return referees.length > 0 ? (
+                                                                            <div className="mb-2">
+                                                                                <div className="text-xs text-gray-400 mb-1">裁判 ({referees.length}人):</div>
+                                                                                <div className="flex flex-wrap gap-2">
+                                                                                    {referees.map(referee => (
+                                                                                        <div key={referee.id} className="flex items-center space-x-1 bg-blue-900/30 px-2 py-1 rounded">
+                                                                                            <img
+                                                                                                src={referee.staff_avatar_url || '/unknow.svg'}
+                                                                                                alt={referee.staff_username}
+                                                                                                className="w-4 h-4 rounded-full"
+                                                                                                onError={(e) => {
+                                                                                                    e.currentTarget.src = '/unknow.svg';
+                                                                                                }}
+                                                                                            />
+                                                                                            <span className="text-xs text-white">{referee.staff_username}</span>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="text-xs text-gray-400 mb-1">裁判: 0人</div>
+                                                                        );
+                                                                    })()}
+
+                                                                    {/* 解说 */}
+                                                                    {(() => {
+                                                                        const commentators = staffAssignments.filter(a => a.room_id === room.id && a.staff_role === 'commentator' && a.status === 'confirmed');
+                                                                        return commentators.length > 0 ? (
+                                                                            <div className="mb-2">
+                                                                                <div className="text-xs text-gray-400 mb-1">解说 ({commentators.length}人):</div>
+                                                                                <div className="flex flex-wrap gap-2">
+                                                                                    {commentators.map(commentator => (
+                                                                                        <div key={commentator.id} className="flex items-center space-x-1 bg-green-900/30 px-2 py-1 rounded">
+                                                                                            <img
+                                                                                                src={commentator.staff_avatar_url || '/unknow.svg'}
+                                                                                                alt={commentator.staff_username}
+                                                                                                className="w-4 h-4 rounded-full"
+                                                                                                onError={(e) => {
+                                                                                                    e.currentTarget.src = '/unknow.svg';
+                                                                                                }}
+                                                                                            />
+                                                                                            <span className="text-xs text-white">{commentator.staff_username}</span>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="text-xs text-gray-400 mb-1">解说: 0人</div>
+                                                                        );
+                                                                    })()}
+
+                                                                    {/* 直播 */}
+                                                                    {(() => {
+                                                                        const streamers = staffAssignments.filter(a => a.room_id === room.id && a.staff_role === 'streamer' && a.status === 'confirmed');
+                                                                        return streamers.length > 0 ? (
+                                                                            <div className="mb-2">
+                                                                                <div className="text-xs text-gray-400 mb-1">直播 ({streamers.length}人):</div>
+                                                                                <div className="flex flex-wrap gap-2">
+                                                                                    {streamers.map(streamer => (
+                                                                                        <div key={streamer.id} className="flex items-center space-x-1 bg-purple-900/30 px-2 py-1 rounded">
+                                                                                            <img
+                                                                                                src={streamer.staff_avatar_url || '/unknow.svg'}
+                                                                                                alt={streamer.staff_username}
+                                                                                                className="w-4 h-4 rounded-full"
+                                                                                                onError={(e) => {
+                                                                                                    e.currentTarget.src = '/unknow.svg';
+                                                                                                }}
+                                                                                            />
+                                                                                            <span className="text-xs text-white">{streamer.staff_username}</span>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="text-xs text-gray-400 mb-1">直播: 0人</div>
+                                                                        );
+                                                                    })()}
                                                                 </div>
 
                                                                 {room.description && (
@@ -1780,6 +1867,39 @@ export default function AdminPage() {
                                             </div>
                                         )}
 
+                                        {/* 撤销分配区域 */}
+                                        {staffAssignments.filter(a => a.staff_osuId === user.osuId && a.status === 'confirmed').length > 0 && (
+                                            <div className="mt-6">
+                                                <h4 className="text-lg font-medium text-white mb-4 flex items-center">
+                                                    <span className="w-2 h-2 bg-red-500 rounded-full mr-3"></span>
+                                                    撤销分配
+                                                </h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                    {staffAssignments
+                                                        .filter(a => a.staff_osuId === user.osuId && a.status === 'confirmed')
+                                                        .map((assignment) => (
+                                                            <div key={`revoke-${assignment.id}`} className="bg-[#2d2d2d] border border-red-600 rounded-lg p-4">
+                                                                <div className="text-center">
+                                                                    <h5 className="text-white font-semibold text-sm mb-2">
+                                                                        {assignment.room?.room_name || `房间 ${assignment.room_id}`}
+                                                                    </h5>
+                                                                    <p className="text-xs text-gray-400 mb-3">
+                                                                        {assignment.staff_role === 'referee' ? '裁判' :
+                                                                            assignment.staff_role === 'streamer' ? '直播' : '解说'}
+                                                                    </p>
+                                                                    <button
+                                                                        onClick={() => handleRevokeAssignment(assignment.id, assignment.staff_role === 'referee' ? '裁判' : assignment.staff_role === 'streamer' ? '直播' : '解说')}
+                                                                        className="w-full bg-red-600 hover:bg-red-700 text-white text-sm py-2 px-4 rounded transition-colors duration-200"
+                                                                    >
+                                                                        撤销分配
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* 可参加的房间 */}
                                         <div>
                                             <h4 className="text-lg font-medium text-white mb-4 flex items-center">
@@ -1824,10 +1944,87 @@ export default function AdminPage() {
                                                                 </div>
 
                                                                 {/* Staff分配情况 */}
-                                                                <div className="text-xs text-gray-400 space-y-1 mb-4">
-                                                                    <div>裁判: {room.staff_counts?.referee || 0}人 {room.referee_username && `(${room.referee_username})`}</div>
-                                                                    <div>解说: {room.staff_counts?.commentator || 0}人 {room.commentator_username && `(${room.commentator_username})`}</div>
-                                                                    <div>直播: {room.staff_counts?.streamer || 0}人</div>
+                                                                <div className="mb-4">
+                                                                    {/* 裁判 */}
+                                                                    {(() => {
+                                                                        const referees = staffAssignments.filter(a => a.room_id === room.id && a.staff_role === 'referee' && a.status === 'confirmed');
+                                                                        return referees.length > 0 ? (
+                                                                            <div className="mb-2">
+                                                                                <div className="text-xs text-gray-400 mb-1">裁判 ({referees.length}人):</div>
+                                                                                <div className="flex flex-wrap gap-2">
+                                                                                    {referees.map(referee => (
+                                                                                        <div key={referee.id} className="flex items-center space-x-1 bg-blue-900/30 px-2 py-1 rounded">
+                                                                                            <img
+                                                                                                src={referee.staff_avatar_url || '/unknow.svg'}
+                                                                                                alt={referee.staff_username}
+                                                                                                className="w-4 h-4 rounded-full"
+                                                                                                onError={(e) => {
+                                                                                                    e.currentTarget.src = '/unknow.svg';
+                                                                                                }}
+                                                                                            />
+                                                                                            <span className="text-xs text-white">{referee.staff_username}</span>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="text-xs text-gray-400 mb-1">裁判: 0人</div>
+                                                                        );
+                                                                    })()}
+
+                                                                    {/* 解说 */}
+                                                                    {(() => {
+                                                                        const commentators = staffAssignments.filter(a => a.room_id === room.id && a.staff_role === 'commentator' && a.status === 'confirmed');
+                                                                        return commentators.length > 0 ? (
+                                                                            <div className="mb-2">
+                                                                                <div className="text-xs text-gray-400 mb-1">解说 ({commentators.length}人):</div>
+                                                                                <div className="flex flex-wrap gap-2">
+                                                                                    {commentators.map(commentator => (
+                                                                                        <div key={commentator.id} className="flex items-center space-x-1 bg-green-900/30 px-2 py-1 rounded">
+                                                                                            <img
+                                                                                                src={commentator.staff_avatar_url || '/unknow.svg'}
+                                                                                                alt={commentator.staff_username}
+                                                                                                className="w-4 h-4 rounded-full"
+                                                                                                onError={(e) => {
+                                                                                                    e.currentTarget.src = '/unknow.svg';
+                                                                                                }}
+                                                                                            />
+                                                                                            <span className="text-xs text-white">{commentator.staff_username}</span>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="text-xs text-gray-400 mb-1">解说: 0人</div>
+                                                                        );
+                                                                    })()}
+
+                                                                    {/* 直播 */}
+                                                                    {(() => {
+                                                                        const streamers = staffAssignments.filter(a => a.room_id === room.id && a.staff_role === 'streamer' && a.status === 'confirmed');
+                                                                        return streamers.length > 0 ? (
+                                                                            <div className="mb-2">
+                                                                                <div className="text-xs text-gray-400 mb-1">直播 ({streamers.length}人):</div>
+                                                                                <div className="flex flex-wrap gap-2">
+                                                                                    {streamers.map(streamer => (
+                                                                                        <div key={streamer.id} className="flex items-center space-x-1 bg-purple-900/30 px-2 py-1 rounded">
+                                                                                            <img
+                                                                                                src={streamer.staff_avatar_url || '/unknow.svg'}
+                                                                                                alt={streamer.staff_username}
+                                                                                                className="w-4 h-4 rounded-full"
+                                                                                                onError={(e) => {
+                                                                                                    e.currentTarget.src = '/unknow.svg';
+                                                                                                }}
+                                                                                            />
+                                                                                            <span className="text-xs text-white">{streamer.staff_username}</span>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="text-xs text-gray-400 mb-1">直播: 0人</div>
+                                                                        );
+                                                                    })()}
                                                                 </div>
 
                                                                 {room.description && (
