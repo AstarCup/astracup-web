@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { showSuccess, showError } from '../ui/Notification';
 import Dropdown from '../ui/Dropdown';
@@ -124,7 +124,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     // 状态定义 - 必须在任何条件逻辑之前
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthorized, setIsAuthorized] = useState(false);
-    const [_isAdmin, setIsAdmin] = useState(false);
 
     // Season configuration
     const [availableSeasons, setAvailableSeasons] = useState([
@@ -218,6 +217,162 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         selection: null
     });
 
+    // 检查权限并加载数据
+    useEffect(() => {
+        const checkAccessAndLoadData = async () => {
+            if (!user) return;
+
+            const hasAccess = permissions.isMapSelector || permissions.isAdmin;
+            if (!hasAccess) {
+                showError('无权限访问选图系统');
+                setIsLoading(false);
+                return;
+            }
+
+            setIsAuthorized(true);
+
+            // 获取赛季配置
+            await loadSeasonConfig();
+            setIsLoading(false);
+        };
+
+        if (user) {
+            checkAccessAndLoadData();
+        }
+    }, [user, permissions]); // 当用户或权限改变时执行
+
+    // 获取地图评分
+    const fetchMapRatings = useCallback(async (selectionId: number) => {
+        try {
+            const response = await fetch(`/api/map-ratings?mapSelectionId=${selectionId}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    setMapRatings(prev => ({
+                        ...prev,
+                        [selectionId]: data.ratings
+                    }));
+
+                    // 设置当前用户的评分
+                    const userRating = data.ratings.find((rating: MapRating) => rating.userId === userForState.id.toString());
+                    if (userRating) {
+                        setUserRatings(prev => ({
+                            ...prev,
+                            [selectionId]: userRating.rating
+                        }));
+                    }
+                }
+            } else {
+                console.error('Failed to fetch map ratings');
+            }
+        } catch (error) {
+            console.error('Error fetching map ratings:', error);
+        }
+    }, [userForState.id]);
+
+    const fetchSelections = useCallback(async () => {
+        if (!userForState?.id) {
+            console.warn('fetchSelections called without user ID');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/map-selections?season=${season}&category=${category}&osuId=${userForState.id}`);
+            if (response.ok) {
+                const data = await response.json();
+                setSelections(data.selections || []);
+
+                // 获取所有选图的评分数据
+                if (data.selections && data.selections.length > 0) {
+                    for (const selection of data.selections) {
+                        fetchMapRatings(selection.id);
+                    }
+                }
+            } else {
+                const errorData = await response.json();
+                showError(errorData.error || '获取选图列表失败');
+            }
+        } catch (error) {
+            console.error('Failed to fetch selections:', error);
+            showError('获取选图列表时出错');
+        }
+    }, [season, category, userForState?.id, fetchMapRatings]);
+
+    // 计算mod后的属性
+    interface CustomSettings {
+        customModName?: string;
+        customDASettings?: {
+            cs: number | null;
+            ar: number | null;
+            od: number | null;
+            hp: number | null;
+        } | null;
+        customDTRate?: number | null;
+    }
+
+    const calculateModdedStatsAPI = useCallback(async (beatmap: BeatmapInfo, mods: string, customSettings: CustomSettings) => {
+        try {
+            const response = await fetch('/api/calculate-mod-stats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    beatmap,
+                    mods,
+                    customSettings
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return data.stats;
+            } else {
+                console.error('Failed to calculate modded stats');
+                return null;
+            }
+        } catch (error) {
+            console.error('Error calculating modded stats:', error);
+            return null;
+        }
+    }, []);
+
+    // Get selection list
+    useEffect(() => {
+        if (isAuthorized && user) {
+            fetchSelections();
+        }
+    }, [isAuthorized, user, fetchSelections]);
+
+    // Calculate modded stats when beatmap or mods change
+    useEffect(() => {
+        const updateModdedStats = async () => {
+            if (beatmapPreview && user) {
+                const customSettings = {
+                    customModName: selectedMods === 'LZ' ? customModName : undefined,
+                    customDASettings: customModName === 'DA' && selectedMods === 'LZ' ? {
+                        cs: customCS !== '' ? customCS : null,
+                        ar: customAR !== '' ? customAR : null,
+                        od: customOD !== '' ? customOD : null,
+                        hp: customHP !== '' ? customHP : null,
+                    } : null,
+                    customDTRate: selectedMods === 'DT' && customDTRate !== '' ? customDTRate : null,
+                };
+                const stats = await calculateModdedStatsAPI(beatmapPreview, selectedMods, customSettings);
+                setModdedStats(stats);
+            } else {
+                setModdedStats(null);
+            }
+        };
+
+        updateModdedStats();
+    }, [beatmapPreview, selectedMods, customModName, customCS, customAR, customOD, customHP, customDTRate, user, calculateModdedStatsAPI]);
+
+    // 初始化
+    useEffect(() => {
+        fetchAvailableLazerMods();
+    }, []);
+
     // 验证用户数据
     if (!userForState.id || isNaN(userForState.id)) {
         return (
@@ -301,37 +456,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
     };
 
-    // Get selection list
-    useEffect(() => {
-        if (isAuthorized && user) {
-            fetchSelections();
-        }
-    }, [isAuthorized, user, season, category]);
-
-    // Calculate modded stats when beatmap or mods change
-    useEffect(() => {
-        const updateModdedStats = async () => {
-            if (beatmapPreview && user) {
-                const customSettings = {
-                    customModName: selectedMods === 'LZ' ? customModName : undefined,
-                    customDASettings: customModName === 'DA' && selectedMods === 'LZ' ? {
-                        cs: customCS !== '' ? customCS : null,
-                        ar: customAR !== '' ? customAR : null,
-                        od: customOD !== '' ? customOD : null,
-                        hp: customHP !== '' ? customHP : null,
-                    } : null,
-                    customDTRate: selectedMods === 'DT' && customDTRate !== '' ? customDTRate : null,
-                };
-                const stats = await calculateModdedStatsAPI(beatmapPreview, selectedMods, customSettings);
-                setModdedStats(stats);
-            } else {
-                setModdedStats(null);
-            }
-        };
-
-        updateModdedStats();
-    }, [beatmapPreview, selectedMods, customModName, customCS, customAR, customOD, customHP, customDTRate, user]);
-
     const loadSeasonConfig = async () => {
         try {
             const response = await fetch('/api/season-config');
@@ -359,34 +483,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         if (e.key === 'Enter' && !isSubmitting && urlInput.trim()) {
             e.preventDefault();
             parseBeatmapUrl();
-        }
-    };
-
-    const fetchSelections = async () => {
-        if (!userForState?.id) {
-            console.warn('fetchSelections called without user ID');
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/map-selections?season=${season}&category=${category}&osuId=${userForState.id}`);
-            if (response.ok) {
-                const data = await response.json();
-                setSelections(data.selections || []);
-
-                // 获取所有选图的评分数据
-                if (data.selections && data.selections.length > 0) {
-                    for (const selection of data.selections) {
-                        fetchMapRatings(selection.id);
-                    }
-                }
-            } else {
-                const errorData = await response.json();
-                showError(errorData.error || '获取选图列表失败');
-            }
-        } catch (error) {
-            console.error('Failed to fetch selections:', error);
-            showError('获取选图列表时出错');
         }
     };
 
@@ -444,71 +540,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             showError('解析beatmap时出错');
         } finally {
             setIsSubmitting(false);
-        }
-    };
-
-    // 计算mod后的属性
-    interface CustomSettings {
-        customDASettings: {
-            cs: number | null;
-            ar: number | null;
-            od: number | null;
-            hp: number | null;
-        } | null;
-        customDTRate: number | null;
-    }
-
-    const calculateModdedStatsAPI = async (beatmap: BeatmapInfo, mods: string, customSettings: CustomSettings) => {
-        try {
-            const response = await fetch('/api/calculate-mod-stats', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    beatmap,
-                    mods,
-                    customSettings
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                return data.stats;
-            } else {
-                console.error('Failed to calculate modded stats');
-                return null;
-            }
-        } catch (error) {
-            console.error('Error calculating modded stats:', error);
-            return null;
-        }
-    };
-
-    // 获取地图评分
-    const fetchMapRatings = async (selectionId: number) => {
-        try {
-            const response = await fetch(`/api/map-ratings?mapSelectionId=${selectionId}`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    setMapRatings(prev => ({
-                        ...prev,
-                        [selectionId]: data.ratings
-                    }));
-
-                    // 设置当前用户的评分
-                    const userRating = data.ratings.find((rating: MapRating) => rating.userId === userForState.id.toString());
-                    if (userRating) {
-                        setUserRatings(prev => ({
-                            ...prev,
-                            [selectionId]: userRating.rating
-                        }));
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Failed to fetch map ratings:', error);
         }
     };
 
@@ -856,11 +887,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
         return options;
     };
-
-    // 初始化
-    useEffect(() => {
-        fetchAvailableLazerMods();
-    }, []);
 
     return (
         <div className="max-w-9xl mx-auto p-6">
