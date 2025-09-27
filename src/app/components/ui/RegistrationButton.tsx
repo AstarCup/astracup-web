@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { UserSession } from "@/lib/permissions";
 import RegistrationModal from "./RegistrationModal";
-import { TournamentRegistration } from "@/lib/mysql-registrations";
 
 interface RegistrationButtonProps {
     user: UserSession;

@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { UserSession } from '@/lib/permissions';
 import { UserPermissions } from '@/lib/permissions';
-import { getUserPermissions } from '@/lib/permissions';
 import MatchScheduleSystem from '@/app/components/staff/MatchScheduleSystem';
 import localFont from "next/font/local";
 import { MatchRoom } from '@/lib/mysql-registrations';
@@ -82,8 +81,15 @@ export default function PlayerInfoPage() {
                 setUser(sessionData.session);
 
                 // 获取用户权限
-                const userPermissions = await getUserPermissions(sessionData.session.osuId.toString());
-                setPermissions(userPermissions);
+                try {
+                    const permissionsResponse = await fetch(`/api/user-permissions?osuId=${sessionData.session.osuId}`);
+                    if (permissionsResponse.ok) {
+                        const userPermissions = await permissionsResponse.json();
+                        setPermissions(userPermissions);
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch user permissions:', error);
+                }
 
                 // 获取注册信息
                 const registrationResponse = await fetch(`/api/user-registration?osuId=${sessionData.session.osuId}`);

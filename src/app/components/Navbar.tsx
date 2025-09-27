@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import localFont from "next/font/local";
 import { UserSession } from '@/lib/permissions';
-import { getUserPermissions } from '@/lib/permissions';
 import MessageNotification from './ui/MessageNotification';
 
 const audiowide = localFont({
@@ -93,10 +92,17 @@ export default function Navbar() {
                     setUser(sessionData.session);
                     setAvatarSrc(sessionData.session?.avatar_url || '');
 
-                    // 直接从permissions库获取用户权限
+                    // 通过API获取用户权限
                     if (sessionData.session?.osuId) {
-                        const userPermissions = await getUserPermissions(sessionData.session.osuId.toString());
-                        setPermissions(userPermissions);
+                        try {
+                            const permissionsResponse = await fetch(`/api/user-permissions?osuId=${sessionData.session.osuId}`);
+                            if (permissionsResponse.ok) {
+                                const permissionsData = await permissionsResponse.json();
+                                setPermissions(permissionsData);
+                            }
+                        } catch (error) {
+                            console.error('Failed to fetch user permissions:', error);
+                        }
                     }
                 }
             } catch (error) {

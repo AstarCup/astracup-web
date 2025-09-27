@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserSession } from '@/lib/permissions';
 import { UserPermissions } from '@/lib/permissions';
-import { getUserPermissions } from '@/lib/permissions';
 import localFont from "next/font/local";
 import Link from 'next/link';
 import Image from 'next/image';
@@ -160,12 +159,26 @@ export default function AdminPage() {
                 setUser(sessionData.session);
 
                 // 获取用户权限
-                const userPermissions = await getUserPermissions(sessionData.session.osuId.toString());
-                setPermissions(userPermissions);
+                try {
+                    const permissionsResponse = await fetch(`/api/user-permissions?osuId=${sessionData.session.osuId}`);
+                    if (permissionsResponse.ok) {
+                        const userPermissions = await permissionsResponse.json();
+                        setPermissions(userPermissions);
 
-                // 检查管理员权限
-                if (!userPermissions.isAdmin) {
-                    showError('需要管理员权限');
+                        // 检查管理员权限
+                        if (!userPermissions.isAdmin) {
+                            showError('需要管理员权限');
+                            router.push('/player-info');
+                            return;
+                        }
+                    } else {
+                        showError('获取权限失败');
+                        router.push('/player-info');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch user permissions:', error);
+                    showError('获取权限失败');
                     router.push('/player-info');
                     return;
                 }
