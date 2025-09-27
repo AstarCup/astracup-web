@@ -419,9 +419,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                                 width={40}
                                                 height={40}
                                                 className="w-10 h-10 rounded-full border-2 border-red-500"
-                                                onError={(e) => {
-                                                    e.currentTarget.style.display = 'none';
-                                                }}
+                                                onError={() => { }}
                                             />
                                         )}
                                         <div>
@@ -440,9 +438,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                                 width={40}
                                                 height={40}
                                                 className="w-10 h-10 rounded-full border-2 border-blue-500"
-                                                onError={(e) => {
-                                                    e.currentTarget.style.display = 'none';
-                                                }}
+                                                onError={() => { }}
                                             />
                                         )}
                                         <div>

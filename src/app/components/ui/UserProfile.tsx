@@ -17,10 +17,18 @@ interface UserProfileProps {
 
 export default function UserProfile({ user, onLogout }: UserProfileProps) {
     const [isClient, setIsClient] = useState(false);
+    const [avatarSrc, setAvatarSrc] = useState(user?.avatar_url || '');
 
     useEffect(() => {
         setIsClient(true);
-    }, []);
+        if (user?.avatar_url) {
+            setAvatarSrc(user.avatar_url);
+        }
+    }, [user?.avatar_url]);
+
+    const handleAvatarError = () => {
+        setAvatarSrc('/default-avatar.png');
+    };
 
     if (!isClient || !user) {
         return (
@@ -39,14 +47,12 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
         <div className="p-2 w-full">
             <div className="flex items-left m-2">
                 <Image
-                    src={user.avatar_url}
+                    src={avatarSrc}
                     alt={user.username}
                     width={64}
                     height={64}
                     className="outline outline-2 outline-[#E93B66]"
-                    onError={(e) => {
-                        e.currentTarget.src = '/default-avatar.png';
-                    }}
+                    onError={handleAvatarError}
                 />
                 <div className="flex-1 min-w-0 items-left text-left pl-2">
                     <h3 className="text-2xl font-semibold text-[#E93B66] truncate">

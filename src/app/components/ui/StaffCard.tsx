@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 
 interface StaffMember {
@@ -15,8 +15,14 @@ interface StaffCardProps {
 }
 
 export default function StaffCard({ member }: StaffCardProps) {
+    const [avatarSrc, setAvatarSrc] = useState(member.avatarUrl);
+
     const handleClick = () => {
         window.open(`https://osu.ppy.sh/users/${member.osuId}`, '_blank');
+    };
+
+    const handleAvatarError = () => {
+        setAvatarSrc('/icons/unknow.svg');
     };
 
     return (
@@ -39,15 +45,12 @@ export default function StaffCard({ member }: StaffCardProps) {
                 {/* 头像 */}
                 <div className="relative mb-4">
                     <Image
-                        src={member.avatarUrl}
+                        src={avatarSrc}
                         alt={member.name}
                         width={80}
                         height={80}
                         className="w-20 h-20 rounded-full border-4 border-gray-600 group-hover:border-[#3BE9D8] transition-colors duration-300"
-                        onError={(e) => {
-                            // 如果头像加载失败，使用默认头像
-                            (e.target as HTMLImageElement).src = '/icons/unknow.svg';
-                        }}
+                        onError={handleAvatarError}
                     />
                 </div>
 

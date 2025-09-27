@@ -23,9 +23,7 @@ export default function OverviewManagement({ user, permissions, registrations }:
                         width={60}
                         height={60}
                         className="rounded-full outline outline-2 outline-[#E93B66] mr-4"
-                        onError={(e) => {
-                            e.currentTarget.src = '/default-avatar.png';
-                        }}
+                        onError={() => { }}
                     />
                     <div className="flex-1">
                         <h2 className="text-2xl font-bold text-white mb-2">管理员: {user.username}</h2>

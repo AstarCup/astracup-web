@@ -56,9 +56,7 @@ export default function StreamingManagement({
                                                     width={40}
                                                     height={40}
                                                     className="w-10 h-10 rounded-full"
-                                                    onError={(e) => {
-                                                        e.currentTarget.src = '/unknow.svg';
-                                                    }}
+                                                    onError={() => { }}
                                                 />
                                                 <div>
                                                     <h4 className="text-white font-semibold">{assignment.staff_username}</h4>
@@ -188,10 +186,7 @@ export default function StreamingManagement({
                                                                                 src={referee.staff_avatar_url || '/unknow.svg'}
                                                                                 alt={referee.staff_username}
                                                                                 width={16} height={16} className="w-4 h-4 rounded-full"
-                                                                                onError={(e) => {
-                                                                                    e.currentTarget.src = '/unknow.svg';
-                                                                                }}
-                                                                            />
+                                                                                onError={() => { }} />
                                                                             <span className="text-xs text-white">{referee.staff_username}</span>
                                                                         </div>
                                                                     ))}
@@ -215,10 +210,7 @@ export default function StreamingManagement({
                                                                                 src={commentator.staff_avatar_url || '/unknow.svg'}
                                                                                 alt={commentator.staff_username}
                                                                                 width={16} height={16} className="w-4 h-4 rounded-full"
-                                                                                onError={(e) => {
-                                                                                    e.currentTarget.src = '/unknow.svg';
-                                                                                }}
-                                                                            />
+                                                                                onError={() => { }} />
                                                                             <span className="text-xs text-white">{commentator.staff_username}</span>
                                                                         </div>
                                                                     ))}
@@ -242,10 +234,7 @@ export default function StreamingManagement({
                                                                                 src={streamer.staff_avatar_url || '/unknow.svg'}
                                                                                 alt={streamer.staff_username}
                                                                                 width={16} height={16} className="w-4 h-4 rounded-full"
-                                                                                onError={(e) => {
-                                                                                    e.currentTarget.src = '/unknow.svg';
-                                                                                }}
-                                                                            />
+                                                                                onError={() => { }} />
                                                                             <span className="text-xs text-white">{streamer.staff_username}</span>
                                                                         </div>
                                                                     ))}
@@ -394,10 +383,7 @@ export default function StreamingManagement({
                                                                                 src={referee.staff_avatar_url || '/unknow.svg'}
                                                                                 alt={referee.staff_username}
                                                                                 width={16} height={16} className="w-4 h-4 rounded-full"
-                                                                                onError={(e) => {
-                                                                                    e.currentTarget.src = '/unknow.svg';
-                                                                                }}
-                                                                            />
+                                                                                onError={() => { }} />
                                                                             <span className="text-xs text-white">{referee.staff_username}</span>
                                                                         </div>
                                                                     ))}
@@ -421,10 +407,7 @@ export default function StreamingManagement({
                                                                                 src={commentator.staff_avatar_url || '/unknow.svg'}
                                                                                 alt={commentator.staff_username}
                                                                                 width={16} height={16} className="w-4 h-4 rounded-full"
-                                                                                onError={(e) => {
-                                                                                    e.currentTarget.src = '/unknow.svg';
-                                                                                }}
-                                                                            />
+                                                                                onError={() => { }} />
                                                                             <span className="text-xs text-white">{commentator.staff_username}</span>
                                                                         </div>
                                                                     ))}
@@ -448,10 +431,7 @@ export default function StreamingManagement({
                                                                                 src={streamer.staff_avatar_url || '/unknow.svg'}
                                                                                 alt={streamer.staff_username}
                                                                                 width={16} height={16} className="w-4 h-4 rounded-full"
-                                                                                onError={(e) => {
-                                                                                    e.currentTarget.src = '/unknow.svg';
-                                                                                }}
-                                                                            />
+                                                                                onError={() => { }} />
                                                                             <span className="text-xs text-white">{streamer.staff_username}</span>
                                                                         </div>
                                                                     ))}

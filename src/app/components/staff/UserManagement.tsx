@@ -67,9 +67,7 @@ export default function UserManagement({
                                                     width={40}
                                                     height={40}
                                                     className="rounded-full outline outline-1 outline-[#E93B66]"
-                                                    onError={(e) => {
-                                                        e.currentTarget.src = '/default-avatar.png';
-                                                    }}
+                                                    onError={() => { }}
                                                 />
                                                 <div>
                                                     <h4 className="font-medium text-white">{player.username}</h4>

@@ -139,13 +139,9 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                                             width={20}
                                             height={20}
                                             className="w-full h-full object-cover"
-                                            onError={(e) => {
-                                                e.currentTarget.style.display = 'none';
-                                                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                                                if (fallback) fallback.style.display = 'flex';
-                                            }}
+                                            onError={() => { }}
                                         />
-                                        <div className="w-full h-full bg-gray-300 rounded-full flex items-center justify-center absolute inset-0" style={{ display: 'none' }}>
+                                        <div className="w-full h-full bg-gray-300 rounded-full flex items-center justify-center absolute inset-0">
                                             <span className="text-xs text-gray-600">
                                                 {c.username?.charAt(0).toUpperCase() || 'U'}
                                             </span>

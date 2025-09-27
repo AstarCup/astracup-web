@@ -19,6 +19,9 @@ interface WinnerCardProps {
 
 export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
     const [showImageModal, setShowImageModal] = useState(false);
+    const isPending = winner.playerName === "TBD";
+    const [avatarSrc, setAvatarSrc] = useState(isPending ? '/icons/unknow.svg' : (winner.avatarUrl || '/icons/unknow.svg'));
+    const [resultImageVisible, setResultImageVisible] = useState(true);
 
     const handleCardClick = () => {
         if (winner.osuId !== "00000000") {
@@ -28,9 +31,15 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
 
     const handleImageClick = (e: React.MouseEvent) => {
         e.stopPropagation(); // 阻止事件冒泡到卡片点击
-        if (winner.resultImage && winner.resultImage.trim() !== "") {
-            setShowImageModal(true);
-        }
+        setShowImageModal(true);
+    };
+
+    const handleAvatarError = () => {
+        setAvatarSrc('/icons/unknow.svg');
+    };
+
+    const handleResultImageError = () => {
+        setResultImageVisible(false);
     };
 
     const closeModal = () => {
@@ -75,7 +84,6 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
     };
 
     const rankStyle = getRankStyle(winner.rank);
-    const isPending = winner.playerName === "TBD";
 
     return (
         <>
@@ -103,14 +111,12 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
                     {/* 头像 */}
                     <div className={`relative mb-4 p-1 rounded-full bg-gradient-to-br ${rankStyle.bgGradient}`}>
                         <Image
-                            src={isPending ? '/icons/unknow.svg' : (winner.avatarUrl || '/icons/unknow.svg')}
+                            src={avatarSrc}
                             alt={winner.playerName}
                             width={96}
                             height={96}
                             className="w-24 h-24 rounded-full border-4 border-[#1A1A1A]"
-                            onError={(e) => {
-                                (e.target as HTMLImageElement).src = '/icons/unknow.svg';
-                            }}
+                            onError={handleAvatarError}
                         />
                         {/* 国旗 */}
                         {!isPending && (
@@ -198,16 +204,16 @@ export default function WinnerCard({ winner, seasonName }: WinnerCardProps) {
 
                             {/* 返图 */}
                             <div className="flex justify-center">
-                                <Image
-                                    src={winner.resultImage}
-                                    alt={`${winner.playerName} 的返图`}
-                                    width={800}
-                                    height={600}
-                                    className="max-w-full max-h-[70vh]  shadow-lg"
-                                    onError={(e) => {
-                                        (e.target as HTMLImageElement).style.display = 'none';
-                                    }}
-                                />
+                                {resultImageVisible && (
+                                    <Image
+                                        src={winner.resultImage}
+                                        alt={`${winner.playerName} 的返图`}
+                                        width={800}
+                                        height={600}
+                                        className="max-w-full max-h-[70vh]  shadow-lg"
+                                        onError={handleResultImageError}
+                                    />
+                                )}
                             </div>
 
                             {/* 底部信息 */}

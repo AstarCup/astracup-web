@@ -20,6 +20,7 @@ export default function Navbar() {
     const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
     const [clickedGroup, setClickedGroup] = useState<string | null>(null);
     const [user, setUser] = useState<UserSession | null>(null);
+    const [avatarSrc, setAvatarSrc] = useState<string>('');
     const [permissions, setPermissions] = useState({
         isMapSelector: false,
         isReplayTester: false,
@@ -28,6 +29,10 @@ export default function Navbar() {
     const [versionInfo, setVersionInfo] = useState<string>('');
     const [iconCache, setIconCache] = useState<Map<string, boolean>>(new Map());
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const handleAvatarError = () => {
+        setAvatarSrc('/default-avatar.png');
+    };
 
     useEffect(() => {
         const handleDocumentClick = (event: MouseEvent) => {
@@ -86,6 +91,7 @@ export default function Navbar() {
                 const sessionData = await sessionResponse.json();
                 if (sessionData.success) {
                     setUser(sessionData.session);
+                    setAvatarSrc(sessionData.session?.avatar_url || '');
 
                     // 直接从permissions库获取用户权限
                     if (sessionData.session?.osuId) {
@@ -325,14 +331,12 @@ export default function Navbar() {
                                 {user ? (
                                     <Link href="/player-info">
                                         <Image
-                                            src={user.avatar_url}
+                                            src={avatarSrc}
                                             alt={user.username}
                                             width={40}
                                             height={40}
                                             className="rounded-full outline outline-2 outline-[#E93B66] cursor-pointer hover:outline-[#3BE9D8] hover:scale-110 hover:shadow-lg hover:shadow-[#E93B66]/50 transition-all duration-200"
-                                            onError={(e) => {
-                                                e.currentTarget.src = '/default-avatar.png';
-                                            }}
+                                            onError={handleAvatarError}
                                         />
                                     </Link>
                                 ) : (
@@ -352,14 +356,12 @@ export default function Navbar() {
                             <div className="flex items-center">
                                 {user ? (
                                     <Image
-                                        src={user.avatar_url}
+                                        src={avatarSrc}
                                         alt={user.username}
                                         width={32}
                                         height={32}
                                         className="rounded-full outline outline-2 outline-[#E93B66]"
-                                        onError={(e) => {
-                                            e.currentTarget.src = '/default-avatar.png';
-                                        }}
+                                        onError={handleAvatarError}
                                     />
                                 ) : (
                                     <button
@@ -450,14 +452,12 @@ export default function Navbar() {
                                     <Link href="/player-info" onClick={() => setMobileMenuOpen(false)}>
                                         <div className="flex items-center gap-3 p-3 bg-[#3d3d3d] rounded-md cursor-pointer hover:bg-[#4d4d4d] transition-colors duration-200">
                                             <Image
-                                                src={user.avatar_url}
+                                                src={avatarSrc}
                                                 alt={user.username}
                                                 width={40}
                                                 height={40}
                                                 className="rounded-full outline outline-2 outline-[#E93B66]"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = '/default-avatar.png';
-                                                }}
+                                                onError={handleAvatarError}
                                             />
                                             <div className="flex-1">
                                                 <div className="text-white font-bold text-sm">{user.username}</div>

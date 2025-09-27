@@ -255,9 +255,7 @@ export default function MatchupManagement({ matchups, matchupsLoading, deletingM
                                                 width={32}
                                                 height={32}
                                                 className="w-8 h-8 rounded-full mr-3"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = '/unknow.svg'; // fallback to default avatar
-                                                }}
+                                                onError={() => { }}
                                             />
                                             <div>
                                                 <p className="text-white text-sm font-medium">{matchup.player1_username}</p>
@@ -284,9 +282,7 @@ export default function MatchupManagement({ matchups, matchupsLoading, deletingM
                                                 width={32}
                                                 height={32}
                                                 className="w-8 h-8 rounded-full mr-3"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = '/unknow.svg'; // fallback to default avatar
-                                                }}
+                                                onError={() => { }}
                                             />
                                             <div>
                                                 <p className="text-white text-sm font-medium">{matchup.player2_username}</p>
