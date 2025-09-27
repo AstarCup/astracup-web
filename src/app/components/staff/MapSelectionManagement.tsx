@@ -1373,8 +1373,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         />
                                         {/* 过审状态指示器 */}
                                         {selection.approved && (
-                                            <div className="absolute -top-1 -right-1 w-24 h-24 bg-green-500 rounded-full flex items-center justify-center">
-                                                <svg className="w-18 h-18 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <div className="absolute -top-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                                <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                 </svg>
                                             </div>

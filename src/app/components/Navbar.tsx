@@ -103,7 +103,7 @@ export default function Navbar() {
                             const permissionsResponse = await fetch(`/api/user-permissions?osuId=${sessionData.session.osuId}`);
                             if (permissionsResponse.ok) {
                                 const permissionsData = await permissionsResponse.json();
-                                setPermissions(permissionsData);
+                                setPermissions(permissionsData.permissions);
                             }
                         } catch (error) {
                             console.error('Failed to fetch user permissions:', error);
