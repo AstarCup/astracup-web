@@ -388,11 +388,18 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             const data = await response.json();
 
             if (data.success) {
-                if (data.beatmaps && data.beatmaps.length > 0) {
-                    setAvailableBeatmaps(data.beatmaps);
-                    // 如果只有一个谱面，直接预览
-                    if (data.beatmaps.length === 1) {
-                        setBeatmapPreview(data.beatmaps[0]);
+                if (data.data) {
+                    if (data.data.type === 'multiple' && data.data.beatmaps && data.data.beatmaps.length > 0) {
+                        setAvailableBeatmaps(data.data.beatmaps);
+                        // 如果只有一个谱面，直接预览
+                        if (data.data.beatmaps.length === 1) {
+                            setBeatmapPreview(data.data.beatmaps[0]);
+                        }
+                    } else if (data.data.type === 'single' && data.data.beatmap) {
+                        setAvailableBeatmaps([data.data.beatmap]);
+                        setBeatmapPreview(data.data.beatmap);
+                    } else {
+                        showError('未找到有效的beatmap数据');
                     }
                 } else {
                     showError('未找到有效的beatmap数据');
@@ -449,7 +456,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     // 获取地图评分
     const fetchMapRatings = async (selectionId: number) => {
         try {
-            const response = await fetch(`/api/map-ratings?selectionId=${selectionId}`);
+            const response = await fetch(`/api/map-ratings?mapSelectionId=${selectionId}`);
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
@@ -488,7 +495,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    selectionId,
+                    mapSelectionId: selectionId,
                     userId: userForState.id.toString(),
                     rating
                 })

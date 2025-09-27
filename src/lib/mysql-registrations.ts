@@ -1610,6 +1610,9 @@ const mysqlStorage = {
                 admin_group: row.admin_group ? JSON.parse(row.admin_group) : [],
                 map_selection_group: row.map_selection_group ? JSON.parse(row.map_selection_group) : [],
                 map_testing_group: row.map_testing_group ? JSON.parse(row.map_testing_group) : [],
+                streamer_group: row.streamer_group ? JSON.parse(row.streamer_group) : [],
+                referee_group: row.referee_group ? JSON.parse(row.referee_group) : [],
+                commentator_group: row.commentator_group ? JSON.parse(row.commentator_group) : [],
                 registration_enabled: row.registration_enabled,
                 mappool_visible: row.mappool_visible,
                 created_at: row.created_at,
@@ -1635,6 +1638,9 @@ const mysqlStorage = {
                 admin_group: JSON.stringify(settings.admin_group || []),
                 map_selection_group: JSON.stringify(settings.map_selection_group || []),
                 map_testing_group: JSON.stringify(settings.map_testing_group || []),
+                streamer_group: JSON.stringify(settings.streamer_group || []),
+                referee_group: JSON.stringify(settings.referee_group || []),
+                commentator_group: JSON.stringify(settings.commentator_group || []),
                 registration_enabled: settings.registration_enabled,
                 mappool_visible: settings.mappool_visible
             };
@@ -1650,8 +1656,9 @@ const mysqlStorage = {
                     INSERT INTO tournament_settings (
                         tournament_name, max_pp_for_registration, min_pp_for_registration,
                         current_season, current_season_stage, admin_group, map_selection_group,
-                        map_testing_group, registration_enabled, mappool_visible
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        map_testing_group, streamer_group, referee_group, commentator_group,
+                        registration_enabled, mappool_visible
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `, [
                     updateData.tournament_name,
                     updateData.max_pp_for_registration,
@@ -1661,6 +1668,9 @@ const mysqlStorage = {
                     updateData.admin_group,
                     updateData.map_selection_group,
                     updateData.map_testing_group,
+                    updateData.streamer_group,
+                    updateData.referee_group,
+                    updateData.commentator_group,
                     updateData.registration_enabled,
                     updateData.mappool_visible
                 ]);
@@ -1670,7 +1680,8 @@ const mysqlStorage = {
                     UPDATE tournament_settings SET
                         tournament_name = ?, max_pp_for_registration = ?, min_pp_for_registration = ?,
                         current_season = ?, current_season_stage = ?, admin_group = ?,
-                        map_selection_group = ?, map_testing_group = ?, registration_enabled = ?,
+                        map_selection_group = ?, map_testing_group = ?, streamer_group = ?,
+                        referee_group = ?, commentator_group = ?, registration_enabled = ?,
                         mappool_visible = ?, updated_at = CURRENT_TIMESTAMP
                     ORDER BY id DESC LIMIT 1
                 `, [
@@ -1682,6 +1693,9 @@ const mysqlStorage = {
                     updateData.admin_group,
                     updateData.map_selection_group,
                     updateData.map_testing_group,
+                    updateData.streamer_group,
+                    updateData.referee_group,
+                    updateData.commentator_group,
                     updateData.registration_enabled,
                     updateData.mappool_visible
                 ]);
