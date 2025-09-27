@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { showSuccess, showError, showInfo } from '../ui/Notification';
-import Dropdown, { DropdownOption } from '../ui/Dropdown';
+import { useState, useEffect } from 'react';
+import { showSuccess, showError } from '../ui/Notification';
+import Dropdown from '../ui/Dropdown';
 import RatingDisplay from './ui/RatingDisplay';
 import CommentComponent from './ui/CommentComponent';
 import CurrentRating from './ui/CurrentRating';
-import { getUserPermissions, UserSession } from '@/lib/permissions';
+import { UserSession } from '@/lib/permissions';
 
 interface User {
     id: number;
@@ -71,6 +71,15 @@ interface MapSelection {
     customDTRate?: number | null;
 }
 
+interface ModdedStats {
+    cs?: number;
+    ar?: number;
+    od?: number;
+    hp?: number;
+    starRating?: number;
+    bpm?: number;
+}
+
 const MOD_OPTIONS = [
     'NM', 'HD', 'HR', 'DT', 'FM', 'LZ', 'TB'
 ];
@@ -101,79 +110,9 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         avatar_url: user.avatar_url
     };
 
-    // 图池配置数据
-    const poolData = [
-        {
-            pool: 'QUA',
-            difficulty: '6.2星',
-            boBan: '',
-            nmCount: 4,
-            hdCount: 2,
-            hrCount: 2,
-            dtCount: 2,
-            lzCount: 0,
-            tbCount: 0
-        },
-        {
-            pool: 'RO16',
-            difficulty: '5.9星',
-            boBan: '9/1',
-            nmCount: 5,
-            hdCount: 3,
-            hrCount: 2,
-            dtCount: 2,
-            lzCount: 1,
-            tbCount: 1
-        },
-        {
-            pool: 'QF',
-            difficulty: '6.2星',
-            boBan: '11/1',
-            nmCount: 5,
-            hdCount: 3,
-            hrCount: 2,
-            dtCount: 3,
-            lzCount: 1,
-            tbCount: 1
-        },
-        {
-            pool: 'SF',
-            difficulty: '6.5星',
-            boBan: '11/1',
-            nmCount: 5,
-            hdCount: 3,
-            hrCount: 3,
-            dtCount: 3,
-            lzCount: 1,
-            tbCount: 1
-        },
-        {
-            pool: 'F',
-            difficulty: '6.7星',
-            boBan: '11/2',
-            nmCount: 6,
-            hdCount: 3,
-            hrCount: 3,
-            dtCount: 3,
-            lzCount: 1,
-            tbCount: 1
-        },
-        {
-            pool: 'GF',
-            difficulty: '7.0星',
-            boBan: '13/2',
-            nmCount: 6,
-            hdCount: 3,
-            hrCount: 3,
-            dtCount: 4,
-            lzCount: 2,
-            tbCount: 1
-        }
-    ];
-
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthorized, setIsAuthorized] = useState(false);
-    const [isAdmin, setIsAdmin] = useState(false);
+    const [_isAdmin, setIsAdmin] = useState(false);
 
     // Season configuration
     const [availableSeasons, setAvailableSeasons] = useState([
@@ -190,7 +129,26 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
     // Rating states
     const [userRatings, setUserRatings] = useState<{ [key: number]: number }>({});
-    const [mapRatings, setMapRatings] = useState<{ [key: number]: any[] }>({});
+    interface MapRating {
+        id: number;
+        mapSelectionId: number;
+        userId: string;
+        username: string;
+        avatar_url: string;
+        rating: number;
+        comment: string;
+        createdAt: string;
+        updatedAt: string;
+    }
+
+    interface ExistingSelection {
+        selectedMods: string;
+        modPosition: string;
+        category: string;
+        selectedByUsername: string;
+    }
+
+    const [mapRatings, setMapRatings] = useState<{ [key: number]: MapRating[] }>({});
     const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
 
     // Add selection form
@@ -204,13 +162,13 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [beatmapPreview, setBeatmapPreview] = useState<BeatmapInfo | null>(null);
     const [availableBeatmaps, setAvailableBeatmaps] = useState<BeatmapInfo[]>([]);
-    const [moddedStats, setModdedStats] = useState<any>(null);
+    const [moddedStats, setModdedStats] = useState<ModdedStats | null>(null);
 
     // 重复检查状态
     const [duplicateWarning, setDuplicateWarning] = useState<{
         show: boolean;
         beatmapId: number;
-        existingSelections: any[];
+        existingSelections: ExistingSelection[];
     }>({
         show: false,
         beatmapId: 0,
@@ -348,27 +306,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
     };
 
-    // 检测输入是否像在输入数字（连续的数字字符，可能包含部分URL）
-    const isLikelyTypingNumbers = (input: string): boolean => {
-        // 如果输入为空或很短，不触发自动解析
-        if (!input || input.length < 10) return true;
-
-        // 检查是否包含完整的osu.ppy.sh域名
-        if (!input.includes('osu.ppy.sh')) return true;
-
-        // 检查是否以数字结尾（可能还在输入beatmap ID）
-        const lastChar = input[input.length - 1];
-        const lastFewChars = input.slice(-3);
-
-        // 如果最后的字符是数字，并且最近几个字符主要是数字，可能还在输入
-        if (/\d/.test(lastChar)) {
-            const digitCount = (lastFewChars.match(/\d/g) || []).length;
-            return digitCount >= 2; // 最近3个字符中有2个或更多数字
-        }
-
-        return false;
-    };
-
     // 处理输入变化
     const handleUrlInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setUrlInput(e.target.value);
@@ -461,7 +398,17 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     };
 
     // 计算mod后的属性
-    const calculateModdedStatsAPI = async (beatmap: BeatmapInfo, mods: string, customSettings: any) => {
+    interface CustomSettings {
+        customDASettings: {
+            cs: number | null;
+            ar: number | null;
+            od: number | null;
+            hp: number | null;
+        } | null;
+        customDTRate: number | null;
+    }
+
+    const calculateModdedStatsAPI = async (beatmap: BeatmapInfo, mods: string, customSettings: CustomSettings) => {
         try {
             const response = await fetch('/api/calculate-mod-stats', {
                 method: 'POST',
@@ -501,7 +448,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     }));
 
                     // 设置当前用户的评分
-                    const userRating = data.ratings.find((rating: any) => rating.userId === userForState.id.toString());
+                    const userRating = data.ratings.find((rating: MapRating) => rating.userId === userForState.id.toString());
                     if (userRating) {
                         setUserRatings(prev => ({
                             ...prev,
@@ -963,7 +910,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         />
                                         <div className="flex-1">
                                             <h4 className="font-bold">{beatmapPreview.title}</h4>
-                                            <p className="text-sm text-gray-600">{beatmapPreview.artist} // {beatmapPreview.creator}</p>
+                                            <p className="text-sm text-gray-600">{beatmapPreview.artist} / {beatmapPreview.creator}</p>
                                             <p className="text-sm text-gray-600">[{beatmapPreview.version}] ★{beatmapPreview.star_rating.toFixed(2)}</p>
                                             <p className="text-sm text-gray-600">
                                                 CS: {beatmapPreview.cs} | AR: {beatmapPreview.ar} | OD: {beatmapPreview.od} | HP: {beatmapPreview.hp}
@@ -1143,7 +1090,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         此谱面已被选择 {duplicateWarning.existingSelections.length} 次：
                                     </p>
                                     <ul className="text-sm text-yellow-700 list-disc list-inside">
-                                        {duplicateWarning.existingSelections.map((sel: any, index: number) => (
+                                        {duplicateWarning.existingSelections.map((sel: ExistingSelection, index: number) => (
                                             <li key={index}>
                                                 {sel.selectedMods}{sel.modPosition} - {sel.category} - {sel.selectedByUsername}
                                             </li>

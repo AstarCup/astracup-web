@@ -71,7 +71,7 @@ export default function RatingDisplay({ ratings, selectedBy, currentUserId, onRe
                 try {
                     const errorData = await response.json();
                     errorMessage = errorData.error || `HTTP ${response.status}`;
-                } catch (parseError) {
+                } catch (_parseError) {
                     errorMessage = `HTTP ${response.status}: ${response.statusText}`;
                 }
                 console.error('删除评论失败:', errorMessage);

@@ -23,6 +23,15 @@ export default function DebugPage() {
     const [staffLoading, setStaffLoading] = useState(false);
     const [generatedStaffData, setGeneratedStaffData] = useState<any>(null);
 
+    interface Staff {
+        osuId: string;
+        username: string;
+        role?: string;
+        name?: string;
+        description?: string;
+        coverUrl?: string;
+    }
+
     // Staff 列表管理相关状态
     const [staffList, setStaffList] = useState<any>({});
     const [staffJsonInput, setStaffJsonInput] = useState('');
@@ -199,7 +208,7 @@ export default function DebugPage() {
         }
 
         // 检查是否已存在相同的用户
-        const exists = newStaffList[roleKey].some((staff: any) => staff.osuId === generatedStaffData.osuId);
+        const exists = newStaffList[roleKey].some((staff: Staff) => staff.osuId === generatedStaffData.osuId);
         if (exists) {
             alert('该用户已存在于此角色中');
             return;
@@ -216,7 +225,7 @@ export default function DebugPage() {
         setStaffList(newStaffList);
     };
 
-    const editStaffInList = (roleKey: string, index: number, staff: any) => {
+    const editStaffInList = (roleKey: string, index: number, staff: Staff) => {
         setEditingStaff({ roleKey, index, staff });
     };
 
@@ -492,7 +501,7 @@ export default function DebugPage() {
                                                 {roleKey} ({Array.isArray(members) ? members.length : 0})
                                             </h4>
 
-                                            {Array.isArray(members) && members.map((staff: any, index: number) => (
+                                            {Array.isArray(members) && members.map((staff: Staff, index: number) => (
                                                 <div key={index} className="bg-gray-50 border border-gray-200 rounded p-3 mb-2">
                                                     <div className="flex justify-between items-start">
                                                         <div className="flex-1">

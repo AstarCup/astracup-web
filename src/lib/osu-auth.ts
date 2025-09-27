@@ -145,7 +145,7 @@ export async function verifyOsuToken(accessToken: string): Promise<boolean> {
         });
 
         return response.ok;
-    } catch (error) {
+    } catch (_error) {
         return false;
     }
 }

@@ -6,14 +6,11 @@ import { UserSession } from '@/lib/permissions';
 import { UserPermissions } from '@/lib/permissions';
 import { getUserPermissions } from '@/lib/permissions';
 import MatchScheduleSystem from '@/app/components/ui/MatchScheduleSystem';
-import MessageNotification from '@/app/components/ui/MessageNotification';
 import localFont from "next/font/local";
 import { MatchRoom } from '@/lib/mysql-registrations';
-import Link from 'next/link';
-import Image from 'next/image';
 
 const audiowide = localFont({
-    src: "../components/font/Audiowide-Regular.ttf",
+    src: "../font/Audiowide-Regular.ttf",
     display: "auto",
 });
 
@@ -122,15 +119,6 @@ export default function PlayerInfoPage() {
             month: '2-digit',
             day: '2-digit'
         });
-    };
-
-    const handleLogout = async () => {
-        try {
-            await fetch('/api/auth/logout', { method: 'POST' });
-            router.push('/');
-        } catch (error) {
-            console.error('Logout failed:', error);
-        }
     };
 
     const formatRank = (rank: number | null) => {

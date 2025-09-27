@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getStaffRoomAssignments, createStaffRoomAssignment, updateStaffRoomAssignmentStatus, deleteStaffRoomAssignment, getRoomStaffAssignments } from '@/lib/mysql-registrations';
+import { getStaffRoomAssignments, createStaffRoomAssignment, deleteStaffRoomAssignment, getRoomStaffAssignments } from '@/lib/mysql-registrations';
 import { getUserPermissions } from '@/lib/permissions';
 
 // GET /api/staff-room-assignments - 获取所有staff房间分配

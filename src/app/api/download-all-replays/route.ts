@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { list } from '@vercel/blob';
 import JSZip from 'jszip';
 
+interface ReplayFile {
+    filename: string;
+    content: ArrayBuffer;
+}
+
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
@@ -29,7 +34,7 @@ export async function GET(request: NextRequest) {
         const zip = new JSZip();
 
         // 按mod位组织文件
-        const filesByMod: { [key: string]: any[] } = {};
+        const filesByMod: { [key: string]: ReplayFile[] } = {};
 
         for (const blob of blobs) {
             try {

@@ -10,7 +10,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { TournamentRegistration } from '@/lib/mysql-registrations';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { showSuccess, showError, showInfo, showWarning, NotificationContainer } from '@/app/components/ui/Notification';
+import { showSuccess, showError } from '@/app/components/ui/Notification';
 import OverviewManagement from '@/app/components/staff/OverviewManagement';
 import RoomManagement from '@/app/components/staff/RoomManagement';
 import MatchupManagement from '@/app/components/staff/MatchupManagement';
@@ -98,11 +98,6 @@ interface StaffRoomAssignment {
     };
 }
 
-const audiowide = localFont({
-    src: "../components/font/Audiowide-Regular.ttf",
-    display: "auto",
-});
-
 // 创建对战模态框组件
 
 export default function AdminPage() {
@@ -125,13 +120,11 @@ export default function AdminPage() {
     // 房间管理状态
     const [rooms, setRooms] = useState<MatchRoom[]>([]);
     const [roomsLoading, setRoomsLoading] = useState(false);
-    const [showCreateRoomModal, setShowCreateRoomModal] = useState(false);
     const [deletingRoomId, setDeletingRoomId] = useState<number | null>(null);
 
     // 对战管理状态
     const [matchups, setMatchups] = useState<PlayerMatchup[]>([]);
     const [matchupsLoading, setMatchupsLoading] = useState(false);
-    const [showCreateMatchupModal, setShowCreateMatchupModal] = useState(false);
     const [deletingMatchupId, setDeletingMatchupId] = useState<number | null>(null);
 
     // 已过审玩家状态

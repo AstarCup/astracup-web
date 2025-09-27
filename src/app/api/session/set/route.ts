@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 
 export async function POST(request: NextRequest) {
     try {
         const session = await request.json();
-        const cookieStore = await cookies();
 
         // 设置会话cookie，有效期30天 - 动态配置域名
         const isProduction = process.env.NODE_ENV === 'production';
-        const cookieOptions: any = {
+        const cookieOptions: Record<string, string | number | boolean> = {
             httpOnly: false, // 允许JavaScript访问
             secure: isProduction, // 生产环境使用HTTPS
             sameSite: isProduction ? 'none' : 'lax', // 生产环境允许跨站

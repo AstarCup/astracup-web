@@ -40,7 +40,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                         createdAt: r.createdAt
                     })).filter((r: any) => r.comment));
                 }
-            } catch (e) {
+            } catch (_e) {
                 setComments([]);
             } finally {
                 setIsLoading(false);
@@ -78,7 +78,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                 const errorData = await response.json();
                 showError(errorData.error || '评论提交失败');
             }
-        } catch (error) {
+        } catch (_error) {
             showError('评论提交失败');
         } finally {
             setIsSubmitting(false);
@@ -100,7 +100,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                 const errorData = await response.json();
                 showError(errorData.error || '删除失败');
             }
-        } catch (e) {
+        } catch (_e) {
             showError('删除失败');
         } finally {
             setDeletingCommentId(null);

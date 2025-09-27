@@ -277,8 +277,10 @@ export interface MatchSchedule {
     room_id: number;
     player1_osuId: string;
     player1_username: string;
+    player1_avatar_url?: string;
     player2_osuId: string;
     player2_username: string;
+    player2_avatar_url?: string;
     red_player_osuId?: string;
     blue_player_osuId?: string;
     red_score: number;
@@ -1029,7 +1031,7 @@ const mysqlStorage = {
             const connection = await getPool().getConnection();
 
             let query = 'UPDATE messages SET status = ?, updated_at = CURRENT_TIMESTAMP';
-            let params: any[] = [status];
+            const params: any[] = [status];
 
             if (response_action) {
                 query += ', response_action = ?, response_time = CURRENT_TIMESTAMP';
@@ -1138,7 +1140,7 @@ const mysqlStorage = {
             }
 
             let query = 'UPDATE match_schedules SET status = ?';
-            let params: any[] = [status];
+            const params: any[] = [status];
 
             if (additionalData) {
                 const updates: string[] = [];

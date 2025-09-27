@@ -253,9 +253,7 @@ export async function verifyAdminAuth(osuId: string): Promise<boolean> {
 
 
         return isAdmin;
-    } catch (error) {
-
-        return false;
+    } finally {
     }
 }
 

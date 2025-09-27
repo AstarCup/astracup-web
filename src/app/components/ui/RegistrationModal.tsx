@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { UserSession } from "@/lib/permissions";
 import { TournamentRegistration } from "@/lib/mysql-registrations";
-import { count } from "console";
 
 interface RegistrationModalProps {
     user: UserSession;
@@ -328,7 +327,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
                                 </div>
                             ) : (
                                 <p className="text-sm text-gray-600">
-                                    请仔细阅读比赛规则和报名要求，并添加QQ群:1072271422。点击"查看详情"了解完整比赛手册。
+                                    请仔细阅读比赛规则和报名要求，并添加QQ群:1072271422。点击&quot;查看详情&quot;了解完整比赛手册。
                                 </p>
                             )}
                         </div>

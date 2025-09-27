@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     try {
         // 创建响应并删除session cookie
         const response = NextResponse.json({
@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
 
         // 删除session cookie - 需要匹配设置时的配置
         const isProduction = process.env.NODE_ENV === 'production';
-        const cookieOptions: any = {
+        const cookieOptions: Record<string, string | number | boolean | Date> = {
             httpOnly: false, // 匹配设置时的配置
             secure: isProduction,
             sameSite: isProduction ? 'none' : 'lax', // 匹配设置时的配置

@@ -6,9 +6,14 @@ interface ScheduleItem {
     players: string;
     player1Score: string;
     player2Score: string;
+    player1Avatar?: string;
+    player2Avatar?: string;
     status: string;
     liveUrl?: string;  // 直播间地址
     roomUrl?: string;  // 比赛房间地址
+    referee?: string;  // 裁判员
+    streamer?: string; // 直播员
+    commentator?: string; // 解说员
 }
 
 interface ScheduleTableProps {
@@ -46,14 +51,8 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
                         <th className="px-6 py-4 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">
                             比赛场次
                         </th>
-                        <th className="px-6 py-4 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">
-                            选手
-                        </th>
                         <th className="px-6 py-4 text-center text-2xs font-medium text-gray-500 uppercase tracking-wider">
-                            红方分数
-                        </th>
-                        <th className="px-6 py-4 text-center text-2xs font-medium text-gray-500 uppercase tracking-wider">
-                            蓝方分数
+                            对阵
                         </th>
                         <th className="px-6 py-4 text-center text-2xs font-medium text-gray-500 uppercase tracking-wider">
                             状态
@@ -63,6 +62,15 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
                         </th>
                         <th className="px-6 py-4 text-center text-2xs font-medium text-gray-500 uppercase tracking-wider">
                             比赛链接
+                        </th>
+                        <th className="px-6 py-4 text-center text-2xs font-medium text-gray-500 uppercase tracking-wider">
+                            裁判员
+                        </th>
+                        <th className="px-6 py-4 text-center text-2xs font-medium text-gray-500 uppercase tracking-wider">
+                            直播员
+                        </th>
+                        <th className="px-6 py-4 text-center text-2xs font-medium text-gray-500 uppercase tracking-wider">
+                            解说员
                         </th>
                     </tr>
                 </thead>
@@ -81,14 +89,51 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {item.match}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {item.players}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center font-medium">
-                                {item.player1Score}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center font-medium">
-                                {item.player2Score}
+                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                <div className="flex items-center justify-center space-x-4">
+                                    {/* Player 1 */}
+                                    <div className="flex items-center space-x-2">
+                                        {item.player1Avatar ? (
+                                            <img
+                                                src={item.player1Avatar}
+                                                alt="Player 1 Avatar"
+                                                className="w-8 h-8 rounded-full"
+                                            />
+                                        ) : (
+                                            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+                                                <span className="text-xs text-gray-600">?</span>
+                                            </div>
+                                        )}
+                                        <span className="text-sm font-medium text-gray-900">
+                                            {item.players.split(' vs ')[0] || '未知选手'}
+                                        </span>
+                                    </div>
+
+                                    {/* Score */}
+                                    <div className="flex items-center space-x-2 text-lg font-bold">
+                                        <span className="text-red-600">{item.player1Score}</span>
+                                        <span className="text-gray-400">:</span>
+                                        <span className="text-blue-600">{item.player2Score}</span>
+                                    </div>
+
+                                    {/* Player 2 */}
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm font-medium text-gray-900">
+                                            {item.players.split(' vs ')[1] || '未知选手'}
+                                        </span>
+                                        {item.player2Avatar ? (
+                                            <img
+                                                src={item.player2Avatar}
+                                                alt="Player 2 Avatar"
+                                                className="w-8 h-8 rounded-full"
+                                            />
+                                        ) : (
+                                            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+                                                <span className="text-xs text-gray-600">?</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold ${getStatusColor(item.status)}`}>
@@ -122,6 +167,15 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
                                 ) : (
                                     <span className="text-gray-400 text-xs">暂无</span>
                                 )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                                {item.referee || <span className="text-gray-400 text-xs">暂无</span>}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                                {item.streamer || <span className="text-gray-400 text-xs">暂无</span>}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                                {item.commentator || <span className="text-gray-400 text-xs">暂无</span>}
                             </td>
                         </tr>
                     ))}

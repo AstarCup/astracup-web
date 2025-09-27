@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import MapoolTable from '../ui/MapoolTable';
 import Dropdown from '../ui/Dropdown';
 import { showError, showSuccess } from '../ui/Notification';
-import { getUserPermissions, UserSession } from '@/lib/permissions';
+import { UserSession } from '@/lib/permissions';
 
 interface User {
     id: number;
@@ -21,6 +20,42 @@ interface ReplayCollectionManagementProps {
     };
 }
 
+interface PaddingMap {
+    id: number;
+    artist: string;
+    title: string;
+    version: string;
+    selectedMods: string;
+    modPosition: number;
+    starRating: number;
+    totalLength: number;
+    bpm: number;
+    creator: string;
+    beatmapsetId: number;
+    beatmapId: number;
+    ar: number;
+    cs: number;
+    od: number;
+    hp: number;
+    comment?: string;
+    // MapoolTable 格式化字段
+    SID: number;
+    BID: number;
+    Slot: string;
+    MapInfo: string;
+    _Creator: string;
+    SR: string;
+    CS: string;
+    AR: string;
+    OD: string;
+    BPM: number;
+    HitLength: string;
+    Notes: string;
+    _CS: string;
+    _AR: string;
+    _OD: string;
+}
+
 export default function ReplayCollectionManagement({ user, permissions }: ReplayCollectionManagementProps) {
     // 转换UserSession为内部使用的User格式
     const userForState: User = {
@@ -29,7 +64,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         avatar_url: user.avatar_url
     };
     const [isLoading, setIsLoading] = useState(true);
-    const [paddingMaps, setPaddingMaps] = useState<any[]>([]);
+    const [paddingMaps, setPaddingMaps] = useState<PaddingMap[]>([]);
     const [selectedSeason, setSelectedSeason] = useState('s1');
     const [selectedCategory, setSelectedCategory] = useState('qualification');
     const [uploading, setUploading] = useState(false);
@@ -91,7 +126,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
     };
 
     // 处理表格行右击 - 跳转到对应卡片并高亮
-    const handleTableRowRightClick = (row: any, index: number) => {
+    const handleTableRowRightClick = (row: PaddingMap, _index: number) => {
         // 设置高亮状态
         setHighlightedMapId(row.id);
 
@@ -256,7 +291,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
     }, [user, selectedSeason, selectedCategory]); // 当用户或选择改变时重新加载
 
     // 上传回放文件
-    const handleReplayUpload = async (map: any, file: File) => {
+    const handleReplayUpload = async (map: PaddingMap, file: File) => {
         if (!user) {
             showError('请先登录');
             return;
@@ -274,7 +309,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
             const formData = new FormData();
             formData.append('file', file);
             formData.append('filename', filename);
-            formData.append('mapId', map.id);
+            formData.append('mapId', map.id.toString());
             formData.append('userId', userForState.id.toString());
             formData.append('username', user.username);
             const res = await fetch('/api/upload-replay', {
@@ -301,7 +336,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
     };
 
     // 删除回放文件
-    const handleReplayDelete = async (map: any) => {
+    const handleReplayDelete = async (map: PaddingMap) => {
         if (!user) {
             showError('请先登录');
             return;

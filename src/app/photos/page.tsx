@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import WinnerCard from '@/app/components/WinnerCard';
+import WinnerCard from '../components/ui/WinnerCard';
 import winnersData from '@/config/winners.json';
 import { usePageTitle } from '@/lib/usePageTitle';
 

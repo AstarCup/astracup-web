@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAvailableRoomsForStaff } from '@/lib/mysql-registrations';
 
 // GET /api/available-rooms-for-staff - 获取可供staff选择的房间列表
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     try {
         const rooms = await getAvailableRoomsForStaff();
         return NextResponse.json({ rooms });

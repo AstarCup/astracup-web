@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import path from 'path';
-import fs from 'fs';
 
 // 从osu! API获取beatmap文件内容
 async function getBeatmapFile(beatmapId: number, accessToken?: string): Promise<string> {
@@ -132,7 +130,7 @@ export async function POST(req: NextRequest) {
         console.log('Difficulty result:', difficultyResult);
 
         // 构建结果 - 优先使用计算出的属性
-        let result = {
+        const result = {
             ar: beatmapAttributes.ar || 0,
             cs: beatmapAttributes.cs || 0,
             od: beatmapAttributes.od || 0,

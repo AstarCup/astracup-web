@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { PlayerMatchup, ApprovedPlayer } from './types';
-import { showSuccess, showError } from '@/app/components/ui/Notification';
 
 interface MatchupManagementProps {
     matchups: PlayerMatchup[];

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import MapoolTable from '@/app/components/ui/MapoolTable';
-import Dropdown, { DropdownOption } from '@/app/components/ui/Dropdown';
+import Dropdown from '@/app/components/ui/Dropdown';
 import { usePageTitle } from '@/lib/usePageTitle';
 
 interface MapSelection {

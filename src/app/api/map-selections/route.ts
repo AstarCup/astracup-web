@@ -348,7 +348,7 @@ export async function PUT(request: NextRequest) {
                 const [rows] = await connection.execute(
                     'SELECT selectedBy FROM map_selections WHERE id = ?',
                     [id]
-                ) as [any[], any];
+                ) as [Array<{ selectedBy: string }>, import('mysql2').FieldPacket[]];
 
                 if (rows && rows.length > 0) {
                     const selection = rows[0];

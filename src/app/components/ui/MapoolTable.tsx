@@ -42,57 +42,6 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
     const [showBulkDownloadManager, setShowBulkDownloadManager] = useState(false);
     const [isBulkDownloading, setIsBulkDownloading] = useState(false);
 
-    // Sayobot批量下载 - 直接打开多个Sayobot下载链接
-    const startSayobotBulkDownload = () => {
-        if (data.length === 0) return;
-
-        showInfo(`正在打开 ${data.length} 个Sayobot下载链接...`);
-
-        // 逐个打开Sayobot下载链接，添加小延迟避免浏览器阻止
-        data.forEach((row, index) => {
-            setTimeout(() => {
-                const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`;
-                window.open(downloadUrl, '_blank');
-            }, index * 200); // 每个链接间隔200ms
-        });
-
-        showSuccess('已打开所有Sayobot下载链接，请在弹出的标签页中下载');
-    };
-
-    // osu官方批量下载 - 下载10个后暂停1分钟
-    const startOsuOfficialBulkDownload = async () => {
-        if (data.length === 0) return;
-
-        setIsBulkDownloading(true);
-        showInfo('开始osu官方批量下载，每下载10个谱面暂停1分钟...');
-
-        const batchSize = 10;
-        let processed = 0;
-
-        for (let i = 0; i < data.length; i += batchSize) {
-            const batch = data.slice(i, i + batchSize);
-            console.log(`Processing batch ${Math.floor(i / batchSize) + 1}, items ${i + 1}-${Math.min(i + batchSize, data.length)}`);
-
-            // 打开当前批次的下载链接
-            batch.forEach((row, batchIndex) => {
-                setTimeout(() => {
-                    const downloadUrl = `https://osu.ppy.sh/beatmapsets/${row.SID}/download`;
-                    window.open(downloadUrl, '_blank');
-                    processed++;
-                }, batchIndex * 200); // 批次内每个链接间隔200ms
-            });
-
-            // 如果不是最后一批，等待1分钟
-            if (i + batchSize < data.length) {
-                showInfo(`已下载 ${processed} 个谱面，暂停1分钟后继续...`);
-                await new Promise(resolve => setTimeout(resolve, 60000)); // 1分钟 = 60000ms
-            }
-        }
-
-        setIsBulkDownloading(false);
-        showSuccess(`osu官方批量下载完成！共打开 ${data.length} 个下载链接`);
-    };
-
     // 准备批量下载 (原有的API批量下载)
     const prepareBulkDownload = () => {
         const items: DownloadItem[] = data.map(row => ({

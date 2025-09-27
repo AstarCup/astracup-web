@@ -10,14 +10,14 @@ import { getUserPermissions } from '@/lib/permissions';
 import MessageNotification from './ui/MessageNotification';
 
 const audiowide = localFont({
-    src: "./font/Audiowide-Regular.ttf",
+    src: "../font/Audiowide-Regular.ttf",
     display: "auto",
 });
 
 export default function Navbar() {
     const pathname = usePathname();
     const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [activeLink, setActiveLink] = useState<string>(pathname);
+    const [_activeLink, setActiveLink] = useState<string>(pathname);
     const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
     const [clickedGroup, setClickedGroup] = useState<string | null>(null);
     const [user, setUser] = useState<UserSession | null>(null);
@@ -26,7 +26,7 @@ export default function Navbar() {
         isReplayTester: false,
         isAdmin: false
     });
-    const [versionInfo, setVersionInfo] = useState<string>('');
+    const [_versionInfo, setVersionInfo] = useState<string>('');
     const [iconCache, setIconCache] = useState<Map<string, boolean>>(new Map());
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -144,18 +144,7 @@ export default function Navbar() {
     // 预加载图标
     useEffect(() => {
         preloadIcons();
-    }, []);
-
-    const handleLogout = async () => {
-        try {
-            await fetch('/api/auth/logout', { method: 'POST' });
-            setUser(null);
-            // 可以添加页面刷新或重定向
-            window.location.reload();
-        } catch (error) {
-            console.error('Failed to logout:', error);
-        }
-    };
+    }, [preloadIcons]);
 
     const handleMouseEnter = (groupName: string) => {
         if (hoverTimeoutRef.current) {
@@ -254,7 +243,7 @@ export default function Navbar() {
                         <div className="flex items-center space-x-4">
                             {/* Desktop Menu */}
                             <ul className="hidden xl:flex space-x-8 text-[#FFFFFF] p-2 m-2 navbar-menu">
-                                {navGroups.map((group, groupIndex) => (
+                                {navGroups.map((group, _groupIndex) => (
                                     <li key={group.name} className="relative">
                                         <div
                                             className="flex flex-col items-center relative text-shadow-lg cursor-pointer hover:text-[#E93B66] transition duration-200"

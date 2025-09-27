@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import StaffCard from '@/app/components/StaffCard';
+import StaffCard from '../components/ui/StaffCard';
 import staffData from '@/config/staff.json';
 import { usePageTitle } from '@/lib/usePageTitle';
 

@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import localFont from "next/font/local";
 const audiowide = localFont({
-    src: "./font/Audiowide-Regular.ttf",
+    src: "../../font/Audiowide-Regular.ttf",
     display: "auto",
 });
 

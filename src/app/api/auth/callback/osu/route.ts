@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
         // 设置会话cookie
         const isProduction = process.env.NODE_ENV === 'production';
-        const cookieOptions: any = {
+        const cookieOptions: Record<string, string | number | boolean> = {
             httpOnly: false,
             secure: isProduction,
             sameSite: isProduction ? 'none' : 'lax',

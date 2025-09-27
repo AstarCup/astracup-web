@@ -1,7 +1,6 @@
 "use client";
 
 import { TournamentRegistration } from '@/lib/mysql-registrations';
-import { showSuccess, showError } from '@/app/components/ui/Notification';
 
 interface UserManagementProps {
     registrations: TournamentRegistration[];

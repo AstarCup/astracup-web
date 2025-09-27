@@ -2,13 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import {
     getRatingsForMap,
-    getUserRating,
     addRating,
     deleteRating,
     deleteRatingById,
     getRatingStats
 } from '@/lib/map-ratings';
-import { verifyMapSelectionAuth, verifyAdminAuth } from '@/lib/permissions';
+import { verifyAdminAuth } from '@/lib/permissions';
 
 // 验证用户权限的辅助函数
 async function verifyUserAuth(osuId: string): Promise<{ authorized: boolean; username?: string }> {
