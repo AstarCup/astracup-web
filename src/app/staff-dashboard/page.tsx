@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation';
 import { UserSession } from '@/lib/permissions';
 import { UserPermissions } from '@/lib/permissions';
 import { getUserPermissions } from '@/lib/permissions';
-import MatchScheduleSystem from '@/app/components/MatchScheduleSystem';
-import MessageNotification from '@/app/components/MessageNotification';
 import localFont from "next/font/local";
 import Link from 'next/link';
 import Image from 'next/image';
@@ -20,6 +18,7 @@ import StreamingManagement from '@/app/components/staff/StreamingManagement';
 import UserManagement from '@/app/components/staff/UserManagement';
 import MatchManagement from '@/app/components/staff/MatchManagement';
 import SettingsManagement from '@/app/components/staff/SettingsManagement';
+import ReplayCollectionManagement from '@/app/components/staff/ReplayCollectionManagement';
 
 interface MatchRoom {
     id: number;
@@ -107,7 +106,7 @@ const audiowide = localFont({
 
 export default function AdminPage() {
     const router = useRouter();
-    usePageTitle('/schedulemanagement');
+    usePageTitle('/staff-dashboard');
     const [user, setUser] = useState<UserSession | null>(null);
     const [permissions, setPermissions] = useState<UserPermissions>({
         isMapSelector: false,
@@ -726,6 +725,19 @@ export default function AdminPage() {
                         </button>
 
                         <button
+                            onClick={() => setActiveTab('replays')}
+                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'replays'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h4a2 2 0 012 2v2a2 2 0 01-2 2H8a2 2 0 01-2-2v-2z" clipRule="evenodd" />
+                            </svg>
+                            回放收集
+                        </button>
+
+                        <button
                             onClick={() => setActiveTab('settings')}
                             className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'settings'
                                 ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
@@ -767,6 +779,7 @@ export default function AdminPage() {
                         {activeTab === 'matches' && '比赛管理'}
                         {activeTab === 'streaming' && '直播裁判'}
                         {activeTab === 'users' && '用户管理'}
+                        {activeTab === 'replays' && '回放收集管理'}
                         {activeTab === 'settings' && '系统设置'}
                     </h1>
                 </header>
@@ -799,6 +812,14 @@ export default function AdminPage() {
                             onFetchRegistrations={fetchRegistrations}
                             onApproveRegistration={handleApproveRegistration}
                             onDeleteRegistration={handleDeleteRegistration}
+                        />
+                    )}
+
+                    {/* 回放收集管理页面 */}
+                    {activeTab === 'replays' && (
+                        <ReplayCollectionManagement
+                            user={user}
+                            permissions={permissions}
                         />
                     )}
 

@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import MapoolTable from '../components/MapoolTable';
-import Dropdown from '../components/Dropdown';
-import { showError, showSuccess } from '../components/Notification';
-import { usePageTitle } from '@/lib/usePageTitle';
-import { getUserPermissions } from '@/lib/permissions';
+import MapoolTable from '../MapoolTable';
+import Dropdown from '../Dropdown';
+import { showError, showSuccess } from '../Notification';
+import { getUserPermissions, UserSession } from '@/lib/permissions';
 
 interface User {
     id: number;
@@ -14,10 +13,21 @@ interface User {
     avatar_url: string;
 }
 
-export default function ReplayCollectionPage() {
-    usePageTitle('/replay-collection');
+interface ReplayCollectionManagementProps {
+    user: UserSession;
+    permissions: {
+        isAdmin: boolean;
+        isReplayTester: boolean;
+    };
+}
 
-    const [user, setUser] = useState<User | null>(null);
+export default function ReplayCollectionManagement({ user, permissions }: ReplayCollectionManagementProps) {
+    // 转换UserSession为内部使用的User格式
+    const userForState: User = {
+        id: parseInt(user.osuId),
+        username: user.username,
+        avatar_url: user.avatar_url
+    };
     const [isLoading, setIsLoading] = useState(true);
     const [paddingMaps, setPaddingMaps] = useState<any[]>([]);
     const [selectedSeason, setSelectedSeason] = useState('s1');
@@ -38,6 +48,7 @@ export default function ReplayCollectionPage() {
         { value: 'semifinal', label: '半决赛' },
         { value: 'final', label: '决赛' }
     ];
+
     const formatLength = (seconds: number): string => {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = seconds % 60;
@@ -126,6 +137,7 @@ export default function ReplayCollectionPage() {
 
         return options;
     };
+
     const loadSeasonConfig = async () => {
         try {
             const response = await fetch('/api/season-config');
@@ -146,98 +158,42 @@ export default function ReplayCollectionPage() {
         }
     };
 
-    const checkUserAuth = async () => {
-        try {
-            console.log('Starting auth check...');
-
-            // Check if user is logged in
-            console.log('Fetching session...');
-            const sessionResponse = await fetch('/api/session/get');
-            console.log('Session response status:', sessionResponse.status);
-
-            if (!sessionResponse.ok) {
-                console.log('Session check failed, redirecting to register');
-                showError('未登录。正在跳转到登录页面...');
-                setTimeout(() => window.location.href = '/register', 3000); // 3秒后跳转
-                return;
-            }
-
-            const sessionData = await sessionResponse.json();
-            console.log('Session data:', sessionData);
-
-            if (!sessionData.success || !sessionData.session) {
-                console.log('No user in session, redirecting to register');
-                showError('未找到用户会话。正在跳转到登录页面...');
-                setTimeout(() => window.location.href = '/register', 3000); // 3秒后跳转
-                return;
-            }
-
-            const currentUser = sessionData.session;
-            console.log('Current user details:', {
-                id: currentUser.osuId,
-                username: currentUser.username,
-                idType: typeof currentUser.osuId
-            });
-
-            // 为了兼容现有的User接口，我们需要将osuId转换为id
-            const userForState = {
-                id: parseInt(currentUser.osuId),
-                username: currentUser.username,
-                avatar_url: currentUser.avatar_url
-            };
-
-            setUser(userForState);
-            console.log('Current user set:', userForState);
-
-        } catch (error) {
-            console.error('Auth check failed:', error);
-            showError(`验证用户权限时出错: ${error instanceof Error ? error.message : '未知错误'}`);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        checkUserAuth();
-    }, []);
-
-    // 当用户加载完成后，检查权限并加载数据
+    // 检查权限并加载数据
     useEffect(() => {
         const checkAccessAndLoadData = async () => {
             if (!user) return;
 
             console.log('Checking access for user:', user);
 
-            const permissions = await getUserPermissions(user.id.toString());
-            console.log('User permissions:', permissions);
-
             const hasAccess = permissions.isReplayTester || permissions.isAdmin;
             console.log('User access check result:', hasAccess);
 
             if (!hasAccess) {
                 showError('无权限访问回放收集系统');
+                setIsLoading(false);
                 return;
             }
 
             // 获取赛季配置
             await loadSeasonConfig();
+            setIsLoading(false);
         };
 
         if (user) {
             checkAccessAndLoadData();
         }
-    }, [user]); // 当用户改变时执行
+    }, [user, permissions]); // 当用户或权限改变时执行
 
     // 单独的useEffect来加载地图数据
     useEffect(() => {
         const loadMapData = async () => {
             if (!user) return;
 
-            console.log('Loading map data for:', { selectedSeason, selectedCategory, userId: user.id });
+            console.log('Loading map data for:', { selectedSeason, selectedCategory, userId: userForState.id });
 
             // 获取padding状态的图池
             try {
-                const url = `/api/map-selections?season=${selectedSeason}&category=${selectedCategory}&padding=true&osuId=${user.id}`;
+                const url = `/api/map-selections?season=${selectedSeason}&category=${selectedCategory}&padding=true&osuId=${userForState.id}`;
                 console.log('Fetching from URL:', url);
 
                 const response = await fetch(url);
@@ -313,13 +269,13 @@ export default function ReplayCollectionPage() {
         try {
             // 构造文件名 - 格式: modPosition_bid_userId_username.osr
             const safeUsername = user.username.replace(/[^a-zA-Z0-9_-]/g, '_'); // 替换特殊字符
-            const filename = `${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}_${map.BID}_${user.id}_${safeUsername}.osr`;
+            const filename = `${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}_${map.BID}_${userForState.id}_${safeUsername}.osr`;
             // 上传到vercel blob
             const formData = new FormData();
             formData.append('file', file);
             formData.append('filename', filename);
             formData.append('mapId', map.id);
-            formData.append('userId', user.id.toString());
+            formData.append('userId', userForState.id.toString());
             formData.append('username', user.username);
             const res = await fetch('/api/upload-replay', {
                 method: 'POST',
@@ -358,7 +314,7 @@ export default function ReplayCollectionPage() {
         try {
             // 构造文件名 - 需要找到对应的文件名
             const safeUsername = user.username.replace(/[^a-zA-Z0-9_-]/g, '_');
-            const filename = `${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}_${map.BID}_${user.id}_${safeUsername}.osr`;
+            const filename = `${selectedSeason}/${selectedCategory}/${map.selectedMods}${map.modPosition}_${map.BID}_${userForState.id}_${safeUsername}.osr`;
 
             const res = await fetch('/api/upload-replay', {
                 method: 'DELETE',
@@ -367,7 +323,7 @@ export default function ReplayCollectionPage() {
                 },
                 body: JSON.stringify({
                     filename,
-                    userId: user.id.toString()
+                    userId: userForState.id.toString()
                 })
             });
 

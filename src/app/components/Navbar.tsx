@@ -217,16 +217,8 @@ export default function Navbar() {
             name: '管理',
             svg: '/icons/admin-fill.svg',
             links: [
-                ...(permissions.isMapSelector || permissions.isAdmin ? [
-                    { name: 'MAP SELECTION', href: '/map-selection', tip: '图池管理', svg: '/icons/table-fill.svg' }
-                ] : []),
-                ...(permissions.isReplayTester || permissions.isAdmin ? [
-                    { name: 'UPLOAD REPLAY', href: '/replay-collection', tip: '测图上传', svg: '/icons/upload.svg' }
-                ] : []),
-                ...(permissions.isAdmin ? [
-                    { name: 'ADMIN PANEL', href: '/schedulemanagement', tip: '管理比赛安排', svg: '/icons/admin-fill.svg' }
-                ] : [])
-            ].filter(Boolean)
+                { name: 'STAFF PANEL', href: '/staff-dashboard', tip: '管理比赛安排', svg: '/icons/admin-fill.svg' }
+            ]
         }] : [])
     ];
 
