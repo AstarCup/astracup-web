@@ -56,16 +56,43 @@ export async function POST(request: NextRequest) {
             staff_username,
             staff_role,
             assigned_by: assigned_by || staff_osuId,
-            status: 'pending'
+            status: 'confirmed'
         });
 
         return NextResponse.json({
             success: true,
             assignmentId,
-            message: '申请已提交，等待管理员确认'
+            message: '已成功加入房间'
         });
     } catch (error) {
         console.error('Error creating staff room assignment:', error);
         return NextResponse.json({ error: '创建staff房间分配失败' }, { status: 500 });
+    }
+}
+
+// DELETE /api/staff-room-assignments - 撤销staff房间分配
+export async function DELETE(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const assignmentId = searchParams.get('assignmentId');
+
+        if (!assignmentId) {
+            return NextResponse.json({ error: '缺少分配ID参数' }, { status: 400 });
+        }
+
+        // 删除分配记录
+        const success = await deleteStaffRoomAssignment(parseInt(assignmentId));
+
+        if (success) {
+            return NextResponse.json({
+                success: true,
+                message: '已撤销房间分配'
+            });
+        } else {
+            return NextResponse.json({ error: '撤销失败，分配记录不存在' }, { status: 404 });
+        }
+    } catch (error) {
+        console.error('Error deleting staff room assignment:', error);
+        return NextResponse.json({ error: '撤销staff房间分配失败' }, { status: 500 });
     }
 }

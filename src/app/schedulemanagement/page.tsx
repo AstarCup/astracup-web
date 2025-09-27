@@ -822,10 +822,6 @@ export default function AdminPage() {
 
         const roleName = role === 'referee' ? '裁判' : role === 'streamer' ? '直播' : '解说';
 
-        if (!confirm(`确定要申请成为房间 ${roomId} 的${roleName}吗？`)) {
-            return;
-        }
-
         try {
             const response = await fetch('/api/staff-room-assignments', {
                 method: 'POST',
@@ -842,7 +838,7 @@ export default function AdminPage() {
             });
 
             if (response.ok) {
-                showSuccess(`成功申请成为${roleName}！请等待管理员确认。`);
+                showSuccess(`成功加入房间成为${roleName}！`);
                 // 重新获取数据
                 fetchStaffAssignments();
                 fetchAvailableRooms();
@@ -853,6 +849,31 @@ export default function AdminPage() {
         } catch (error) {
             console.error('Error applying for room:', error);
             showError('申请失败，请稍后重试');
+        }
+    };
+
+    const handleRevokeAssignment = async (assignmentId: number, roleName: string) => {
+        if (!confirm(`确定要撤销${roleName}分配吗？`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/staff-room-assignments?assignmentId=${assignmentId}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                showSuccess(`已撤销${roleName}分配`);
+                // 重新获取数据
+                fetchStaffAssignments();
+                fetchAvailableRooms();
+            } else {
+                const errorData = await response.json();
+                showError(`撤销失败: ${errorData.error || '未知错误'}`);
+            }
+        } catch (error) {
+            console.error('Error revoking assignment:', error);
+            showError('撤销失败，请稍后重试');
         }
     };
 
@@ -1649,7 +1670,7 @@ export default function AdminPage() {
                                                         const adminApplication = staffAssignments.find(a =>
                                                             a.staff_osuId === user.osuId &&
                                                             a.room_id === room.id &&
-                                                            a.status === 'pending'
+                                                            a.status === 'confirmed'
                                                         );
 
                                                         return (
@@ -1689,8 +1710,8 @@ export default function AdminPage() {
                                                                 {/* 申请按钮 - 管理员默认申请直播员 */}
                                                                 <div className="flex flex-col space-y-2">
                                                                     {adminApplication ? (
-                                                                        <div className="text-xs text-yellow-400 text-center py-2">
-                                                                            已申请直播员 - 等待确认
+                                                                        <div className="text-xs text-green-400 text-center py-2">
+                                                                            已加入直播员
                                                                         </div>
                                                                     ) : (
                                                                         <button
@@ -1745,42 +1766,13 @@ export default function AdminPage() {
                                                                     <div>轮次: {assignment.room?.round_number} | 场次: {assignment.room?.match_number}</div>
                                                                     <div>日期: {assignment.room?.match_date} | 时间: {assignment.room?.match_time}</div>
                                                                 </div>
-                                                            </div>
-                                                        ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* 待处理的申请 */}
-                                        {staffAssignments.filter(a => a.staff_osuId === user.osuId && a.status === 'pending').length > 0 && (
-                                            <div>
-                                                <h4 className="text-lg font-medium text-white mb-4 flex items-center">
-                                                    <span className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></span>
-                                                    待确认的申请
-                                                </h4>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                                                    {staffAssignments
-                                                        .filter(a => a.staff_osuId === user.osuId && a.status === 'pending')
-                                                        .map((assignment) => (
-                                                            <div key={assignment.id} className="bg-[#2d2d2d] border border-yellow-600 rounded-lg p-4">
-                                                                <div className="flex justify-between items-start mb-3">
-                                                                    <h5 className="text-white font-semibold text-sm truncate flex-1 mr-2">
-                                                                        {assignment.room?.room_name || `房间 ${assignment.room_id}`}
-                                                                    </h5>
-                                                                    <span className={`px-2 py-1 rounded text-xs font-medium ${assignment.staff_role === 'referee' ? 'bg-blue-600 text-white' :
-                                                                        assignment.staff_role === 'streamer' ? 'bg-purple-600 text-white' :
-                                                                            'bg-green-600 text-white'
-                                                                        }`}>
-                                                                        {assignment.staff_role === 'referee' ? '裁判' :
-                                                                            assignment.staff_role === 'streamer' ? '直播' : '解说'}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="text-xs text-gray-400 space-y-1">
-                                                                    <div>轮次: {assignment.room?.round_number} | 场次: {assignment.room?.match_number}</div>
-                                                                    <div>日期: {assignment.room?.match_date} | 时间: {assignment.room?.match_time}</div>
-                                                                </div>
-                                                                <div className="mt-3 text-xs text-yellow-400">
-                                                                    等待管理员确认...
+                                                                <div className="mt-3">
+                                                                    <button
+                                                                        onClick={() => handleRevokeAssignment(assignment.id, assignment.staff_role === 'referee' ? '裁判' : assignment.staff_role === 'streamer' ? '直播' : '解说')}
+                                                                        className="w-full bg-red-600 hover:bg-red-700 text-white text-xs py-2 px-3 rounded transition-colors duration-200"
+                                                                    >
+                                                                        撤销分配
+                                                                    </button>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -1807,7 +1799,7 @@ export default function AdminPage() {
                                                         const userApplication = staffAssignments.find(a =>
                                                             a.staff_osuId === user.osuId &&
                                                             a.room_id === room.id &&
-                                                            a.status === 'pending'
+                                                            a.status === 'confirmed'
                                                         );
 
                                                         return (
@@ -1847,9 +1839,9 @@ export default function AdminPage() {
                                                                 {/* 申请按钮 */}
                                                                 <div className="flex flex-col space-y-2">
                                                                     {userApplication ? (
-                                                                        <div className="text-xs text-yellow-400 text-center py-2">
-                                                                            已申请 {userApplication.staff_role === 'referee' ? '裁判' :
-                                                                                userApplication.staff_role === 'streamer' ? '直播' : '解说'} - 等待确认
+                                                                        <div className="text-xs text-green-400 text-center py-2">
+                                                                            已加入 {userApplication.staff_role === 'referee' ? '裁判' :
+                                                                                userApplication.staff_role === 'streamer' ? '直播' : '解说'}
                                                                         </div>
                                                                     ) : (
                                                                         <div className="flex space-x-2">
