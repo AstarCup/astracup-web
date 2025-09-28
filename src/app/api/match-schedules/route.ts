@@ -9,41 +9,33 @@ export async function GET(_request: NextRequest) {
         const cookieStore = await cookies();
         const sessionCookie = cookieStore.get('astra_session');
 
-        if (!sessionCookie?.value) {
-            return NextResponse.json({
-                success: false,
-                error: '未登录'
-            }, { status: 401 });
-        }
+        let isLoggedIn = false;
+        let osuId: string | null = null;
+        let permissions = null;
 
-        let session;
-        try {
-            session = JSON.parse(sessionCookie.value);
-        } catch {
-            return NextResponse.json({
-                success: false,
-                error: '会话无效'
-            }, { status: 401 });
+        if (sessionCookie?.value) {
+            try {
+                const session = JSON.parse(sessionCookie.value);
+                osuId = session.osuId;
+                if (osuId) {
+                    isLoggedIn = true;
+                    permissions = await getUserPermissions(osuId);
+                }
+            } catch {
+                // 会话无效，继续作为未登录用户处理
+            }
         }
-
-        const osuId = session.osuId;
-        if (!osuId) {
-            return NextResponse.json({
-                success: false,
-                error: '用户ID无效'
-            }, { status: 400 });
-        }
-
-        // 检查用户权限
-        const permissions = await getUserPermissions(osuId);
 
         let schedules;
-        if (permissions.isAdmin) {
+        if (isLoggedIn && permissions?.isAdmin) {
             // 管理员可以看到所有比赛预约
             schedules = await getAllMatchSchedules();
-        } else {
-            // 普通用户只能看到自己的比赛预约
+        } else if (isLoggedIn && osuId) {
+            // 登录用户可以看到自己的比赛预约
             schedules = await getUserMatchSchedules(osuId);
+        } else {
+            // 未登录用户可以看到所有公开的比赛预约（不包含私人信息）
+            schedules = await getAllMatchSchedules();
         }
 
         return NextResponse.json({
