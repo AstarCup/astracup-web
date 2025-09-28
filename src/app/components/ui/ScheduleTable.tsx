@@ -51,7 +51,7 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
 
     return (
         <div className="overflow-x-auto">
-            <table className="min-w-[1300px] bg-white">
+            <table className="min-w-[1800px] bg-white">
                 <thead>
                     <tr className="bg-gray-50 text-center">
                         <th className="px-6 py-4 text-left text-2xs font-medium text-gray-500 uppercase tracking-wider">

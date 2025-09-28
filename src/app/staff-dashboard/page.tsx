@@ -124,6 +124,7 @@ export default function AdminPage() {
     const [registrationsLoading, setRegistrationsLoading] = useState(false);
     const [processingUser, setProcessingUser] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('overview');
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
     // 房间管理状态
     const [rooms, setRooms] = useState<MatchRoom[]>([]);
@@ -671,145 +672,188 @@ export default function AdminPage() {
             )}
 
             {/* 侧边栏 */}
-            <div className="w-64 bg-[#2d2d2d] border-r border-[#404040] flex flex-col">
+            <div className={`bg-[#2d2d2d] border-r border-[#404040] flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'
+                }`}>
                 {/* 头部信息 */}
-                <div className="p-6 border-b border-[#404040]">
-                    <div className="flex items-center mb-4">
-                        <Image
-                            src={user.avatar_url}
-                            alt={user.username}
-                            width={40}
-                            height={40}
-                            className="rounded-full outline outline-2 outline-[#E93B66] mr-3"
-                            onError={(e) => {
-                                e.currentTarget.src = '/default-avatar.png';
-                            }}
-                        />
-                        <div>
-                            <h3 className="text-white font-medium text-sm">{user.username}</h3>
-                            <p className="text-gray-400 text-xs">管理员</p>
-                        </div>
+                <div className={`border-b border-[#404040] ${sidebarCollapsed ? 'p-3' : 'p-6'}`}>
+                    {/* 收起/展开按钮 */}
+                    <div className="flex items-center justify-between mb-4">
+                        {!sidebarCollapsed && (
+                            <div className="flex items-center">
+                                <Image
+                                    src={user.avatar_url}
+                                    alt={user.username}
+                                    width={32}
+                                    height={32}
+                                    className="rounded-full outline outline-2 outline-[#E93B66] mr-3"
+                                    onError={(e) => {
+                                        e.currentTarget.src = '/default-avatar.png';
+                                    }}
+                                />
+                                <div>
+                                    <h3 className="text-white font-medium text-sm">{user.username}</h3>
+                                    <p className="text-gray-400 text-xs">管理员</p>
+                                </div>
+                            </div>
+                        )}
+                        <button
+                            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                            className="p-2 text-gray-400 hover:text-white hover:bg-[#3a3a3a] rounded transition-colors duration-200"
+                            title={sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'}
+                        >
+                            <svg
+                                className={`w-5 h-5 transition-transform duration-200 ${sidebarCollapsed ? 'rotate-180' : ''}`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
                     </div>
+                    {sidebarCollapsed && (
+                        <div className="flex justify-center">
+                            <Image
+                                src={user.avatar_url}
+                                alt={user.username}
+                                width={32}
+                                height={32}
+                                className="rounded-full outline outline-2 outline-[#E93B66]"
+                                onError={(e) => {
+                                    e.currentTarget.src = '/default-avatar.png';
+                                }}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* 导航菜单 */}
-                <nav className="flex-1 p-4">
+                <nav className={`flex-1 ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
                     <div className="space-y-2">
                         <button
                             onClick={() => setActiveTab('overview')}
-                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'overview'
-                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
-                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'overview'
+                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
+                            title={sidebarCollapsed ? '概览' : undefined}
                         >
-                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                             </svg>
-                            概览
+                            {!sidebarCollapsed && <span className="ml-3">概览</span>}
                         </button>
                         <button
                             onClick={() => setActiveTab('rooms')}
-                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'rooms'
+                            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'rooms'
                                 ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
+                            title={sidebarCollapsed ? '比赛房间管理' : undefined}
                         >
-                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                             </svg>
-                            比赛房间管理
+                            {!sidebarCollapsed && <span className="ml-3">比赛房间管理</span>}
                         </button>
 
                         <button
                             onClick={() => setActiveTab('matchups')}
-                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'matchups'
+                            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'matchups'
                                 ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
+                            title={sidebarCollapsed ? '对战列表管理' : undefined}
                         >
-                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
                             </svg>
-                            对战列表管理
+                            {!sidebarCollapsed && <span className="ml-3">对战列表管理</span>}
                         </button>
 
                         <button
                             onClick={() => setActiveTab('streaming')}
-                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'streaming'
+                            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'streaming'
                                 ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
+                            title={sidebarCollapsed ? '直播裁判' : undefined}
                         >
-                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.414-1.414A1 1 0 0010.586 3H7.414a1 1 0 00-.707.293L5.293 4.707A1 1 0 014.586 5H4zm12 12H4a4 4 0 01-4-4V7a4 4 0 014-4h1.586a1 1 0 01.707.293L7.707 5.707A1 1 0 008.414 6h3.172a1 1 0 01.707.293l1.414 1.414A1 1 0 0014.414 8H16a4 4 0 014 4v6a4 4 0 01-4 4z" clipRule="evenodd" />
                                 <path fillRule="evenodd" d="M8 11a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
                             </svg>
-                            直播裁判
+                            {!sidebarCollapsed && <span className="ml-3">直播裁判</span>}
                         </button>
 
                         <button
                             onClick={() => setActiveTab('matches')}
-                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'matches'
+                            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'matches'
                                 ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
+                            title={sidebarCollapsed ? '比赛管理' : undefined}
                         >
-                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                             </svg>
-                            比赛管理
+                            {!sidebarCollapsed && <span className="ml-3">比赛管理</span>}
                         </button>
 
                         <button
                             onClick={() => setActiveTab('users')}
-                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'users'
+                            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'users'
                                 ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
+                            title={sidebarCollapsed ? '用户管理' : undefined}
                         >
-                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            用户管理
+                            {!sidebarCollapsed && <span className="ml-3">用户管理</span>}
                         </button>
 
                         <button
                             onClick={() => setActiveTab('replays')}
-                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'replays'
+                            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'replays'
                                 ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
+                            title={sidebarCollapsed ? '回放收集' : undefined}
                         >
-                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h4a2 2 0 012 2v2a2 2 0 01-2 2H8a2 2 0 01-2-2v-2z" clipRule="evenodd" />
                             </svg>
-                            回放收集
+                            {!sidebarCollapsed && <span className="ml-3">回放收集</span>}
                         </button>
 
                         <button
                             onClick={() => setActiveTab('map-selection')}
-                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'map-selection'
+                            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'map-selection'
                                 ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
+                            title={sidebarCollapsed ? '选图管理' : undefined}
                         >
-                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd" />
                             </svg>
-                            选图管理
+                            {!sidebarCollapsed && <span className="ml-3">选图管理</span>}
                         </button>
 
                         <button
                             onClick={() => setActiveTab('settings')}
-                            className={`w-full flex items-center px-4 py-3 text-left transition-colors duration-200 ${activeTab === 'settings'
+                            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'settings'
                                 ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
+                            title={sidebarCollapsed ? '系统设置' : undefined}
                         >
-                            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
                             </svg>
-                            系统设置
+                            {!sidebarCollapsed && <span className="ml-3">系统设置</span>}
                         </button>
 
 
