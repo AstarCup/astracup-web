@@ -249,21 +249,28 @@ export default function Navbar() {
 
     return (
         <nav className={`${audiowide.className} antialiased`}>
-            <div className="fixed top-0 left-0 w-full z-50 object-center font-bold">
+            <div className="absolute inset-0" style={{
+                zIndex: -20,
+                background: 'linear-gradient(to bottom, rgba(0,0,0, 0.6) 10%, rgba(0,0,0, 0.3) 50%, rgba(0,0,0, 0.1) 80%, rgba(233, 59, 102, 0) 100%)'
+            }}></div>
 
-                <div className="absolute inset-0" style={{
-                    zIndex: -20,
-                    background: 'linear-gradient(to bottom, rgba(0,0,0, 0.6) 10%, rgba(0,0,0, 0.3) 50%, rgba(0,0,0, 0.1) 80%, rgba(233, 59, 102, 0) 100%)'
-                }}></div>
+
+
+            <div className="fixed top-0 left-0 w-full z-50 object-center font-bold">
                 <div className="absolute inset-0 backdrop-blur-lg" style={{
                     zIndex: -20,
                     maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 10%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)',
                     WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 10%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)'
                 }}></div>
 
+                <Image src="/NavbarBackground.svg"
+                    width={1920}
+                    height={80}
+                    alt="Background"
+                    className="absolute inset-0 object-cover bg-center bg-repeat-x"
+                    style={{ zIndex: -2 }} />
 
 
-                <Image src="/NavbarBackground.svg" alt="Background" fill className="absolute inset-0 object-cover bg-center bg-repeat-x" style={{ zIndex: -2 }} />
 
 
                 <div className="max-w-7xl mx-auto px-2">
@@ -277,17 +284,7 @@ export default function Navbar() {
                         <div className="flex items-center space-x-4">
                             {/* Desktop Menu */}
                             <ul className="hidden xl:flex space-x-8 text-[#FFFFFF] p-2 m-2 navbar-menu">
-                                {/* 调试信息 - 仅开发环境显示 */}
-                                {process.env.NODE_ENV === 'development' && (
-                                    <li className="text-xs text-yellow-300 bg-black/50 px-2 py-1 rounded">
-                                        权限加载: {permissionsLoading ? '加载中...' : '完成'} |
-                                        用户: {user ? user.osuId : '未登录'} |
-                                        管理员: {permissions.isAdmin ? '是' : '否'} |
-                                        裁判: {permissions.isReferee ? '是' : '否'} |
-                                        主播: {permissions.isStreamer ? '是' : '否'} |
-                                        解说: {permissions.isCommentator ? '是' : '否'}
-                                    </li>
-                                )}
+
                                 {navGroups.map((group) => (
                                     <li key={group.name} className="relative">
                                         <div
@@ -353,10 +350,12 @@ export default function Navbar() {
                                     </li>
                                 ))}
                             </ul>
-
+                            <p className='text-white'>|</p>
                             {/* User Profile */}
                             <div className="hidden xl:flex items-center ml-4">
-                                <MessageNotification />
+                                <div className='mr-4'>
+                                    <MessageNotification />
+                                </div>
                                 {user ? (
                                     <Link href="/player-info">
                                         <Image
