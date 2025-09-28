@@ -690,15 +690,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     // 删除选图
     const deleteSelection = async (selectionId: number) => {
         try {
-            const response = await fetch('/api/map-selections', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    id: selectionId,
-                    selectedBy: userForState.id
-                })
+            const response = await fetch(`/api/map-selections?id=${selectionId}&selectedBy=${userForState.id}`, {
+                method: 'DELETE'
             });
 
             const data = await response.json();
@@ -1614,7 +1607,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         查看谱面
                     </button>
 
-                    {permissions.isAdmin || permissions.isMapSelector && (
+                    {(permissions.isAdmin || permissions.isMapSelector) && (
                         <button
                             onClick={() => {
                                 toggleApproval(contextMenu.selection!.id, contextMenu.selection!.approved);
