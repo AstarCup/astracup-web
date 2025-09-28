@@ -220,6 +220,15 @@ export default function PlayerInfoPage() {
         }
     };
 
+    const handleLogout = async () => {
+        try {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            router.push('/');
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
@@ -265,18 +274,29 @@ export default function PlayerInfoPage() {
                         <div className="mb-8 pb-6">
 
                             {/* 头像和用户名在一行 */}
-                            <div className="flex items-center mb-4">
-                                <Image
-                                    src={user.avatar_url}
-                                    alt={user.username}
-                                    width={80}
-                                    height={80}
-                                    className="rounded-full outline outline-2 outline-[#E93B66] mr-6"
-                                    onError={(e) => {
-                                        e.currentTarget.src = '/default-avatar.png';
-                                    }}
-                                />
-                                <h2 className="text-3xl font-bold text-white">{user.username}</h2>
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center">
+                                    <Image
+                                        src={user.avatar_url}
+                                        alt={user.username}
+                                        width={80}
+                                        height={80}
+                                        className="rounded-full outline outline-2 outline-[#E93B66] mr-6"
+                                        onError={(e) => {
+                                            e.currentTarget.src = '/default-avatar.png';
+                                        }}
+                                    />
+                                    <h2 className="text-3xl font-bold text-white">{user.username}</h2>
+                                </div>
+                                <button
+                                    onClick={handleLogout}
+                                    className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-4 py-2 transition-colors duration-200 font-medium border-b-4 border-[#3BE9D8] hover:border-[#E93B66]"
+                                    title="登出"
+                                >
+                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+                                    </svg>
+                                </button>
                             </div>
 
                             {/* 下方flex信息显示 */}

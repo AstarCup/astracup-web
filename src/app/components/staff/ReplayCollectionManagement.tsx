@@ -590,7 +590,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
 
                     {/* 下载全部回放功能 */}
                     <div className="mt-8 border-t pt-6 bg-[#3d3d3d]">
-                        <div className="flex justify-between items-center mb-4">
+                        <div className="flex justify-between items-center mb-4 p-6">
                             <h3 className="text-xl font-bold text-white">下载全部回放</h3>
                             <button
                                 onClick={handleDownloadAllReplays}
