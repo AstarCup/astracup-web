@@ -1654,7 +1654,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     {(permissions.isAdmin || permissions.isMapSelector) && (
                         <button
                             onClick={() => {
-                                togglePadding(contextMenu.selection!.id, contextMenu.selection!.padding);
+                                togglePadding(contextMenu.selection!.id, contextMenu.selection!.padding || false);
                                 closeContextMenu();
                             }}
                             className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
