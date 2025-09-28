@@ -59,7 +59,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
                         height={500}
                     />
                     <Navbar />
-                    <main className={`pt-20`}>
+                    <main className={`pt-30`}>
                         {children}
                     </main>
                     <Footer />
