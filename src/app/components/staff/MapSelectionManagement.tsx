@@ -1349,7 +1349,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     )}
 
                     {/* 选图列表 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {filteredSelections.map(selection => (
                             <div
                                 key={selection.id}
