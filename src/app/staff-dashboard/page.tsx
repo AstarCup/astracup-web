@@ -624,7 +624,7 @@ export default function AdminPage() {
         );
     }
 
-    if (!user || !permissions.isAdmin && !permissions.isReferee && !permissions.isStreamer && !permissions.isCommentator) {
+    if (!user || !permissions.isAdmin && !permissions.isReferee && !permissions.isStreamer && !permissions.isCommentator && !permissions.isReplayTester && !permissions.isMapSelector) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen relative">
                 <div className="fixed inset-0 z-0">
