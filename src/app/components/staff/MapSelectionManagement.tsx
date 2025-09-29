@@ -226,7 +226,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         const checkAccessAndLoadData = async () => {
             if (!user) return;
 
-            const hasAccess = permissions.isMapSelector || permissions.isAdmin;
+            const hasAccess = permissions.isMapSelector || permissions.isAdmin || permissions.isReferee || permissions.isStreamer || permissions.isCommentator;
             if (!hasAccess) {
                 showError('无权限访问选图系统');
                 setIsLoading(false);

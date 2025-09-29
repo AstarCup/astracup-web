@@ -17,6 +17,9 @@ interface ReplayCollectionManagementProps {
     permissions: {
         isAdmin: boolean;
         isReplayTester: boolean;
+        isReferee: boolean;
+        isStreamer: boolean;
+        isCommentator: boolean;
     };
 }
 
@@ -200,7 +203,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
 
             console.log('Checking access for user:', user);
 
-            const hasAccess = permissions.isReplayTester || permissions.isAdmin;
+            const hasAccess = permissions.isReplayTester || permissions.isAdmin || permissions.isReferee || permissions.isStreamer || permissions.isCommentator;
             console.log('User access check result:', hasAccess);
 
             if (!hasAccess) {

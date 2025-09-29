@@ -1,8 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { list } from '@vercel/blob';
+import { getUserPermissions } from '@/lib/permissions';
 
 export async function GET(request: NextRequest) {
     try {
+        // 获取用户session
+        const cookieStore = await cookies();
+        const sessionCookie = cookieStore.get('astra_session');
+
+        if (!sessionCookie?.value) {
+            return NextResponse.json({
+                success: false,
+                error: '未登录'
+            }, { status: 401 });
+        }
+
+        let session;
+        try {
+            session = JSON.parse(sessionCookie.value);
+        } catch {
+            return NextResponse.json({
+                success: false,
+                error: '会话无效'
+            }, { status: 401 });
+        }
+
+        const userOsuId = session.osuId;
+        if (!userOsuId) {
+            return NextResponse.json({
+                success: false,
+                error: '用户ID无效'
+            }, { status: 400 });
+        }
+
+        // 检查用户权限（回放测试者或管理员可以查看已上传用户）
+        const permissions = await getUserPermissions(userOsuId);
+        if (!permissions.isAdmin && !permissions.isReplayTester) {
+            return NextResponse.json({
+                success: false,
+                error: '权限不足，只有回放测试者或管理员可以查看已上传用户'
+            }, { status: 403 });
+        }
+
         const { searchParams } = new URL(request.url);
         const season = searchParams.get('season') || 's1';
         const category = searchParams.get('category') || 'qualification';

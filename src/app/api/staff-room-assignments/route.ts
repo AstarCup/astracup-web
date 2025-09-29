@@ -5,6 +5,44 @@ import { getUserPermissions } from '@/lib/permissions';
 // GET /api/staff-room-assignments - 获取所有staff房间分配
 export async function GET(request: NextRequest) {
     try {
+        // 获取用户session
+        const cookieStore = await request.cookies;
+        const sessionCookie = cookieStore.get('astra_session');
+
+        if (!sessionCookie?.value) {
+            return NextResponse.json({
+                success: false,
+                error: '未登录'
+            }, { status: 401 });
+        }
+
+        let session;
+        try {
+            session = JSON.parse(sessionCookie.value);
+        } catch {
+            return NextResponse.json({
+                success: false,
+                error: '会话无效'
+            }, { status: 401 });
+        }
+
+        const userOsuId = session.osuId;
+        if (!userOsuId) {
+            return NextResponse.json({
+                success: false,
+                error: '用户ID无效'
+            }, { status: 400 });
+        }
+
+        // 检查用户权限（裁判员、直播员、管理员或解说员可以查看分配）
+        const userPermissions = await getUserPermissions(userOsuId.toString());
+        if (!userPermissions.isAdmin && !userPermissions.isReferee && !userPermissions.isStreamer && !userPermissions.isCommentator) {
+            return NextResponse.json({
+                success: false,
+                error: '权限不足，只有相关工作人员可以查看房间分配'
+            }, { status: 403 });
+        }
+
         const { searchParams } = new URL(request.url);
         const roomId = searchParams.get('roomId');
 
