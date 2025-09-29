@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { showSuccess, showError } from '../ui/Notification';
+import { showSuccess, showError, showInfo } from '../ui/Notification';
 import Dropdown from '../ui/Dropdown';
 import RatingDisplay from './ui/RatingDisplay';
 import CommentComponent from './ui/CommentComponent';
@@ -1634,6 +1634,53 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
                         查看谱面
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            window.open(`osu://b/${contextMenu.selection!.beatmapId}`, '_blank');
+                            showInfo('已在osu客户端中打开谱面');
+                            closeContextMenu();
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                        </svg>
+                        从osu中打开
+                    </button>
+
+                    {/* 分隔符 */}
+                    <div className="border-t border-gray-200 my-2"></div>
+
+                    <button
+                        onClick={() => {
+                            const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${contextMenu.selection!.beatmapsetId}`;
+                            window.open(downloadUrl, '_blank');
+                            showSuccess('已开始从Sayobot下载');
+                            closeContextMenu();
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                        </svg>
+                        下载谱面 (Sayobot)
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            const downloadUrl = `https://osu.ppy.sh/beatmapsets/${contextMenu.selection!.beatmapsetId}/download`;
+                            window.open(downloadUrl, '_blank');
+                            showSuccess('已开始从osu官方下载');
+                            closeContextMenu();
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        osu官方下载
                     </button>
 
                     {(permissions.isAdmin || permissions.isMapSelector) && (
