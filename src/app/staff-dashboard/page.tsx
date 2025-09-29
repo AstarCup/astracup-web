@@ -206,17 +206,6 @@ export default function AdminPage() {
         fetchUserData();
     }, [router]);
 
-    // 权限验证：等待权限加载完成后进行验证
-    useEffect(() => {
-        if (!permissionsLoading && user) {
-            const hasStaffPermission = permissions.isAdmin || permissions.isReferee || permissions.isStreamer || permissions.isCommentator || permissions.isReplayTester || permissions.isMapSelector;
-
-            if (!hasStaffPermission) {
-                showError('需要工作人员权限');
-                router.push('/player-info');
-            }
-        }
-    }, [permissionsLoading, permissions, user, router]);
 
     // 当切换到房间管理选项卡时获取房间列表
     useEffect(() => {
