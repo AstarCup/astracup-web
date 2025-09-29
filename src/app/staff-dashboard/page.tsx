@@ -173,8 +173,8 @@ export default function AdminPage() {
                         setPermissions(userPermissions.permissions);
                         setPermissionsLoading(false);
 
-                        // 检查是否有staff权限（管理员、裁判员、解说员或主播）
-                        const hasStaffPermission = userPermissions.permissions.isAdmin || userPermissions.permissions.isReferee || userPermissions.permissions.isStreamer || userPermissions.permissions.isCommentator;
+                        // 检查是否有staff权限（管理员、裁判员、解说员、主播、重播测试员或地图选择员）
+                        const hasStaffPermission = userPermissions.permissions.isAdmin || userPermissions.permissions.isReferee || userPermissions.permissions.isStreamer || userPermissions.permissions.isCommentator || userPermissions.permissions.isReplayTester || userPermissions.permissions.isMapSelector;
 
                         if (!hasStaffPermission) {
                             showError('需要工作人员权限');
@@ -733,8 +733,8 @@ export default function AdminPage() {
                         <button
                             onClick={() => setActiveTab('overview')}
                             className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'overview'
-                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
                             title={sidebarCollapsed ? '概览' : undefined}
                         >
