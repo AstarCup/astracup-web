@@ -1160,27 +1160,69 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             <div className="text-center font-medium">AR</div>
                                             <div className="text-center font-medium">OD</div>
                                             <div className="text-center font-medium">HP</div>
-                                            <div className={`text-center font-bold text-lg ${moddedStats && moddedStats.cs && moddedStats.cs > beatmapPreview.cs ? 'text-red-500' : moddedStats && moddedStats.cs && moddedStats.cs < beatmapPreview.cs ? 'text-green-500' : ''}`}>
-                                                {(moddedStats?.cs ?? beatmapPreview.cs).toFixed(1)}
+                                            <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.cs !== undefined ? (moddedStats.cs > beatmapPreview.cs + 0.01 ? 'text-red-500' : moddedStats.cs < beatmapPreview.cs - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.cs ?? beatmapPreview.cs;
+                                                    if (selectedMods !== 'NM' && moddedStats?.cs !== undefined) {
+                                                        if (moddedStats.cs > beatmapPreview.cs + 0.01) return `${val.toFixed(1)} ▲`;
+                                                        if (moddedStats.cs < beatmapPreview.cs - 0.01) return `${val.toFixed(1)} ▼`;
+                                                    }
+                                                    return val.toFixed(1);
+                                                })()}
                                             </div>
-                                            <div className={`text-center font-bold text-lg ${moddedStats && moddedStats.ar && moddedStats.ar > beatmapPreview.ar ? 'text-red-500' : moddedStats && moddedStats.ar && moddedStats.ar < beatmapPreview.ar ? 'text-green-500' : ''}`}>
-                                                {(moddedStats?.ar ?? beatmapPreview.ar).toFixed(1)}
+                                            <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.ar !== undefined ? (moddedStats.ar > beatmapPreview.ar + 0.01 ? 'text-red-500' : moddedStats.ar < beatmapPreview.ar - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.ar ?? beatmapPreview.ar;
+                                                    if (selectedMods !== 'NM' && moddedStats?.ar !== undefined) {
+                                                        if (moddedStats.ar > beatmapPreview.ar + 0.01) return `${val.toFixed(1)} ▲`;
+                                                        if (moddedStats.ar < beatmapPreview.ar - 0.01) return `${val.toFixed(1)} ▼`;
+                                                    }
+                                                    return val.toFixed(1);
+                                                })()}
                                             </div>
-                                            <div className={`text-center font-bold text-lg ${moddedStats && moddedStats.od && moddedStats.od > beatmapPreview.od ? 'text-red-500' : moddedStats && moddedStats.od && moddedStats.od < beatmapPreview.od ? 'text-green-500' : ''}`}>
-                                                {(moddedStats?.od ?? beatmapPreview.od).toFixed(1)}
+                                            <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.od !== undefined ? (moddedStats.od > beatmapPreview.od + 0.01 ? 'text-red-500' : moddedStats.od < beatmapPreview.od - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.od ?? beatmapPreview.od;
+                                                    if (selectedMods !== 'NM' && moddedStats?.od !== undefined) {
+                                                        if (moddedStats.od > beatmapPreview.od + 0.01) return `${val.toFixed(1)} ▲`;
+                                                        if (moddedStats.od < beatmapPreview.od - 0.01) return `${val.toFixed(1)} ▼`;
+                                                    }
+                                                    return val.toFixed(1);
+                                                })()}
                                             </div>
-                                            <div className={`text-center font-bold text-lg ${moddedStats && moddedStats.hp && moddedStats.hp > beatmapPreview.hp ? 'text-red-500' : moddedStats && moddedStats.hp && moddedStats.hp < beatmapPreview.hp ? 'text-green-500' : ''}`}>
-                                                {(moddedStats?.hp ?? beatmapPreview.hp).toFixed(1)}
+                                            <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.hp !== undefined ? (moddedStats.hp > beatmapPreview.hp + 0.01 ? 'text-red-500' : moddedStats.hp < beatmapPreview.hp - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.hp ?? beatmapPreview.hp;
+                                                    if (selectedMods !== 'NM' && moddedStats?.hp !== undefined) {
+                                                        if (moddedStats.hp > beatmapPreview.hp + 0.01) return `${val.toFixed(1)} ▲`;
+                                                        if (moddedStats.hp < beatmapPreview.hp - 0.01) return `${val.toFixed(1)} ▼`;
+                                                    }
+                                                    return val.toFixed(1);
+                                                })()}
                                             </div>
                                             <div className="text-center font-medium col-span-2">Length</div>
                                             <div className="text-center font-medium">BPM</div>
                                             <div className="text-center font-medium">★</div>
                                             <div className="text-center font-bold text-base col-span-2">{formatLength(beatmapPreview.total_length)}</div>
-                                            <div className={`text-center font-bold text-base ${moddedStats && moddedStats.bpm && moddedStats.bpm > beatmapPreview.bpm ? 'text-red-500' : ''}`}>
-                                                {moddedStats?.bpm ?? beatmapPreview.bpm}
+                                            <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.bpm !== undefined ? (moddedStats.bpm > beatmapPreview.bpm + 0.01 ? 'text-red-500' : moddedStats.bpm < beatmapPreview.bpm - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.bpm ?? beatmapPreview.bpm;
+                                                    if (selectedMods !== 'NM' && moddedStats?.bpm !== undefined) {
+                                                        if (moddedStats.bpm > beatmapPreview.bpm + 0.01) return `${val} ▲`;
+                                                        if (moddedStats.bpm < beatmapPreview.bpm - 0.01) return `${val} ▼`;
+                                                    }
+                                                    return val;
+                                                })()}
                                             </div>
-                                            <div className={`text-center font-bold text-base ${moddedStats && moddedStats.starRating && moddedStats.starRating > beatmapPreview.star_rating ? 'text-red-500' : moddedStats && moddedStats.starRating && moddedStats.starRating < beatmapPreview.star_rating ? 'text-green-500' : ''}`}>
-                                                {(moddedStats?.starRating ?? beatmapPreview.star_rating).toFixed(2)}
+                                            <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.starRating !== undefined ? (moddedStats.starRating > beatmapPreview.star_rating + 0.01 ? 'text-red-500' : moddedStats.starRating < beatmapPreview.star_rating - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.starRating ?? beatmapPreview.star_rating;
+                                                    if (selectedMods !== 'NM' && moddedStats?.starRating !== undefined) {
+                                                        if (moddedStats.starRating > beatmapPreview.star_rating + 0.01) return `${val.toFixed(2)} ▲`;
+                                                        if (moddedStats.starRating < beatmapPreview.star_rating - 0.01) return `${val.toFixed(2)} ▼`;
+                                                    }
+                                                    return val.toFixed(2);
+                                                })()}
                                             </div>
                                         </div>
                                     </div>
@@ -1329,20 +1371,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 </div>
                             )}
 
-                            {/* Mod后的属性预览 */}
-                            {moddedStats && (
-                                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
-                                    <h4 className="font-medium text-green-800 mb-2">应用MOD后的属性</h4>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                                        <div>CS: {moddedStats.cs?.toFixed(1) || 'N/A'}</div>
-                                        <div>AR: {moddedStats.ar?.toFixed(1) || 'N/A'}</div>
-                                        <div>OD: {moddedStats.od?.toFixed(1) || 'N/A'}</div>
-                                        <div>HP: {moddedStats.hp?.toFixed(1) || 'N/A'}</div>
-                                        <div className="col-span-2">星级: {moddedStats.starRating?.toFixed(2) || 'N/A'}★</div>
-                                        <div className="col-span-2">BPM: {moddedStats.bpm || 'N/A'}</div>
-                                    </div>
-                                </div>
-                            )}
 
                             {/* 重复检查警告 */}
                             {duplicateWarning.show && (
