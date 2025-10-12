@@ -752,6 +752,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     bpm: modStats.bpm
                 }) : s));
                 showSuccess('已刷新MOD属性');
+                // 重新加载列表
+                await fetchSelections();
             } else {
                 showError('刷新属性失败');
             }
