@@ -653,6 +653,18 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     selectedByUsername: userForState.username,
                     selectedByAvatar: userForState.avatar_url,
                     customSettings
+                    ,
+                    // send computed modded stats for backend
+                    moddedStats: moddedStats
+                        ? {
+                            ar: moddedStats.ar,
+                            cs: moddedStats.cs,
+                            od: moddedStats.od,
+                            hp: moddedStats.hp,
+                            star_rating: moddedStats.starRating,
+                            bpm: moddedStats.bpm
+                        }
+                        : undefined
                 })
             });
 
@@ -706,6 +718,46 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         } catch (error) {
             console.error('Delete selection error:', error);
             showError('删除选图时出错');
+        }
+    };
+
+    // 刷新MOD属性
+    const refreshSelection = async (selection: MapSelection) => {
+        try {
+            const response = await fetch('/api/calculate-mod-stats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    beatmap: {
+                        id: selection.beatmapId,
+                        beatmapset_id: selection.beatmapsetId
+                    },
+                    mods: selection.selectedMods,
+                    customSettings: {
+                        customModName: selection.customModName,
+                        customDASettings: selection.customDASettings,
+                        customDTRate: selection.customDTRate
+                    }
+                })
+            });
+            if (response.ok) {
+                const { modStats } = await response.json();
+                setSelections(prev => prev.map(s => s.id === selection.id ? ({
+                    ...s,
+                    ar: modStats.ar,
+                    cs: modStats.cs,
+                    od: modStats.od,
+                    hp: modStats.hp,
+                    starRating: modStats.starRating,
+                    bpm: modStats.bpm
+                }) : s));
+                showSuccess('已刷新MOD属性');
+            } else {
+                showError('刷新属性失败');
+            }
+        } catch (error) {
+            console.error('Refresh error:', error);
+            showError('刷新属性时出错');
         }
     };
 
@@ -1767,18 +1819,33 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     )}
 
                     {(permissions.isAdmin || permissions.isMapSelector) && (
-                        <button
-                            onClick={() => {
-                                togglePadding(contextMenu.selection!.id, contextMenu.selection!.padding || false);
-                                closeContextMenu();
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v3M7 4H5a1 1 0 00-1 1v16a1 1 0 001 1h14a1 1 0 001-1V5a1 1 0 00-1-1h-2M7 4h10M9 9h6m-6 4h6m-6 4h6" />
-                            </svg>
-                            {contextMenu.selection!.padding ? '取消Padding' : '设为Padding'}
-                        </button>
+                        <>
+                            <button
+                                onClick={() => {
+                                    togglePadding(contextMenu.selection!.id, contextMenu.selection!.padding || false);
+                                    closeContextMenu();
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v3M7 4H5a1 1 0 00-1 1v16a1 1 0 001 1h14a1 1 0 001-1V5a1 1 0 00-1-1h-2M7 4h10M9 9h6m-6 4h6m-6 4h6" />
+                                </svg>
+                                {contextMenu.selection!.padding ? '取消Padding' : '设为Padding'}
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    refreshSelection(contextMenu.selection!);
+                                    closeContextMenu();
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A9 9 0 014.582 9m0 0H9m11 11v-5h-.581m0 0a9 9 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                刷新MOD属性
+                            </button>
+                        </>
                     )}
 
                     {(contextMenu.selection!.selectedBy === userForState.id.toString() || permissions.isAdmin || permissions.isMapSelector) && (
