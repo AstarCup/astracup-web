@@ -742,6 +742,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             });
             if (response.ok) {
                 const { modStats } = await response.json();
+                // Update local state immediately
                 setSelections(prev => prev.map(s => s.id === selection.id ? ({
                     ...s,
                     ar: modStats.ar,
@@ -751,8 +752,35 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     starRating: modStats.starRating,
                     bpm: modStats.bpm
                 }) : s));
-                showSuccess('已刷新MOD属性');
-                // 重新加载列表
+                // Persist changes to backend
+                try {
+                    const putResp = await fetch('/api/map-selections', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: selection.id,
+                            selectedBy: userForState.id.toString(),
+                            moddedStats: {
+                                ar: modStats.ar,
+                                cs: modStats.cs,
+                                od: modStats.od,
+                                hp: modStats.hp,
+                                starRating: modStats.starRating,
+                                bpm: modStats.bpm
+                            }
+                        })
+                    });
+                    if (!putResp.ok) {
+                        const err = await putResp.json();
+                        showError('数据库更新失败: ' + (err.error || putResp.statusText));
+                    } else {
+                        showSuccess('已刷新MOD属性并更新数据库');
+                    }
+                } catch (err) {
+                    console.error('Error updating backend:', err);
+                    showError('更新数据库时出错');
+                }
+                // 重新加载列表以确保数据一致
                 await fetchSelections();
             } else {
                 showError('刷新属性失败');

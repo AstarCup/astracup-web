@@ -495,9 +495,12 @@ export const mapSelectionStorage = {
 
             // 检查是否只更新padding字段
             const isOnlyPaddingUpdate = Object.keys(updates).length === 1 && updates.padding !== undefined;
+            // 检查是否只更新mod加成后的属性字段
+            const statsKeys = ['ar', 'cs', 'od', 'hp', 'starRating', 'bpm'];
+            const isOnlyStatsUpdate = Object.keys(updates).length > 0 && Object.keys(updates).every(key => statsKeys.includes(key));
 
-            if (!isOnlyPaddingUpdate) {
-                // 如果不是只更新padding字段，则需要验证创建者身份
+            // 如果不是只更新padding或只更新stats字段，则需要验证创建者身份
+            if (!isOnlyPaddingUpdate && !isOnlyStatsUpdate) {
                 whereClause += ' AND selectedBy = ?';
                 queryParams.push(selectedBy);
             }
