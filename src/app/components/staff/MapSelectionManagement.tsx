@@ -330,7 +330,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
             if (response.ok) {
                 const data = await response.json();
-                return data.stats;
+                return data.modStats;
             } else {
                 console.error('Failed to calculate modded stats');
                 return null;
@@ -1132,25 +1132,44 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                             {/* Beatmap预览 */}
                             {beatmapPreview && (
-                                <div className="mb-4 p-3 bg-white border border-gray-300 rounded-md">
-                                    <div className="flex items-start gap-4">
+                                <div className="mb-4 p-4 bg-white border border-gray-300 rounded-lg shadow-sm">
+                                    {/* 头部：封面和基本信息 */}
+                                    <div className="flex items-start gap-3 mb-3">
                                         <Image
                                             src={beatmapPreview.cover_url}
                                             alt="Beatmap cover"
-                                            width={128}
-                                            height={128}
-                                            className="w-32 h-32 object-cover rounded"
+                                            width={124}
+                                            height={124}
+                                            className="w-24 h-24 object-cover rounded"
                                         />
-                                        <div className="flex-1">
-                                            <h4 className="font-bold">{beatmapPreview.title}</h4>
-                                            <p className="text-sm text-gray-600">{beatmapPreview.artist} / {beatmapPreview.creator}</p>
-                                            <p className="text-sm text-gray-600">[{beatmapPreview.version}] ★{beatmapPreview.star_rating.toFixed(2)}</p>
-                                            <p className="text-sm text-gray-600">
-                                                CS: {beatmapPreview.cs} | AR: {beatmapPreview.ar} | OD: {beatmapPreview.od} | HP: {beatmapPreview.hp}
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-bold text-sm truncate" title={beatmapPreview.title}>
+                                                {beatmapPreview.title}
+                                            </h3>
+                                            <p className="font-bold text-xs text-gray-600 truncate" title={beatmapPreview.artist}>
+                                                {beatmapPreview.artist}
                                             </p>
-                                            <p className="text-sm text-gray-600">
-                                                BPM: {beatmapPreview.bpm} | Length: {formatLength(beatmapPreview.total_length)}
-                                            </p>
+                                            <p className="font-bold text-xs text-gray-600">[{beatmapPreview.version}] by {beatmapPreview.creator}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* 属性信息 */}
+                                    <div className="mb-3 text-xs text-gray-600">
+                                        <div className="grid grid-cols-4 gap-1">
+                                            <div className="text-center font-medium">CS</div>
+                                            <div className="text-center font-medium">AR</div>
+                                            <div className="text-center font-medium">OD</div>
+                                            <div className="text-center font-medium">HP</div>
+                                            <div className="text-center font-bold text-lg">{beatmapPreview.cs.toFixed(1)}</div>
+                                            <div className="text-center font-bold text-lg">{beatmapPreview.ar.toFixed(1)}</div>
+                                            <div className="text-center font-bold text-lg">{beatmapPreview.od.toFixed(1)}</div>
+                                            <div className="text-center font-bold text-lg">{beatmapPreview.hp.toFixed(1)}</div>
+                                            <div className="text-center font-medium col-span-2">Length</div>
+                                            <div className="text-center font-medium">BPM</div>
+                                            <div className="text-center font-medium">★</div>
+                                            <div className="text-center font-bold text-base col-span-2">{formatLength(beatmapPreview.total_length)}</div>
+                                            <div className="text-center font-bold text-base">{beatmapPreview.bpm}</div>
+                                            <div className="text-center font-bold text-base">{beatmapPreview.star_rating.toFixed(2)}</div>
                                         </div>
                                     </div>
                                 </div>
