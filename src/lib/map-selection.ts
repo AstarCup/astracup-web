@@ -458,6 +458,31 @@ export const mapSelectionStorage = {
                 setClause.push('padding = ?');
                 params.push(updates.padding);
             }
+            // update modded attributes
+            if ((updates as any).ar !== undefined) {
+                setClause.push('ar = ?');
+                params.push((updates as any).ar);
+            }
+            if ((updates as any).cs !== undefined) {
+                setClause.push('cs = ?');
+                params.push((updates as any).cs);
+            }
+            if ((updates as any).od !== undefined) {
+                setClause.push('od = ?');
+                params.push((updates as any).od);
+            }
+            if ((updates as any).hp !== undefined) {
+                setClause.push('hp = ?');
+                params.push((updates as any).hp);
+            }
+            if ((updates as any).starRating !== undefined) {
+                setClause.push('starRating = ?');
+                params.push((updates as any).starRating);
+            }
+            if ((updates as any).bpm !== undefined) {
+                setClause.push('bpm = ?');
+                params.push((updates as any).bpm);
+            }
 
             if (setClause.length === 0) {
                 connection.release();
