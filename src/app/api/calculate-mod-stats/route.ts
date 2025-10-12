@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
             cs: beatmapAttributes.cs || 0,
             od: beatmapAttributes.od || 0,
             hp: beatmapAttributes.hp || 0,
-            star_rating: difficultyResult.stars || 0,
+            starRating: difficultyResult.stars || 0,
             bpm: Math.round((beatmapAttributes.clockRate || clockRate) * (beatmap.bpm || 120))
         };
 

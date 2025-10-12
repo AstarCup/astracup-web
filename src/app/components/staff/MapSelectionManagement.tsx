@@ -1160,16 +1160,28 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             <div className="text-center font-medium">AR</div>
                                             <div className="text-center font-medium">OD</div>
                                             <div className="text-center font-medium">HP</div>
-                                            <div className="text-center font-bold text-lg">{beatmapPreview.cs.toFixed(1)}</div>
-                                            <div className="text-center font-bold text-lg">{beatmapPreview.ar.toFixed(1)}</div>
-                                            <div className="text-center font-bold text-lg">{beatmapPreview.od.toFixed(1)}</div>
-                                            <div className="text-center font-bold text-lg">{beatmapPreview.hp.toFixed(1)}</div>
+                                            <div className={`text-center font-bold text-lg ${moddedStats && moddedStats.cs && moddedStats.cs > beatmapPreview.cs ? 'text-red-500' : moddedStats && moddedStats.cs && moddedStats.cs < beatmapPreview.cs ? 'text-green-500' : ''}`}>
+                                                {(moddedStats?.cs ?? beatmapPreview.cs).toFixed(1)}
+                                            </div>
+                                            <div className={`text-center font-bold text-lg ${moddedStats && moddedStats.ar && moddedStats.ar > beatmapPreview.ar ? 'text-red-500' : moddedStats && moddedStats.ar && moddedStats.ar < beatmapPreview.ar ? 'text-green-500' : ''}`}>
+                                                {(moddedStats?.ar ?? beatmapPreview.ar).toFixed(1)}
+                                            </div>
+                                            <div className={`text-center font-bold text-lg ${moddedStats && moddedStats.od && moddedStats.od > beatmapPreview.od ? 'text-red-500' : moddedStats && moddedStats.od && moddedStats.od < beatmapPreview.od ? 'text-green-500' : ''}`}>
+                                                {(moddedStats?.od ?? beatmapPreview.od).toFixed(1)}
+                                            </div>
+                                            <div className={`text-center font-bold text-lg ${moddedStats && moddedStats.hp && moddedStats.hp > beatmapPreview.hp ? 'text-red-500' : moddedStats && moddedStats.hp && moddedStats.hp < beatmapPreview.hp ? 'text-green-500' : ''}`}>
+                                                {(moddedStats?.hp ?? beatmapPreview.hp).toFixed(1)}
+                                            </div>
                                             <div className="text-center font-medium col-span-2">Length</div>
                                             <div className="text-center font-medium">BPM</div>
                                             <div className="text-center font-medium">★</div>
                                             <div className="text-center font-bold text-base col-span-2">{formatLength(beatmapPreview.total_length)}</div>
-                                            <div className="text-center font-bold text-base">{beatmapPreview.bpm}</div>
-                                            <div className="text-center font-bold text-base">{beatmapPreview.star_rating.toFixed(2)}</div>
+                                            <div className={`text-center font-bold text-base ${moddedStats && moddedStats.bpm && moddedStats.bpm > beatmapPreview.bpm ? 'text-red-500' : ''}`}>
+                                                {moddedStats?.bpm ?? beatmapPreview.bpm}
+                                            </div>
+                                            <div className={`text-center font-bold text-base ${moddedStats && moddedStats.starRating && moddedStats.starRating > beatmapPreview.star_rating ? 'text-red-500' : moddedStats && moddedStats.starRating && moddedStats.starRating < beatmapPreview.star_rating ? 'text-green-500' : ''}`}>
+                                                {(moddedStats?.starRating ?? beatmapPreview.star_rating).toFixed(2)}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
