@@ -34,13 +34,14 @@ async function loadRosuPP() {
 export async function POST(req: NextRequest) {
     try {
         const {
-            beatmapId,
+            beatmap: beatmapInfo,
             mods,
             accessToken,
-            customModName,
-            customDASettings,
-            customDTRate
+            customSettings
         } = await req.json();
+
+        const { customModName, customDASettings, customDTRate } = customSettings || {};
+        const beatmapId = beatmapInfo?.id;
 
         if (!beatmapId) {
             return NextResponse.json({ error: 'beatmapId is required' }, { status: 400 });

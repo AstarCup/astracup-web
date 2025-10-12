@@ -902,7 +902,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     }
                 }
 
-                // 检查是否是简化属性搜索格式 (属性名+数字，如 ar9, cs5)
+                // 检查是否是简化属性搜索格式 (属性名+数字，如 ar9, cs5, nm1)
                 const simplifiedPropertyMatch = query.match(/^([a-zA-Z]+)(\d+(?:\.\d+)?)$/);
                 if (simplifiedPropertyMatch) {
                     const [, property, valueStr] = simplifiedPropertyMatch;
@@ -917,6 +917,14 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             return Math.abs(selection.od - value) < 0.01;
                         case 'hp':
                             return Math.abs(selection.hp - value) < 0.01;
+                        case 'nm':
+                        case 'hd':
+                        case 'hr':
+                        case 'dt':
+                        case 'fm':
+                        case 'lz':
+                        case 'tb':
+                            return selection.selectedMods.toLowerCase() === property.toLowerCase() && selection.modPosition === value;
                         default:
                             break;
                     }
