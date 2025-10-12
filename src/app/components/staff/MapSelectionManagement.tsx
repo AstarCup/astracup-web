@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { showSuccess, showError } from '../ui/Notification';
+import { showSuccess, showError, showInfo } from '../ui/Notification';
 import Dropdown from '../ui/Dropdown';
 import RatingDisplay from './ui/RatingDisplay';
 import CommentComponent from './ui/CommentComponent';
@@ -330,7 +330,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
             if (response.ok) {
                 const data = await response.json();
-                return data.stats;
+                return data.modStats;
             } else {
                 console.error('Failed to calculate modded stats');
                 return null;
@@ -632,13 +632,14 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     artist: beatmapPreview.artist,
                     version: beatmapPreview.version,
                     creator: beatmapPreview.creator,
-                    starRating: beatmapPreview.star_rating,
-                    bpm: beatmapPreview.bpm,
+                    // Use modded stats if available, otherwise original
+                    starRating: moddedStats?.starRating ?? beatmapPreview.star_rating,
+                    bpm: moddedStats?.bpm ?? beatmapPreview.bpm,
                     totalLength: beatmapPreview.total_length,
-                    ar: beatmapPreview.ar,
-                    cs: beatmapPreview.cs,
-                    od: beatmapPreview.od,
-                    hp: beatmapPreview.hp,
+                    ar: moddedStats?.ar ?? beatmapPreview.ar,
+                    cs: moddedStats?.cs ?? beatmapPreview.cs,
+                    od: moddedStats?.od ?? beatmapPreview.od,
+                    hp: moddedStats?.hp ?? beatmapPreview.hp,
                     selectedMods,
                     modPosition,
                     comment,
@@ -652,6 +653,18 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     selectedByUsername: userForState.username,
                     selectedByAvatar: userForState.avatar_url,
                     customSettings
+                    ,
+                    // send computed modded stats for backend
+                    moddedStats: moddedStats
+                        ? {
+                            ar: moddedStats.ar,
+                            cs: moddedStats.cs,
+                            od: moddedStats.od,
+                            hp: moddedStats.hp,
+                            star_rating: moddedStats.starRating,
+                            bpm: moddedStats.bpm
+                        }
+                        : undefined
                 })
             });
 
@@ -705,6 +718,76 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         } catch (error) {
             console.error('Delete selection error:', error);
             showError('删除选图时出错');
+        }
+    };
+
+    // 刷新MOD属性
+    const refreshSelection = async (selection: MapSelection) => {
+        try {
+            const response = await fetch('/api/calculate-mod-stats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    beatmap: {
+                        id: selection.beatmapId,
+                        beatmapset_id: selection.beatmapsetId
+                    },
+                    mods: selection.selectedMods,
+                    customSettings: {
+                        customModName: selection.customModName,
+                        customDASettings: selection.customDASettings,
+                        customDTRate: selection.customDTRate
+                    }
+                })
+            });
+            if (response.ok) {
+                const { modStats } = await response.json();
+                // Update local state immediately
+                setSelections(prev => prev.map(s => s.id === selection.id ? ({
+                    ...s,
+                    ar: modStats.ar,
+                    cs: modStats.cs,
+                    od: modStats.od,
+                    hp: modStats.hp,
+                    starRating: modStats.starRating,
+                    bpm: modStats.bpm
+                }) : s));
+                // Persist changes to backend
+                try {
+                    const putResp = await fetch('/api/map-selections', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: selection.id,
+                            selectedBy: userForState.id.toString(),
+                            moddedStats: {
+                                ar: modStats.ar,
+                                cs: modStats.cs,
+                                od: modStats.od,
+                                hp: modStats.hp,
+                                starRating: modStats.starRating,
+                                bpm: modStats.bpm
+                            }
+                        })
+                    });
+                    if (!putResp.ok) {
+                        const err = await putResp.json();
+                        showError('数据库更新失败: ' + (err.error || putResp.statusText));
+                    } else {
+                        showSuccess('已刷新MOD属性并更新数据库');
+                    }
+                } catch (err) {
+                    console.error('Error updating backend:', err);
+                    showError('更新数据库时出错');
+                }
+                // 重新加载列表以确保数据一致
+                await fetchSelections();
+            } else {
+                showError('刷新属性失败');
+            }
+        } catch (error) {
+            console.error('Refresh error:', error);
+            showError('刷新属性时出错');
         }
     };
 
@@ -902,7 +985,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     }
                 }
 
-                // 检查是否是简化属性搜索格式 (属性名+数字，如 ar9, cs5)
+                // 检查是否是简化属性搜索格式 (属性名+数字，如 ar9, cs5, nm1)
                 const simplifiedPropertyMatch = query.match(/^([a-zA-Z]+)(\d+(?:\.\d+)?)$/);
                 if (simplifiedPropertyMatch) {
                     const [, property, valueStr] = simplifiedPropertyMatch;
@@ -917,6 +1000,14 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             return Math.abs(selection.od - value) < 0.01;
                         case 'hp':
                             return Math.abs(selection.hp - value) < 0.01;
+                        case 'nm':
+                        case 'hd':
+                        case 'hr':
+                        case 'dt':
+                        case 'fm':
+                        case 'lz':
+                        case 'tb':
+                            return selection.selectedMods.toLowerCase() === property.toLowerCase() && selection.modPosition === value;
                         default:
                             break;
                     }
@@ -1124,25 +1215,98 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                             {/* Beatmap预览 */}
                             {beatmapPreview && (
-                                <div className="mb-4 p-3 bg-white border border-gray-300 rounded-md">
-                                    <div className="flex items-start gap-4">
+                                <div className="mb-4 p-4 bg-white border border-gray-300 rounded-lg shadow-sm">
+                                    {/* 头部：封面和基本信息 */}
+                                    <div className="flex items-start gap-3 mb-3">
                                         <Image
                                             src={beatmapPreview.cover_url}
                                             alt="Beatmap cover"
-                                            width={128}
-                                            height={128}
-                                            className="w-32 h-32 object-cover rounded"
+                                            width={124}
+                                            height={124}
+                                            className="w-24 h-24 object-cover rounded"
                                         />
-                                        <div className="flex-1">
-                                            <h4 className="font-bold">{beatmapPreview.title}</h4>
-                                            <p className="text-sm text-gray-600">{beatmapPreview.artist} / {beatmapPreview.creator}</p>
-                                            <p className="text-sm text-gray-600">[{beatmapPreview.version}] ★{beatmapPreview.star_rating.toFixed(2)}</p>
-                                            <p className="text-sm text-gray-600">
-                                                CS: {beatmapPreview.cs} | AR: {beatmapPreview.ar} | OD: {beatmapPreview.od} | HP: {beatmapPreview.hp}
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-bold text-sm truncate" title={beatmapPreview.title}>
+                                                {beatmapPreview.title}
+                                            </h3>
+                                            <p className="font-bold text-xs text-gray-600 truncate" title={beatmapPreview.artist}>
+                                                {beatmapPreview.artist}
                                             </p>
-                                            <p className="text-sm text-gray-600">
-                                                BPM: {beatmapPreview.bpm} | Length: {formatLength(beatmapPreview.total_length)}
-                                            </p>
+                                            <p className="font-bold text-xs text-gray-600">[{beatmapPreview.version}] by {beatmapPreview.creator}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* 属性信息 */}
+                                    <div className="mb-3 text-xs text-gray-600">
+                                        <div className="grid grid-cols-4 gap-1">
+                                            <div className="text-center font-medium">CS</div>
+                                            <div className="text-center font-medium">AR</div>
+                                            <div className="text-center font-medium">OD</div>
+                                            <div className="text-center font-medium">HP</div>
+                                            <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.cs !== undefined ? (moddedStats.cs > beatmapPreview.cs + 0.01 ? 'text-red-500' : moddedStats.cs < beatmapPreview.cs - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.cs ?? beatmapPreview.cs;
+                                                    if (selectedMods !== 'NM' && moddedStats?.cs !== undefined) {
+                                                        if (moddedStats.cs > beatmapPreview.cs + 0.01) return `${val.toFixed(1)} ▲`;
+                                                        if (moddedStats.cs < beatmapPreview.cs - 0.01) return `${val.toFixed(1)} ▼`;
+                                                    }
+                                                    return val.toFixed(1);
+                                                })()}
+                                            </div>
+                                            <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.ar !== undefined ? (moddedStats.ar > beatmapPreview.ar + 0.01 ? 'text-red-500' : moddedStats.ar < beatmapPreview.ar - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.ar ?? beatmapPreview.ar;
+                                                    if (selectedMods !== 'NM' && moddedStats?.ar !== undefined) {
+                                                        if (moddedStats.ar > beatmapPreview.ar + 0.01) return `${val.toFixed(1)} ▲`;
+                                                        if (moddedStats.ar < beatmapPreview.ar - 0.01) return `${val.toFixed(1)} ▼`;
+                                                    }
+                                                    return val.toFixed(1);
+                                                })()}
+                                            </div>
+                                            <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.od !== undefined ? (moddedStats.od > beatmapPreview.od + 0.01 ? 'text-red-500' : moddedStats.od < beatmapPreview.od - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.od ?? beatmapPreview.od;
+                                                    if (selectedMods !== 'NM' && moddedStats?.od !== undefined) {
+                                                        if (moddedStats.od > beatmapPreview.od + 0.01) return `${val.toFixed(1)} ▲`;
+                                                        if (moddedStats.od < beatmapPreview.od - 0.01) return `${val.toFixed(1)} ▼`;
+                                                    }
+                                                    return val.toFixed(1);
+                                                })()}
+                                            </div>
+                                            <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.hp !== undefined ? (moddedStats.hp > beatmapPreview.hp + 0.01 ? 'text-red-500' : moddedStats.hp < beatmapPreview.hp - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.hp ?? beatmapPreview.hp;
+                                                    if (selectedMods !== 'NM' && moddedStats?.hp !== undefined) {
+                                                        if (moddedStats.hp > beatmapPreview.hp + 0.01) return `${val.toFixed(1)} ▲`;
+                                                        if (moddedStats.hp < beatmapPreview.hp - 0.01) return `${val.toFixed(1)} ▼`;
+                                                    }
+                                                    return val.toFixed(1);
+                                                })()}
+                                            </div>
+                                            <div className="text-center font-medium col-span-2">Length</div>
+                                            <div className="text-center font-medium">BPM</div>
+                                            <div className="text-center font-medium">★</div>
+                                            <div className="text-center font-bold text-base col-span-2">{formatLength(beatmapPreview.total_length)}</div>
+                                            <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.bpm !== undefined ? (moddedStats.bpm > beatmapPreview.bpm + 0.01 ? 'text-red-500' : moddedStats.bpm < beatmapPreview.bpm - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.bpm ?? beatmapPreview.bpm;
+                                                    if (selectedMods !== 'NM' && moddedStats?.bpm !== undefined) {
+                                                        if (moddedStats.bpm > beatmapPreview.bpm + 0.01) return `${val} ▲`;
+                                                        if (moddedStats.bpm < beatmapPreview.bpm - 0.01) return `${val} ▼`;
+                                                    }
+                                                    return val;
+                                                })()}
+                                            </div>
+                                            <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.starRating !== undefined ? (moddedStats.starRating > beatmapPreview.star_rating + 0.01 ? 'text-red-500' : moddedStats.starRating < beatmapPreview.star_rating - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.starRating ?? beatmapPreview.star_rating;
+                                                    if (selectedMods !== 'NM' && moddedStats?.starRating !== undefined) {
+                                                        if (moddedStats.starRating > beatmapPreview.star_rating + 0.01) return `${val.toFixed(2)} ▲`;
+                                                        if (moddedStats.starRating < beatmapPreview.star_rating - 0.01) return `${val.toFixed(2)} ▼`;
+                                                    }
+                                                    return val.toFixed(2);
+                                                })()}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1290,20 +1454,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 </div>
                             )}
 
-                            {/* Mod后的属性预览 */}
-                            {moddedStats && (
-                                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
-                                    <h4 className="font-medium text-green-800 mb-2">应用MOD后的属性</h4>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                                        <div>CS: {moddedStats.cs?.toFixed(1) || 'N/A'}</div>
-                                        <div>AR: {moddedStats.ar?.toFixed(1) || 'N/A'}</div>
-                                        <div>OD: {moddedStats.od?.toFixed(1) || 'N/A'}</div>
-                                        <div>HP: {moddedStats.hp?.toFixed(1) || 'N/A'}</div>
-                                        <div className="col-span-2">星级: {moddedStats.starRating?.toFixed(2) || 'N/A'}★</div>
-                                        <div className="col-span-2">BPM: {moddedStats.bpm || 'N/A'}</div>
-                                    </div>
-                                </div>
-                            )}
 
                             {/* 重复检查警告 */}
                             {duplicateWarning.show && (
@@ -1636,6 +1786,53 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         查看谱面
                     </button>
 
+                    <button
+                        onClick={() => {
+                            window.open(`osu://b/${contextMenu.selection!.beatmapId}`, '_blank');
+                            showInfo('已在osu客户端中打开谱面');
+                            closeContextMenu();
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                        </svg>
+                        从osu中打开
+                    </button>
+
+                    {/* 分隔符 */}
+                    <div className="border-t border-gray-200 my-2"></div>
+
+                    <button
+                        onClick={() => {
+                            const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${contextMenu.selection!.beatmapsetId}`;
+                            window.open(downloadUrl, '_blank');
+                            showSuccess('已开始从Sayobot下载');
+                            closeContextMenu();
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                        </svg>
+                        下载谱面 (Sayobot)
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            const downloadUrl = `https://osu.ppy.sh/beatmapsets/${contextMenu.selection!.beatmapsetId}/download`;
+                            window.open(downloadUrl, '_blank');
+                            showSuccess('已开始从osu官方下载');
+                            closeContextMenu();
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        osu官方下载
+                    </button>
+
                     {(permissions.isAdmin || permissions.isMapSelector) && (
                         <button
                             onClick={() => {
@@ -1652,18 +1849,33 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     )}
 
                     {(permissions.isAdmin || permissions.isMapSelector) && (
-                        <button
-                            onClick={() => {
-                                togglePadding(contextMenu.selection!.id, contextMenu.selection!.padding || false);
-                                closeContextMenu();
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v3M7 4H5a1 1 0 00-1 1v16a1 1 0 001 1h14a1 1 0 001-1V5a1 1 0 00-1-1h-2M7 4h10M9 9h6m-6 4h6m-6 4h6" />
-                            </svg>
-                            {contextMenu.selection!.padding ? '取消Padding' : '设为Padding'}
-                        </button>
+                        <>
+                            <button
+                                onClick={() => {
+                                    togglePadding(contextMenu.selection!.id, contextMenu.selection!.padding || false);
+                                    closeContextMenu();
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v3M7 4H5a1 1 0 00-1 1v16a1 1 0 001 1h14a1 1 0 001-1V5a1 1 0 00-1-1h-2M7 4h10M9 9h6m-6 4h6m-6 4h6" />
+                                </svg>
+                                {contextMenu.selection!.padding ? '取消Padding' : '设为Padding'}
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    refreshSelection(contextMenu.selection!);
+                                    closeContextMenu();
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A9 9 0 014.582 9m0 0H9m11 11v-5h-.581m0 0a9 9 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                刷新MOD属性
+                            </button>
+                        </>
                     )}
 
                     {(contextMenu.selection!.selectedBy === userForState.id.toString() || permissions.isAdmin || permissions.isMapSelector) && (

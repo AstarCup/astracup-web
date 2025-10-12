@@ -290,7 +290,9 @@ export async function PUT(request: NextRequest) {
             comment,
             approved,
             padding,
-            selectedBy
+            selectedBy,
+            // optional modded stats to update
+            moddedStats
         } = await request.json();
 
         if (!id || !selectedBy) {
@@ -301,11 +303,20 @@ export async function PUT(request: NextRequest) {
         }
 
         // 准备更新数据
-        const updates: { selectedMods?: string; comment?: string; approved?: boolean; padding?: boolean } = {};
+        const updates: { selectedMods?: string; comment?: string; approved?: boolean; padding?: boolean; ar?: number; cs?: number; od?: number; hp?: number; starRating?: number; bpm?: number } = {};
         if (selectedMods !== undefined) updates.selectedMods = selectedMods;
         if (comment !== undefined) updates.comment = comment;
         if (approved !== undefined) updates.approved = approved;
         if (padding !== undefined) updates.padding = padding;
+        // 更新mod加成后的属性
+        if (moddedStats) {
+            if (moddedStats.ar !== undefined) updates.ar = moddedStats.ar;
+            if (moddedStats.cs !== undefined) updates.cs = moddedStats.cs;
+            if (moddedStats.od !== undefined) updates.od = moddedStats.od;
+            if (moddedStats.hp !== undefined) updates.hp = moddedStats.hp;
+            if (moddedStats.starRating !== undefined) updates.starRating = moddedStats.starRating;
+            if (moddedStats.bpm !== undefined) updates.bpm = moddedStats.bpm;
+        }
 
         if (Object.keys(updates).length === 0) {
             return NextResponse.json(

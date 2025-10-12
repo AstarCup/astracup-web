@@ -34,13 +34,14 @@ async function loadRosuPP() {
 export async function POST(req: NextRequest) {
     try {
         const {
-            beatmapId,
+            beatmap: beatmapInfo,
             mods,
             accessToken,
-            customModName,
-            customDASettings,
-            customDTRate
+            customSettings
         } = await req.json();
+
+        const { customModName, customDASettings, customDTRate } = customSettings || {};
+        const beatmapId = beatmapInfo?.id;
 
         if (!beatmapId) {
             return NextResponse.json({ error: 'beatmapId is required' }, { status: 400 });
@@ -135,7 +136,7 @@ export async function POST(req: NextRequest) {
             cs: beatmapAttributes.cs || 0,
             od: beatmapAttributes.od || 0,
             hp: beatmapAttributes.hp || 0,
-            star_rating: difficultyResult.stars || 0,
+            starRating: difficultyResult.stars || 0,
             bpm: Math.round((beatmapAttributes.clockRate || clockRate) * (beatmap.bpm || 120))
         };
 

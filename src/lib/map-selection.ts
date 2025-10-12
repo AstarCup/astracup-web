@@ -458,6 +458,31 @@ export const mapSelectionStorage = {
                 setClause.push('padding = ?');
                 params.push(updates.padding);
             }
+            // update modded attributes
+            if ((updates as any).ar !== undefined) {
+                setClause.push('ar = ?');
+                params.push((updates as any).ar);
+            }
+            if ((updates as any).cs !== undefined) {
+                setClause.push('cs = ?');
+                params.push((updates as any).cs);
+            }
+            if ((updates as any).od !== undefined) {
+                setClause.push('od = ?');
+                params.push((updates as any).od);
+            }
+            if ((updates as any).hp !== undefined) {
+                setClause.push('hp = ?');
+                params.push((updates as any).hp);
+            }
+            if ((updates as any).starRating !== undefined) {
+                setClause.push('starRating = ?');
+                params.push((updates as any).starRating);
+            }
+            if ((updates as any).bpm !== undefined) {
+                setClause.push('bpm = ?');
+                params.push((updates as any).bpm);
+            }
 
             if (setClause.length === 0) {
                 connection.release();
@@ -470,9 +495,12 @@ export const mapSelectionStorage = {
 
             // 检查是否只更新padding字段
             const isOnlyPaddingUpdate = Object.keys(updates).length === 1 && updates.padding !== undefined;
+            // 检查是否只更新mod加成后的属性字段
+            const statsKeys = ['ar', 'cs', 'od', 'hp', 'starRating', 'bpm'];
+            const isOnlyStatsUpdate = Object.keys(updates).length > 0 && Object.keys(updates).every(key => statsKeys.includes(key));
 
-            if (!isOnlyPaddingUpdate) {
-                // 如果不是只更新padding字段，则需要验证创建者身份
+            // 如果不是只更新padding或只更新stats字段，则需要验证创建者身份
+            if (!isOnlyPaddingUpdate && !isOnlyStatsUpdate) {
                 whereClause += ' AND selectedBy = ?';
                 queryParams.push(selectedBy);
             }
