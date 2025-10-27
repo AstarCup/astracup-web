@@ -88,7 +88,7 @@ export default function RegistrationButton({ user }: RegistrationButtonProps) {
                 <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-3 mb-4">
                     <p className="text-lg font-semibold">您已成功报名！</p>
                     <p className="text-sm">感谢您报名参加 AstraCup 比赛</p>
-                    <a href=''>点击领取主办女装照</a>
+                    <a href='https://vip.123pan.cn/1818470319/yk6baz03t0n000d7w33hec1n2seihzd9DIYPBdF0DdDPBGxPDwivDa==.jpg'>点击领取主办女装照</a>
                 </div>
             </div>
         );
