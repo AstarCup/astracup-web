@@ -83,6 +83,9 @@ export default function Home() {
           <span className="text-sm sm:text-base z-10 relative text-gray-800 drop-shadow-md -translate-y-25 bg-[#ffffff] px-2 py-1 w-fit border-b-4 border-[#E93B66]">这里是OSU!Lazer{tournamentSettings?.tournament_name || '星域杯'}，面向中国大陆 {tournamentSettings?.min_pp_for_registration || 0}pp - {tournamentSettings?.max_pp_for_registration || 9999}pp 分段的 1v1 比赛。</span>
         </div>
       </div>
+      <div>
+
+      </div>
       {/* 导航按钮区域 */}
       <div className="mt-0 w-full max-w-5xl z-10 relative p-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -178,12 +181,15 @@ export default function Home() {
           <div className="flex-1 flex flex-col overflow-y-auto">
             <UserProfile user={user} onLogout={handleLogout} />
             {!user ? (
-              <div className="text-2xl px-3 py-3 bg-[#E93B66] text-white hover:bg-[#3BE9D8] transition mt-4">
-                {/* <p className="animate-bounce mb-3 font-bold">点我报名</p> */}
+              <div className="text-2xl px-3 py-3 bg-[#E93B66] text-white hover:bg-[#3BE9D8] mt-4 shadow-lg hover:shadow-cyan-500/50">
                 <a href="/register" className=""
                 ><div className="relative">
-                    <Image src='icons/osu-lazer-logo.svg' width={50} height={50} alt="osulogo" className="animate-bounce absolute bottom-0 left-3" />
-                    <Image src='icons/useOsuLogin.svg' width={700} height={300} alt="使用 osu! 账号登录" className="left-200" />
+                    <Image src='icons/useOsuLogin.svg' width={700} height={300} alt="使用 osu! 账号登录" className="" />
+                    <div className="animate-bounce absolute bottom-0 left-3">
+                      <p className="animate-bounce font-bold absolute w-60 mt-2 text-xs skew-x-12 left-12 -top-2">点我报名谢谢喵</p>
+                      <Image src='icons/osu-lazer-logo.svg' width={50} height={50} alt="osulogo" className="absolute" />
+                      <Image src='icons/osu-lazer-logo.svg' width={50} height={50} alt="osulogo" className="animate-ping" />
+                    </div>
                   </div>
                 </a>
               </div>
