@@ -178,8 +178,16 @@ export default function Home() {
           <div className="flex-1 flex flex-col overflow-y-auto">
             <UserProfile user={user} onLogout={handleLogout} />
             {!user ? (
-              <a href="/register" className="text-2xl px-3 py-3 bg-[#E93B66] text-white hover:bg-[#3BE9D8] transition mt-4"
-              ><Image src='icons/useOsuLogin.svg' width={700} height={300} alt="使用 osu! 账号登录" /></a>
+              <div className="text-2xl px-3 py-3 bg-[#E93B66] text-white hover:bg-[#3BE9D8] transition mt-4">
+                {/* <p className="animate-bounce mb-3 font-bold">点我报名</p> */}
+                <a href="/register" className=""
+                ><div className="relative">
+                    <Image src='icons/osu-lazer-logo.svg' width={50} height={50} alt="osulogo" className="animate-bounce absolute bottom-0 left-3" />
+                    <Image src='icons/useOsuLogin.svg' width={700} height={300} alt="使用 osu! 账号登录" className="left-200" />
+                  </div>
+                </a>
+              </div>
+
             ) : (
               <RegistrationButton user={user} />
             )}
