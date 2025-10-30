@@ -75,15 +75,6 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
         let failCount = 0;
 
         try {
-            // 先测试第一个下载，确保API工作正常
-            console.log('Testing API with first beatmap...');
-            const testResult = await testSingleDownload(bulkDownloadItems[0].sid, source);
-            if (!testResult.success) {
-                showError(`API测试失败，无法开始批量下载: ${testResult.error}`);
-                setIsBulkDownloading(false);
-                return;
-            }
-            console.log('API test passed, proceeding with bulk download...');
 
             // 记录开始时间
             const startTime = Date.now();
