@@ -221,7 +221,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
     };
 
     // 测试单个下载
-    const testSingleDownload = async (sid: string, source: 'sayobot' | 'osu') => {
+    const testSingleDownload = async (sid: string, source: 'nerinyan' | 'osu') => {
         try {
             console.log('Testing single download for SID:', sid, 'source:', source);
             const response = await fetch(`/api/download-beatmap?sid=${sid}&source=${source}`, {
@@ -297,14 +297,14 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
             { type: 'separator' as const, label: '' },
             // 下载相关
             {
-                label: '下载谱面 (Sayobot)',
+                label: '下载谱面 (Nerinyan)',
                 icon: '/icons/download-sayobot.svg',
                 onClick: () => {
-                    const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`;
+                    const downloadUrl = `https://api.nerinyan.moe/d/${row.SID}`;
 
-                    // 直接跳转到Sayobot下载链接，让浏览器处理下载
+                    // 直接跳转到Nerinyan下载链接，让浏览器处理下载
                     window.open(downloadUrl, '_blank');
-                    showSuccess('已开始从sayobot下载');
+                    showSuccess('已开始从Nerinyan下载');
                 },
                 type: 'item' as const
             },
