@@ -83,7 +83,7 @@ export default function BulkDownloadManager({
                             className="text-gray-500 hover:text-gray-700 text-lg leading-none"
                             title="恢复"
                         >
-                            ⬜
+                            +
                         </button>
                         <button
                             onClick={onClose}
@@ -153,7 +153,7 @@ export default function BulkDownloadManager({
                             className="text-gray-500 hover:text-gray-700 text-lg"
                             title="最小化"
                         >
-                            ⬜
+                            -
                         </button>
                         <button
                             onClick={onClose}

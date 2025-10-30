@@ -87,6 +87,10 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                         idx === i ? { ...prevItem, status: 'downloading', progress: 10 } : prevItem
                     ));
 
+                    // 更新整体进度
+                    const newOverallProgress = ((i) / bulkDownloadItems.length) * 100;
+                    // 更新BulkDownloadManager中的整体进度状态
+
                     console.log(`Downloading beatmap ${i + 1}/${bulkDownloadItems.length}:`, item.sid, item.bid);
 
                     const response = await fetch(`/api/download-beatmap?sid=${item.sid}&source=${source}`, {
