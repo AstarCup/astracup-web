@@ -17,6 +17,7 @@ export default function RegistrationsPage() {
     const [registrations, setRegistrations] = useState<TournamentRegistration[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
+    const [filter, setFilter] = useState('all'); // 'all', 'approved', 'unapproved'
 
     useEffect(() => {
         fetchRegistrations();
@@ -51,6 +52,18 @@ export default function RegistrationsPage() {
     const formatPP = (pp: number) => {
         return Math.round(pp).toLocaleString();
     };
+
+    const filteredRegistrations = registrations
+        .filter(player => {
+            if (filter === 'approved') return player.approved;
+            if (filter === 'unapproved') return !player.approved;
+            return true;
+        })
+        .sort((a, b) => {
+            if (a.approved && !b.approved) return -1;
+            if (!a.approved && b.approved) return 1;
+            return 0;
+        });
 
     if (isLoading) {
         return (
@@ -93,17 +106,40 @@ export default function RegistrationsPage() {
                     </p>
                 </div>
 
-                {registrations.length === 0 ? (
+                <div className="flex justify-center mb-6">
+                    <div className="flex bg-black-200 border-b-2 border-gray-500">
+                        <button
+                            onClick={() => setFilter('all')}
+                            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${filter === 'all' ? 'bg-blue-500 text-white' : 'text-gray-300 hover:bg-gray-600'}`}
+                        >
+                            全部
+                        </button>
+                        <button
+                            onClick={() => setFilter('approved')}
+                            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${filter === 'approved' ? 'bg-green-500 text-white' : 'text-gray-300 hover:bg-gray-600'}`}
+                        >
+                            已审核
+                        </button>
+                        <button
+                            onClick={() => setFilter('unapproved')}
+                            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${filter === 'unapproved' ? 'bg-yellow-500 text-white' : 'text-gray-300 hover:bg-gray-600'}`}
+                        >
+                            未审核/未通过审核
+                        </button>
+                    </div>
+                </div>
+
+                {filteredRegistrations.length === 0 ? (
                     <div className="text-center py-12 bg-[#3d3d3d] border-b-4 border-[#E93B66]">
                         <div className="p-8">
-                            <h3 className="text-xl font-semibold text-white mb-2">暂无报名玩家</h3>
-                            <p className="text-gray-400">还没有玩家报名参加比赛</p>
+                            <h3 className="text-xl font-semibold text-white mb-2">暂无符合条件的玩家</h3>
+                            <p className="text-gray-400">请尝试更改筛选条件</p>
                         </div>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {registrations.map((player) => (
-                            <div key={player.osuId} className="bg-white shadow-md overflow-hidden">
+                        {filteredRegistrations.map((player) => (
+                            <div key={player.osuId} className={`bg-white shadow-md overflow-hidden ${player.approved ? 'border-b-8 border-green-500' : 'border-b-8 border-gray-500'}`}>
                                 <div className="p-6">
                                     <div className="flex items-center space-x-4 mb-4">
                                         <Image
