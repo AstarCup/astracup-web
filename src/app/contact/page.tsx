@@ -18,6 +18,8 @@ export default function Contact() {
     usePageTitle('/contact');
 
     const allStaffMembers = staffData as StaffMember[];
+    const regularStaff = allStaffMembers.filter(member => member.role !== 'special');
+    const specialStaff = allStaffMembers.filter(member => member.role === 'special');
 
     return (
         <div className="min-h-screen pb-20">
@@ -32,7 +34,7 @@ export default function Contact() {
                         <div className="mt-6 flex justify-center items-center space-x-2">
                             <span className="text-white/80">总共</span>
                             <span className="bg-white/20 text-white font-bold px-3 py-1">
-                                {allStaffMembers.length}
+                                {regularStaff.length}
                             </span>
                             <span className="text-white/80">位工作人员</span>
                         </div>
@@ -43,10 +45,27 @@ export default function Contact() {
             <div className="max-w-7xl mx-auto px-6">
                 {/* Staff 卡片网格 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {allStaffMembers.map((member, index) => (
+                    {regularStaff.map((member, index) => (
                         <StaffCard key={`staff-${index}`} member={member} />
                     ))}
                 </div>
+
+                {/* 特别感谢 */}
+                {specialStaff.length > 0 && (
+                    <div className="mt-20">
+                        <div className="text-center mb-8">
+                            <h2 className="text-3xl font-bold text-white mb-4">特别感谢</h2>
+                            <p className="text-gray-400 max-w-2xl mx-auto">
+                                感谢所有为本次比赛的成功举办提供支持的个人和团体。你们的帮助是不可或缺的。
+                            </p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {specialStaff.map((member, index) => (
+                                <StaffCard key={`special-${index}`} member={member} />
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* 页面底部信息 */}
                 <div className="mt-20 text-center">

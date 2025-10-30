@@ -60,7 +60,7 @@
         "osuId": "30284920",
         "avatarUrl": "https://a.ppy.sh/30284920",
         "role": "图池测试",
-        "description": "测试比赛图池",
+        "description": "测试比赛图池 图池策划",
         "coverUrl": "https://assets.ppy.sh/user-profile-covers/30284920/d792a40a4eb4ae12b45360c8a29b97c29d53d45a108cc53725202e26e1394726.jpeg"
     },
     {
@@ -70,5 +70,37 @@
         "role": "图池测试",
         "description": "测试比赛图池",
         "coverUrl": "https://assets.ppy.sh/user-profile-covers/3046750/69fab6d0c74537ad3b14c8f3fc83e68d643ebe37f1dd50a23786dc83f24077f5.jpeg"
+    },
+    {
+        "name": "Akisa 18",
+        "osuId": "16134378",
+        "avatarUrl": "https://a.ppy.sh/16134378",
+        "role": "图池策划",
+        "description": "图池策划",
+        "coverUrl": "https://assets.ppy.sh/user-profile-covers/16134378/45f80f76861f34d83f492a637853bfdf83a203c8dd6bdcc7e772400bf390d47f.jpeg"
+    },
+    {
+        "name": "Pata-Mon",
+        "osuId": "6149313",
+        "avatarUrl": "https://a.ppy.sh/6149313",
+        "role": "special",
+        "description": "规则校验",
+        "coverUrl": "https://assets.ppy.sh/user-profile-covers/6149313/89e4baa3eb9f2bb9bd03a7e6c40988b5643e9b0b21dc1325a76548855cac11bd.png"
+    },
+    {
+        "name": "[SHK]T_T",
+        "osuId": "13999223",
+        "avatarUrl": "https://a.ppy.sh/13999223",
+        "role": "special",
+        "description": "比赛宣传",
+        "coverUrl": "https://assets.ppy.sh/user-profile-covers/13999223/6c4ec97d5aaaeb84ddb0938d65bb00566eff47f5822565a0be848a00743100fb.png"
+    },
+    {
+        "name": "Dana Iclucia",
+        "osuId": "13184288",
+        "avatarUrl": "https://a.ppy.sh/13184288",
+        "role": "special",
+        "description": "比赛宣传",
+        "coverUrl": "https://assets.ppy.sh/user-profile-covers/13184288/990bb9d12e323292672fbc3515523426fee3bd45d1f732c5068552669716f7ce.jpeg"
     }
 ]
