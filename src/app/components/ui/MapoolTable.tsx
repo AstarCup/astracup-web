@@ -41,6 +41,9 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
     const [bulkDownloadItems, setBulkDownloadItems] = useState<DownloadItem[]>([]);
     const [showBulkDownloadManager, setShowBulkDownloadManager] = useState(false);
     const [isBulkDownloading, setIsBulkDownloading] = useState(false);
+    const [downloadSpeed, setDownloadSpeed] = useState(0);
+    const [eta, setEta] = useState<number | null>(null);
+    const [overallProgress, setOverallProgress] = useState(0);
 
     // 准备批量下载 (原有的API批量下载)
     const prepareBulkDownload = () => {
@@ -77,6 +80,10 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
             }
             console.log('API test passed, proceeding with bulk download...');
 
+            // 记录开始时间
+            const startTime = Date.now();
+            let lastProgressUpdate = 0;
+
             // 逐个下载谱面，添加延迟避免并发过多
             for (let i = 0; i < bulkDownloadItems.length; i++) {
                 const item = bulkDownloadItems[i];
@@ -92,6 +99,27 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                     // 更新BulkDownloadManager中的整体进度状态
 
                     console.log(`Downloading beatmap ${i + 1}/${bulkDownloadItems.length}:`, item.sid, item.bid);
+
+                    // 计算下载速度和ETA
+                    const currentTime = Date.now();
+                    const elapsedTime = (currentTime - startTime) / 1000; // 秒
+                    const progressRatio = (i + 1) / bulkDownloadItems.length;
+
+                    if (elapsedTime > 0 && progressRatio > 0) {
+                        // 计算下载速度 (items per second)
+                        const speed = (i + 1) / elapsedTime;
+
+                        // 计算剩余时间 (seconds)
+                        const remainingItems = bulkDownloadItems.length - (i + 1);
+                        const etaSeconds = remainingItems / speed;
+
+                        // 更新状态
+                        setDownloadSpeed(speed);
+                        setEta(etaSeconds);
+                    }
+
+                    // 更新整体进度状态
+                    setOverallProgress(newOverallProgress);
 
                     const response = await fetch(`/api/download-beatmap?sid=${item.sid}&source=${source}`, {
                         method: 'GET',
@@ -502,6 +530,9 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                 onStartDownload={startBulkDownload}
                 onCancelDownload={cancelBulkDownload}
                 isDownloading={isBulkDownloading}
+                downloadSpeed={downloadSpeed}
+                eta={eta}
+                overallProgress={overallProgress}
             />
         </div>
     );

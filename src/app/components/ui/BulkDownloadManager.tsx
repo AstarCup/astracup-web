@@ -18,6 +18,9 @@ interface BulkDownloadManagerProps {
     onStartDownload: (source: 'nerinyan' | 'osu') => void;
     onCancelDownload: () => void;
     isDownloading?: boolean;
+    downloadSpeed?: number;
+    eta?: number | null;
+    overallProgress?: number;
 }
 
 export default function BulkDownloadManager({
@@ -26,9 +29,10 @@ export default function BulkDownloadManager({
     items,
     onStartDownload,
     onCancelDownload,
-    isDownloading = false
+    isDownloading = false,
+    overallProgress = 0
 }: BulkDownloadManagerProps) {
-    const [overallProgress, setOverallProgress] = useState(0);
+    // 移除本地的overallProgress状态，使用从props传入的值
     const [downloadSource, setDownloadSource] = useState<'nerinyan' | 'osu'>('nerinyan');
     const [isMinimized, setIsMinimized] = useState(false);
     const [downloadSpeed, setDownloadSpeed] = useState(0);
@@ -83,14 +87,14 @@ export default function BulkDownloadManager({
                             className="text-gray-500 hover:text-gray-700 text-lg leading-none"
                             title="恢复"
                         >
-                            +
+                            恢复
                         </button>
                         <button
                             onClick={onClose}
                             className="text-gray-500 hover:text-gray-700 text-lg leading-none ml-1"
                             title="关闭"
                         >
-                            ×
+                            关闭
                         </button>
                     </div>
                 </div>
