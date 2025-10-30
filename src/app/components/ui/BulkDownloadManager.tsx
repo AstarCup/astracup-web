@@ -15,7 +15,7 @@ interface BulkDownloadManagerProps {
     isOpen: boolean;
     onClose: () => void;
     items: DownloadItem[];
-    onStartDownload: (source: 'sayobot' | 'osu') => void;
+    onStartDownload: (source: 'nerinyan' | 'osu') => void;
     onCancelDownload: () => void;
     isDownloading?: boolean;
 }
@@ -29,7 +29,7 @@ export default function BulkDownloadManager({
     isDownloading = false
 }: BulkDownloadManagerProps) {
     const [overallProgress, setOverallProgress] = useState(0);
-    const [downloadSource, setDownloadSource] = useState<'sayobot' | 'osu'>('sayobot');
+    const [downloadSource, setDownloadSource] = useState<'nerinyan' | 'osu'>('nerinyan');
     const [isMinimized, setIsMinimized] = useState(false);
     const [downloadSpeed, setDownloadSpeed] = useState(0);
     const [eta, setEta] = useState<number | null>(null);
@@ -128,7 +128,7 @@ export default function BulkDownloadManager({
                                 取消下载
                             </button>
                             <span className="text-xs text-gray-500">
-                                {downloadSource === 'sayobot' ? 'Sayobot' : 'osu官方'}
+                                {downloadSource === 'nerinyan' ? 'Nerinyan' : 'osu官方'}
                             </span>
                         </div>
                     ) : (
@@ -235,11 +235,11 @@ export default function BulkDownloadManager({
                         <label className="text-sm text-gray-600">下载源:</label>
                         <select
                             value={downloadSource}
-                            onChange={(e) => setDownloadSource(e.target.value as 'sayobot' | 'osu')}
+                            onChange={(e) => setDownloadSource(e.target.value as 'nerinyan' | 'osu')}
                             className="px-2 py-1 bg-gray-100 text-gray-800 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                             disabled={isDownloading}
                         >
-                            <option value="sayobot">Sayobot</option>
+                            <option value="nerinyan">Nerinyan</option>
                             <option value="osu">osu官方</option>
                         </select>
                     </div>
@@ -257,7 +257,7 @@ export default function BulkDownloadManager({
                             disabled={isDownloading || totalCount === 0}
                             className="px-4 py-2 bg-[#E93B66] text-white  hover:bg-[#95E1D3] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isDownloading ? '下载中...' : `开始下载 (${downloadSource === 'sayobot' ? 'Sayobot' : 'osu官方'})`}
+                            {isDownloading ? '下载中...' : `开始下载 (${downloadSource === 'nerinyan' ? 'Nerinyan' : 'osu官方'})`}
                         </button>
                     </div>
                 </div>

@@ -58,7 +58,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
     };
 
     // 开始批量下载
-    const startBulkDownload = async (source: 'sayobot' | 'osu') => {
+    const startBulkDownload = async (source: 'nerinyan' | 'osu') => {
         if (bulkDownloadItems.length === 0) return;
 
         setIsBulkDownloading(true);

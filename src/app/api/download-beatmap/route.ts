@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const sid = searchParams.get('sid');
-    const source = searchParams.get('source') || 'sayobot'; // 'sayobot' or 'osu'
+    const source = searchParams.get('source') || 'nerinyan'; // 'nerinyan', 'sayobot' or 'osu'
 
     if (!sid) {
         return NextResponse.json({ error: 'Missing sid parameter' }, { status: 400 });
@@ -16,9 +16,13 @@ export async function GET(request: NextRequest) {
         if (source === 'osu') {
             downloadUrl = `https://osu.ppy.sh/beatmapsets/${sid}/download`;
             sourceName = 'osu官方';
+        } else if (source === 'nerinyan') {
+            downloadUrl = `https://api.nerinyan.moe/d/${sid}`;
+            sourceName = 'Nerinyan';
         } else {
-            downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${sid}`;
-            sourceName = 'Sayobot';
+            // Fallback to nerinyan if sayobot is requested but deprecated
+            downloadUrl = `https://api.nerinyan.moe/d/${sid}`;
+            sourceName = 'Nerinyan';
         }
 
         console.log(`Proxying download request from ${sourceName}:`, { sid, downloadUrl, source });

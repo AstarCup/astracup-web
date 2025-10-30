@@ -1805,9 +1805,9 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                     <button
                         onClick={() => {
-                            const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${contextMenu.selection!.beatmapsetId}`;
+                            const downloadUrl = `https://api.nerinyan.moe/d/${contextMenu.selection!.beatmapsetId}`;
                             window.open(downloadUrl, '_blank');
-                            showSuccess('已开始从Sayobot下载');
+                            showSuccess('已开始从Nerinyan下载');
                             closeContextMenu();
                         }}
                         className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
@@ -1815,7 +1815,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                         </svg>
-                        下载谱面 (Sayobot)
+                        下载谱面 (Nerinyan)
                     </button>
 
                     <button
