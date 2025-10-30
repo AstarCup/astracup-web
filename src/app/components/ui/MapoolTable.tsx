@@ -44,6 +44,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
     const [downloadSpeed, setDownloadSpeed] = useState(0);
     const [eta, setEta] = useState<number | null>(null);
     const [overallProgress, setOverallProgress] = useState(0);
+    const [abortController, setAbortController] = useState<AbortController | null>(null);
 
     // 准备批量下载 (原有的API批量下载)
     const prepareBulkDownload = () => {
@@ -63,6 +64,10 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
     // 开始批量下载
     const startBulkDownload = async (source: 'nerinyan' | 'sayobot' | 'osu') => {
         if (bulkDownloadItems.length === 0) return;
+
+        // 创建新的AbortController用于取消请求
+        const controller = new AbortController();
+        setAbortController(controller);
 
         setIsBulkDownloading(true);
         const zip = new JSZip();
@@ -86,6 +91,12 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
 
             // 逐个下载谱面，添加延迟避免并发过多
             for (let i = 0; i < bulkDownloadItems.length; i++) {
+                // 检查是否已取消
+                if (!isBulkDownloading) {
+                    console.log('Download cancelled');
+                    break;
+                }
+
                 const item = bulkDownloadItems[i];
 
                 try {
@@ -126,6 +137,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                         headers: {
                             'Cache-Control': 'no-cache',
                         },
+                        signal: controller.signal // 添加signal用于取消请求
                     });
 
                     if (!response.ok) {
@@ -174,6 +186,13 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                     }
 
                 } catch (error) {
+                    // 检查是否是取消操作导致的错误
+                    if (error instanceof Error && error.name === 'AbortError') {
+                        console.log('Download cancelled by user');
+                        showInfo('下载已被用户取消');
+                        break;
+                    }
+
                     const errorMessage = error instanceof Error ? error.message : '未知错误';
                     console.error(`Failed to download ${item.sid}:`, errorMessage);
 
@@ -245,10 +264,17 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
             }
 
         } catch (error) {
-            console.error('Bulk download process error:', error);
-            showError('批量下载过程中出现严重错误');
+            // 检查是否是取消操作导致的错误
+            if (error instanceof Error && error.name === 'AbortError') {
+                console.log('Bulk download cancelled by user');
+                showInfo('批量下载已被用户取消');
+            } else {
+                console.error('Bulk download process error:', error);
+                showError('批量下载过程中出现严重错误');
+            }
         } finally {
             setIsBulkDownloading(false);
+            setAbortController(null);
         }
     };
 
@@ -288,6 +314,12 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
 
     // 取消批量下载
     const cancelBulkDownload = () => {
+        // 如果有正在进行的请求，取消它
+        if (abortController) {
+            abortController.abort();
+            setAbortController(null);
+        }
+
         setIsBulkDownloading(false);
         setBulkDownloadItems([]);
         setShowBulkDownloadManager(false);
