@@ -61,7 +61,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
     };
 
     // 开始批量下载
-    const startBulkDownload = async (source: 'nerinyan' | 'osu') => {
+    const startBulkDownload = async (source: 'nerinyan' | 'sayobot' | 'osu') => {
         if (bulkDownloadItems.length === 0) return;
 
         setIsBulkDownloading(true);
@@ -253,7 +253,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
     };
 
     // 测试单个下载
-    const testSingleDownload = async (sid: string, source: 'nerinyan' | 'osu') => {
+    const testSingleDownload = async (sid: string, source: 'nerinyan' | 'sayobot' | 'osu') => {
         try {
             console.log('Testing single download for SID:', sid, 'source:', source);
             const response = await fetch(`/api/download-beatmap?sid=${sid}&source=${source}`, {

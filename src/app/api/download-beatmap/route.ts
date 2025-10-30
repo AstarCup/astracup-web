@@ -19,6 +19,9 @@ export async function GET(request: NextRequest) {
         } else if (source === 'nerinyan') {
             downloadUrl = `https://api.nerinyan.moe/d/${sid}`;
             sourceName = 'Nerinyan';
+        } else if (source === 'sayobot') {
+            downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${sid}`;
+            sourceName = 'Sayobot';
         } else {
             // Fallback to nerinyan if sayobot is requested but deprecated
             downloadUrl = `https://api.nerinyan.moe/d/${sid}`;
@@ -29,7 +32,7 @@ export async function GET(request: NextRequest) {
 
         // 从环境变量获取 Referer，如果没有则使用默认值
         const referer = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.rino.ink/';
-        // 使用更真实的User-Agent
+        // 从请求中获取User-Agent，如果没有则使用默认值
         const userAgent = request.headers.get('user-agent') ||
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
