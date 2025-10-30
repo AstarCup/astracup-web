@@ -92,8 +92,9 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
             // 逐个下载谱面，添加延迟避免并发过多
             for (let i = 0; i < bulkDownloadItems.length; i++) {
                 // 检查是否已取消
-                if (!isBulkDownloading) {
-                    console.log('Download cancelled');
+                if (controller.signal.aborted) {
+                    console.log('Download cancelled by user');
+                    showInfo('下载已被用户取消');
                     break;
                 }
 
