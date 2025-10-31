@@ -431,13 +431,26 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 // 如果API失败，使用预定义的mod列表
                 const fallbackMods = [
                     { name: 'DA', description: 'Difficulty Adjust - 自定义难度属性' },
-                    { name: 'WG', description: 'Wiggle - 摆动效果' },
-                    { name: 'MR', description: 'Mirror - 镜像' },
-                    { name: 'RD', description: 'Random - 随机' },
+                    { name: 'AD', description: 'Approach Different - 不一样的缩圈' },
                     { name: 'AS', description: 'Adaptive Speed - 自适应速度' },
-                    { name: 'CL', description: 'Classic - 经典模式' },
-                    { name: 'SG', description: 'Single Tap - 单键模式' },
-                    { name: 'TC', description: 'Target Practice - 目标练习' },
+                    { name: 'BM', description: 'Bloom - 缩圈越来越大' },
+                    { name: 'BR', description: 'Barrel Roll - 旋转' },
+                    { name: 'BU', description: 'Bubbles - 气泡一样的显示方式' },
+                    { name: 'DF', description: 'Deflate - ' },
+                    { name: 'DP', description: 'Depth - 3d模式' },
+                    { name: 'FR', description: 'Freeze Frame - 每组note都一起分组出现' },
+                    { name: 'GR', description: 'Grow - 逐渐变大' },
+                    { name: 'MG', description: 'Magnetised - 自动吸note' },
+                    { name: 'MU', description: 'Muted - 我的世界没有声音' },
+                    { name: 'NS', description: 'No Scope - 我的世界没有瞄准' },
+                    { name: 'RP', description: 'Repel - ' },
+                    { name: 'SI', description: 'Spin In - 精确度挑战' },
+                    { name: 'SY', description: 'Synesthesia - 缩圈颜色为节奏型' },
+                    { name: 'TC', description: 'Traceable - 只有缩圈' },
+                    { name: 'TR', description: 'Transform - ' },
+                    { name: 'AC', description: 'Accuracy Challenge - 精确度挑战' },
+                    { name: 'AC', description: 'Accuracy Challenge - 精确度挑战' },
+                    { name: 'AC', description: 'Accuracy Challenge - 精确度挑战' },
                     { name: 'AC', description: 'Accuracy Challenge - 精确度挑战' }
                 ];
                 setAvailableLazerMods(fallbackMods);
@@ -1504,7 +1517,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         onChange={(e) => setPadding(e.target.checked)}
                                         className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                                     />
-                                    <span className="text-sm text-gray-700">Padding图</span>
+                                    <span className="text-sm text-gray-700">送测该图</span>
                                 </label>
                             </div>
 

@@ -719,7 +719,7 @@ export default function AdminPage() {
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
                         >
-                            <Image src='/icons/table-fill.svg' alt='overview' width={10} height={10} />
+                            <Image src='/icons/table-fill.svg' alt='overview' width={20} height={20} />
                             概览
                         </button>
 
@@ -731,7 +731,7 @@ export default function AdminPage() {
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
                         >
-                            <Image src='/icons/flag-fill.svg' alt='matches' width={10} height={10} />
+                            <Image src='/icons/flag-fill.svg' alt='matches' width={20} height={20} />
                             比赛预约管理
                         </button>
 
@@ -744,7 +744,7 @@ export default function AdminPage() {
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <Image src='/icons/home.svg' alt='streaming' width={10} height={10} />
+                                <Image src='/icons/home.svg' alt='streaming' width={20} height={20} />
                                 staff比赛房间加入
                             </button>
                         )}
@@ -758,7 +758,7 @@ export default function AdminPage() {
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <Image src='/icons/mapool-sm.svg' alt='map selection' width={10} height={10} />
+                                <Image src='/icons/mapool-sm.svg' alt='map selection' width={20} height={20} />
                                 选图管理
                             </button>
                         )}
@@ -772,7 +772,7 @@ export default function AdminPage() {
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <Image src='/icons/live.svg' alt='replays' width={10} height={10} />
+                                <Image src='/icons/photos.svg' alt='replays' width={20} height={20} />
                                 回放收集
                             </button>
                         )}
@@ -786,7 +786,7 @@ export default function AdminPage() {
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <Image src='/icons/hourglass-2-fill.svg' alt='match rooms' width={10} height={10} />
+                                <Image src='/icons/hourglass-2-fill.svg' alt='match rooms' width={20} height={20} />
                                 比赛时间房间管理
                             </button>
                         )}
@@ -800,7 +800,7 @@ export default function AdminPage() {
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <Image src='/icons/auction-fill.svg' alt='matchups' width={10} height={10} />
+                                <Image src='/icons/auction-fill.svg' alt='matchups' width={20} height={20} />
                                 玩家对战列表管理
                             </button>
                         )}
@@ -814,7 +814,7 @@ export default function AdminPage() {
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <Image src='/icons/register.svg' alt='user management' width={10} height={10} />
+                                <Image src='/icons/register.svg' alt='user management' width={20} height={20} />
                                 用户管理
                             </button>
                         )}
@@ -828,7 +828,7 @@ export default function AdminPage() {
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <Image src='/icons/settings-3-fill.svg' alt='system settings' width={10} height={10} />
+                                <Image src='/icons/settings-3-fill.svg' alt='system settings' width={20} height={20} />
                                 系统设置
                             </button>
                         )}
