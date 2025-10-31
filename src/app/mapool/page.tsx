@@ -173,8 +173,8 @@ export default function Mapool() {
         );
     }
 
-    // 检查图池是否可见
-    if (!tournamentSettings?.mappool_visible) {
+    // 检查图池是否可见 - 只有当没有数据时才显示"暂未开放"
+    if (!tournamentSettings?.mappool_visible && mapPoolData.length === 0) {
         return (
             <div className="max-w-9xl mx-auto pt-60 pb-60">
                 <div className="text-center text-white">

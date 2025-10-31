@@ -494,9 +494,9 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                             let slotText = row.Slot || "";
 
                             // 处理自定义mod名称和DT倍率
-                            if (row.customModName && row.Slot?.includes("LZ")) {
+                            if (row.customModName && row.Slot?.startsWith("LZ")) {
                                 slotText = `LZ${row.Slot.match(/\d+/)?.[0] || ''}-${row.customModName}`;
-                            } else if (row.customDTRate && row.customDTRate !== 1.5 && row.Slot?.includes("DT")) {
+                            } else if (row.customDTRate && row.customDTRate !== 1.5 && row.Slot?.startsWith("DT")) {
                                 slotText = `DT${row.Slot.match(/\d+/)?.[0] || ''}-${Number(row.customDTRate).toFixed(1)}x`;
                             }
 
@@ -649,11 +649,11 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(detailCard.row.Slot?.replace(/\d+/g, '') || 'NM')}`}>
-                                        {detailCard.row.customModName && detailCard.row.Slot?.includes("LZ") ?
+                                        {detailCard.row.customModName && detailCard.row.Slot?.startsWith("LZ") ?
                                             (detailCard.row.customModName && detailCard.row.customModName.trim() !== '' ?
                                                 `LZ${detailCard.row.Slot.match(/\d+/)?.[0] || ''}-${detailCard.row.customModName}` :
                                                 `LZ${detailCard.row.Slot.match(/\d+/)?.[0] || ''}`) :
-                                            detailCard.row.customDTRate && detailCard.row.customDTRate !== 1.5 && detailCard.row.Slot?.includes("DT") ?
+                                            detailCard.row.customDTRate && detailCard.row.customDTRate !== 1.5 && detailCard.row.Slot?.startsWith("DT") ?
                                                 ((detailCard.row.customDTRate && detailCard.row.customDTRate !== 1.5) ?
                                                     `DT${detailCard.row.Slot.match(/\d+/)?.[0] || ''}-${Number(detailCard.row.customDTRate).toFixed(1)}倍` :
                                                     `DT${detailCard.row.Slot.match(/\d+/)?.[0] || ''}`) :
