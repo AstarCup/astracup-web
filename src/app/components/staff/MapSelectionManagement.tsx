@@ -664,6 +664,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     selectedBy: userForState.id.toString(),
                     selectedByUsername: userForState.username,
                     selectedByAvatar: userForState.avatar_url,
+                    customModName: selectedMods === 'LZ' ? customModName : undefined,
+                    customDTRate: selectedMods === 'DT' && customDTRate !== '' ? customDTRate : undefined,
                     customSettings
                     ,
                     // send computed modded stats for backend

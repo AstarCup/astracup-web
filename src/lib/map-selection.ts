@@ -432,7 +432,7 @@ export const mapSelectionStorage = {
     },
 
     // 更新选图信息
-    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved' | 'padding'>>, selectedBy: string): Promise<boolean> {
+    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved' | 'padding' | 'customModName' | 'customDTRate'>>, selectedBy: string): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
 
@@ -458,6 +458,17 @@ export const mapSelectionStorage = {
                 setClause.push('padding = ?');
                 params.push(updates.padding);
             }
+
+            if (updates.customModName !== undefined) {
+                setClause.push('customModName = ?');
+                params.push(updates.customModName);
+            }
+
+            if (updates.customDTRate !== undefined) {
+                setClause.push('customDTRate = ?');
+                params.push(updates.customDTRate);
+            }
+
             // update modded attributes
             if ((updates as any).ar !== undefined) {
                 setClause.push('ar = ?');
