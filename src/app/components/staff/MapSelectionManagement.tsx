@@ -457,7 +457,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 if (data.success) {
                     setAvailableSeasons(data.availableSeasons);
                     setSeason(data.defaultSeason);
-                    console.log('Season config loaded:', data);
+                    // console.log('Season config loaded:', data);
                 }
             }
         } catch (error) {
@@ -810,12 +810,14 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             starRating: modStats.starRating,
                             bpm: modStats.bpm
                         },
-                        // 同时更新基础beatmap信息
+                        // 同时更新基础beatmap信息，包括计算后的DT时长
                         title: latestBeatmap.title,
                         artist: latestBeatmap.artist,
                         version: latestBeatmap.version,
                         creator: latestBeatmap.creator,
-                        totalLength: latestBeatmap.total_length,
+                        totalLength: selection.selectedMods === 'DT' && selection.customDTRate ?
+                            Math.round(latestBeatmap.total_length / selection.customDTRate) :
+                            latestBeatmap.total_length,
                         coverUrl: latestBeatmap.cover_url
                     })
                 });
@@ -1380,7 +1382,12 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             <div className="text-center font-medium col-span-2">Length</div>
                                             <div className="text-center font-medium">BPM</div>
                                             <div className="text-center font-medium">★</div>
-                                            <div className="text-center font-bold text-base col-span-2">{formatLength(beatmapPreview.total_length)}</div>
+                                            <div className={`text-center font-bold text-base col-span-2 ${selectedMods === 'DT' && customDTRate !== '' ? 'text-red-500' : ''}`}>
+                                                {selectedMods === 'DT' && customDTRate !== '' ?
+                                                    formatLength(Math.round(beatmapPreview.total_length / (customDTRate as number))) + ' ▼' :
+                                                    formatLength(beatmapPreview.total_length)
+                                                }
+                                            </div>
                                             <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.bpm !== undefined ? (moddedStats.bpm > beatmapPreview.bpm + 0.01 ? 'text-red-500' : moddedStats.bpm < beatmapPreview.bpm - 0.01 ? 'text-green-500' : '') : ''}`}>
                                                 {(() => {
                                                     const val = moddedStats?.bpm ?? beatmapPreview.bpm;
