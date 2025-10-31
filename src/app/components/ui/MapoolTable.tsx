@@ -679,16 +679,16 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                 <div className="text-center font-medium">AR</div>
                                 <div className="text-center font-medium">OD</div>
                                 <div className="text-center font-medium">HP</div>
-                                <div className="text-center font-bold text-lg">{detailCard.row.cs?.toFixed(1) || detailCard.row.CS?.toFixed(1) || '0.0'}</div>
-                                <div className="text-center font-bold text-lg">{detailCard.row.ar?.toFixed(1) || detailCard.row.AR?.toFixed(1) || '0.0'}</div>
-                                <div className="text-center font-bold text-lg">{detailCard.row.od?.toFixed(1) || detailCard.row.OD?.toFixed(1) || '0.0'}</div>
-                                <div className="text-center font-bold text-lg">{detailCard.row.hp?.toFixed(1) || '0.0'}</div>
+                                <div className="text-center font-bold text-lg">{Number(detailCard.row.cs || detailCard.row.CS || 0).toFixed(1)}</div>
+                                <div className="text-center font-bold text-lg">{Number(detailCard.row.ar || detailCard.row.AR || 0).toFixed(1)}</div>
+                                <div className="text-center font-bold text-lg">{Number(detailCard.row.od || detailCard.row.OD || 0).toFixed(1)}</div>
+                                <div className="text-center font-bold text-lg">{Number(detailCard.row.hp || 0).toFixed(1)}</div>
                                 <div className="text-center font-medium col-span-2">Length</div>
                                 <div className="text-center font-medium">BPM</div>
                                 <div className="text-center font-medium">★</div>
                                 <div className="text-center font-bold text-base col-span-2">{formatLength(detailCard.row.totalLength || detailCard.row.HitLength || 0)}</div>
                                 <div className="text-center font-bold text-base">{Math.round(detailCard.row.bpm || detailCard.row.BPM || 0)}</div>
-                                <div className="text-center font-bold text-base">{detailCard.row.starRating?.toFixed(2) || detailCard.row.SR?.toFixed(2) || '0.00'}</div>
+                                <div className="text-center font-bold text-base">{Number(detailCard.row.starRating || detailCard.row.SR || 0).toFixed(2)}</div>
                             </div>
                         </div>
 
