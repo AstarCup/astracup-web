@@ -31,6 +31,9 @@ interface MapSelection {
     url: string;
     coverUrl: string;
     approved: boolean;
+    // 添加自定义mod字段
+    customModName?: string;
+    customDTRate?: number;
 }
 
 const MOD_ORDER = ['NM', 'HD', 'HR', 'DT', 'FM', 'LZ', 'TB'];
@@ -49,16 +52,22 @@ export default function Mapool() {
     const [currentSeason, setCurrentSeason] = useState('s1');
     const [selectedCategory, setSelectedCategory] = useState('qualification');
 
-    // 当config加载完成后，更新赛季信息
+    // 当config加载完成后，更新赛季信息 - 只在初始加载时设置一次
     useEffect(() => {
-        if (tournamentSettings?.current_season) {
+        console.log('tournamentSettings changed:', tournamentSettings);
+        if (tournamentSettings?.current_season && currentSeason === 's1') {
             const seasonValue = `s${tournamentSettings.current_season}`;
             const seasonLabel = `第${tournamentSettings.current_season}赛季`;
 
             setAvailableSeasons([{ value: seasonValue, label: seasonLabel }]);
             setCurrentSeason(seasonValue);
         }
-    }, [tournamentSettings]);
+    }, [tournamentSettings, currentSeason]);
+
+    // 调试：监控mapPoolData变化
+    useEffect(() => {
+        console.log('mapPoolData changed, length:', mapPoolData.length);
+    }, [mapPoolData]);
 
     const CATEGORY_OPTIONS = [
         { value: 'qualification', label: 'QUA' },
@@ -143,7 +152,12 @@ export default function Mapool() {
             _OD: map.od.toFixed(1),
             BPM: map.bpm,
             HitLength: formatLength(map.totalLength),
-            Notes: map.comment || '-'
+            Notes: map.comment || '-',
+            // 添加自定义mod字段
+            customModName: map.customModName,
+            customDTRate: map.customDTRate,
+            selectedMods: map.selectedMods,
+            modPosition: map.modPosition
         }));
     };
 
