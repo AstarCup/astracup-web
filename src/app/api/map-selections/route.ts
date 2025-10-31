@@ -364,7 +364,9 @@ export async function PUT(request: NextRequest) {
         } else {
             // 更新其他字段：只允许选图团队成员
             isAuthorized = await verifyMapSelectionAuth(selectedBy);
-        } if (!isAuthorized) {
+        }
+
+        if (!isAuthorized) {
             return NextResponse.json(
                 { error: '您没有权限更新此选图' },
                 { status: 403 }

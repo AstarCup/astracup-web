@@ -929,7 +929,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 },
                 body: JSON.stringify({
                     selectionIds: Array.from(tempApprovedSelections),
-                    approved: true
+                    approved: true,
+                    selectedBy: userForState.id.toString()
                 })
             });
 
