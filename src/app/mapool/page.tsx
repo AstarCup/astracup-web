@@ -34,6 +34,8 @@ interface MapSelection {
     // 添加自定义mod字段
     customModName?: string;
     customDTRate?: number;
+    // 添加缺失的字段
+    selectedByUsername?: string;
 }
 
 const MOD_ORDER = ['NM', 'HD', 'HR', 'DT', 'FM', 'LZ', 'TB'];
@@ -54,7 +56,7 @@ export default function Mapool() {
 
     // 当config加载完成后，更新赛季信息 - 只在初始加载时设置一次
     useEffect(() => {
-        console.log('tournamentSettings changed:', tournamentSettings);
+        // console.log('tournamentSettings changed:', tournamentSettings);
         if (tournamentSettings?.current_season && currentSeason === 's1') {
             // tournamentSettings.current_season 已经是字符串格式（如 's1'）
             const seasonValue = tournamentSettings.current_season;
@@ -68,7 +70,7 @@ export default function Mapool() {
 
     // 调试：监控mapPoolData变化
     useEffect(() => {
-        console.log('mapPoolData changed, length:', mapPoolData.length);
+        // console.log('mapPoolData changed, length:', mapPoolData.length);
     }, [mapPoolData]);
 
     const CATEGORY_OPTIONS = [
@@ -104,21 +106,21 @@ export default function Mapool() {
 
     const fetchApprovedMaps = async () => {
         try {
-            console.log('fetchApprovedMaps called with:', { currentSeason, selectedCategory });
+            // console.log('fetchApprovedMaps called with:', { currentSeason, selectedCategory });
             setIsLoading(true);
             const response = await fetch(`/api/map-selections?season=${currentSeason}&category=${selectedCategory}&approved=true`);
 
-            console.log('fetchApprovedMaps response:', response.status, response.ok);
+            // console.log('fetchApprovedMaps response:', response.status, response.ok);
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('fetchApprovedMaps data:', data);
+                // console.log('fetchApprovedMaps data:', data);
                 const approvedMaps = data.selections?.filter((map: MapSelection) => map.approved) || [];
-                console.log('approvedMaps:', approvedMaps);
+                // console.log('approvedMaps:', approvedMaps);
 
                 // 转换数据格式为MapoolTable需要的格式
                 const convertedData = convertToMapoolFormat(approvedMaps);
-                console.log('convertedData:', convertedData);
+                // console.log('convertedData:', convertedData);
                 setMapPoolData(convertedData);
             } else {
                 const errorText = await response.text();
@@ -167,7 +169,14 @@ export default function Mapool() {
             customModName: map.customModName,
             customDTRate: map.customDTRate,
             selectedMods: map.selectedMods,
-            modPosition: map.modPosition
+            modPosition: map.modPosition,
+            // 添加缺失的字段
+            hp: map.hp?.toFixed(1) || '0.0',
+            totalLength: map.totalLength,
+            selectedByUsername: map.selectedByUsername || map.selectedBy || '未知',
+            selectedAt: map.selectedAt || new Date().toISOString(),
+            starRating: map.starRating,
+            approved: map.approved || false
         }));
     };
 
