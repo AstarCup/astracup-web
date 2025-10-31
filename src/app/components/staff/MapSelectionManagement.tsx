@@ -79,6 +79,7 @@ interface ModdedStats {
     hp?: number;
     starRating?: number;
     bpm?: number;
+    totalLength?: number;
 }
 
 const MOD_OPTIONS = [
@@ -623,7 +624,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     // Use modded stats if available, otherwise original
                     starRating: moddedStats?.starRating ?? beatmapPreview.star_rating,
                     bpm: moddedStats?.bpm ?? beatmapPreview.bpm,
-                    totalLength: beatmapPreview.total_length,
+                    totalLength: moddedStats?.totalLength ?? beatmapPreview.total_length,
                     ar: moddedStats?.ar ?? beatmapPreview.ar,
                     cs: moddedStats?.cs ?? beatmapPreview.cs,
                     od: moddedStats?.od ?? beatmapPreview.od,
