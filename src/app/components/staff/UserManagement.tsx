@@ -37,7 +37,8 @@ export default function UserManagement({
                         >
                             {registrationsLoading ? (
                                 <div className="flex items-center">
-                                    <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />                                    加载中...
+                                    <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
+                                    <span className="ml-2 text-gray-400">加载中...</span>
                                 </div>
                             ) : '获取待审核用户列表'}
                         </button>

@@ -73,7 +73,8 @@ export default function StreamingManagement({
 
                 {staffAssignmentsLoading ? (
                     <div className="flex justify-center items-center py-8">
-                        <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />                        <span className="ml-2 text-gray-400">加载中...</span>
+                        <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
+                        <span className="ml-2 text-gray-400">加载中...</span>
                     </div>
                 ) : permissions.isAdmin ? (
                     // 管理员视图 - 显示所有已确认的staff分配（从比赛预约表获取）
