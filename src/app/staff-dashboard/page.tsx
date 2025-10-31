@@ -705,18 +705,8 @@ export default function AdminPage() {
                             />
                             <div>
                                 <h3 className="text-white font-medium">{user.username}</h3>
-                                <p className="text-gray-400 text-sm">工作人员面板</p>
                             </div>
                         </div>
-                        <button
-                            onClick={handleLogout}
-                            className="flex items-center px-4 py-2 text-gray-300 hover:bg-[#3a3a3a] hover:text-white transition-colors duration-200 rounded"
-                        >
-                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
-                            </svg>
-                            登出
-                        </button>
                     </div>
 
                     {/* 顶部Tab栏 */}
@@ -729,9 +719,7 @@ export default function AdminPage() {
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
                         >
-                            <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                            </svg>
+                            <Image src='/icons/table-fill.svg' alt='overview' width={10} height={10} />
                             概览
                         </button>
 
@@ -743,10 +731,8 @@ export default function AdminPage() {
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
                         >
-                            <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                            </svg>
-                            比赛管理
+                            <Image src='/icons/flag-fill.svg' alt='matches' width={10} height={10} />
+                            比赛预约管理
                         </button>
 
                         {/* 直播裁判 - 管理员、裁判员、直播员 */}
@@ -758,26 +744,8 @@ export default function AdminPage() {
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.414-1.414A1 1 0 0010.586 3H7.414a1 1 0 00-.707.293L5.293 4.707A1 1 0 014.586 5H4zm12 12H4a4 4 0 01-4-4V7a4 4 0 014-4h1.586a1 1 0 01.707.293L7.707 5.707A1 1 0 008.414 6h3.172a1 1 0 01.707.293l1.414 1.414A1 1 0 0014.414 8H16a4 4 0 014 4v6a4 4 0 01-4 4z" clipRule="evenodd" />
-                                </svg>
-                                直播裁判
-                            </button>
-                        )}
-
-                        {/* 回放收集 - 重播测试员或管理员 */}
-                        {(permissions.isReplayTester || permissions.isAdmin) && (
-                            <button
-                                onClick={() => setActiveTab('replays')}
-                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'replays'
-                                    ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
-                                    }`}
-                            >
-                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h4a2 2 0 012 2v2a2 2 0 01-2 2H8a2 2 0 01-2-2v-2z" clipRule="evenodd" />
-                                </svg>
-                                回放收集
+                                <Image src='/icons/home.svg' alt='streaming' width={10} height={10} />
+                                staff比赛房间加入
                             </button>
                         )}
 
@@ -790,10 +758,22 @@ export default function AdminPage() {
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd" />
-                                </svg>
+                                <Image src='/icons/mapool-sm.svg' alt='map selection' width={10} height={10} />
                                 选图管理
+                            </button>
+                        )}
+
+                        {/* 回放收集 - 重播测试员或管理员 */}
+                        {(permissions.isReplayTester || permissions.isAdmin) && (
+                            <button
+                                onClick={() => setActiveTab('replays')}
+                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'replays'
+                                    ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
+                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                    }`}
+                            >
+                                <Image src='/icons/live.svg' alt='replays' width={10} height={10} />
+                                回放收集
                             </button>
                         )}
 
@@ -806,10 +786,8 @@ export default function AdminPage() {
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                                </svg>
-                                比赛房间管理
+                                <Image src='/icons/hourglass-2-fill.svg' alt='match rooms' width={10} height={10} />
+                                比赛时间房间管理
                             </button>
                         )}
 
@@ -822,10 +800,8 @@ export default function AdminPage() {
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
-                                </svg>
-                                对战列表管理
+                                <Image src='/icons/auction-fill.svg' alt='matchups' width={10} height={10} />
+                                玩家对战列表管理
                             </button>
                         )}
 
@@ -838,9 +814,7 @@ export default function AdminPage() {
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
+                                <Image src='/icons/register.svg' alt='user management' width={10} height={10} />
                                 用户管理
                             </button>
                         )}
@@ -854,9 +828,7 @@ export default function AdminPage() {
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-                                </svg>
+                                <Image src='/icons/settings-3-fill.svg' alt='system settings' width={10} height={10} />
                                 系统设置
                             </button>
                         )}
@@ -865,24 +837,9 @@ export default function AdminPage() {
             </div>
 
             {/* 内容区域 */}
-            <div className="flex-1 p-6 bg-[#1a1a1a]">
-                {/* 页面标题 */}
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-white">
-                        {activeTab === 'overview' && '管理概览'}
-                        {activeTab === 'matchups' && '对战列表管理'}
-                        {activeTab === 'rooms' && '比赛房间管理'}
-                        {activeTab === 'matches' && '比赛管理'}
-                        {activeTab === 'streaming' && '直播裁判'}
-                        {activeTab === 'users' && '用户管理'}
-                        {activeTab === 'replays' && '回放收集管理'}
-                        {activeTab === 'map-selection' && '选图管理'}
-                        {activeTab === 'settings' && '系统设置'}
-                    </h1>
-                </div>
-
+            <div className="flex-1">
                 {/* 内容区域 */}
-                <div className="bg-[#2d2d2d] rounded-lg border border-[#404040] p-6">
+                <div className="p-6">
                     {/* 概览页面 */}
                     {activeTab === 'overview' && (
                         <OverviewManagement
