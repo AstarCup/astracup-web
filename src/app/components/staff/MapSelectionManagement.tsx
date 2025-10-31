@@ -1271,9 +1271,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                     {/* 添加选图表单 */}
                     {showAddForm && (
-                        <div className="mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50 max-w-6xl">
+                        <div className="mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50 max-w-5xl object-center">
                             <h3 className="text-lg font-bold mb-4">添加新选图</h3>
-
                             {/* URL输入 */}
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1421,8 +1420,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             )}
 
                             {/* Mod选择 */}
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                                <div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div className="min-w-[220px]">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Mod
                                     </label>
@@ -1458,7 +1457,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
                                     <h4 className="font-medium text-blue-800 mb-2">Lazer特有MOD设置</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
+                                        <div className='min-w-[300px]'>
                                             <Dropdown
                                                 label="MOD名称"
                                                 options={[
