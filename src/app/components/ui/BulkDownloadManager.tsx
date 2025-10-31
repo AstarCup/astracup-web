@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 interface DownloadItem {
     sid: string;
@@ -87,14 +88,14 @@ export default function BulkDownloadManager({
                             className="text-gray-500 hover:text-gray-700 text-lg leading-none"
                             title="恢复"
                         >
-                            恢复
+                            <Image src='/icons/fullscreen-fill.svg' alt='恢复' width={32} height={32} />
                         </button>
                         <button
                             onClick={onClose}
                             className="text-gray-500 hover:text-gray-700 text-lg leading-none ml-1"
                             title="关闭"
                         >
-                            关闭
+                            <Image src='/icons/close-fill.svg' alt='关闭' width={32} height={32} />
                         </button>
                     </div>
                 </div>
@@ -157,13 +158,13 @@ export default function BulkDownloadManager({
                             className="text-gray-500 hover:text-gray-700 text-lg"
                             title="最小化"
                         >
-                            最小化
+                            <Image src='/icons/fullscreen-exit-fill.svg' alt='最小化' width={32} height={32} />
                         </button>
                         <button
                             onClick={onClose}
                             className="text-gray-500 hover:text-gray-700 text-2xl"
                         >
-                            关闭
+                            <Image src='/icons/close-fill.svg' alt='关闭' width={32} height={32} />
                         </button>
                     </div>
                 </div>

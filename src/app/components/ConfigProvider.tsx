@@ -7,7 +7,7 @@ export interface TournamentSettings {
     tournament_name: string;
     max_pp_for_registration: number;
     min_pp_for_registration: number;
-    current_season: number;
+    current_season: string;
     current_season_stage: string;
     admin_group: string[];
     map_selection_group: string[];

@@ -31,6 +31,11 @@ interface MapSelection {
     url: string;
     coverUrl: string;
     approved: boolean;
+    // 添加自定义mod字段
+    customModName?: string;
+    customDTRate?: number;
+    // 添加缺失的字段
+    selectedByUsername?: string;
 }
 
 const MOD_ORDER = ['NM', 'HD', 'HR', 'DT', 'FM', 'LZ', 'TB'];
@@ -49,16 +54,24 @@ export default function Mapool() {
     const [currentSeason, setCurrentSeason] = useState('s1');
     const [selectedCategory, setSelectedCategory] = useState('qualification');
 
-    // 当config加载完成后，更新赛季信息
+    // 当config加载完成后，更新赛季信息 - 只在初始加载时设置一次
     useEffect(() => {
-        if (tournamentSettings?.current_season) {
-            const seasonValue = `s${tournamentSettings.current_season}`;
-            const seasonLabel = `第${tournamentSettings.current_season}赛季`;
+        // console.log('tournamentSettings changed:', tournamentSettings);
+        if (tournamentSettings?.current_season && currentSeason === 's1') {
+            // tournamentSettings.current_season 已经是字符串格式（如 's1'）
+            const seasonValue = tournamentSettings.current_season;
+            const seasonNumber = tournamentSettings.current_season.replace('s', '');
+            const seasonLabel = `第${seasonNumber}赛季`;
 
             setAvailableSeasons([{ value: seasonValue, label: seasonLabel }]);
             setCurrentSeason(seasonValue);
         }
-    }, [tournamentSettings]);
+    }, [tournamentSettings, currentSeason]);
+
+    // 调试：监控mapPoolData变化
+    useEffect(() => {
+        // console.log('mapPoolData changed, length:', mapPoolData.length);
+    }, [mapPoolData]);
 
     const CATEGORY_OPTIONS = [
         { value: 'qualification', label: 'QUA' },
@@ -93,17 +106,25 @@ export default function Mapool() {
 
     const fetchApprovedMaps = async () => {
         try {
+            // console.log('fetchApprovedMaps called with:', { currentSeason, selectedCategory });
             setIsLoading(true);
             const response = await fetch(`/api/map-selections?season=${currentSeason}&category=${selectedCategory}&approved=true`);
 
+            // console.log('fetchApprovedMaps response:', response.status, response.ok);
+
             if (response.ok) {
                 const data = await response.json();
+                // console.log('fetchApprovedMaps data:', data);
                 const approvedMaps = data.selections?.filter((map: MapSelection) => map.approved) || [];
+                // console.log('approvedMaps:', approvedMaps);
 
                 // 转换数据格式为MapoolTable需要的格式
                 const convertedData = convertToMapoolFormat(approvedMaps);
+                // console.log('convertedData:', convertedData);
                 setMapPoolData(convertedData);
             } else {
+                const errorText = await response.text();
+                console.error('fetchApprovedMaps failed:', errorText);
                 setError('获取图池数据失败');
             }
         } catch (error) {
@@ -141,9 +162,20 @@ export default function Mapool() {
             _AR: map.ar.toFixed(1),
             OD: map.od.toFixed(1),
             _OD: map.od.toFixed(1),
+            hp: map.hp?.toFixed(1) || '0.0',
+            totalLength: map.totalLength,
             BPM: map.bpm,
             HitLength: formatLength(map.totalLength),
-            Notes: map.comment || '-'
+            Notes: map.comment || '-',
+            // 添加自定义mod字段
+            customModName: map.customModName,
+            customDTRate: map.customDTRate,
+            selectedMods: map.selectedMods,
+            modPosition: map.modPosition,
+            selectedByUsername: map.selectedByUsername || map.selectedBy || '未知',
+            selectedAt: map.selectedAt || new Date().toISOString(),
+            starRating: map.starRating,
+            approved: map.approved || false
         }));
     };
 
@@ -173,8 +205,8 @@ export default function Mapool() {
         );
     }
 
-    // 检查图池是否可见
-    if (!tournamentSettings?.mappool_visible) {
+    // 检查图池是否可见 - 只有当没有数据时才显示"暂未开放"
+    if (!tournamentSettings?.mappool_visible && mapPoolData.length === 0) {
         return (
             <div className="max-w-9xl mx-auto pt-60 pb-60">
                 <div className="text-center text-white">

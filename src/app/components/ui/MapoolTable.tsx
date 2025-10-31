@@ -37,6 +37,13 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
         index: number;
     } | null>(null);
 
+    // 详细信息卡片状态
+    const [detailCard, setDetailCard] = useState<{
+        visible: boolean;
+        position: { x: number; y: number };
+        row: any;
+    } | null>(null);
+
     // 批量下载状态
     const [bulkDownloadItems, setBulkDownloadItems] = useState<DownloadItem[]>([]);
     const [showBulkDownloadManager, setShowBulkDownloadManager] = useState(false);
@@ -318,6 +325,52 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
         showInfo('批量下载已取消');
     };
 
+    // 处理鼠标悬停事件
+    const handleMouseEnter = (e: React.MouseEvent, row: any) => {
+        setDetailCard({
+            visible: true,
+            position: { x: e.clientX + 10, y: e.clientY + 10 },
+            row
+        });
+    };
+
+    // 处理鼠标离开事件
+    const handleMouseLeave = () => {
+        setDetailCard(null);
+    };
+
+    // 格式化时间长度
+    const formatLength = (seconds: number): string => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    };
+
+    // 格式化日期时间
+    const formatDateTime = (dateTimeString: string) => {
+        try {
+            return new Date(dateTimeString).toLocaleString('zh-CN');
+        } catch (error) {
+            console.error('日期格式化错误:', error, dateTimeString);
+            return '时间格式错误';
+        }
+    };
+
+    // 获取mod颜色class
+    const getModColorClass = (mod: string): string => {
+        switch (mod) {
+            case 'NM': return 'bg-gray-500';
+            case 'HD': return 'bg-yellow-500';
+            case 'HR': return 'bg-red-500';
+            case 'DT': return 'bg-purple-500';
+            case 'EZ': return 'bg-green-500';
+            case 'LZ': return 'bg-gray-600';
+            case 'TB': return 'bg-black';
+            case 'FM': return 'bg-blue-500';
+            default: return 'bg-blue-500';
+        }
+    };
+
     // 生成右击菜单项
     const getContextMenuItems = (row: any, index: number) => {
         const items = [
@@ -438,6 +491,17 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                         {data.map((row, idx) => {
                             let bgClass = "";
                             let slotClass = "";
+                            let slotText = row.Slot || "";
+
+                            // 处理自定义mod名称和DT倍率
+                            if (row.customModName && row.Slot?.startsWith("LZ")) {
+                                slotText = `LZ${row.Slot.match(/\d+/)?.[0] || ''}`;
+                                // -${row.customModName}
+                            } else if (row.customDTRate && row.customDTRate !== 1.5 && row.Slot?.startsWith("DT")) {
+                                slotText = `DT${row.Slot.match(/\d+/)?.[0] || ''}`;
+                                // -${Number(row.customDTRate).toFixed(1)}x
+                            }
+
                             if (row.Slot?.includes("NM")) {
                                 bgClass = "bg-white";
                                 slotClass = "bg-gray-200 p-2 text-center font-bold";
@@ -467,6 +531,8 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                 <tr
                                     key={idx}
                                     className={`${bgClass} cursor-pointer hover:bg-gray-100 ${hasUploads ? 'bg-green-50' : ''}`}
+                                    onMouseEnter={(e) => handleMouseEnter(e, row)}
+                                    onMouseLeave={handleMouseLeave}
                                     onContextMenu={(e) => {
                                         e.preventDefault(); // 阻止默认右键菜单
                                         setContextMenu({
@@ -477,7 +543,15 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                         });
                                     }}
                                 >
-                                    <td className="text-center"><a className={slotClass}>{row.Slot}</a></td>
+                                    <td className="text-center relative">
+                                        <a className={slotClass}>{row.Slot}</a>
+                                        {/* 自定义mod名称气泡 - 显示在右上角 */}
+                                        {(row.customModName || (row.customDTRate && row.customDTRate !== 1.5)) && (
+                                            <div className="absolute -top-1 -right-1 bg-red-600 text-white text-xs px-1 rounded-full min-w-4 h-4 flex items-center justify-center font-bold shadow-md p-1">
+                                                {row.customModName ? row.customModName : `${Number(row.customDTRate).toFixed(1)}x`}
+                                            </div>
+                                        )}
+                                    </td>
                                     <td
                                         className="cursor-pointer text-[#E93B66] hover:underline relative group"
                                         title="点击复制BID"
@@ -558,6 +632,82 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                 eta={eta}
                 overallProgress={overallProgress}
             />
+
+            {/* 详细信息卡片 */}
+            {detailCard?.visible && detailCard.row && (
+                <div
+                    className="fixed shadow-lg max-w-sm transition-all duration-200 z-999"
+                    style={{
+                        left: detailCard.position.x,
+                        top: detailCard.position.y,
+                    }}
+                >
+                    <div className={`border p-4 shadow-sm hover:shadow-md transition-all duration-200 border-gray-300 bg-white`}>
+                        {/* 头部：封面和基本信息 */}
+                        <div className="flex items-start gap-3 mb-3">
+                            <div className="relative">
+                                <Image
+                                    src={`https://assets.ppy.sh/beatmaps/${detailCard.row.SID}/covers/cover.jpg`}
+                                    alt="Beatmap cover"
+                                    width={512}
+                                    height={512}
+                                    className="w-24 h-19 object-cover rounded"
+                                    unoptimized
+                                />
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(detailCard.row.Slot?.replace(/\d+/g, '') || 'NM')}`}>
+                                        {detailCard.row.customModName && detailCard.row.Slot?.startsWith("LZ") ?
+                                            (detailCard.row.customModName && detailCard.row.customModName.trim() !== '' ?
+                                                `LZ${detailCard.row.Slot.match(/\d+/)?.[0] || ''}-${detailCard.row.customModName}` :
+                                                `LZ${detailCard.row.Slot.match(/\d+/)?.[0] || ''}`) :
+                                            detailCard.row.customDTRate && detailCard.row.customDTRate !== 1.5 && detailCard.row.Slot?.startsWith("DT") ?
+                                                ((detailCard.row.customDTRate && detailCard.row.customDTRate !== 1.5) ?
+                                                    `DT${detailCard.row.Slot.match(/\d+/)?.[0] || ''}-${Number(detailCard.row.customDTRate).toFixed(1)}倍` :
+                                                    `DT${detailCard.row.Slot.match(/\d+/)?.[0] || ''}`) :
+                                                detailCard.row.Slot || 'NM1'
+                                        }
+                                    </span>
+                                </div>
+
+                                <h3 className="font-bold text-sm truncate" title={detailCard.row.title || detailCard.row.MapInfo}>
+                                    {detailCard.row.title || detailCard.row.MapInfo}
+                                </h3>
+                                <p className="font-bold text-xs text-gray-600">by {detailCard.row.creator || detailCard.row._Creator}</p>
+                            </div>
+                        </div>
+
+                        {/* 属性信息 */}
+                        <div className="mb-3 text-xs text-gray-600">
+                            <div className="grid grid-cols-4 gap-1">
+                                <div className="text-center font-medium">CS</div>
+                                <div className="text-center font-medium">AR</div>
+                                <div className="text-center font-medium">OD</div>
+                                <div className="text-center font-medium">HP</div>
+                                <div className="text-center font-bold text-lg">{Number(detailCard.row.cs || detailCard.row.CS || 0).toFixed(1)}</div>
+                                <div className="text-center font-bold text-lg">{Number(detailCard.row.ar || detailCard.row.AR || 0).toFixed(1)}</div>
+                                <div className="text-center font-bold text-lg">{Number(detailCard.row.od || detailCard.row.OD || 0).toFixed(1)}</div>
+                                <div className="text-center font-bold text-lg">{Number(detailCard.row.hp || 0).toFixed(1)}</div>
+                                <div className="text-center font-medium col-span-2">Length</div>
+                                <div className="text-center font-medium">BPM</div>
+                                <div className="text-center font-medium">★</div>
+                                <div className="text-center font-bold text-base col-span-2">{formatLength(detailCard.row.totalLength || detailCard.row.HitLength || 0)}</div>
+                                <div className="text-center font-bold text-base">{Math.round(detailCard.row.bpm || detailCard.row.BPM || 0)}</div>
+                                <div className="text-center font-bold text-base">{Number(detailCard.row.starRating || detailCard.row.SR || 0).toFixed(2)}</div>
+                            </div>
+                        </div>
+
+                        {/* 提名者信息 */}
+                        <div className="mb-3 text-xs text-gray-600">
+                            <div className="flex items-center gap-3 w-full">
+                                <span className="flex items-center gap-1">提名者: {detailCard.row.selectedByUsername || '未知'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
