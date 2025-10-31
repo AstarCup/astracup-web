@@ -102,17 +102,25 @@ export default function Mapool() {
 
     const fetchApprovedMaps = async () => {
         try {
+            console.log('fetchApprovedMaps called with:', { currentSeason, selectedCategory });
             setIsLoading(true);
             const response = await fetch(`/api/map-selections?season=${currentSeason}&category=${selectedCategory}&approved=true`);
 
+            console.log('fetchApprovedMaps response:', response.status, response.ok);
+
             if (response.ok) {
                 const data = await response.json();
+                console.log('fetchApprovedMaps data:', data);
                 const approvedMaps = data.selections?.filter((map: MapSelection) => map.approved) || [];
+                console.log('approvedMaps:', approvedMaps);
 
                 // 转换数据格式为MapoolTable需要的格式
                 const convertedData = convertToMapoolFormat(approvedMaps);
+                console.log('convertedData:', convertedData);
                 setMapPoolData(convertedData);
             } else {
+                const errorText = await response.text();
+                console.error('fetchApprovedMaps failed:', errorText);
                 setError('获取图池数据失败');
             }
         } catch (error) {
