@@ -1153,6 +1153,53 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         return options;
     };
 
+    // 按mod类型分组选图
+    const getSelectionsByMod = () => {
+        const grouped: { [key: string]: MapSelection[] } = {};
+
+        // 按mod类型分组
+        filteredSelections.forEach(selection => {
+            const mod = selection.selectedMods;
+            if (!grouped[mod]) {
+                grouped[mod] = [];
+            }
+            grouped[mod].push(selection);
+        });
+
+        // 按mod顺序排序
+        const modOrder = ['NM', 'HD', 'HR', 'DT', 'FM', 'LZ', 'TB'];
+        const sortedGroups: { [key: string]: MapSelection[] } = {};
+
+        modOrder.forEach(mod => {
+            if (grouped[mod]) {
+                sortedGroups[mod] = grouped[mod];
+            }
+        });
+
+        // 添加其他mod类型
+        Object.keys(grouped).forEach(mod => {
+            if (!modOrder.includes(mod)) {
+                sortedGroups[mod] = grouped[mod];
+            }
+        });
+
+        return sortedGroups;
+    };
+
+    // 获取mod显示名称
+    const getModDisplayName = (mod: string): string => {
+        const modNames: { [key: string]: string } = {
+            'NM': 'No Mod',
+            'HD': 'Hidden',
+            'HR': 'Hard Rock',
+            'DT': 'Double Time',
+            'FM': 'Free Mod',
+            'LZ': 'Lazer Mod',
+            'TB': 'Tiebreaker'
+        };
+        return modNames[mod] || mod;
+    };
+
     return (
         <div className="max-w-9xl mx-auto p-6">
             {isLoading ? (
@@ -1277,7 +1324,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                             {/* Beatmap预览 */}
                             {beatmapPreview && (
-                                <div className="mb-4 p-4 bg-white border border-gray-300 rounded-lg shadow-sm">
+                                <div className="mb-4 p-4 bg-white border border-gray-300 rounded-lg shadow-sm max-w-[660px]">
                                     {/* 头部：封面和基本信息 */}
                                     <div className="flex items-start gap-3 mb-3">
                                         <Image
@@ -1591,161 +1638,178 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         </div>
                     )}
 
-                    {/* 选图列表 */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {filteredSelections.map(selection => (
-                            <div
-                                key={selection.id}
-                                className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 ${selection.approved ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'
-                                    }`}
-                                onContextMenu={(e) => handleContextMenu(e, selection)}
-                            >
-                                {/* 头部：封面和基本信息 */}
-                                <div className="flex items-start gap-3 mb-3">
-                                    <div className="relative">
-                                        <Image
-                                            src={selection.coverUrl}
-                                            alt="Beatmap cover"
-                                            width={124}
-                                            height={124}
-                                            className="w-24 h-24 object-cover rounded"
-                                        />
-                                        {/* 过审状态指示器 */}
-                                        {selection.approved && (
-                                            <div className="absolute -top-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                                                <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                </svg>
+                    {/* 选图列表 - 按mod类型分类显示 */}
+                    <div className="space-y-8">
+                        {Object.entries(getSelectionsByMod()).map(([mod, modSelections]) => (
+                            <div key={mod} className="space-y-4">
+                                {/* Mod分类标题 */}
+                                <div className="flex items-center gap-3">
+                                    <div className={`px-4 py-2 rounded-lg text-white font-bold text-lg ${getModColorClass(mod)}`}>
+                                        {mod} - {getModDisplayName(mod)}
+                                    </div>
+                                    <span className="text-gray-500 text-sm">
+                                        ({modSelections.length} 个选图)
+                                    </span>
+                                </div>
+
+                                {/* 该mod下的选图列表 */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {modSelections.map(selection => (
+                                        <div
+                                            key={selection.id}
+                                            className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 ${selection.approved ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'
+                                                }`}
+                                            onContextMenu={(e) => handleContextMenu(e, selection)}
+                                        >
+                                            {/* 头部：封面和基本信息 */}
+                                            <div className="flex items-start gap-3 mb-3">
+                                                <div className="relative">
+                                                    <Image
+                                                        src={selection.coverUrl}
+                                                        alt="Beatmap cover"
+                                                        width={512}
+                                                        height={512}
+                                                        className="w-24 h-19 object-cover rounded"
+                                                    />
+                                                    {/* 过审状态指示器 */}
+                                                    {selection.approved && (
+                                                        <div className="absolute -top-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                                            <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
+                                                            {selection.selectedMods === 'LZ' ?
+                                                                (selection.customModName && selection.customModName.trim() !== '' ?
+                                                                    `LZ${selection.modPosition}-${selection.customModName}` :
+                                                                    `LZ${selection.modPosition}`) :
+                                                                selection.selectedMods === 'DT' ?
+                                                                    ((selection.customDTRate && selection.customDTRate !== 1.5) ?
+                                                                        `DT${selection.modPosition}-${selection.customDTRate.toFixed(1)}倍` :
+                                                                        `DT${selection.modPosition}`) :
+                                                                    `${selection.selectedMods}${selection.modPosition}`
+                                                            }
+                                                        </span>
+                                                        {selection.padding && (
+                                                            <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded">
+                                                                提交测图中
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <h3 className="font-bold text-sm truncate" title={selection.title}>
+                                                        {selection.title}
+                                                    </h3>
+                                                    <p className="font-bold text-xs text-gray-600 truncate" title={`${selection.artist}`}>
+                                                        {selection.artist}
+                                                    </p>
+                                                    <p className="font-bold text-xs text-gray-600">[{selection.version}] by {selection.creator}</p>
+                                                </div>
+                                                <div className="ml-auto">
+                                                    <RatingDisplay
+                                                        ratings={mapRatings[selection.id] || []}
+                                                        selectedBy={selection.selectedBy}
+                                                        currentUserId={userForState.id.toString()}
+                                                        compact={true}
+                                                        isAdmin={permissions.isAdmin || permissions.isMapSelector}
+                                                    />
+                                                </div>
                                             </div>
-                                        )}
-                                    </div>
 
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
-                                                {selection.selectedMods === 'LZ' ?
-                                                    (selection.customModName && selection.customModName.trim() !== '' ?
-                                                        `LZ${selection.modPosition}-${selection.customModName}` :
-                                                        `LZ${selection.modPosition}`) :
-                                                    selection.selectedMods === 'DT' ?
-                                                        ((selection.customDTRate && selection.customDTRate !== 1.5) ?
-                                                            `DT${selection.modPosition}-${selection.customDTRate.toFixed(1)}倍` :
-                                                            `DT${selection.modPosition}`) :
-                                                        `${selection.selectedMods}${selection.modPosition}`
-                                                }
-                                            </span>
-                                            {selection.padding && (
-                                                <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded">
-                                                    提交测图中
-                                                </span>
+                                            {/* 属性信息 */}
+                                            <div className="mb-3 text-xs text-gray-600">
+                                                <div className="grid grid-cols-4 gap-1">
+                                                    <div className="text-center font-medium">CS</div>
+                                                    <div className="text-center font-medium">AR</div>
+                                                    <div className="text-center font-medium">OD</div>
+                                                    <div className="text-center font-medium">HP</div>
+                                                    <div className="text-center font-bold text-lg">{selection.cs.toFixed(1)}</div>
+                                                    <div className="text-center font-bold text-lg">{selection.ar.toFixed(1)}</div>
+                                                    <div className="text-center font-bold text-lg">{selection.od.toFixed(1)}</div>
+                                                    <div className="text-center font-bold text-lg">{selection.hp.toFixed(1)}</div>
+                                                    <div className="text-center font-medium col-span-2">Length</div>
+                                                    <div className="text-center font-medium">BPM</div>
+                                                    <div className="text-center font-medium">★</div>
+                                                    <div className="text-center font-bold text-base col-span-2">{formatLength(selection.totalLength)}</div>
+                                                    <div className="text-center font-bold text-base">{selection.bpm}</div>
+                                                    <div className="text-center font-bold text-base">{selection.starRating.toFixed(2)}</div>
+                                                </div>
+                                            </div>
+
+                                            {/* 提名者信息 */}
+                                            <div className="mb-3 text-xs text-gray-600">
+                                                <div className="flex items-center gap-3 w-full">
+                                                    <span className="flex items-center gap-1">提名者:<Image src={selection.selectedByAvatar || "/default-avatar.png"} alt={selection.selectedByUsername || '未知'} width={16} height={16} className="rounded-full" />{selection.selectedByUsername}</span>
+                                                    <span>•</span>
+                                                    <span>{formatDateTime(selection.selectedAt)}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* 评论 */}
+                                            {selection.comment && (
+                                                <div className="mb-3 p-2 bg-gray-50 rounded text-xs text-gray-700">
+                                                    {selection.comment}
+                                                </div>
                                             )}
+
+                                            {/* 评分组件 */}
+                                            <div className="mb-3">
+                                                <CurrentRating
+                                                    rating={userRatings[selection.id] || 0}
+                                                    onRatingChange={(rating) => submitRating(selection.id, rating)}
+                                                    isSubmitting={isRatingSubmitting}
+                                                    userId={userForState.id.toString()}
+                                                />
+                                            </div>
+
+                                            {/* 操作按钮 */}
+                                            <div className="flex gap-2 items-center justify-end">
+                                                {/* 复制BID按钮 */}
+                                                <button
+                                                    onClick={() => copyBeatmapId(selection.beatmapId)}
+                                                    className="px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors"
+                                                    title="复制Beatmap ID"
+                                                >
+                                                    复制BID
+                                                </button>
+
+                                                {/* 批量选择复选框 - 仅管理员可见 */}
+                                                {permissions.isAdmin && !selection.approved && (
+                                                    <label className="flex items-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={tempApprovedSelections.has(selection.id)}
+                                                            onChange={(e) => {
+                                                                const newSelections = new Set(tempApprovedSelections);
+                                                                if (e.target.checked) {
+                                                                    newSelections.add(selection.id);
+                                                                } else {
+                                                                    newSelections.delete(selection.id);
+                                                                }
+                                                                setTempApprovedSelections(newSelections);
+                                                            }}
+                                                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                                        />
+                                                    </label>
+                                                )}
+                                            </div>
+
+                                            {/* 评论区 */}
+                                            <div className="mt-4 pt-3 border-t border-gray-300">
+                                                <CommentComponent
+                                                    mapSelectionId={selection.id}
+                                                    userId={userForState.id.toString()}
+                                                    onCommentUpdate={fetchSelections}
+                                                    compactMode={true}
+                                                />
+                                            </div>
                                         </div>
-
-                                        <h3 className="font-bold text-sm truncate" title={selection.title}>
-                                            {selection.title}
-                                        </h3>
-                                        <p className="font-bold text-xs text-gray-600 truncate" title={`${selection.artist}`}>
-                                            {selection.artist}
-                                        </p>
-                                        <p className="font-bold text-xs text-gray-600">[{selection.version}] by {selection.creator}</p>
-                                    </div>
-                                    <div className="ml-auto">
-                                        <RatingDisplay
-                                            ratings={mapRatings[selection.id] || []}
-                                            selectedBy={selection.selectedBy}
-                                            currentUserId={userForState.id.toString()}
-                                            compact={true}
-                                            isAdmin={permissions.isAdmin || permissions.isMapSelector}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* 属性信息 */}
-                                <div className="mb-3 text-xs text-gray-600">
-                                    <div className="grid grid-cols-4 gap-1">
-                                        <div className="text-center font-medium">CS</div>
-                                        <div className="text-center font-medium">AR</div>
-                                        <div className="text-center font-medium">OD</div>
-                                        <div className="text-center font-medium">HP</div>
-                                        <div className="text-center font-bold text-lg">{selection.cs.toFixed(1)}</div>
-                                        <div className="text-center font-bold text-lg">{selection.ar.toFixed(1)}</div>
-                                        <div className="text-center font-bold text-lg">{selection.od.toFixed(1)}</div>
-                                        <div className="text-center font-bold text-lg">{selection.hp.toFixed(1)}</div>
-                                        <div className="text-center font-medium col-span-2">Length</div>
-                                        <div className="text-center font-medium">BPM</div>
-                                        <div className="text-center font-medium">★</div>
-                                        <div className="text-center font-bold text-base col-span-2">{formatLength(selection.totalLength)}</div>
-                                        <div className="text-center font-bold text-base">{selection.bpm}</div>
-                                        <div className="text-center font-bold text-base">{selection.starRating.toFixed(2)}</div>
-                                    </div>
-                                </div>
-
-                                {/* 提名者信息 */}
-                                <div className="mb-3 text-xs text-gray-600">
-                                    <div className="flex items-center gap-3 w-full">
-                                        <span className="flex items-center gap-1">提名者:<Image src={selection.selectedByAvatar || "/default-avatar.png"} alt={selection.selectedByUsername || '未知'} width={16} height={16} className="rounded-full" />{selection.selectedByUsername}</span>
-                                        <span>•</span>
-                                        <span>{formatDateTime(selection.selectedAt)}</span>
-                                    </div>
-                                </div>
-
-                                {/* 评论 */}
-                                {selection.comment && (
-                                    <div className="mb-3 p-2 bg-gray-50 rounded text-xs text-gray-700">
-                                        {selection.comment}
-                                    </div>
-                                )}
-
-                                {/* 评分组件 */}
-                                <div className="mb-3">
-                                    <CurrentRating
-                                        rating={userRatings[selection.id] || 0}
-                                        onRatingChange={(rating) => submitRating(selection.id, rating)}
-                                        isSubmitting={isRatingSubmitting}
-                                        userId={userForState.id.toString()}
-                                    />
-                                </div>
-
-                                {/* 操作按钮 */}
-                                <div className="flex gap-2 items-center justify-end">
-                                    {/* 复制BID按钮 */}
-                                    <button
-                                        onClick={() => copyBeatmapId(selection.beatmapId)}
-                                        className="px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors"
-                                        title="复制Beatmap ID"
-                                    >
-                                        复制BID
-                                    </button>
-
-                                    {/* 批量选择复选框 - 仅管理员可见 */}
-                                    {permissions.isAdmin && !selection.approved && (
-                                        <label className="flex items-center">
-                                            <input
-                                                type="checkbox"
-                                                checked={tempApprovedSelections.has(selection.id)}
-                                                onChange={(e) => {
-                                                    const newSelections = new Set(tempApprovedSelections);
-                                                    if (e.target.checked) {
-                                                        newSelections.add(selection.id);
-                                                    } else {
-                                                        newSelections.delete(selection.id);
-                                                    }
-                                                    setTempApprovedSelections(newSelections);
-                                                }}
-                                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                                            />
-                                        </label>
-                                    )}
-                                </div>
-
-                                {/* 评论区 */}
-                                <div className="mt-4 pt-3 border-t border-gray-300">
-                                    <CommentComponent
-                                        mapSelectionId={selection.id}
-                                        userId={userForState.id.toString()}
-                                        onCommentUpdate={fetchSelections}
-                                        compactMode={true}
-                                    />
+                                    ))}
                                 </div>
                             </div>
                         ))}
