@@ -162,6 +162,8 @@ export default function Mapool() {
             _AR: map.ar.toFixed(1),
             OD: map.od.toFixed(1),
             _OD: map.od.toFixed(1),
+            hp: map.hp?.toFixed(1) || '0.0',
+            totalLength: map.totalLength,
             BPM: map.bpm,
             HitLength: formatLength(map.totalLength),
             Notes: map.comment || '-',
@@ -170,9 +172,6 @@ export default function Mapool() {
             customDTRate: map.customDTRate,
             selectedMods: map.selectedMods,
             modPosition: map.modPosition,
-            // 添加缺失的字段
-            hp: map.hp?.toFixed(1) || '0.0',
-            totalLength: map.totalLength,
             selectedByUsername: map.selectedByUsername || map.selectedBy || '未知',
             selectedAt: map.selectedAt || new Date().toISOString(),
             starRating: map.starRating,

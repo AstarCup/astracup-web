@@ -495,9 +495,11 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
 
                             // 处理自定义mod名称和DT倍率
                             if (row.customModName && row.Slot?.startsWith("LZ")) {
-                                slotText = `LZ${row.Slot.match(/\d+/)?.[0] || ''}-${row.customModName}`;
+                                slotText = `LZ${row.Slot.match(/\d+/)?.[0] || ''}`;
+                                // -${row.customModName}
                             } else if (row.customDTRate && row.customDTRate !== 1.5 && row.Slot?.startsWith("DT")) {
-                                slotText = `DT${row.Slot.match(/\d+/)?.[0] || ''}-${Number(row.customDTRate).toFixed(1)}x`;
+                                slotText = `DT${row.Slot.match(/\d+/)?.[0] || ''}`;
+                                // -${Number(row.customDTRate).toFixed(1)}x
                             }
 
                             if (row.Slot?.includes("NM")) {
@@ -541,7 +543,15 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                         });
                                     }}
                                 >
-                                    <td className="text-center"><a className={slotClass}>{slotText}</a></td>
+                                    <td className="text-center relative">
+                                        <a className={slotClass}>{row.Slot}</a>
+                                        {/* 自定义mod名称气泡 - 显示在右上角 */}
+                                        {(row.customModName || (row.customDTRate && row.customDTRate !== 1.5)) && (
+                                            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded-full min-w-4 h-4 flex items-center justify-center font-bold shadow-md">
+                                                {row.customModName ? row.customModName : `${Number(row.customDTRate).toFixed(1)}x`}
+                                            </div>
+                                        )}
+                                    </td>
                                     <td
                                         className="cursor-pointer text-[#E93B66] hover:underline relative group"
                                         title="点击复制BID"
@@ -626,13 +636,13 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
             {/* 详细信息卡片 */}
             {detailCard?.visible && detailCard.row && (
                 <div
-                    className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-4 max-w-sm transition-all duration-200"
+                    className="fixed shadow-lg max-w-sm transition-all duration-200"
                     style={{
                         left: detailCard.position.x,
                         top: detailCard.position.y,
                     }}
                 >
-                    <div className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 ${detailCard.row.approved ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'}`}>
+                    <div className={`border p-4 shadow-sm hover:shadow-md transition-all duration-200 border-gray-300 bg-white`}>
                         {/* 头部：封面和基本信息 */}
                         <div className="flex items-start gap-3 mb-3">
                             <div className="relative">
