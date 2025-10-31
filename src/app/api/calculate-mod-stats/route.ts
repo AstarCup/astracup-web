@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
             hp: beatmapAttributes.hp || 0,
             starRating: difficultyResult.stars || 0,
             bpm: Math.round((beatmapAttributes.clockRate || clockRate) * (beatmap.bpm || 120)),
-            totalLength: Math.round((beatmap.totalLength || 0) / (beatmapAttributes.clockRate || clockRate))
+            totalLength: Math.round((beatmapInfo.totalLength || 0) / (beatmapAttributes.clockRate || clockRate))
         };
 
         // 应用DA模式的自定义属性覆盖
