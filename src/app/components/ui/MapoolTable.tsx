@@ -672,8 +672,8 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                     </span>
                                 </div>
 
-                                <h3 className="font-bold text-sm truncate" title={detailCard.row.title || detailCard.row.MapInfo}>
-                                    {detailCard.row.title || detailCard.row.MapInfo}
+                                <h3 className="font-bold text-sm truncate" title={detailCard.row.title}>
+                                    {detailCard.row.title}
                                 </h3>
                                 <p className="font-bold text-xs text-gray-600 truncate" title={`${detailCard.row.artist}`}>
                                     {detailCard.row.artist}
@@ -706,8 +706,6 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                         <div className="mb-3 text-xs text-gray-600">
                             <div className="flex items-center gap-3 w-full">
                                 <span className="flex items-center gap-1">提名者: {detailCard.row.selectedByUsername || '未知'}</span>
-                                <span>•</span>
-                                <span>{formatDateTime(detailCard.row.selectedAt || new Date().toISOString())}</span>
                             </div>
                         </div>
                     </div>
