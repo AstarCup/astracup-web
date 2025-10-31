@@ -655,7 +655,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             od: moddedStats.od,
                             hp: moddedStats.hp,
                             star_rating: moddedStats.starRating,
-                            bpm: moddedStats.bpm
+                            bpm: moddedStats.bpm,
+                            totalLength: selectedMods === 'DT' && customDTRate !== '' ?
+                                Math.round(beatmapPreview.total_length / (customDTRate as number)) :
+                                beatmapPreview.total_length
                         }
                         : undefined
                 })
@@ -808,7 +811,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             od: modStats.od,
                             hp: modStats.hp,
                             starRating: modStats.starRating,
-                            bpm: modStats.bpm
+                            bpm: modStats.bpm,
+                            totalLength: selection.selectedMods === 'DT' && selection.customDTRate ?
+                                Math.round(latestBeatmap.total_length / selection.customDTRate) :
+                                latestBeatmap.total_length
                         },
                         // 同时更新基础beatmap信息，包括计算后的DT时长
                         title: latestBeatmap.title,
