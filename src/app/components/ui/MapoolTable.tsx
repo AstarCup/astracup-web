@@ -636,7 +636,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
             {/* 详细信息卡片 */}
             {detailCard?.visible && detailCard.row && (
                 <div
-                    className="fixed shadow-lg max-w-sm transition-all duration-200 z-999"
+                    className="fixed shadow-lg max-w-sm transition-all duration-200"
                     style={{
                         left: detailCard.position.x,
                         top: detailCard.position.y,
@@ -672,13 +672,10 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                     </span>
                                 </div>
 
-                                <h3 className="font-bold text-sm truncate" title={detailCard.row.title}>
-                                    {detailCard.row.title}
+                                <h3 className="font-bold text-sm truncate" title={detailCard.row.title || detailCard.row.MapInfo}>
+                                    {detailCard.row.title || detailCard.row.MapInfo}
                                 </h3>
-                                <p className="font-bold text-xs text-gray-600 truncate" title={`${detailCard.row.artist}`}>
-                                    {detailCard.row.artist}
-                                </p>
-                                <p className="font-bold text-xs text-gray-600">[{detailCard.row.version || detailCard.row._Creator}] by {detailCard.row.creator || detailCard.row._Creator}</p>
+                                <p className="font-bold text-xs text-gray-600">by {detailCard.row.creator || detailCard.row._Creator}</p>
                             </div>
                         </div>
 
