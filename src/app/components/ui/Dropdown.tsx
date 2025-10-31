@@ -137,7 +137,7 @@ const Dropdown: React.FC<DropdownProps> = ({
                 {isOpen && (
                     <div
                         className="dropdown-menu"
-                        style={{ maxHeight }}
+                        style={{ maxHeight, width: '100%' }}
                     >
                         {options.map((option) => (
                             <button

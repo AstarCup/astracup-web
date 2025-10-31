@@ -15,9 +15,12 @@ interface BulkDownloadManagerProps {
     isOpen: boolean;
     onClose: () => void;
     items: DownloadItem[];
-    onStartDownload: (source: 'sayobot' | 'osu') => void;
+    onStartDownload: (source: 'nerinyan' | 'sayobot' | 'osu') => void;
     onCancelDownload: () => void;
     isDownloading?: boolean;
+    downloadSpeed?: number;
+    eta?: number | null;
+    overallProgress?: number;
 }
 
 export default function BulkDownloadManager({
@@ -26,10 +29,11 @@ export default function BulkDownloadManager({
     items,
     onStartDownload,
     onCancelDownload,
-    isDownloading = false
+    isDownloading = false,
+    overallProgress = 0
 }: BulkDownloadManagerProps) {
-    const [overallProgress, setOverallProgress] = useState(0);
-    const [downloadSource, setDownloadSource] = useState<'sayobot' | 'osu'>('sayobot');
+    // 移除本地的overallProgress状态，使用从props传入的值
+    const [downloadSource, setDownloadSource] = useState<'nerinyan' | 'sayobot' | 'osu'>('nerinyan');
     const [isMinimized, setIsMinimized] = useState(false);
     const [downloadSpeed, setDownloadSpeed] = useState(0);
     const [eta, setEta] = useState<number | null>(null);
@@ -83,14 +87,14 @@ export default function BulkDownloadManager({
                             className="text-gray-500 hover:text-gray-700 text-lg leading-none"
                             title="恢复"
                         >
-                            ⬜
+                            恢复
                         </button>
                         <button
                             onClick={onClose}
                             className="text-gray-500 hover:text-gray-700 text-lg leading-none ml-1"
                             title="关闭"
                         >
-                            ×
+                            关闭
                         </button>
                     </div>
                 </div>
@@ -128,7 +132,7 @@ export default function BulkDownloadManager({
                                 取消下载
                             </button>
                             <span className="text-xs text-gray-500">
-                                {downloadSource === 'sayobot' ? 'Sayobot' : 'osu官方'}
+                                {downloadSource === 'nerinyan' ? 'Nerinyan' : downloadSource === 'sayobot' ? 'Sayobot' : 'osu官方'}
                             </span>
                         </div>
                     ) : (
@@ -153,13 +157,13 @@ export default function BulkDownloadManager({
                             className="text-gray-500 hover:text-gray-700 text-lg"
                             title="最小化"
                         >
-                            ⬜
+                            最小化
                         </button>
                         <button
                             onClick={onClose}
                             className="text-gray-500 hover:text-gray-700 text-2xl"
                         >
-                            ×
+                            关闭
                         </button>
                     </div>
                 </div>
@@ -235,10 +239,11 @@ export default function BulkDownloadManager({
                         <label className="text-sm text-gray-600">下载源:</label>
                         <select
                             value={downloadSource}
-                            onChange={(e) => setDownloadSource(e.target.value as 'sayobot' | 'osu')}
+                            onChange={(e) => setDownloadSource(e.target.value as 'nerinyan' | 'sayobot' | 'osu')}
                             className="px-2 py-1 bg-gray-100 text-gray-800 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                             disabled={isDownloading}
                         >
+                            <option value="nerinyan">Nerinyan</option>
                             <option value="sayobot">Sayobot</option>
                             <option value="osu">osu官方</option>
                         </select>
@@ -257,7 +262,7 @@ export default function BulkDownloadManager({
                             disabled={isDownloading || totalCount === 0}
                             className="px-4 py-2 bg-[#E93B66] text-white  hover:bg-[#95E1D3] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isDownloading ? '下载中...' : `开始下载 (${downloadSource === 'sayobot' ? 'Sayobot' : 'osu官方'})`}
+                            {isDownloading ? '下载中...' : `开始下载 (${downloadSource === 'nerinyan' ? 'Nerinyan' : downloadSource === 'sayobot' ? 'Sayobot' : 'osu官方'})`}
                         </button>
                     </div>
                 </div>

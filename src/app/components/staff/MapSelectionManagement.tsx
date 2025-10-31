@@ -422,42 +422,54 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
     // 获取可用的Lazer特有mod
     const fetchAvailableLazerMods = async () => {
-        try {
-            const response = await fetch('/api/get-available-mods');
-            if (response.ok) {
-                const data = await response.json();
-                setAvailableLazerMods(data.availableMods || []);
-            } else {
-                // 如果API失败，使用预定义的mod列表
-                const fallbackMods = [
-                    { name: 'DA', description: 'Difficulty Adjust - 自定义难度属性' },
-                    { name: 'WG', description: 'Wiggle - 摆动效果' },
-                    { name: 'MR', description: 'Mirror - 镜像' },
-                    { name: 'RD', description: 'Random - 随机' },
-                    { name: 'AS', description: 'Adaptive Speed - 自适应速度' },
-                    { name: 'CL', description: 'Classic - 经典模式' },
-                    { name: 'SG', description: 'Single Tap - 单键模式' },
-                    { name: 'TC', description: 'Target Practice - 目标练习' },
-                    { name: 'AC', description: 'Accuracy Challenge - 精确度挑战' }
-                ];
-                setAvailableLazerMods(fallbackMods);
-            }
-        } catch (error) {
-            console.error('Failed to fetch available Lazer mods:', error);
-            // 使用预定义的mod列表作为备选
-            const fallbackMods = [
-                { name: 'DA', description: 'Difficulty Adjust - 自定义难度属性' },
-                { name: 'WG', description: 'Wiggle - 摆动效果' },
-                { name: 'MR', description: 'Mirror - 镜像' },
-                { name: 'RD', description: 'Random - 随机' },
-                { name: 'AS', description: 'Adaptive Speed - 自适应速度' },
-                { name: 'CL', description: 'Classic - 经典模式' },
-                { name: 'SG', description: 'Single Tap - 单键模式' },
-                { name: 'TC', description: 'Target Practice - 目标练习' },
-                { name: 'AC', description: 'Accuracy Challenge - 精确度挑战' }
-            ];
-            setAvailableLazerMods(fallbackMods);
-        }
+        // try {
+        // const response = await fetch('/api/get-available-mods');
+        // if (response.ok) {
+        //     const data = await response.json();
+        //     setAvailableLazerMods(data.availableMods || []);
+        // } else {
+        // 如果API失败，使用预定义的mod列表
+        const fallbackMods = [
+            { name: 'DA', description: 'Difficulty Adjust - 自定义难度属性' },
+            { name: 'AD', description: 'Approach Different - 不一样的缩圈' },
+            { name: 'AS', description: 'Adaptive Speed - 自适应速度' },
+            { name: 'BM', description: 'Bloom - 缩圈越来越大' },
+            { name: 'BR', description: 'Barrel Roll - 旋转' },
+            { name: 'BU', description: 'Bubbles - 气泡一样的显示方式' },
+            { name: 'DF', description: 'Deflate - ' },
+            { name: 'DP', description: 'Depth - 3d模式' },
+            { name: 'FR', description: 'Freeze Frame - 每组note都一起分组出现' },
+            { name: 'GR', description: 'Grow - 逐渐变大' },
+            { name: 'MG', description: 'Magnetised - 自动吸note' },
+            { name: 'MU', description: 'Muted - 我的世界没有声音' },
+            { name: 'NS', description: 'No Scope - 我的世界没有瞄准' },
+            { name: 'RP', description: 'Repel - ' },
+            { name: 'SI', description: 'Spin In - 精确度挑战' },
+            { name: 'SY', description: 'Synesthesia - 缩圈颜色为节奏型' },
+            { name: 'TC', description: 'Traceable - 只有缩圈' },
+            { name: 'TR', description: 'Transform - ' },
+            { name: 'WD', description: 'Wind Down - ' },
+            { name: 'WG', description: 'Wiggle - ' },
+            { name: 'WU', description: 'Wind Up - 精确度挑战' }
+        ];
+        setAvailableLazerMods(fallbackMods);
+        // }
+        // } catch (error) {
+        //     console.error('Failed to fetch available Lazer mods:', error);
+        //     // 使用预定义的mod列表作为备选
+        //     const fallbackMods = [
+        //         { name: 'DA', description: 'Difficulty Adjust - 自定义难度属性' },
+        //         { name: 'WG', description: 'Wiggle - 摆动效果' },
+        //         { name: 'MR', description: 'Mirror - 镜像' },
+        //         { name: 'RD', description: 'Random - 随机' },
+        //         { name: 'AS', description: 'Adaptive Speed - 自适应速度' },
+        //         { name: 'CL', description: 'Classic - 经典模式' },
+        //         { name: 'SG', description: 'Single Tap - 单键模式' },
+        //         { name: 'TC', description: 'Target Practice - 目标练习' },
+        //         { name: 'AC', description: 'Accuracy Challenge - 精确度挑战' }
+        //     ];
+        //     setAvailableLazerMods(fallbackMods);
+        // }
     };
 
     const loadSeasonConfig = async () => {
@@ -724,14 +736,45 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     // 刷新MOD属性
     const refreshSelection = async (selection: MapSelection) => {
         try {
-            const response = await fetch('/api/calculate-mod-stats', {
+            // 第一步：重新获取beatmap数据
+            showInfo('正在重新获取beatmap数据...');
+            const beatmapResponse = await fetch('/api/parse-beatmap', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    beatmap: {
-                        id: selection.beatmapId,
-                        beatmapset_id: selection.beatmapsetId
-                    },
+                    url: selection.url,
+                    osuId: userForState.id.toString()
+                })
+            });
+
+            if (!beatmapResponse.ok) {
+                showError('重新获取beatmap数据失败');
+                return;
+            }
+
+            const beatmapData = await beatmapResponse.json();
+            if (!beatmapData.success || !beatmapData.data) {
+                showError('重新获取beatmap数据失败: ' + (beatmapData.error || '未知错误'));
+                return;
+            }
+
+            // 获取最新的beatmap信息
+            const latestBeatmap = beatmapData.data.type === 'single'
+                ? beatmapData.data.beatmap
+                : beatmapData.data.beatmaps?.find((b: BeatmapInfo) => b.id === selection.beatmapId);
+
+            if (!latestBeatmap) {
+                showError('未找到对应的beatmap数据');
+                return;
+            }
+
+            // 第二步：使用最新的beatmap数据计算mod属性
+            showInfo('正在计算MOD属性...');
+            const modStatsResponse = await fetch('/api/calculate-mod-stats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    beatmap: latestBeatmap,
                     mods: selection.selectedMods,
                     customSettings: {
                         customModName: selection.customModName,
@@ -740,51 +783,72 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     }
                 })
             });
-            if (response.ok) {
-                const { modStats } = await response.json();
-                // Update local state immediately
-                setSelections(prev => prev.map(s => s.id === selection.id ? ({
-                    ...s,
-                    ar: modStats.ar,
-                    cs: modStats.cs,
-                    od: modStats.od,
-                    hp: modStats.hp,
-                    starRating: modStats.starRating,
-                    bpm: modStats.bpm
-                }) : s));
-                // Persist changes to backend
-                try {
-                    const putResp = await fetch('/api/map-selections', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            id: selection.id,
-                            selectedBy: userForState.id.toString(),
-                            moddedStats: {
-                                ar: modStats.ar,
-                                cs: modStats.cs,
-                                od: modStats.od,
-                                hp: modStats.hp,
-                                starRating: modStats.starRating,
-                                bpm: modStats.bpm
-                            }
-                        })
-                    });
-                    if (!putResp.ok) {
-                        const err = await putResp.json();
-                        showError('数据库更新失败: ' + (err.error || putResp.statusText));
-                    } else {
-                        showSuccess('已刷新MOD属性并更新数据库');
-                    }
-                } catch (err) {
-                    console.error('Error updating backend:', err);
-                    showError('更新数据库时出错');
-                }
-                // 重新加载列表以确保数据一致
-                await fetchSelections();
-            } else {
-                showError('刷新属性失败');
+
+            if (!modStatsResponse.ok) {
+                showError('计算MOD属性失败');
+                return;
             }
+
+            const { modStats } = await modStatsResponse.json();
+
+            // 第三步：更新本地状态
+            setSelections(prev => prev.map(s => s.id === selection.id ? ({
+                ...s,
+                ar: modStats.ar,
+                cs: modStats.cs,
+                od: modStats.od,
+                hp: modStats.hp,
+                starRating: modStats.starRating,
+                bpm: modStats.bpm,
+                // 同时更新基础beatmap信息
+                title: latestBeatmap.title,
+                artist: latestBeatmap.artist,
+                version: latestBeatmap.version,
+                creator: latestBeatmap.creator,
+                totalLength: latestBeatmap.total_length,
+                coverUrl: latestBeatmap.cover_url
+            }) : s));
+
+            // 第四步：将最终数据写入数据库
+            showInfo('正在更新数据库...');
+            try {
+                const putResp = await fetch('/api/map-selections', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: selection.id,
+                        selectedBy: userForState.id.toString(),
+                        moddedStats: {
+                            ar: modStats.ar,
+                            cs: modStats.cs,
+                            od: modStats.od,
+                            hp: modStats.hp,
+                            starRating: modStats.starRating,
+                            bpm: modStats.bpm
+                        },
+                        // 同时更新基础beatmap信息
+                        title: latestBeatmap.title,
+                        artist: latestBeatmap.artist,
+                        version: latestBeatmap.version,
+                        creator: latestBeatmap.creator,
+                        totalLength: latestBeatmap.total_length,
+                        coverUrl: latestBeatmap.cover_url
+                    })
+                });
+
+                if (!putResp.ok) {
+                    const err = await putResp.json();
+                    showError('数据库更新失败: ' + (err.error || putResp.statusText));
+                } else {
+                    showSuccess('已重新获取beatmap数据、刷新MOD属性并更新数据库');
+                }
+            } catch (err) {
+                console.error('Error updating backend:', err);
+                showError('更新数据库时出错');
+            }
+
+            // 重新加载列表以确保数据一致
+            await fetchSelections();
         } catch (error) {
             console.error('Refresh error:', error);
             showError('刷新属性时出错');
@@ -837,7 +901,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
             const data = await response.json();
             if (data.success) {
-                showSuccess(currentPadding ? '已取消Padding状态' : '已设为Padding状态');
+                showSuccess(currentPadding ? '已取消测图状态' : '已设为测图状态');
                 // 刷新选图列表
                 await fetchSelections();
             } else {
@@ -1089,10 +1153,55 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         return options;
     };
 
+    // 按mod类型分组选图
+    const getSelectionsByMod = () => {
+        const grouped: { [key: string]: MapSelection[] } = {};
+
+        // 按mod类型分组
+        filteredSelections.forEach(selection => {
+            const mod = selection.selectedMods;
+            if (!grouped[mod]) {
+                grouped[mod] = [];
+            }
+            grouped[mod].push(selection);
+        });
+
+        // 按mod顺序排序
+        const modOrder = ['NM', 'HD', 'HR', 'DT', 'FM', 'LZ', 'TB'];
+        const sortedGroups: { [key: string]: MapSelection[] } = {};
+
+        modOrder.forEach(mod => {
+            if (grouped[mod]) {
+                sortedGroups[mod] = grouped[mod];
+            }
+        });
+
+        // 添加其他mod类型
+        Object.keys(grouped).forEach(mod => {
+            if (!modOrder.includes(mod)) {
+                sortedGroups[mod] = grouped[mod];
+            }
+        });
+
+        return sortedGroups;
+    };
+
+    // 获取mod显示名称
+    const getModDisplayName = (mod: string): string => {
+        const modNames: { [key: string]: string } = {
+            'NM': 'No Mod',
+            'HD': 'Hidden',
+            'HR': 'Hard Rock',
+            'DT': 'Double Time',
+            'FM': 'Free Mod',
+            'LZ': 'Lazer Mod',
+            'TB': 'Tiebreaker'
+        };
+        return modNames[mod] || mod;
+    };
+
     return (
         <div className="max-w-9xl mx-auto p-6">
-            <h2 className="text-2xl font-bold mb-4 text-white">选图管理</h2>
-
             {isLoading ? (
                 <div className="text-center py-8">
                     <div className="text-lg text-white">正在加载...</div>
@@ -1215,15 +1324,15 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                             {/* Beatmap预览 */}
                             {beatmapPreview && (
-                                <div className="mb-4 p-4 bg-white border border-gray-300 rounded-lg shadow-sm">
+                                <div className="mb-4 p-4 bg-white border border-gray-300 rounded-lg shadow-sm max-w-[660px]">
                                     {/* 头部：封面和基本信息 */}
                                     <div className="flex items-start gap-3 mb-3">
                                         <Image
                                             src={beatmapPreview.cover_url}
                                             alt="Beatmap cover"
-                                            width={124}
-                                            height={124}
-                                            className="w-24 h-24 object-cover rounded"
+                                            width={512}
+                                            height={512}
+                                            className="w-28 h-19 object-cover rounded"
                                         />
                                         <div className="flex-1 min-w-0">
                                             <h3 className="font-bold text-sm truncate" title={beatmapPreview.title}>
@@ -1315,8 +1424,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             {/* Mod选择 */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Mod
+                                    </label>
                                     <Dropdown
-                                        label="MOD"
                                         options={MOD_OPTIONS.map(mod => ({
                                             value: mod,
                                             label: mod
@@ -1381,7 +1492,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         value={customCS}
                                                         onChange={(e) => setCustomCS(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                                         className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                                                        placeholder="原值"
+                                                        placeholder="不修改则为原值"
                                                     />
                                                 </div>
                                                 <div>
@@ -1394,7 +1505,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         value={customAR}
                                                         onChange={(e) => setCustomAR(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                                         className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                                                        placeholder="原值"
+                                                        placeholder="不修改则为原值"
                                                     />
                                                 </div>
                                                 <div>
@@ -1407,7 +1518,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         value={customOD}
                                                         onChange={(e) => setCustomOD(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                                         className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                                                        placeholder="原值"
+                                                        placeholder="不修改则为原值"
                                                     />
                                                 </div>
                                                 <div>
@@ -1420,7 +1531,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         value={customHP}
                                                         onChange={(e) => setCustomHP(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                                         className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                                                        placeholder="原值"
+                                                        placeholder="不修改则为原值"
                                                     />
                                                 </div>
                                             </div>
@@ -1458,7 +1569,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             {/* 重复检查警告 */}
                             {duplicateWarning.show && (
                                 <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                                    <h4 className="font-medium text-yellow-800 mb-2">⚠️ 重复检测</h4>
+                                    <h4 className="font-medium text-yellow-800 mb-2">重复检测</h4>
                                     <p className="text-yellow-700 text-sm mb-2">
                                         此谱面已被选择 {duplicateWarning.existingSelections.length} 次：
                                     </p>
@@ -1487,7 +1598,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             </div>
 
                             <div className="flex gap-4 items-center mb-4">
-                                <label className="flex items-center gap-2">
+                                {/* <label className="flex items-center gap-2">
                                     <input
                                         type="checkbox"
                                         checked={approved}
@@ -1495,7 +1606,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                                     />
                                     <span className="text-sm text-gray-700">直接过审</span>
-                                </label>
+                                </label> */}
 
                                 <label className="flex items-center gap-2">
                                     <input
@@ -1504,7 +1615,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         onChange={(e) => setPadding(e.target.checked)}
                                         className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                                     />
-                                    <span className="text-sm text-gray-700">Padding图</span>
+                                    <span className="text-sm text-gray-700">送测该图</span>
                                 </label>
                             </div>
 
@@ -1527,161 +1638,178 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         </div>
                     )}
 
-                    {/* 选图列表 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {filteredSelections.map(selection => (
-                            <div
-                                key={selection.id}
-                                className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 ${selection.approved ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'
-                                    }`}
-                                onContextMenu={(e) => handleContextMenu(e, selection)}
-                            >
-                                {/* 头部：封面和基本信息 */}
-                                <div className="flex items-start gap-3 mb-3">
-                                    <div className="relative">
-                                        <Image
-                                            src={selection.coverUrl}
-                                            alt="Beatmap cover"
-                                            width={124}
-                                            height={124}
-                                            className="w-24 h-24 object-cover rounded"
-                                        />
-                                        {/* 过审状态指示器 */}
-                                        {selection.approved && (
-                                            <div className="absolute -top-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                                                <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                </svg>
+                    {/* 选图列表 - 按mod类型分类显示 */}
+                    <div className="space-y-8">
+                        {Object.entries(getSelectionsByMod()).map(([mod, modSelections]) => (
+                            <div key={mod} className="space-y-4">
+                                {/* Mod分类标题 */}
+                                <div className="flex items-center gap-3">
+                                    <div className={`px-4 py-2 rounded-lg text-white font-bold text-lg ${getModColorClass(mod)}`}>
+                                        {mod} - {getModDisplayName(mod)}
+                                    </div>
+                                    <span className="text-gray-500 text-sm">
+                                        ({modSelections.length} 个选图)
+                                    </span>
+                                </div>
+
+                                {/* 该mod下的选图列表 */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {modSelections.map(selection => (
+                                        <div
+                                            key={selection.id}
+                                            className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 ${selection.approved ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'
+                                                }`}
+                                            onContextMenu={(e) => handleContextMenu(e, selection)}
+                                        >
+                                            {/* 头部：封面和基本信息 */}
+                                            <div className="flex items-start gap-3 mb-3">
+                                                <div className="relative">
+                                                    <Image
+                                                        src={selection.coverUrl}
+                                                        alt="Beatmap cover"
+                                                        width={512}
+                                                        height={512}
+                                                        className="w-24 h-19 object-cover rounded"
+                                                    />
+                                                    {/* 过审状态指示器 */}
+                                                    {selection.approved && (
+                                                        <div className="absolute -top-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                                            <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
+                                                            {selection.selectedMods === 'LZ' ?
+                                                                (selection.customModName && selection.customModName.trim() !== '' ?
+                                                                    `LZ${selection.modPosition}-${selection.customModName}` :
+                                                                    `LZ${selection.modPosition}`) :
+                                                                selection.selectedMods === 'DT' ?
+                                                                    ((selection.customDTRate && selection.customDTRate !== 1.5) ?
+                                                                        `DT${selection.modPosition}-${selection.customDTRate.toFixed(1)}倍` :
+                                                                        `DT${selection.modPosition}`) :
+                                                                    `${selection.selectedMods}${selection.modPosition}`
+                                                            }
+                                                        </span>
+                                                        {selection.padding && (
+                                                            <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded">
+                                                                提交测图中
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <h3 className="font-bold text-sm truncate" title={selection.title}>
+                                                        {selection.title}
+                                                    </h3>
+                                                    <p className="font-bold text-xs text-gray-600 truncate" title={`${selection.artist}`}>
+                                                        {selection.artist}
+                                                    </p>
+                                                    <p className="font-bold text-xs text-gray-600">[{selection.version}] by {selection.creator}</p>
+                                                </div>
+                                                <div className="ml-auto">
+                                                    <RatingDisplay
+                                                        ratings={mapRatings[selection.id] || []}
+                                                        selectedBy={selection.selectedBy}
+                                                        currentUserId={userForState.id.toString()}
+                                                        compact={true}
+                                                        isAdmin={permissions.isAdmin || permissions.isMapSelector}
+                                                    />
+                                                </div>
                                             </div>
-                                        )}
-                                    </div>
 
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
-                                                {selection.selectedMods === 'LZ' ?
-                                                    (selection.customModName && selection.customModName.trim() !== '' ?
-                                                        `LZ${selection.modPosition}-${selection.customModName}` :
-                                                        `LZ${selection.modPosition}`) :
-                                                    selection.selectedMods === 'DT' ?
-                                                        ((selection.customDTRate && selection.customDTRate !== 1.5) ?
-                                                            `DT${selection.modPosition}-${selection.customDTRate.toFixed(1)}倍` :
-                                                            `DT${selection.modPosition}`) :
-                                                        `${selection.selectedMods}${selection.modPosition}`
-                                                }
-                                            </span>
-                                            {selection.padding && (
-                                                <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded">
-                                                    提交测图中
-                                                </span>
+                                            {/* 属性信息 */}
+                                            <div className="mb-3 text-xs text-gray-600">
+                                                <div className="grid grid-cols-4 gap-1">
+                                                    <div className="text-center font-medium">CS</div>
+                                                    <div className="text-center font-medium">AR</div>
+                                                    <div className="text-center font-medium">OD</div>
+                                                    <div className="text-center font-medium">HP</div>
+                                                    <div className="text-center font-bold text-lg">{selection.cs.toFixed(1)}</div>
+                                                    <div className="text-center font-bold text-lg">{selection.ar.toFixed(1)}</div>
+                                                    <div className="text-center font-bold text-lg">{selection.od.toFixed(1)}</div>
+                                                    <div className="text-center font-bold text-lg">{selection.hp.toFixed(1)}</div>
+                                                    <div className="text-center font-medium col-span-2">Length</div>
+                                                    <div className="text-center font-medium">BPM</div>
+                                                    <div className="text-center font-medium">★</div>
+                                                    <div className="text-center font-bold text-base col-span-2">{formatLength(selection.totalLength)}</div>
+                                                    <div className="text-center font-bold text-base">{selection.bpm}</div>
+                                                    <div className="text-center font-bold text-base">{selection.starRating.toFixed(2)}</div>
+                                                </div>
+                                            </div>
+
+                                            {/* 提名者信息 */}
+                                            <div className="mb-3 text-xs text-gray-600">
+                                                <div className="flex items-center gap-3 w-full">
+                                                    <span className="flex items-center gap-1">提名者:<Image src={selection.selectedByAvatar || "/default-avatar.png"} alt={selection.selectedByUsername || '未知'} width={16} height={16} className="rounded-full" />{selection.selectedByUsername}</span>
+                                                    <span>•</span>
+                                                    <span>{formatDateTime(selection.selectedAt)}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* 评论 */}
+                                            {selection.comment && (
+                                                <div className="mb-3 p-2 bg-gray-50 rounded text-xs text-gray-700">
+                                                    {selection.comment}
+                                                </div>
                                             )}
+
+                                            {/* 评分组件 */}
+                                            <div className="mb-3">
+                                                <CurrentRating
+                                                    rating={userRatings[selection.id] || 0}
+                                                    onRatingChange={(rating) => submitRating(selection.id, rating)}
+                                                    isSubmitting={isRatingSubmitting}
+                                                    userId={userForState.id.toString()}
+                                                />
+                                            </div>
+
+                                            {/* 操作按钮 */}
+                                            <div className="flex gap-2 items-center justify-end">
+                                                {/* 复制BID按钮 */}
+                                                <button
+                                                    onClick={() => copyBeatmapId(selection.beatmapId)}
+                                                    className="px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors"
+                                                    title="复制Beatmap ID"
+                                                >
+                                                    复制BID
+                                                </button>
+
+                                                {/* 批量选择复选框 - 仅管理员可见 */}
+                                                {permissions.isAdmin && !selection.approved && (
+                                                    <label className="flex items-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={tempApprovedSelections.has(selection.id)}
+                                                            onChange={(e) => {
+                                                                const newSelections = new Set(tempApprovedSelections);
+                                                                if (e.target.checked) {
+                                                                    newSelections.add(selection.id);
+                                                                } else {
+                                                                    newSelections.delete(selection.id);
+                                                                }
+                                                                setTempApprovedSelections(newSelections);
+                                                            }}
+                                                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                                        />
+                                                    </label>
+                                                )}
+                                            </div>
+
+                                            {/* 评论区 */}
+                                            <div className="mt-4 pt-3 border-t border-gray-300">
+                                                <CommentComponent
+                                                    mapSelectionId={selection.id}
+                                                    userId={userForState.id.toString()}
+                                                    onCommentUpdate={fetchSelections}
+                                                    compactMode={true}
+                                                />
+                                            </div>
                                         </div>
-
-                                        <h3 className="font-bold text-sm truncate" title={selection.title}>
-                                            {selection.title}
-                                        </h3>
-                                        <p className="font-bold text-xs text-gray-600 truncate" title={`${selection.artist}`}>
-                                            {selection.artist}
-                                        </p>
-                                        <p className="font-bold text-xs text-gray-600">[{selection.version}] by {selection.creator}</p>
-                                    </div>
-                                    <div className="ml-auto">
-                                        <RatingDisplay
-                                            ratings={mapRatings[selection.id] || []}
-                                            selectedBy={selection.selectedBy}
-                                            currentUserId={userForState.id.toString()}
-                                            compact={true}
-                                            isAdmin={permissions.isAdmin || permissions.isMapSelector}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* 属性信息 */}
-                                <div className="mb-3 text-xs text-gray-600">
-                                    <div className="grid grid-cols-4 gap-1">
-                                        <div className="text-center font-medium">CS</div>
-                                        <div className="text-center font-medium">AR</div>
-                                        <div className="text-center font-medium">OD</div>
-                                        <div className="text-center font-medium">HP</div>
-                                        <div className="text-center font-bold text-lg">{selection.cs.toFixed(1)}</div>
-                                        <div className="text-center font-bold text-lg">{selection.ar.toFixed(1)}</div>
-                                        <div className="text-center font-bold text-lg">{selection.od.toFixed(1)}</div>
-                                        <div className="text-center font-bold text-lg">{selection.hp.toFixed(1)}</div>
-                                        <div className="text-center font-medium col-span-2">Length</div>
-                                        <div className="text-center font-medium">BPM</div>
-                                        <div className="text-center font-medium">★</div>
-                                        <div className="text-center font-bold text-base col-span-2">{formatLength(selection.totalLength)}</div>
-                                        <div className="text-center font-bold text-base">{selection.bpm}</div>
-                                        <div className="text-center font-bold text-base">{selection.starRating.toFixed(2)}</div>
-                                    </div>
-                                </div>
-
-                                {/* 提名者信息 */}
-                                <div className="mb-3 text-xs text-gray-600">
-                                    <div className="flex items-center gap-3 w-full">
-                                        <span className="flex items-center gap-1">提名者:<Image src={selection.selectedByAvatar || "/default-avatar.png"} alt={selection.selectedByUsername || '未知'} width={16} height={16} className="rounded-full" />{selection.selectedByUsername}</span>
-                                        <span>•</span>
-                                        <span>{formatDateTime(selection.selectedAt)}</span>
-                                    </div>
-                                </div>
-
-                                {/* 评论 */}
-                                {selection.comment && (
-                                    <div className="mb-3 p-2 bg-gray-50 rounded text-xs text-gray-700">
-                                        {selection.comment}
-                                    </div>
-                                )}
-
-                                {/* 评分组件 */}
-                                <div className="mb-3">
-                                    <CurrentRating
-                                        rating={userRatings[selection.id] || 0}
-                                        onRatingChange={(rating) => submitRating(selection.id, rating)}
-                                        isSubmitting={isRatingSubmitting}
-                                        userId={userForState.id.toString()}
-                                    />
-                                </div>
-
-                                {/* 操作按钮 */}
-                                <div className="flex gap-2 items-center justify-end">
-                                    {/* 复制BID按钮 */}
-                                    <button
-                                        onClick={() => copyBeatmapId(selection.beatmapId)}
-                                        className="px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors"
-                                        title="复制Beatmap ID"
-                                    >
-                                        复制BID
-                                    </button>
-
-                                    {/* 批量选择复选框 - 仅管理员可见 */}
-                                    {permissions.isAdmin && !selection.approved && (
-                                        <label className="flex items-center">
-                                            <input
-                                                type="checkbox"
-                                                checked={tempApprovedSelections.has(selection.id)}
-                                                onChange={(e) => {
-                                                    const newSelections = new Set(tempApprovedSelections);
-                                                    if (e.target.checked) {
-                                                        newSelections.add(selection.id);
-                                                    } else {
-                                                        newSelections.delete(selection.id);
-                                                    }
-                                                    setTempApprovedSelections(newSelections);
-                                                }}
-                                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                                            />
-                                        </label>
-                                    )}
-                                </div>
-
-                                {/* 评论区 */}
-                                <div className="mt-4 pt-3 border-t border-gray-300">
-                                    <CommentComponent
-                                        mapSelectionId={selection.id}
-                                        userId={userForState.id.toString()}
-                                        onCommentUpdate={fetchSelections}
-                                        compactMode={true}
-                                    />
+                                    ))}
                                 </div>
                             </div>
                         ))}
@@ -1720,7 +1848,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         .filter(selection => tempApprovedSelections.has(selection.id) && !selection.approved)
                                         .map(selection => (
                                             <tr key={selection.id} className="hover:bg-gray-50">
-                                                <td className="border border-gray-300 px-3 py-2">
+                                                <td className="border border-gray-300 px-3 py-2 text-left">
                                                     <span className={`${getModColorClass(selection.selectedMods)} text-white px-2 py-1 rounded text-sm font-bold`}>
                                                         {selection.selectedMods === 'LZ' ?
                                                             (selection.customModName && selection.customModName.trim() !== '' ?
@@ -1734,10 +1862,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         }
                                                     </span>
                                                 </td>
-                                                <td className="border border-gray-300 px-3 py-2">{selection.title}</td>
-                                                <td className="border border-gray-300 px-3 py-2">{selection.artist}</td>
-                                                <td className="border border-gray-300 px-3 py-2">{selection.version}</td>
-                                                <td className="border border-gray-300 px-3 py-2">{selection.selectedByUsername}</td>
+                                                <td className="border border-gray-300 px-3 py-2 text-left">{selection.title}</td>
+                                                <td className="border border-gray-300 px-3 py-2 text-left">{selection.artist}</td>
+                                                <td className="border border-gray-300 px-3 py-2 text-left">{selection.version}</td>
+                                                <td className="border border-gray-300 px-3 py-2 text-left">{selection.selectedByUsername}</td>
                                             </tr>
                                         ))}
                                 </tbody>
@@ -1805,9 +1933,9 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                     <button
                         onClick={() => {
-                            const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${contextMenu.selection!.beatmapsetId}`;
+                            const downloadUrl = `https://api.nerinyan.moe/d/${contextMenu.selection!.beatmapsetId}`;
                             window.open(downloadUrl, '_blank');
-                            showSuccess('已开始从Sayobot下载');
+                            showSuccess('已开始从Nerinyan下载');
                             closeContextMenu();
                         }}
                         className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
@@ -1815,7 +1943,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                         </svg>
-                        下载谱面 (Sayobot)
+                        下载谱面 (Nerinyan)
                     </button>
 
                     <button

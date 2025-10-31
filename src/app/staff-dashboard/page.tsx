@@ -104,8 +104,6 @@ interface StaffRoomAssignment {
     };
 }
 
-// 创建对战模态框组件
-
 export default function AdminPage() {
     const router = useRouter();
     usePageTitle('/staff-dashboard');
@@ -124,7 +122,6 @@ export default function AdminPage() {
     const [registrationsLoading, setRegistrationsLoading] = useState(false);
     const [processingUser, setProcessingUser] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('overview');
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
     // 房间管理状态
     const [rooms, setRooms] = useState<MatchRoom[]>([]);
@@ -689,181 +686,66 @@ export default function AdminPage() {
     }
 
     return (
-        <div className="flex h-screen bg-[#1a1a1a]">
-
-
-            {/* 侧边栏 */}
-            <div className={`bg-[#2d2d2d] border-r border-[#404040] flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'
-                }`}>
-                {/* 头部信息 */}
-                <div className={`border-b border-[#404040] ${sidebarCollapsed ? 'p-3' : 'p-6'}`}>
-                    {/* 收起/展开按钮 */}
-                    <div className="flex items-center justify-between mb-4">
-                        {!sidebarCollapsed && (
-                            <div className="flex items-center">
-                                <Image
-                                    src={user.avatar_url}
-                                    alt={user.username}
-                                    width={32}
-                                    height={32}
-                                    className="rounded-full outline outline-2 outline-[#E93B66] mr-3"
-                                    onError={(e) => {
-                                        e.currentTarget.src = '/default-avatar.png';
-                                    }}
-                                />
-                                <div>
-                                    <h3 className="text-white font-medium text-sm">{user.username}</h3>
-                                    <p className="text-gray-400 text-xs">管理员</p>
-                                </div>
-                            </div>
-                        )}
-                        <button
-                            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                            className="p-2 text-gray-400 hover:text-white hover:bg-[#3a3a3a] rounded transition-colors duration-200"
-                            title={sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'}
-                        >
-                            <svg
-                                className={`w-5 h-5 transition-transform duration-200 ${sidebarCollapsed ? 'rotate-180' : ''}`}
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                    </div>
-                    {sidebarCollapsed && (
-                        <div className="flex justify-center">
+        <div className="min-h-screen bg-[#1a1a1a]">
+            {/* 顶部导航栏 */}
+            <div className="bg-[#2d2d2d] border-b border-[#404040]">
+                <div className="max-w-7xl mx-auto px-6">
+                    {/* 用户信息和登出按钮 */}
+                    <div className="flex items-center justify-between py-4">
+                        <div className="flex items-center space-x-4">
                             <Image
                                 src={user.avatar_url}
                                 alt={user.username}
-                                width={32}
-                                height={32}
+                                width={40}
+                                height={40}
                                 className="rounded-full outline outline-2 outline-[#E93B66]"
                                 onError={(e) => {
                                     e.currentTarget.src = '/default-avatar.png';
                                 }}
                             />
+                            <div>
+                                <h3 className="text-white font-medium">{user.username}</h3>
+                            </div>
                         </div>
-                    )}
-                </div>
+                    </div>
 
-                {/* 导航菜单 */}
-                <nav className={`flex-1 ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
-                    <div className="space-y-2">
+                    {/* 顶部Tab栏 */}
+                    <div className="flex space-x-1 overflow-x-auto">
                         {/* 概览 - 所有工作人员都可以访问 */}
                         <button
                             onClick={() => setActiveTab('overview')}
-                            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'overview'
-                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                            className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'overview'
+                                ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
-                            title={sidebarCollapsed ? '概览' : undefined}
                         >
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                            </svg>
-                            {!sidebarCollapsed && <span className="ml-3">概览</span>}
+                            <Image src='/icons/table-fill.svg' alt='overview' width={20} height={20} />
+                            概览
                         </button>
 
-                        {/* 比赛房间管理 - 仅管理员 */}
-                        {permissions.isAdmin && (
-                            <button
-                                onClick={() => setActiveTab('rooms')}
-                                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'rooms'
-                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
-                                    }`}
-                                title={sidebarCollapsed ? '比赛房间管理' : undefined}
-                            >
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                                </svg>
-                                {!sidebarCollapsed && <span className="ml-3">比赛房间管理</span>}
-                            </button>
-                        )}
-
-                        {/* 对战列表管理 - 仅管理员 */}
-                        {permissions.isAdmin && (
-                            <button
-                                onClick={() => setActiveTab('matchups')}
-                                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'matchups'
-                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
-                                    }`}
-                                title={sidebarCollapsed ? '对战列表管理' : undefined}
-                            >
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
-                                </svg>
-                                {!sidebarCollapsed && <span className="ml-3">对战列表管理</span>}
-                            </button>
-                        )}
+                        {/* 比赛管理 - 所有工作人员都可以访问 */}
+                        <button
+                            onClick={() => setActiveTab('matches')}
+                            className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'matches'
+                                ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
+                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                }`}
+                        >
+                            <Image src='/icons/flag-fill.svg' alt='matches' width={20} height={20} />
+                            比赛预约管理
+                        </button>
 
                         {/* 直播裁判 - 管理员、裁判员、直播员 */}
                         {(permissions.isAdmin || permissions.isReferee || permissions.isStreamer) && (
                             <button
                                 onClick={() => setActiveTab('streaming')}
-                                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'streaming'
-                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'streaming'
+                                    ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
-                                title={sidebarCollapsed ? '直播裁判' : undefined}
                             >
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.414-1.414A1 1 0 0010.586 3H7.414a1 1 0 00-.707.293L5.293 4.707A1 1 0 014.586 5H4zm12 12H4a4 4 0 01-4-4V7a4 4 0 014-4h1.586a1 1 0 01.707.293L7.707 5.707A1 1 0 008.414 6h3.172a1 1 0 01.707.293l1.414 1.414A1 1 0 0014.414 8H16a4 4 0 014 4v6a4 4 0 01-4 4z" clipRule="evenodd" />
-                                    <path fillRule="evenodd" d="M8 11a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
-                                </svg>
-                                {!sidebarCollapsed && <span className="ml-3">直播裁判</span>}
-                            </button>
-                        )}
-
-                        {/* 比赛管理 - 所有工作人员都可以访问 */}
-                        <button
-                            onClick={() => setActiveTab('matches')}
-                            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'matches'
-                                ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
-                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
-                                }`}
-                            title={sidebarCollapsed ? '比赛管理' : undefined}
-                        >
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                            </svg>
-                            {!sidebarCollapsed && <span className="ml-3">比赛管理</span>}
-                        </button>
-
-                        {/* 用户管理 - 仅管理员 */}
-                        {permissions.isAdmin && (
-                            <button
-                                onClick={() => setActiveTab('users')}
-                                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'users'
-                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
-                                    }`}
-                                title={sidebarCollapsed ? '用户管理' : undefined}
-                            >
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                {!sidebarCollapsed && <span className="ml-3">用户管理</span>}
-                            </button>
-                        )}
-
-                        {/* 回放收集 - 重播测试员或管理员 */}
-                        {(permissions.isReplayTester || permissions.isAdmin) && (
-                            <button
-                                onClick={() => setActiveTab('replays')}
-                                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'replays'
-                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
-                                    }`}
-                                title={sidebarCollapsed ? '回放收集' : undefined}
-                            >
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h4a2 2 0 012 2v2a2 2 0 01-2 2H8a2 2 0 01-2-2v-2z" clipRule="evenodd" />
-                                </svg>
-                                {!sidebarCollapsed && <span className="ml-3">回放收集</span>}
+                                <Image src='/icons/home.svg' alt='streaming' width={20} height={20} />
+                                staff比赛房间加入
                             </button>
                         )}
 
@@ -871,16 +753,69 @@ export default function AdminPage() {
                         {(permissions.isMapSelector || permissions.isAdmin) && (
                             <button
                                 onClick={() => setActiveTab('map-selection')}
-                                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'map-selection'
-                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'map-selection'
+                                    ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
-                                title={sidebarCollapsed ? '选图管理' : undefined}
                             >
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd" />
-                                </svg>
-                                {!sidebarCollapsed && <span className="ml-3">选图管理</span>}
+                                <Image src='/icons/mapool-sm.svg' alt='map selection' width={20} height={20} />
+                                选图管理
+                            </button>
+                        )}
+
+                        {/* 回放收集 - 重播测试员或管理员 */}
+                        {(permissions.isReplayTester || permissions.isAdmin) && (
+                            <button
+                                onClick={() => setActiveTab('replays')}
+                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'replays'
+                                    ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
+                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                    }`}
+                            >
+                                <Image src='/icons/photos.svg' alt='replays' width={20} height={20} />
+                                回放收集
+                            </button>
+                        )}
+
+                        {/* 比赛房间管理 - 仅管理员 */}
+                        {permissions.isAdmin && (
+                            <button
+                                onClick={() => setActiveTab('rooms')}
+                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'rooms'
+                                    ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
+                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                    }`}
+                            >
+                                <Image src='/icons/hourglass-2-fill.svg' alt='match rooms' width={20} height={20} />
+                                比赛时间房间管理
+                            </button>
+                        )}
+
+                        {/* 对战列表管理 - 仅管理员 */}
+                        {permissions.isAdmin && (
+                            <button
+                                onClick={() => setActiveTab('matchups')}
+                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'matchups'
+                                    ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
+                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                    }`}
+                            >
+                                <Image src='/icons/auction-fill.svg' alt='matchups' width={20} height={20} />
+                                玩家对战列表管理
+                            </button>
+                        )}
+
+                        {/* 用户管理 - 仅管理员 */}
+                        {permissions.isAdmin && (
+                            <button
+                                onClick={() => setActiveTab('users')}
+                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'users'
+                                    ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
+                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+                                    }`}
+                            >
+                                <Image src='/icons/register.svg' alt='user management' width={20} height={20} />
+                                用户管理
                             </button>
                         )}
 
@@ -888,56 +823,23 @@ export default function AdminPage() {
                         {permissions.isAdmin && (
                             <button
                                 onClick={() => setActiveTab('settings')}
-                                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 text-left'} transition-colors duration-200 ${activeTab === 'settings'
-                                    ? 'bg-[#E93B66] text-white border-r-4 border-[#3BE9D8]'
+                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'settings'
+                                    ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
-                                title={sidebarCollapsed ? '系统设置' : undefined}
                             >
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-                                </svg>
-                                {!sidebarCollapsed && <span className="ml-3">系统设置</span>}
+                                <Image src='/icons/settings-3-fill.svg' alt='system settings' width={20} height={20} />
+                                系统设置
                             </button>
                         )}
-
-
                     </div>
-                </nav>
-
-                {/* 底部登出按钮 */}
-                <div className="p-4 border-t border-[#404040]">
-                    <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center px-4 py-3 text-left text-gray-300 hover:bg-[#3a3a3a] hover:text-white transition-colors duration-200"
-                    >
-                        <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
-                        </svg>
-                        登出
-                    </button>
                 </div>
             </div>
 
-            {/* 主内容区域 */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-                {/* 顶部标题栏 */}
-                <header className="bg-[#2d2d2d] border-b border-[#404040] px-6 py-4">
-                    <h1 className="text-2xl font-bold text-white">
-                        {activeTab === 'overview' && '管理概览'}
-                        {activeTab === 'matchups' && '对战列表管理'}
-                        {activeTab === 'rooms' && '比赛房间管理'}
-                        {activeTab === 'matches' && '比赛管理'}
-                        {activeTab === 'streaming' && '直播裁判'}
-                        {activeTab === 'users' && '用户管理'}
-                        {activeTab === 'replays' && '回放收集管理'}
-                        {activeTab === 'map-selection' && '选图管理'}
-                        {activeTab === 'settings' && '系统设置'}
-                    </h1>
-                </header>
-
+            {/* 内容区域 */}
+            <div className="flex-1">
                 {/* 内容区域 */}
-                <main className="flex-1 overflow-y-auto p-6 bg-[#1a1a1a]">
+                <div className="p-6">
                     {/* 概览页面 */}
                     {activeTab === 'overview' && (
                         <OverviewManagement
@@ -1024,12 +926,8 @@ export default function AdminPage() {
                             onRevokeAssignment={handleRevokeAssignment}
                         />
                     )}
-                </main>
+                </div>
             </div>
-
-
-
-
         </div>
     );
 }

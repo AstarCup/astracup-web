@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const sid = searchParams.get('sid');
-    const source = searchParams.get('source') || 'sayobot'; // 'sayobot' or 'osu'
+    const source = searchParams.get('source') || 'nerinyan'; // 'nerinyan', 'sayobot' or 'osu'
 
     if (!sid) {
         return NextResponse.json({ error: 'Missing sid parameter' }, { status: 400 });
@@ -16,16 +16,23 @@ export async function GET(request: NextRequest) {
         if (source === 'osu') {
             downloadUrl = `https://osu.ppy.sh/beatmapsets/${sid}/download`;
             sourceName = 'osu官方';
-        } else {
+        } else if (source === 'nerinyan') {
+            downloadUrl = `https://api.nerinyan.moe/d/${sid}`;
+            sourceName = 'Nerinyan';
+        } else if (source === 'sayobot') {
             downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${sid}`;
             sourceName = 'Sayobot';
+        } else {
+            // Fallback to nerinyan if sayobot is requested but deprecated
+            downloadUrl = `https://api.nerinyan.moe/d/${sid}`;
+            sourceName = 'Nerinyan';
         }
 
         console.log(`Proxying download request from ${sourceName}:`, { sid, downloadUrl, source });
 
         // 从环境变量获取 Referer，如果没有则使用默认值
         const referer = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.rino.ink/';
-        // 使用更真实的User-Agent
+        // 从请求中获取User-Agent，如果没有则使用默认值
         const userAgent = request.headers.get('user-agent') ||
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 

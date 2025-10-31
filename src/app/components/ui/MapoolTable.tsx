@@ -41,6 +41,10 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
     const [bulkDownloadItems, setBulkDownloadItems] = useState<DownloadItem[]>([]);
     const [showBulkDownloadManager, setShowBulkDownloadManager] = useState(false);
     const [isBulkDownloading, setIsBulkDownloading] = useState(false);
+    const [downloadSpeed, setDownloadSpeed] = useState(0);
+    const [eta, setEta] = useState<number | null>(null);
+    const [overallProgress, setOverallProgress] = useState(0);
+    const [abortController, setAbortController] = useState<AbortController | null>(null);
 
     // 准备批量下载 (原有的API批量下载)
     const prepareBulkDownload = () => {
@@ -58,8 +62,12 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
     };
 
     // 开始批量下载
-    const startBulkDownload = async (source: 'sayobot' | 'osu') => {
+    const startBulkDownload = async (source: 'nerinyan' | 'sayobot' | 'osu') => {
         if (bulkDownloadItems.length === 0) return;
+
+        // 创建新的AbortController用于取消请求
+        const controller = new AbortController();
+        setAbortController(controller);
 
         setIsBulkDownloading(true);
         const zip = new JSZip();
@@ -67,18 +75,20 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
         let failCount = 0;
 
         try {
-            // 先测试第一个下载，确保API工作正常
-            console.log('Testing API with first beatmap...');
-            const testResult = await testSingleDownload(bulkDownloadItems[0].sid, source);
-            if (!testResult.success) {
-                showError(`API测试失败，无法开始批量下载: ${testResult.error}`);
-                setIsBulkDownloading(false);
-                return;
-            }
-            console.log('API test passed, proceeding with bulk download...');
+
+            // 记录开始时间
+            const startTime = Date.now();
+            let lastProgressUpdate = 0;
 
             // 逐个下载谱面，添加延迟避免并发过多
             for (let i = 0; i < bulkDownloadItems.length; i++) {
+                // 检查是否已取消
+                if (controller.signal.aborted) {
+                    console.log('Download cancelled by user');
+                    showInfo('下载已被用户取消');
+                    break;
+                }
+
                 const item = bulkDownloadItems[i];
 
                 try {
@@ -87,13 +97,39 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                         idx === i ? { ...prevItem, status: 'downloading', progress: 10 } : prevItem
                     ));
 
+                    // 更新整体进度
+                    const newOverallProgress = ((i) / bulkDownloadItems.length) * 100;
+                    // 更新BulkDownloadManager中的整体进度状态
+
                     console.log(`Downloading beatmap ${i + 1}/${bulkDownloadItems.length}:`, item.sid, item.bid);
+
+                    // 计算下载速度和ETA
+                    const currentTime = Date.now();
+                    const elapsedTime = (currentTime - startTime) / 1000; // 秒
+                    const progressRatio = (i + 1) / bulkDownloadItems.length;
+
+                    if (elapsedTime > 0 && progressRatio > 0) {
+                        // 计算下载速度 (items per second)
+                        const speed = (i + 1) / elapsedTime;
+
+                        // 计算剩余时间 (seconds)
+                        const remainingItems = bulkDownloadItems.length - (i + 1);
+                        const etaSeconds = remainingItems / speed;
+
+                        // 更新状态
+                        setDownloadSpeed(speed);
+                        setEta(etaSeconds);
+                    }
+
+                    // 更新整体进度状态
+                    setOverallProgress(newOverallProgress);
 
                     const response = await fetch(`/api/download-beatmap?sid=${item.sid}&source=${source}`, {
                         method: 'GET',
                         headers: {
                             'Cache-Control': 'no-cache',
                         },
+                        signal: controller.signal // 添加signal用于取消请求
                     });
 
                     if (!response.ok) {
@@ -142,6 +178,13 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                     }
 
                 } catch (error) {
+                    // 检查是否是取消操作导致的错误
+                    if (error instanceof Error && error.name === 'AbortError') {
+                        console.log('Download cancelled by user');
+                        showInfo('下载已被用户取消');
+                        break;
+                    }
+
                     const errorMessage = error instanceof Error ? error.message : '未知错误';
                     console.error(`Failed to download ${item.sid}:`, errorMessage);
 
@@ -213,15 +256,22 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
             }
 
         } catch (error) {
-            console.error('Bulk download process error:', error);
-            showError('批量下载过程中出现严重错误');
+            // 检查是否是取消操作导致的错误
+            if (error instanceof Error && error.name === 'AbortError') {
+                console.log('Bulk download cancelled by user');
+                showInfo('批量下载已被用户取消');
+            } else {
+                console.error('Bulk download process error:', error);
+                showError('批量下载过程中出现严重错误');
+            }
         } finally {
             setIsBulkDownloading(false);
+            setAbortController(null);
         }
     };
 
     // 测试单个下载
-    const testSingleDownload = async (sid: string, source: 'sayobot' | 'osu') => {
+    const testSingleDownload = async (sid: string, source: 'nerinyan' | 'sayobot' | 'osu') => {
         try {
             console.log('Testing single download for SID:', sid, 'source:', source);
             const response = await fetch(`/api/download-beatmap?sid=${sid}&source=${source}`, {
@@ -256,6 +306,12 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
 
     // 取消批量下载
     const cancelBulkDownload = () => {
+        // 如果有正在进行的请求，取消它
+        if (abortController) {
+            abortController.abort();
+            setAbortController(null);
+        }
+
         setIsBulkDownloading(false);
         setBulkDownloadItems([]);
         setShowBulkDownloadManager(false);
@@ -297,14 +353,14 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
             { type: 'separator' as const, label: '' },
             // 下载相关
             {
-                label: '下载谱面 (Sayobot)',
+                label: '下载谱面 (Nerinyan)',
                 icon: '/icons/download-sayobot.svg',
                 onClick: () => {
-                    const downloadUrl = `https://dl.sayobot.cn/beatmaps/download/full/${row.SID}`;
+                    const downloadUrl = `https://api.nerinyan.moe/d/${row.SID}`;
 
-                    // 直接跳转到Sayobot下载链接，让浏览器处理下载
+                    // 直接跳转到Nerinyan下载链接，让浏览器处理下载
                     window.open(downloadUrl, '_blank');
-                    showSuccess('已开始从sayobot下载');
+                    showSuccess('已开始从Nerinyan下载');
                 },
                 type: 'item' as const
             },
@@ -498,6 +554,9 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                 onStartDownload={startBulkDownload}
                 onCancelDownload={cancelBulkDownload}
                 isDownloading={isBulkDownloading}
+                downloadSpeed={downloadSpeed}
+                eta={eta}
+                overallProgress={overallProgress}
             />
         </div>
     );
