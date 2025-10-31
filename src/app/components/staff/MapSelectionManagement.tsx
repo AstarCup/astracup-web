@@ -624,7 +624,9 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     // Use modded stats if available, otherwise original
                     starRating: moddedStats?.starRating ?? beatmapPreview.star_rating,
                     bpm: moddedStats?.bpm ?? beatmapPreview.bpm,
-                    totalLength: moddedStats?.totalLength ?? beatmapPreview.total_length,
+                    totalLength: selectedMods === 'DT' && customDTRate !== '' ?
+                        Math.round(beatmapPreview.total_length / (customDTRate as number)) :
+                        beatmapPreview.total_length,
                     ar: moddedStats?.ar ?? beatmapPreview.ar,
                     cs: moddedStats?.cs ?? beatmapPreview.cs,
                     od: moddedStats?.od ?? beatmapPreview.od,
@@ -779,12 +781,15 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 hp: modStats.hp,
                 starRating: modStats.starRating,
                 bpm: modStats.bpm,
+                // 计算DT时长
+                totalLength: selection.selectedMods === 'DT' && selection.customDTRate ?
+                    Math.round(latestBeatmap.total_length / selection.customDTRate) :
+                    latestBeatmap.total_length,
                 // 同时更新基础beatmap信息
                 title: latestBeatmap.title,
                 artist: latestBeatmap.artist,
                 version: latestBeatmap.version,
                 creator: latestBeatmap.creator,
-                totalLength: latestBeatmap.total_length,
                 coverUrl: latestBeatmap.cover_url
             }) : s));
 
