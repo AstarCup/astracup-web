@@ -422,13 +422,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
     // 获取可用的Lazer特有mod
     const fetchAvailableLazerMods = async () => {
-        // try {
-        // const response = await fetch('/api/get-available-mods');
-        // if (response.ok) {
-        //     const data = await response.json();
-        //     setAvailableLazerMods(data.availableMods || []);
-        // } else {
-        // 如果API失败，使用预定义的mod列表
         const fallbackMods = [
             { name: 'DA', description: 'Difficulty Adjust - 自定义难度属性' },
             { name: 'AD', description: 'Approach Different - 不一样的缩圈' },
@@ -453,23 +446,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             { name: 'WU', description: 'Wind Up - 精确度挑战' }
         ];
         setAvailableLazerMods(fallbackMods);
-        // }
-        // } catch (error) {
-        //     console.error('Failed to fetch available Lazer mods:', error);
-        //     // 使用预定义的mod列表作为备选
-        //     const fallbackMods = [
-        //         { name: 'DA', description: 'Difficulty Adjust - 自定义难度属性' },
-        //         { name: 'WG', description: 'Wiggle - 摆动效果' },
-        //         { name: 'MR', description: 'Mirror - 镜像' },
-        //         { name: 'RD', description: 'Random - 随机' },
-        //         { name: 'AS', description: 'Adaptive Speed - 自适应速度' },
-        //         { name: 'CL', description: 'Classic - 经典模式' },
-        //         { name: 'SG', description: 'Single Tap - 单键模式' },
-        //         { name: 'TC', description: 'Target Practice - 目标练习' },
-        //         { name: 'AC', description: 'Accuracy Challenge - 精确度挑战' }
-        //     ];
-        //     setAvailableLazerMods(fallbackMods);
-        // }
     };
 
     const loadSeasonConfig = async () => {
