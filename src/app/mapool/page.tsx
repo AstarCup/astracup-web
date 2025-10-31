@@ -56,6 +56,7 @@ export default function Mapool() {
     useEffect(() => {
         console.log('tournamentSettings changed:', tournamentSettings);
         if (tournamentSettings?.current_season && currentSeason === 's1') {
+            // tournamentSettings.current_season 是 number 类型，需要转换为字符串
             const seasonValue = `s${tournamentSettings.current_season}`;
             const seasonLabel = `第${tournamentSettings.current_season}赛季`;
 
