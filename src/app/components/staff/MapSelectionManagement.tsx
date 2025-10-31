@@ -947,15 +947,15 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     // 根据mod名返回对应的颜色class
     const getModColorClass = (mod: string): string => {
         switch (mod) {
-            case 'NM': return 'text-gray-500';
-            case 'HD': return 'text-yellow-500';
-            case 'HR': return 'text-red-500';
-            case 'DT': return 'text-purple-500';
-            case 'EZ': return 'text-green-500';
-            case 'LZ': return 'text-gray-600';
-            case 'TB': return 'text-black';
-            case 'FM': return 'text-blue-500';
-            default: return 'text-white-500';
+            case 'NM': return 'bg-gray-500';
+            case 'HD': return 'bg-yellow-500';
+            case 'HR': return 'bg-red-500';
+            case 'DT': return 'bg-purple-500';
+            case 'EZ': return 'bg-green-500';
+            case 'LZ': return 'bg-gray-600';
+            case 'TB': return 'bg-black';
+            case 'FM': return 'bg-blue-500';
+            default: return 'bg-blue-500';
         }
     };
 
@@ -1642,11 +1642,11 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             <div key={mod} className="space-y-4">
                                 {/* Mod分类标题 */}
                                 <div className="flex items-center gap-3">
-                                    <div className={`px-4 py-2 rounded-lg font-bold text-2xl ${getModColorClass(mod)}`}>
+                                    <div className={`px-4 py-2 rounded-lg text-white font-bold text-lg ${getModColorClass(mod)}`}>
                                         {mod} - {getModDisplayName(mod)}
                                     </div>
                                     <span className="text-gray-500 text-sm">
-                                        ({modSelections.length} 个)
+                                        ({modSelections.length} 个选图)
                                     </span>
                                 </div>
 
