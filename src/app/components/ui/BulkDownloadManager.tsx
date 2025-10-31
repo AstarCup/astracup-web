@@ -88,7 +88,7 @@ export default function BulkDownloadManager({
                             className="text-gray-500 hover:text-gray-700 text-lg leading-none"
                             title="恢复"
                         >
-                            <Image src='/icons/fullscreen-exit-fill.svg' alt='恢复' width={32} height={32} />
+                            <Image src='/icons/fullscreen-fill.svg' alt='恢复' width={32} height={32} />
                         </button>
                         <button
                             onClick={onClose}
@@ -158,7 +158,7 @@ export default function BulkDownloadManager({
                             className="text-gray-500 hover:text-gray-700 text-lg"
                             title="最小化"
                         >
-                            <Image src='/icons/fullscreen-fill.svg' alt='最小化' width={32} height={32} />
+                            <Image src='/icons/fullscreen-exit-fill.svg' alt='最小化' width={32} height={32} />
                         </button>
                         <button
                             onClick={onClose}
