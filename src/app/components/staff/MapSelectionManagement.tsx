@@ -457,7 +457,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 if (data.success) {
                     setAvailableSeasons(data.availableSeasons);
                     setSeason(data.defaultSeason);
-                    // console.log('Season config loaded:', data);
+                    // // console.log('Season config loaded:', data);
                 }
             }
         } catch (error) {
@@ -1197,6 +1197,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         <div className="max-w-9xl mx-auto p-6">
             {isLoading ? (
                 <div className="text-center py-8">
+                    <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
                     <div className="text-lg text-white">正在加载...</div>
                 </div>
             ) : (
@@ -1984,7 +1985,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
                             >
-                                <Image src='/icons/loading.svg' alt='refresh map' width={30} height={30} />
+                                <Image src='/icons/loading-black.svg' alt='refresh map' width={30} height={30} />
                                 刷新MOD属性
                             </button>
                         </>

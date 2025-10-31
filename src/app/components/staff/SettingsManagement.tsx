@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { showSuccess, showError } from '@/app/components/ui/Notification';
 import Dropdown from '@/app/components/ui/Dropdown';
+import Image from 'next/image';
 
 interface TournamentSettings {
     id?: number;
@@ -253,7 +254,7 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
                     </h3>
                     <div className="bg-[#3D3D3D80] p-4 border border-gray-600">
                         <div className="flex justify-center items-center py-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E93B66]"></div>
+                            <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
                             <span className="ml-2 text-gray-400">加载中...</span>
                         </div>
                     </div>
@@ -401,7 +402,7 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
                             className="px-6 py-2 bg-[#E93B66] text-white rounded-md hover:bg-[#d32f5a] disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                         >
                             {saving && (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b border-white mr-2"></div>
+                                <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
                             )}
                             保存设置
                         </button>
@@ -443,7 +444,7 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
                                     className="flex-1 px-4 py-2 bg-[#E93B66] text-white rounded-md hover:bg-[#d32f5a] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                                 >
                                     {fetchingUser && (
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b border-white mr-2"></div>
+                                        <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
                                     )}
                                     获取信息
                                 </button>

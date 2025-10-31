@@ -73,8 +73,7 @@ export default function StreamingManagement({
 
                 {staffAssignmentsLoading ? (
                     <div className="flex justify-center items-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E93B66]"></div>
-                        <span className="ml-2 text-gray-400">加载中...</span>
+                        <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />                        <span className="ml-2 text-gray-400">加载中...</span>
                     </div>
                 ) : permissions.isAdmin ? (
                     // 管理员视图 - 显示所有已确认的staff分配（从比赛预约表获取）
@@ -201,8 +200,7 @@ export default function StreamingManagement({
 
                             {availableRoomsLoading ? (
                                 <div className="flex justify-center items-center py-8">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E93B66]"></div>
-                                    <span className="ml-2 text-gray-400">加载房间中...</span>
+                                    <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />                                    <span className="ml-2 text-gray-400">加载房间中...</span>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -398,8 +396,7 @@ export default function StreamingManagement({
 
                             {availableRoomsLoading ? (
                                 <div className="flex justify-center items-center py-8">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E93B66]"></div>
-                                    <span className="ml-2 text-gray-400">加载房间中...</span>
+                                    <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />                                    <span className="ml-2 text-gray-400">加载房间中...</span>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

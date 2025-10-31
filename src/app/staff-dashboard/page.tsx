@@ -645,7 +645,7 @@ export default function AdminPage() {
                     />
                 </div>
                 <div className="relative z-10 bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-8 text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#E93B66] mx-auto mb-4"></div>
+                    <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />                    <div className="text-white text-xl font-medium">加载中...</div>
                     <div className="text-white text-xl font-medium">加载中...</div>
                 </div>
             </div>

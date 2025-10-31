@@ -70,7 +70,7 @@ export default function RegistrationsPage() {
             <div className="min-h-screen py-12">
                 <div className="max-w-6xl mx-auto px-4">
                     <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F38181] mx-auto"></div>
+                        <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />                        <p className="mt-4 text-white">正在加载报名数据...</p>
                         <p className="mt-4 text-white">正在加载报名数据...</p>
                     </div>
                 </div>

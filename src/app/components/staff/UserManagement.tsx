@@ -37,8 +37,7 @@ export default function UserManagement({
                         >
                             {registrationsLoading ? (
                                 <div className="flex items-center">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                    加载中...
+                                    <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />                                    加载中...
                                 </div>
                             ) : '获取待审核用户列表'}
                         </button>
@@ -46,8 +45,7 @@ export default function UserManagement({
 
                     {registrationsLoading && (
                         <div className="text-center py-8">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-[#E93B66] mx-auto mb-4"></div>
-                            <p className="text-gray-400">正在加载注册数据...</p>
+                            <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />                            <p className="text-gray-400">正在加载注册数据...</p>
                         </div>
                     )}
 

@@ -161,7 +161,7 @@ function CreateMatchupModal({ onClose, onCreate, approvedPlayers }: {
                             className="px-4 py-2 bg-[#E93B66] text-white rounded-md hover:bg-[#d32f5a] disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                         >
                             {loading && (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b border-white mr-2"></div>
+                                <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
                             )}
                             创建对战
                         </button>
@@ -202,7 +202,7 @@ export default function MatchupManagement({ matchups, matchupsLoading, deletingM
 
                 {matchupsLoading ? (
                     <div className="flex justify-center items-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E93B66]"></div>
+                        <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
                         <span className="ml-2 text-gray-400">加载中...</span>
                     </div>
                 ) : (
@@ -232,7 +232,7 @@ export default function MatchupManagement({ matchups, matchupsLoading, deletingM
                                         title="删除对战"
                                     >
                                         {deletingMatchupId === matchup.id ? (
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b border-red-400"></div>
+                                            <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
                                         ) : (
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
