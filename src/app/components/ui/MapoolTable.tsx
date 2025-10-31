@@ -497,7 +497,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                             if (row.customModName && row.Slot?.includes("LZ")) {
                                 slotText = `LZ${row.Slot.match(/\d+/)?.[0] || ''}-${row.customModName}`;
                             } else if (row.customDTRate && row.customDTRate !== 1.5 && row.Slot?.includes("DT")) {
-                                slotText = `DT${row.Slot.match(/\d+/)?.[0] || ''}-${row.customDTRate.toFixed(1)}x`;
+                                slotText = `DT${row.Slot.match(/\d+/)?.[0] || ''}-${Number(row.customDTRate).toFixed(1)}x`;
                             }
 
                             if (row.Slot?.includes("NM")) {
@@ -655,7 +655,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                                 `LZ${detailCard.row.Slot.match(/\d+/)?.[0] || ''}`) :
                                             detailCard.row.customDTRate && detailCard.row.customDTRate !== 1.5 && detailCard.row.Slot?.includes("DT") ?
                                                 ((detailCard.row.customDTRate && detailCard.row.customDTRate !== 1.5) ?
-                                                    `DT${detailCard.row.Slot.match(/\d+/)?.[0] || ''}-${detailCard.row.customDTRate.toFixed(1)}倍` :
+                                                    `DT${detailCard.row.Slot.match(/\d+/)?.[0] || ''}-${Number(detailCard.row.customDTRate).toFixed(1)}倍` :
                                                     `DT${detailCard.row.Slot.match(/\d+/)?.[0] || ''}`) :
                                                 detailCard.row.Slot || 'NM1'
                                         }
