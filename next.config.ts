@@ -26,12 +26,7 @@ const nextConfig: NextConfig = {
       },
     ],
     minimumCacheTTL: 86400, // 1天 = 86400秒
-    dangerouslyAllowSVG: true,
-  },
-  // 启用静态资源缓存
-  experimental: {
-    optimizeCss: true,
-  },
+  }
 };
 
 export default nextConfig;
