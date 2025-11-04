@@ -26,6 +26,13 @@ const nextConfig: NextConfig = {
       },
     ],
     minimumCacheTTL: 86400, // 1天 = 86400秒
+    formats: ['image/svg'],
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
+  // 启用静态资源缓存
+  experimental: {
+    optimizeCss: true,
   },
 };
 
