@@ -79,6 +79,7 @@ interface ModdedStats {
     hp?: number;
     starRating?: number;
     bpm?: number;
+    totalLength?: number;
 }
 
 const MOD_OPTIONS = [
@@ -456,7 +457,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 if (data.success) {
                     setAvailableSeasons(data.availableSeasons);
                     setSeason(data.defaultSeason);
-                    console.log('Season config loaded:', data);
+                    // // console.log('Season config loaded:', data);
                 }
             }
         } catch (error) {
@@ -623,7 +624,9 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     // Use modded stats if available, otherwise original
                     starRating: moddedStats?.starRating ?? beatmapPreview.star_rating,
                     bpm: moddedStats?.bpm ?? beatmapPreview.bpm,
-                    totalLength: beatmapPreview.total_length,
+                    totalLength: selectedMods === 'DT' && customDTRate !== '' ?
+                        Math.round(beatmapPreview.total_length / (customDTRate as number)) :
+                        beatmapPreview.total_length,
                     ar: moddedStats?.ar ?? beatmapPreview.ar,
                     cs: moddedStats?.cs ?? beatmapPreview.cs,
                     od: moddedStats?.od ?? beatmapPreview.od,
@@ -652,7 +655,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             od: moddedStats.od,
                             hp: moddedStats.hp,
                             star_rating: moddedStats.starRating,
-                            bpm: moddedStats.bpm
+                            bpm: moddedStats.bpm,
+                            totalLength: selectedMods === 'DT' && customDTRate !== '' ?
+                                Math.round(beatmapPreview.total_length / (customDTRate as number)) :
+                                beatmapPreview.total_length
                         }
                         : undefined
                 })
@@ -778,12 +784,15 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 hp: modStats.hp,
                 starRating: modStats.starRating,
                 bpm: modStats.bpm,
+                // 计算DT时长
+                totalLength: selection.selectedMods === 'DT' && selection.customDTRate ?
+                    Math.round(latestBeatmap.total_length / selection.customDTRate) :
+                    latestBeatmap.total_length,
                 // 同时更新基础beatmap信息
                 title: latestBeatmap.title,
                 artist: latestBeatmap.artist,
                 version: latestBeatmap.version,
                 creator: latestBeatmap.creator,
-                totalLength: latestBeatmap.total_length,
                 coverUrl: latestBeatmap.cover_url
             }) : s));
 
@@ -802,14 +811,19 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             od: modStats.od,
                             hp: modStats.hp,
                             starRating: modStats.starRating,
-                            bpm: modStats.bpm
+                            bpm: modStats.bpm,
+                            totalLength: selection.selectedMods === 'DT' && selection.customDTRate ?
+                                Math.round(latestBeatmap.total_length / selection.customDTRate) :
+                                latestBeatmap.total_length
                         },
-                        // 同时更新基础beatmap信息
+                        // 同时更新基础beatmap信息，包括计算后的DT时长
                         title: latestBeatmap.title,
                         artist: latestBeatmap.artist,
                         version: latestBeatmap.version,
                         creator: latestBeatmap.creator,
-                        totalLength: latestBeatmap.total_length,
+                        totalLength: selection.selectedMods === 'DT' && selection.customDTRate ?
+                            Math.round(latestBeatmap.total_length / selection.customDTRate) :
+                            latestBeatmap.total_length,
                         coverUrl: latestBeatmap.cover_url
                     })
                 });
@@ -1183,6 +1197,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         <div className="max-w-9xl mx-auto p-6">
             {isLoading ? (
                 <div className="text-center py-8">
+                    <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
                     <div className="text-lg text-white">正在加载...</div>
                 </div>
             ) : (
@@ -1256,9 +1271,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                     {/* 添加选图表单 */}
                     {showAddForm && (
-                        <div className="mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
+                        <div className="mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50 max-w-5xl object-center">
                             <h3 className="text-lg font-bold mb-4">添加新选图</h3>
-
                             {/* URL输入 */}
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1374,7 +1388,12 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             <div className="text-center font-medium col-span-2">Length</div>
                                             <div className="text-center font-medium">BPM</div>
                                             <div className="text-center font-medium">★</div>
-                                            <div className="text-center font-bold text-base col-span-2">{formatLength(beatmapPreview.total_length)}</div>
+                                            <div className={`text-center font-bold text-base col-span-2 ${selectedMods === 'DT' && customDTRate !== '' ? 'text-red-500' : ''}`}>
+                                                {selectedMods === 'DT' && customDTRate !== '' ?
+                                                    formatLength(Math.round(beatmapPreview.total_length / (customDTRate as number))) + ' ▼' :
+                                                    formatLength(beatmapPreview.total_length)
+                                                }
+                                            </div>
                                             <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.bpm !== undefined ? (moddedStats.bpm > beatmapPreview.bpm + 0.01 ? 'text-red-500' : moddedStats.bpm < beatmapPreview.bpm - 0.01 ? 'text-green-500' : '') : ''}`}>
                                                 {(() => {
                                                     const val = moddedStats?.bpm ?? beatmapPreview.bpm;
@@ -1402,7 +1421,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                             {/* Mod选择 */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div>
+                                <div className="min-w-[220px]">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Mod
                                     </label>
@@ -1438,7 +1457,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
                                     <h4 className="font-medium text-blue-800 mb-2">Lazer特有MOD设置</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
+                                        <div className='min-w-[300px]'>
                                             <Dropdown
                                                 label="MOD名称"
                                                 options={[
@@ -1887,9 +1906,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         }}
                         className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
+                        <Image src='/icons/link.svg' alt='viewOsu' width={30} height={30} />
                         查看谱面
                     </button>
 
@@ -1901,9 +1918,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         }}
                         className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                        </svg>
+                        <Image src='/icons/osu-lazer-logo-black.svg' alt='viewOsu' width={30} height={30} />
                         从osu中打开
                     </button>
 
@@ -1919,9 +1934,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         }}
                         className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                        </svg>
+                        <Image src='/icons/download.svg' alt='download' width={30} height={30} />
                         下载谱面 (Nerinyan)
                     </button>
 
@@ -1934,9 +1947,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         }}
                         className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
+                        <Image src='/icons/download.svg' alt='download' width={30} height={30} />
                         osu官方下载
                     </button>
 
@@ -1948,9 +1959,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             }}
                             className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <Image src='/icons/auction-fill-black.svg' alt='download' width={30} height={30} />
                             {contextMenu.selection!.approved ? '取消过审' : '过审'}
                         </button>
                     )}
@@ -1964,9 +1973,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
                             >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v3M7 4H5a1 1 0 00-1 1v16a1 1 0 001 1h14a1 1 0 001-1V5a1 1 0 00-1-1h-2M7 4h10M9 9h6m-6 4h6m-6 4h6" />
-                                </svg>
+                                <Image src='/icons/auction-fill-black.svg' alt='download' width={30} height={30} />
                                 {contextMenu.selection!.padding ? '取消Padding' : '设为Padding'}
                             </button>
 
@@ -1977,9 +1984,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
                             >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A9 9 0 014.582 9m0 0H9m11 11v-5h-.581m0 0a9 9 0 01-15.357-2m15.357 2H15" />
-                                </svg>
+                                <Image src='/icons/loading-black.svg' alt='refresh map' width={30} height={30} />
                                 刷新MOD属性
                             </button>
                         </>
@@ -1995,9 +2000,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             }}
                             className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 transition-colors flex items-center gap-2"
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            <Image src='/icons/delete-bin-2-fill.svg' alt='delete' width={30} height={30} />
                             删除
                         </button>
                     )}

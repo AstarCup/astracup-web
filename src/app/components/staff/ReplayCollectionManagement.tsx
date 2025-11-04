@@ -5,6 +5,7 @@ import MapoolTable from '../ui/MapoolTable';
 import Dropdown from '../ui/Dropdown';
 import { showError, showSuccess } from '../ui/Notification';
 import { UserSession } from '@/lib/permissions';
+import Image from 'next/image';
 
 interface User {
     id: number;
@@ -602,7 +603,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                             >
                                 {downloadingAll ? (
                                     <>
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
                                         下载中...
                                     </>
                                 ) : (

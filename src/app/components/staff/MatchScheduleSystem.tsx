@@ -460,7 +460,10 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
     };
 
     if (loading) {
-        return <div className="text-center py-4">加载中...</div>;
+        return <div className="text-center py-4">
+            <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
+            加载中...
+        </div>;
     }
 
     return (

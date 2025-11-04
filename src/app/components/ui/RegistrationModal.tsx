@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { UserSession } from "@/lib/permissions";
 import { TournamentRegistration } from "@/lib/mysql-registrations";
 import { useConfig } from "@/app/components/ConfigProvider";
+import Image from 'next/image';
 
 interface RegistrationModalProps {
     user: UserSession;
@@ -152,8 +153,7 @@ export default function RegistrationModal({ user, isOpen, onClose, onRegister }:
         return (
             <div className="fixed inset-0 bg-black bg-opacity-100 flex items-center justify-center z-50 p-4">
                 <div className="bg-white  max-w-2xl w-full p-6 text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <h2 className="text-xl font-semibold text-gray-900 mb-2">正在加载配置信息</h2>
+                    <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />                    <h2 className="text-xl font-semibold text-gray-900 mb-2">正在加载配置信息</h2>
                     <p className="text-gray-600">请稍候...</p>
                 </div>
             </div>
