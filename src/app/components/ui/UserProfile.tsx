@@ -51,7 +51,7 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
                     alt={user.username}
                     width={64}
                     height={64}
-                    className="outline outline-2 outline-[#E93B66]"
+                    className=""
                     onError={handleAvatarError}
                 />
                 <div className="flex-1 min-w-0 items-left text-left pl-2">
