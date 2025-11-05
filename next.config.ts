@@ -26,7 +26,7 @@ const nextConfig: NextConfig = {
       },
     ],
     minimumCacheTTL: 86400, // 1天 = 86400秒
-  },
+  }
 };
 
 export default nextConfig;

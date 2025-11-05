@@ -223,7 +223,7 @@ export default function Navbar() {
             links: [
                 { name: 'GUIDE', href: `/guide`, tip: '赛事规则', svg: '/icons/guide-sm.svg' },
                 { name: 'SCHEDULE', href: `/schedule`, tip: '赛程安排', svg: '/icons/table-fill.svg' },
-                { name: 'MAPPOOL', href: `/mapool`, tip: '图池', svg: '/icons/mapool-sm.svg' },
+                { name: 'MAPPOOL', href: `/mappool`, tip: '图池', svg: '/icons/mapool-sm.svg' },
                 { name: 'REGISTRATIONS', href: '/registrations', tip: '所有报名玩家', svg: '/icons/register.svg' },
             ]
         },
@@ -489,7 +489,7 @@ export default function Navbar() {
                                             />
                                             <div className="flex-1">
                                                 <div className="text-white font-bold text-sm">{user.username}</div>
-                                                <div className="text-gray-300 text-xs">点击查看详细信息</div>
+                                                <div className="text-gray-300 text-xs">比赛预约</div>
                                             </div>
                                         </div>
                                     </Link>
