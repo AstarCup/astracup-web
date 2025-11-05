@@ -23,9 +23,9 @@
     "jquery-bracket": "^0.11.1",
     "jszip": "^3.10.1",
     "mysql2": "^3.14.3",
-    "next": "15.5.4",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "next": "16.0.1",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
     "remark": "^15.0.1",
     "remark-breaks": "^4.0.0",
     "remark-emoji": "^5.0.2",
@@ -38,9 +38,13 @@
     "@tailwindcss/postcss": "^4",
     "@types/jquery": "^3.5.33",
     "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2"
   }
 }
