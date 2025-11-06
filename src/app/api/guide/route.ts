@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Season parameter is required' }, { status: 400 });
         }
 
-        const { contentHtml } = await getMarkdownContent(`src/app/${season}/guide.md`);
+        const { contentHtml } = await getMarkdownContent(`src/app/guide/${season}.md`);
 
         return NextResponse.json({ contentHtml });
     } catch (error) {
