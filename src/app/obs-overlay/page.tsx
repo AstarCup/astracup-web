@@ -21,6 +21,7 @@ export default function ObsOverlay() {
         }
         // 默认值
         return {
+            matchInfo: '',
             boFormat: 'BO9',
             redTeamName: '红队',
             blueTeamName: '蓝队'
@@ -171,13 +172,15 @@ export default function ObsOverlay() {
                             <Image src='AstaraCup.svg' alt="AstraCup" width={400} height={200} />
                         </div>
                         <div style={{
-                            fontSize: '1.125rem',
+                            fontSize: '1.5rem',
                             color: 'black',
                             backgroundColor: 'white',
-                            padding: '0.25rem 0.5rem'
+                            padding: '0.25rem 0.5rem',
+                            fontWeight: 'bold',
                         }}>
-                            BO{settings.boFormat.slice(2)} (先得{winScore}分)
+                            {settings.matchInfo} BO{settings.boFormat.slice(2)} (先得{winScore}分)
                         </div>
+
                     </div>
 
                     {/* 蓝队 */}

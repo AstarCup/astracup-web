@@ -36,6 +36,13 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
         fetchPlayers();
     }, []);
 
+    const handleMatchInfoChange = (matchInfo: string) => {
+        onSettingsChange({
+            ...settings,
+            matchInfo
+        });
+    };
+
     const handleBoFormatChange = (boFormat: string) => {
         onSettingsChange({
             ...settings,
@@ -72,6 +79,7 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
             localStorage.removeItem('matchTeams');
             // 重置为默认设置
             onSettingsChange({
+                matchInfo: '',
                 boFormat: 'BO3',
                 redTeamName: '',
                 blueTeamName: '',
@@ -87,6 +95,18 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
     return (
         <div className="bg-[#3D3D3D] p-6 rounded-lg border-b-4 border-[#E93B66] mb-6">
             <h3 className="text-2xl font-bold text-white mb-6">比赛设置</h3>
+
+            {/* 比赛信息 */}
+            <div className="mb-6">
+                <label className="text-sm text-gray-200 mb-2 font-medium">比赛信息</label>
+                <input
+                    type="text"
+                    value={settings.matchInfo || ''}
+                    onChange={(e) => handleMatchInfoChange(e.target.value)}
+                    className="w-full bg-[#2D2D2D] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-[#E93B66] transition-colors"
+                    placeholder="输入比赛信息，如：小组赛A组、半决赛等"
+                />
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 {/* BO赛制选择 */}
