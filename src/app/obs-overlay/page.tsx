@@ -7,28 +7,85 @@ import { Team, MatchSettings as MatchSettingsType, BO_FORMAT_WIN_SCORE } from ".
 import Image from "next/image";
 
 export default function ObsOverlay() {
-    const [settings, setSettings] = useState<MatchSettingsType>({
-        boFormat: 'BO9',
-        redTeamName: '红队',
-        blueTeamName: '蓝队'
+    // 使用函数初始化状态，确保从localStorage加载数据
+    const [settings, setSettings] = useState<MatchSettingsType>(() => {
+        try {
+            const savedSettings = localStorage.getItem('matchSettings');
+            if (savedSettings) {
+                const parsedSettings = JSON.parse(savedSettings);
+                console.log('初始化设置数据:', parsedSettings);
+                return parsedSettings;
+            }
+        } catch (error) {
+            console.error('初始化设置数据失败:', error);
+        }
+        // 默认值
+        return {
+            boFormat: 'BO9',
+            redTeamName: '红队',
+            blueTeamName: '蓝队'
+        };
     });
 
-    const [teams, setTeams] = useState<Team[]>([
-        {
-            id: 'red',
-            name: '红队',
-            score: 0,
-            playerName: '红队玩家',
-            avatarUrl: undefined
-        },
-        {
-            id: 'blue',
-            name: '蓝队',
-            score: 0,
-            playerName: '蓝队玩家',
-            avatarUrl: undefined
+    const [teams, setTeams] = useState<Team[]>(() => {
+        try {
+            const savedTeams = localStorage.getItem('matchTeams');
+            if (savedTeams) {
+                const parsedTeams = JSON.parse(savedTeams);
+                console.log('初始化队伍数据:', parsedTeams);
+                return parsedTeams;
+            }
+        } catch (error) {
+            console.error('初始化队伍数据失败:', error);
         }
-    ]);
+        // 默认值
+        return [
+            {
+                id: 'red',
+                name: '红队',
+                score: 0,
+                playerName: '红队玩家',
+                avatarUrl: undefined
+            },
+            {
+                id: 'blue',
+                name: '蓝队',
+                score: 0,
+                playerName: '蓝队玩家',
+                avatarUrl: undefined
+            }
+        ];
+    });
+
+    // 保存设置到本地存储
+    useEffect(() => {
+        const saveSettingsToStorage = () => {
+            try {
+                console.log('保存设置到本地存储:', settings);
+                localStorage.setItem('matchSettings', JSON.stringify(settings));
+                console.log('设置保存成功');
+            } catch (error) {
+                console.error('保存设置到本地存储失败:', error);
+            }
+        };
+
+        saveSettingsToStorage();
+    }, [settings]);
+
+    // 保存队伍数据到本地存储
+    useEffect(() => {
+        const saveTeamsToStorage = () => {
+            try {
+                console.log('保存队伍数据到本地存储:', teams);
+                localStorage.setItem('matchTeams', JSON.stringify(teams));
+                console.log('队伍数据保存成功');
+            } catch (error) {
+                console.error('保存队伍数据到本地存储失败:', error);
+            }
+        };
+
+        saveTeamsToStorage();
+    }, [teams]);
 
     // 计算获胜所需分数
     const winScore = BO_FORMAT_WIN_SCORE[settings.boFormat];

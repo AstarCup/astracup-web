@@ -13,6 +13,7 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
     const [players, setPlayers] = useState<Player[]>([]);
     const [loading, setLoading] = useState(true);
 
+
     // 获取玩家列表
     useEffect(() => {
         const fetchPlayers = async () => {
@@ -57,6 +58,24 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
 
     const getTeamColor = (team: 'red' | 'blue') => {
         return team === 'red' ? '#E93B66' : '#3BE9D8';
+    };
+
+    const handleClearStorage = () => {
+        try {
+            localStorage.removeItem('matchSettings');
+            localStorage.removeItem('matchTeams');
+            // 重置为默认设置
+            onSettingsChange({
+                boFormat: 'BO3',
+                redTeamName: '',
+                blueTeamName: '',
+                redPlayer: undefined,
+                bluePlayer: undefined
+            });
+            alert('本地存储数据已清除，请刷新页面以重置比分');
+        } catch (error) {
+            console.error('清除本地存储失败:', error);
+        }
     };
 
     return (
@@ -115,7 +134,7 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                     <div className="flex gap-3">
                         {settings.redPlayer && (
                             <div className="flex items-center gap-2 bg-[#2D2D2D] p-2 rounded border" style={{ borderColor: getTeamColor('red') }}>
-                                <Image
+                                <img
                                     src={settings.redPlayer.avatar_url}
                                     alt={settings.redPlayer.username}
                                     width={32}
@@ -162,7 +181,7 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                     <div className="flex gap-3">
                         {settings.bluePlayer && (
                             <div className="flex items-center gap-2 bg-[#2D2D2D] p-2 rounded border" style={{ borderColor: getTeamColor('blue') }}>
-                                <Image
+                                <img
                                     src={settings.bluePlayer.avatar_url}
                                     alt={settings.bluePlayer.username}
                                     width={32}
@@ -200,6 +219,19 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                         </select>
                     </div>
                 </div>
+            </div>
+
+            {/* 清除存储按钮 */}
+            <div className="mt-6 pt-4 border-t border-gray-600">
+                <button
+                    onClick={handleClearStorage}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
+                >
+                    清除本地存储数据
+                </button>
+                <p className="text-xs text-gray-400 mt-2">
+                    清除所有保存的比赛设置数据，恢复为默认值
+                </p>
             </div>
         </div>
     );
