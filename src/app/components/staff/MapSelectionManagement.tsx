@@ -1974,7 +1974,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
                             >
                                 <Image src='/icons/auction-fill-black.svg' alt='download' width={30} height={30} />
-                                {contextMenu.selection!.padding ? '取消Padding' : '设为Padding'}
+                                {contextMenu.selection!.padding ? '取消测图' : '设为测图'}
                             </button>
 
                             <button
