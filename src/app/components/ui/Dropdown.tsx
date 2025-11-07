@@ -21,6 +21,7 @@ export interface DropdownProps {
     maxHeight?: string;
     minWidth?: string;
     darkMode?: boolean;
+    fontSize?: 'text-xs' | 'text-sm' | 'text-base' | 'text-lg' | 'text-xl' | 'text-4xl';
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -35,6 +36,7 @@ const Dropdown: React.FC<DropdownProps> = ({
     maxHeight = "12rem",
     minWidth = "7.5rem",
     darkMode = false,
+    fontSize = "text-sm",
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -87,9 +89,10 @@ const Dropdown: React.FC<DropdownProps> = ({
     };
 
     const getButtonClass = () => {
-        return darkMode
+        const baseClass = darkMode
             ? 'dropdown-button dropdown-button-dark'
             : 'dropdown-button';
+        return `${baseClass} ${fontSize}`;
     };
 
     const getOptionClass = (optionValue: string) => {
@@ -97,12 +100,11 @@ const Dropdown: React.FC<DropdownProps> = ({
             ? 'dropdown-option dropdown-option-dark'
             : 'dropdown-option';
 
-        if (value === optionValue) {
-            return darkMode
-                ? `${baseClass} dropdown-option-selected-dark`
-                : `${baseClass} dropdown-option-selected`;
-        }
-        return baseClass;
+        const selectedClass = value === optionValue
+            ? (darkMode ? 'dropdown-option-selected-dark' : 'dropdown-option-selected')
+            : '';
+
+        return `${baseClass} ${fontSize} ${selectedClass}`;
     };
 
     return (

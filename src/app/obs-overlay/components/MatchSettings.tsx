@@ -93,25 +93,23 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
     };
 
     return (
-        <div className="bg-[#3D3D3D] p-6 rounded-lg border-b-4 border-[#E93B66] mb-6">
-            <h3 className="text-2xl font-bold text-white mb-6">比赛设置</h3>
-
+        <div className="bg-[#3D3D3D] p-6 rounded-lg border-b-4 border-[#E93B66] mb-6 w-[50%]">
             {/* 比赛信息 */}
             <div className="mb-6">
-                <label className="text-sm text-gray-200 mb-2 font-medium">比赛信息</label>
+                <label className="text-3xl text-gray-200 mb-2 font-medium">比赛信息</label>
                 <input
                     type="text"
                     value={settings.matchInfo || ''}
                     onChange={(e) => handleMatchInfoChange(e.target.value)}
                     className="w-full bg-[#2D2D2D] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-[#E93B66] transition-colors"
-                    placeholder="输入比赛信息，如：小组赛A组、半决赛等"
+                    placeholder="输入比赛信息，如：Ro16 #1"
                 />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 {/* BO赛制选择 */}
                 <div className="flex flex-col">
-                    <label className="text-sm text-gray-200 mb-2 font-medium">BO赛制</label>
+                    <label className="text-2xl text-gray-200 mb-2 font-medium">BO赛制</label>
                     <Dropdown
                         options={[
                             { value: "BO3", label: "BO3 (先得2分)" },
@@ -124,12 +122,12 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                         onChange={handleBoFormatChange}
                         darkMode={true}
                         minWidth="100%"
+                        fontSize={"text-4xl"}
                     />
                 </div>
 
-                {/* 红队名称 */}
-                <div className="flex flex-col">
-                    <label className="text-sm text-gray-200 mb-2 font-medium">红队名称</label>
+                {/* <div className="flex flex-col">
+                    <label className="text-2xl text-gray-200 mb-2 font-medium">红队名称</label>
                     <input
                         type="text"
                         value={settings.redTeamName}
@@ -139,9 +137,8 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                     />
                 </div>
 
-                {/* 蓝队名称 */}
                 <div className="flex flex-col">
-                    <label className="text-sm text-gray-200 mb-2 font-medium">蓝队名称</label>
+                    <label className="text-2xl text-gray-200 mb-2 font-medium">蓝队名称</label>
                     <input
                         type="text"
                         value={settings.blueTeamName}
@@ -149,18 +146,18 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                         className="bg-[#2D2D2D] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-[#E93B66] transition-colors"
                         placeholder="蓝队名称"
                     />
-                </div>
+                </div> */}
             </div>
 
             {/* 玩家选择区域 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* 红队玩家选择 */}
                 <div className="flex flex-col">
-                    <label className="text-sm text-gray-200 mb-2 font-medium" style={{ color: getTeamColor('red') }}>
+                    <label className="text-2xl text-gray-200 mb-2 font-medium" style={{ color: getTeamColor('red') }}>
                         红队玩家
                     </label>
-                    <div className="flex gap-3">
-                        {settings.redPlayer && (
+                    <div className="flex gap-3 text-2xl">
+                        {/* {settings.redPlayer && (
                             <div className="flex items-center gap-2 bg-[#2D2D2D] p-2 rounded border" style={{ borderColor: getTeamColor('red') }}>
                                 <img
                                     src={settings.redPlayer.avatar_url}
@@ -169,15 +166,15 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                                     height={32}
                                     className="rounded"
                                 />
-                                <span className="text-white text-sm">{settings.redPlayer.inGameName}</span>
+                                <span className="text-white text-2xl">{settings.redPlayer.inGameName}</span>
                                 <button
                                     onClick={() => handlePlayerChange('red', undefined)}
-                                    className="text-xs text-gray-400 hover:text-white ml-2"
+                                    className="text-2xl text-gray-400 hover:text-white ml-2"
                                 >
                                     ×
                                 </button>
                             </div>
-                        )}
+                        )} */}
                         <Dropdown
                             options={loading ? [] : [
                                 { value: "", label: "选择红队玩家..." },
@@ -192,17 +189,18 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                             darkMode={true}
                             minWidth="100%"
                             disabled={loading}
+                            fontSize={"text-4xl"}
                         />
                     </div>
                 </div>
 
                 {/* 蓝队玩家选择 */}
                 <div className="flex flex-col">
-                    <label className="text-sm text-gray-200 mb-2 font-medium" style={{ color: getTeamColor('blue') }}>
+                    <label className="text-2xl text-gray-200 mb-2 font-medium" style={{ color: getTeamColor('blue') }}>
                         蓝队玩家
                     </label>
                     <div className="flex gap-3">
-                        {settings.bluePlayer && (
+                        {/* {settings.bluePlayer && (
                             <div className="flex items-center gap-2 bg-[#2D2D2D] p-2 rounded border" style={{ borderColor: getTeamColor('blue') }}>
                                 <img
                                     src={settings.bluePlayer.avatar_url}
@@ -211,7 +209,7 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                                     height={32}
                                     className="rounded"
                                 />
-                                <span className="text-white text-sm">{settings.bluePlayer.inGameName}</span>
+                                <span className="text-white text-2xl">{settings.bluePlayer.inGameName}</span>
                                 <button
                                     onClick={() => handlePlayerChange('blue', undefined)}
                                     className="text-xs text-gray-400 hover:text-white ml-2"
@@ -219,7 +217,7 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                                     ×
                                 </button>
                             </div>
-                        )}
+                        )} */}
                         <Dropdown
                             options={loading ? [] : [
                                 { value: "", label: "选择蓝队玩家..." },
@@ -234,6 +232,7 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                             darkMode={true}
                             minWidth="100%"
                             disabled={loading}
+                            fontSize={"text-4xl"}
                         />
                     </div>
                 </div>
@@ -243,7 +242,7 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
             <div className="mt-6 pt-4 border-t border-gray-600">
                 <button
                     onClick={handleClearStorage}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-2xl transition-colors"
                 >
                     清除本地存储数据
                 </button>
