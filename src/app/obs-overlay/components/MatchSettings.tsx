@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { MatchSettings as MatchSettingsType, Player } from "../types/match";
 import Image from "next/image";
+import Dropdown, { DropdownOption } from "@/app/components/ui/Dropdown";
 
 interface MatchSettingsProps {
     settings: MatchSettingsType;
@@ -35,10 +36,10 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
         fetchPlayers();
     }, []);
 
-    const handleBoFormatChange = (boFormat: MatchSettingsType['boFormat']) => {
+    const handleBoFormatChange = (boFormat: string) => {
         onSettingsChange({
             ...settings,
-            boFormat
+            boFormat: boFormat as MatchSettingsType['boFormat']
         });
     };
 
@@ -54,6 +55,11 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
             ...settings,
             [team === 'red' ? 'redPlayer' : 'bluePlayer']: player
         });
+    };
+
+    const handlePlayerDropdownChange = (team: 'red' | 'blue', playerId: string) => {
+        const player = players.find(p => p.osuId === playerId);
+        handlePlayerChange(team, player);
     };
 
     const getTeamColor = (team: 'red' | 'blue') => {
@@ -86,17 +92,19 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                 {/* BO赛制选择 */}
                 <div className="flex flex-col">
                     <label className="text-sm text-gray-200 mb-2 font-medium">BO赛制</label>
-                    <select
+                    <Dropdown
+                        options={[
+                            { value: "BO3", label: "BO3 (先得2分)" },
+                            { value: "BO5", label: "BO5 (先得3分)" },
+                            { value: "BO7", label: "BO7 (先得4分)" },
+                            { value: "BO9", label: "BO9 (先得5分)" },
+                            { value: "BO11", label: "BO11 (先得6分)" }
+                        ]}
                         value={settings.boFormat}
-                        onChange={(e) => handleBoFormatChange(e.target.value as MatchSettingsType['boFormat'])}
-                        className="bg-[#2D2D2D] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-[#E93B66] transition-colors"
-                    >
-                        <option value="BO3">BO3 (先得2分)</option>
-                        <option value="BO5">BO5 (先得3分)</option>
-                        <option value="BO7">BO7 (先得4分)</option>
-                        <option value="BO9">BO9 (先得5分)</option>
-                        <option value="BO11">BO11 (先得6分)</option>
-                    </select>
+                        onChange={handleBoFormatChange}
+                        darkMode={true}
+                        minWidth="100%"
+                    />
                 </div>
 
                 {/* 红队名称 */}
@@ -150,26 +158,21 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                                 </button>
                             </div>
                         )}
-                        <select
-                            value={settings.redPlayer?.osuId || ''}
-                            onChange={(e) => {
-                                const playerId = e.target.value;
-                                const player = players.find(p => p.osuId === playerId);
-                                handlePlayerChange('red', player);
-                            }}
-                            className="flex-1 bg-[#2D2D2D] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-[#E93B66] transition-colors"
-                        >
-                            <option value="">选择红队玩家...</option>
-                            {loading ? (
-                                <option value="">加载中...</option>
-                            ) : (
-                                players.map(player => (
-                                    <option key={player.osuId} value={player.osuId}>
-                                        {player.inGameName} ({player.username}) - {Math.round(player.pp)}pp
-                                    </option>
-                                ))
-                            )}
-                        </select>
+                        <Dropdown
+                            options={loading ? [] : [
+                                { value: "", label: "选择红队玩家..." },
+                                ...players.map(player => ({
+                                    value: player.osuId,
+                                    label: `${player.inGameName} (${player.username}) - ${Math.round(player.pp)}pp`
+                                }))
+                            ]}
+                            value={settings.redPlayer?.osuId || ""}
+                            onChange={(value) => handlePlayerDropdownChange('red', value)}
+                            placeholder={loading ? "加载中..." : "选择红队玩家..."}
+                            darkMode={true}
+                            minWidth="100%"
+                            disabled={loading}
+                        />
                     </div>
                 </div>
 
@@ -197,26 +200,21 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                                 </button>
                             </div>
                         )}
-                        <select
-                            value={settings.bluePlayer?.osuId || ''}
-                            onChange={(e) => {
-                                const playerId = e.target.value;
-                                const player = players.find(p => p.osuId === playerId);
-                                handlePlayerChange('blue', player);
-                            }}
-                            className="flex-1 bg-[#2D2D2D] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-[#3BE9D8] transition-colors"
-                        >
-                            <option value="">选择蓝队玩家...</option>
-                            {loading ? (
-                                <option value="">加载中...</option>
-                            ) : (
-                                players.map(player => (
-                                    <option key={player.osuId} value={player.osuId}>
-                                        {player.inGameName} ({player.username}) - {Math.round(player.pp)}pp
-                                    </option>
-                                ))
-                            )}
-                        </select>
+                        <Dropdown
+                            options={loading ? [] : [
+                                { value: "", label: "选择蓝队玩家..." },
+                                ...players.map(player => ({
+                                    value: player.osuId,
+                                    label: `${player.inGameName} (${player.username}) - ${Math.round(player.pp)}pp`
+                                }))
+                            ]}
+                            value={settings.bluePlayer?.osuId || ""}
+                            onChange={(value) => handlePlayerDropdownChange('blue', value)}
+                            placeholder={loading ? "加载中..." : "选择蓝队玩家..."}
+                            darkMode={true}
+                            minWidth="100%"
+                            disabled={loading}
+                        />
                     </div>
                 </div>
             </div>

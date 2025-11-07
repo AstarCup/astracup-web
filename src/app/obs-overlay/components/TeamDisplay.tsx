@@ -27,7 +27,7 @@ export default function TeamDisplay({ team, onScoreChange, winScore }: TeamDispl
     };
 
     const getTeamColor = (teamId: 'red' | 'blue') => {
-        return teamId === 'red' ? '#E93B66' : '#3BE9D8';
+        return teamId === 'red' ? '#E93B66' : '#0FAAE7ff';
     };
 
     const isWinning = team.score === winScore;
@@ -40,7 +40,7 @@ export default function TeamDisplay({ team, onScoreChange, winScore }: TeamDispl
         //     backgroundColor: isWinning ? `${getTeamColor(team.id)}20` : '#00000080'
         // }}
         >
-            <div className="flex items-center justify-between w-full">
+            <div className="flex items-center justify-between w-full relative">
                 {/* 红队布局：头像 | 信息 | 比分 */}
                 {team.id === 'red' && (
                     <>
@@ -104,14 +104,14 @@ export default function TeamDisplay({ team, onScoreChange, winScore }: TeamDispl
                         </div>
                         {/* 比分 */}
                         <div>
-
-
                             {/* 获胜提示 */}
-                            {isWinning && (
-                                <div className="mt-4 text-lg font-bold text-white animate-pulse text-center">
-                                    <Image src='/icons/Winner.svg' alt="winner" width={200} height={100} />
+                            {/* {isWinning && (
+                                <div className="animate-pulse text-center absolute -top-10 left-38">
+                                    <div className="">
+                                        <Image src='/icons/Winner.svg' alt="winner" width={180} height={100} />
+                                    </div>
                                 </div>
-                            )}
+                            )} */}
                         </div>
                     </>
                 )}
@@ -122,11 +122,13 @@ export default function TeamDisplay({ team, onScoreChange, winScore }: TeamDispl
                         {/* 比分 */}
                         <div>
                             {/* 获胜提示 */}
-                            {isWinning && (
-                                <div className="mt-4 text-lg font-bold text-white animate-pulse text-center">
-                                    <Image src='/icons/Winner.svg' alt="winner" width={200} height={100} />
+                            {/* {isWinning && (
+                                <div className="animate-pulse text-center absolute -top-10 -right-38">
+                                    <div className="">
+                                        <Image src='/icons/Winner.svg' alt="winner" width={180} height={100} />
+                                    </div>
                                 </div>
-                            )}
+                            )} */}
                         </div>
                         {/* 信息 */}
                         <div className="flex-1 px-8 justify-items-end-safe">
