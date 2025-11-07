@@ -1950,8 +1950,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         <Image src='/icons/download.svg' alt='download' width={30} height={30} />
                         osu官方下载
                     </button>
-
-                    {(permissions.isAdmin || permissions.isMapSelector) && (
+                    {/* 怕点错 */}
+                    {/* {(permissions.isAdmin || permissions.isMapSelector) && (
                         <button
                             onClick={() => {
                                 toggleApproval(contextMenu.selection!.id, contextMenu.selection!.approved);
@@ -1962,7 +1962,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             <Image src='/icons/auction-fill-black.svg' alt='download' width={30} height={30} />
                             {contextMenu.selection!.approved ? '取消过审' : '过审'}
                         </button>
-                    )}
+                    )} */}
 
                     {(permissions.isAdmin || permissions.isMapSelector) && (
                         <>
