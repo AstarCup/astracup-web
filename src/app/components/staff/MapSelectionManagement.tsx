@@ -1548,16 +1548,16 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         </label>
                                         <input
                                             type="number"
-                                            step="0.1"
+                                            step="0.01"
                                             min="1.0"
                                             max="2.0"
                                             value={customDTRate}
                                             onChange={(e) => setCustomDTRate(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                            placeholder="1.5"
+                                            placeholder="1.50"
                                         />
                                         <p className="text-xs text-gray-500 mt-1">
-                                            默认1.5倍，可自定义1.0-2.0之间的倍率
+                                            默认1.50倍，可自定义1.00-2.00之间的倍率
                                         </p>
                                     </div>
                                 </div>
