@@ -1687,8 +1687,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                                     `LZ${selection.modPosition}-${selection.customModName}` :
                                                                     `LZ${selection.modPosition}`) :
                                                                 selection.selectedMods === 'DT' ?
-                                                                    ((selection.customDTRate && selection.customDTRate !== 1.5) ?
-                                                                        `DT${selection.modPosition}-${selection.customDTRate.toFixed(1)}倍` :
+                                                                    ((selection.customDTRate && selection.customDTRate !== 1.50) ?
+                                                                        `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}倍` :
                                                                         `DT${selection.modPosition}`) :
                                                                     `${selection.selectedMods}${selection.modPosition}`
                                                             }
