@@ -20,6 +20,7 @@ export interface Team {
 }
 
 export interface MatchSettings {
+  matchInfo: string;
   boFormat: 'BO3' | 'BO5' | 'BO7' | 'BO9' | 'BO11';
   redTeamName: string;
   blueTeamName: string;

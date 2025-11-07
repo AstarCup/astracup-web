@@ -1548,16 +1548,16 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         </label>
                                         <input
                                             type="number"
-                                            step="0.1"
+                                            step="0.01"
                                             min="1.0"
                                             max="2.0"
                                             value={customDTRate}
                                             onChange={(e) => setCustomDTRate(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                            placeholder="1.5"
+                                            placeholder="1.50"
                                         />
                                         <p className="text-xs text-gray-500 mt-1">
-                                            默认1.5倍，可自定义1.0-2.0之间的倍率
+                                            默认1.50倍，可自定义1.00-2.00之间的倍率
                                         </p>
                                     </div>
                                 </div>
@@ -1687,8 +1687,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                                     `LZ${selection.modPosition}-${selection.customModName}` :
                                                                     `LZ${selection.modPosition}`) :
                                                                 selection.selectedMods === 'DT' ?
-                                                                    ((selection.customDTRate && selection.customDTRate !== 1.5) ?
-                                                                        `DT${selection.modPosition}-${selection.customDTRate.toFixed(1)}倍` :
+                                                                    ((selection.customDTRate && selection.customDTRate !== 1.50) ?
+                                                                        `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}倍` :
                                                                         `DT${selection.modPosition}`) :
                                                                     `${selection.selectedMods}${selection.modPosition}`
                                                             }
@@ -1950,8 +1950,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         <Image src='/icons/download.svg' alt='download' width={30} height={30} />
                         osu官方下载
                     </button>
-
-                    {(permissions.isAdmin || permissions.isMapSelector) && (
+                    {/* 怕点错 */}
+                    {/* {(permissions.isAdmin || permissions.isMapSelector) && (
                         <button
                             onClick={() => {
                                 toggleApproval(contextMenu.selection!.id, contextMenu.selection!.approved);
@@ -1962,7 +1962,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             <Image src='/icons/auction-fill-black.svg' alt='download' width={30} height={30} />
                             {contextMenu.selection!.approved ? '取消过审' : '过审'}
                         </button>
-                    )}
+                    )} */}
 
                     {(permissions.isAdmin || permissions.isMapSelector) && (
                         <>
@@ -1974,7 +1974,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
                             >
                                 <Image src='/icons/auction-fill-black.svg' alt='download' width={30} height={30} />
-                                {contextMenu.selection!.padding ? '取消Padding' : '设为Padding'}
+                                {contextMenu.selection!.padding ? '取消测图' : '设为测图'}
                             </button>
 
                             <button

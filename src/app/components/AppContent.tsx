@@ -1,6 +1,7 @@
 'use client';
 
 import { useConfig } from '../components/ConfigProvider';
+import { usePathname } from 'next/navigation';
 import Image from "next/image";
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/footer';
@@ -42,28 +43,47 @@ function LoadingScreen({ isLoading }: { isLoading: boolean }) {
 // 应用内容组件
 export function AppContent({ children }: { children: React.ReactNode }) {
     const { isLoading } = useConfig();
+    const pathname = usePathname();
+
+    // 定义需要隐藏组件的页面路径
+    const HIDE_COMPONENTS_PAGES = [
+        '/obs-overlay',
+    ];
+
+    // 检查当前页面是否需要隐藏组件
+    const shouldHideComponents = HIDE_COMPONENTS_PAGES.some(page =>
+        pathname?.startsWith(page)
+    );
 
     return (
         <>
-            <LoadingScreen isLoading={isLoading} />
+            {!shouldHideComponents && <LoadingScreen isLoading={isLoading} />}
             {!isLoading && (
                 <>
-                    <NoiseBackground />
-                    <ParallaxBackground />
-                    <Image
-                        src="/background-top.svg"
-                        alt="Background"
-                        className="object-cover object-center z-0 select-none pointer-events-none opacity-50"
-                        style={{ position: 'fixed', zIndex: -9999, width: '100%', height: '100%', top: 0, left: 0 }}
-                        width={1000}
-                        height={500}
-                    />
-                    <Navbar />
-                    <main className={`pt-30`}>
+                    {!shouldHideComponents && (
+                        <>
+                            <NoiseBackground />
+                            <ParallaxBackground />
+                            <Image
+                                src="/background-top.svg"
+                                alt="Background"
+                                className="object-cover object-center z-0 select-none pointer-events-none opacity-50"
+                                style={{ position: 'fixed', zIndex: -9999, width: '100%', height: '100%', top: 0, left: 0 }}
+                                width={1000}
+                                height={500}
+                            />
+                            <Navbar />
+                        </>
+                    )}
+                    <main className={`${!shouldHideComponents ? 'pt-30' : ''}`}>
                         {children}
                     </main>
-                    <Footer />
-                    <NotificationContainer />
+                    {!shouldHideComponents && (
+                        <>
+                            <Footer />
+                            <NotificationContainer />
+                        </>
+                    )}
                 </>
             )}
         </>
