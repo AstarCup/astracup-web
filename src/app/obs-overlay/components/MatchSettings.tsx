@@ -95,8 +95,8 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
     return (
         <div className="bg-[#3D3D3D] p-6 rounded-lg border-b-4 border-[#E93B66] mb-6 w-[50%]">
             {/* 比赛信息 */}
-            <div className="mb-6">
-                <label className="text-3xl text-gray-200 mb-2 font-medium">比赛信息</label>
+            <div className="mb-6 text-4xl">
+                <label className="text-gray-200 mb-2 font-medium">比赛信息</label>
                 <input
                     type="text"
                     value={settings.matchInfo || ''}
@@ -112,11 +112,9 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                     <label className="text-2xl text-gray-200 mb-2 font-medium">BO赛制</label>
                     <Dropdown
                         options={[
-                            { value: "BO3", label: "BO3 (先得2分)" },
-                            { value: "BO5", label: "BO5 (先得3分)" },
-                            { value: "BO7", label: "BO7 (先得4分)" },
-                            { value: "BO9", label: "BO9 (先得5分)" },
-                            { value: "BO11", label: "BO11 (先得6分)" }
+                            { value: "BO9", label: "BO9 (一轮)" },
+                            { value: "BO11", label: "BO11 (二 三轮)" },
+                            { value: "BO13", label: "BO13 (四 五轮)" },
                         ]}
                         value={settings.boFormat}
                         onChange={handleBoFormatChange}

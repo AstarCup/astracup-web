@@ -21,7 +21,7 @@ export interface Team {
 
 export interface MatchSettings {
   matchInfo: string;
-  boFormat: 'BO3' | 'BO5' | 'BO7' | 'BO9' | 'BO11';
+  boFormat: 'BO3' | 'BO5' | 'BO7' | 'BO9' | 'BO11' | 'BO13';
   redTeamName: string;
   blueTeamName: string;
   redPlayer?: Player;
@@ -33,5 +33,6 @@ export const BO_FORMAT_WIN_SCORE: Record<string, number> = {
   'BO5': 3,
   'BO7': 4,
   'BO9': 5,
-  'BO11': 6
+  'BO11': 6,
+  'BO13': 7,
 };
