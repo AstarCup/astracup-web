@@ -34,36 +34,100 @@ const Dropdown: React.FC<DropdownProps> = ({
     clearButtonText = "清除",
     disabled = false,
     maxHeight = "12rem",
-    minWidth = "7.5rem",
+    minWidth = "20rem",
     darkMode = false,
     fontSize = "text-sm",
 }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filteredOptions, setFilteredOptions] = useState<DropdownOption[]>(options);
+    const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    // Filter options based on search query
+    useEffect(() => {
+        if (searchQuery.trim() === '') {
+            setFilteredOptions(options);
+        } else {
+            const filtered = options.filter(option =>
+                option.label.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setFilteredOptions(filtered);
+        }
+        setHighlightedIndex(-1);
+    }, [searchQuery, options]);
+
+    // Focus search input when dropdown opens
+    useEffect(() => {
+        if (isOpen && searchInputRef.current) {
+            searchInputRef.current.focus();
+        }
+    }, [isOpen]);
 
     // Handle click outside to close dropdown
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
+                setSearchQuery('');
             }
         };
 
         const handleEscKey = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
                 setIsOpen(false);
+                setSearchQuery('');
+            }
+        };
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (!isOpen) return;
+
+            switch (event.key) {
+                case 'ArrowDown':
+                    event.preventDefault();
+                    setHighlightedIndex(prev =>
+                        prev < filteredOptions.length - 1 ? prev + 1 : 0
+                    );
+                    break;
+                case 'ArrowUp':
+                    event.preventDefault();
+                    setHighlightedIndex(prev =>
+                        prev > 0 ? prev - 1 : filteredOptions.length - 1
+                    );
+                    break;
+                case 'Enter':
+                    event.preventDefault();
+                    if (highlightedIndex >= 0 && filteredOptions[highlightedIndex]) {
+                        handleOptionClick(filteredOptions[highlightedIndex].value);
+                    }
+                    break;
             }
         };
 
         if (isOpen) {
             document.addEventListener('mousedown', handleClickOutside);
             document.addEventListener('keydown', handleEscKey);
+            document.addEventListener('keydown', handleKeyDown);
             return () => {
                 document.removeEventListener('mousedown', handleClickOutside);
                 document.removeEventListener('keydown', handleEscKey);
+                document.removeEventListener('keydown', handleKeyDown);
             };
         }
-    }, [isOpen]);
+    }, [isOpen, filteredOptions, highlightedIndex]);
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+    };
+
+    const handleButtonClick = () => {
+        if (!disabled) {
+            setIsOpen(!isOpen);
+            setSearchQuery('');
+        }
+    };
 
     const handleOptionClick = (optionValue: string) => {
         onChange(optionValue);
@@ -95,7 +159,7 @@ const Dropdown: React.FC<DropdownProps> = ({
         return `${baseClass} ${fontSize}`;
     };
 
-    const getOptionClass = (optionValue: string) => {
+    const getOptionClass = (optionValue: string, index: number) => {
         const baseClass = darkMode
             ? 'dropdown-option dropdown-option-dark'
             : 'dropdown-option';
@@ -104,7 +168,11 @@ const Dropdown: React.FC<DropdownProps> = ({
             ? (darkMode ? 'dropdown-option-selected-dark' : 'dropdown-option-selected')
             : '';
 
-        return `${baseClass} ${fontSize} ${selectedClass}`;
+        const highlightedClass = index === highlightedIndex
+            ? (darkMode ? 'dropdown-option-highlighted-dark' : 'dropdown-option-highlighted')
+            : '';
+
+        return `${baseClass} ${fontSize} ${selectedClass} ${highlightedClass}`;
     };
 
     return (
@@ -139,22 +207,41 @@ const Dropdown: React.FC<DropdownProps> = ({
                 {isOpen && (
                     <div
                         className="dropdown-menu"
-                        style={{ maxHeight, width: '100%' }}
+                        style={{ maxHeight, minWidth }}
                     >
-                        {options.map((option) => (
-                            <button
-                                key={option.value}
-                                type="button"
-                                onClick={() => !option.disabled && handleOptionClick(option.value)}
-                                disabled={option.disabled}
-                                className={getOptionClass(option.value)}
-                            >
-                                {option.count !== undefined
-                                    ? `${option.label} (${option.count})`
-                                    : option.label
-                                }
-                            </button>
-                        ))}
+                        {/* Search input */}
+                        <div className="p-2 border-b border-gray-200">
+                            <input
+                                ref={searchInputRef}
+                                type="text"
+                                value={searchQuery}
+                                onChange={handleSearchChange}
+                                placeholder="搜索..."
+                                className={`text-black w-full px-2 py-1 border border-gray-300 ${fontSize}`}
+                            />
+                        </div>
+
+                        {/* Filtered options */}
+                        {filteredOptions.length > 0 ? (
+                            filteredOptions.map((option, index) => (
+                                <button
+                                    key={option.value}
+                                    type="button"
+                                    onClick={() => !option.disabled && handleOptionClick(option.value)}
+                                    disabled={option.disabled}
+                                    className={getOptionClass(option.value, index)}
+                                >
+                                    {option.count !== undefined
+                                        ? `${option.label} (${option.count})`
+                                        : option.label
+                                    }
+                                </button>
+                            ))
+                        ) : (
+                            <div className="px-3 py-2 text-sm text-gray-500 text-center">
+                                没有找到匹配的选项
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

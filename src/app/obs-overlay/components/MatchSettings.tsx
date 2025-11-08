@@ -119,7 +119,7 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                         value={settings.boFormat}
                         onChange={handleBoFormatChange}
                         darkMode={true}
-                        minWidth="100%"
+                        minWidth="20rem"
                         fontSize={"text-4xl"}
                     />
                 </div>
@@ -178,14 +178,15 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                                 { value: "", label: "选择红队玩家..." },
                                 ...players.map(player => ({
                                     value: player.osuId,
-                                    label: `${player.inGameName} (${player.username}) - ${Math.round(player.pp)}pp`
+                                    label: `${player.inGameName}`
                                 }))
                             ]}
                             value={settings.redPlayer?.osuId || ""}
                             onChange={(value) => handlePlayerDropdownChange('red', value)}
                             placeholder={loading ? "加载中..." : "选择红队玩家..."}
                             darkMode={true}
-                            minWidth="100%"
+                            minWidth="35rem"
+                            maxHeight="30rem"
                             disabled={loading}
                             fontSize={"text-4xl"}
                         />
@@ -221,14 +222,15 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                                 { value: "", label: "选择蓝队玩家..." },
                                 ...players.map(player => ({
                                     value: player.osuId,
-                                    label: `${player.inGameName} (${player.username}) - ${Math.round(player.pp)}pp`
+                                    label: `${player.inGameName}`
                                 }))
                             ]}
                             value={settings.bluePlayer?.osuId || ""}
                             onChange={(value) => handlePlayerDropdownChange('blue', value)}
                             placeholder={loading ? "加载中..." : "选择蓝队玩家..."}
                             darkMode={true}
-                            minWidth="100%"
+                            minWidth="35rem"
+                            maxHeight="30rem"
                             disabled={loading}
                             fontSize={"text-4xl"}
                         />
@@ -242,11 +244,8 @@ export default function MatchSettings({ settings, onSettingsChange }: MatchSetti
                     onClick={handleClearStorage}
                     className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-2xl transition-colors"
                 >
-                    清除本地存储数据
+                    重置
                 </button>
-                <p className="text-xs text-gray-400 mt-2">
-                    清除所有保存的比赛设置数据，恢复为默认值
-                </p>
             </div>
         </div>
     );

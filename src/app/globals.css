@@ -476,6 +476,14 @@ select:disabled {
   @apply bg-[#E93B66] text-white hover:bg-[#3BE9D8];
 }
 
+.dropdown-option-highlighted {
+  @apply bg-blue-50 border-blue-200 border;
+}
+
+.dropdown-option-highlighted-dark {
+  @apply bg-gray-700 border-gray-600 border;
+}
+
 .dropdown-clear-button {
   @apply text-blue-600 hover:text-blue-800 underline;
 }
