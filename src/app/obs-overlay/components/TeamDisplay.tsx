@@ -69,7 +69,7 @@ export default function TeamDisplay({ team, onScoreChange, winScore }: TeamDispl
                             <div className="">
                                 {/* 玩家名称 */}
                                 <div className="text-left">
-                                    <p className="text-5xl font-medium bg-white" style={{ color: getTeamColor(team.id) }}>
+                                    <p className="text-5xl font-bold bg-white" style={{ color: getTeamColor(team.id) }}>
                                         {team.playerName}
                                     </p>
                                 </div>
@@ -143,7 +143,7 @@ export default function TeamDisplay({ team, onScoreChange, winScore }: TeamDispl
                             <div className="bg-white">
                                 {/* 玩家名称 */}
                                 <div className="text-right">
-                                    <p className="text-5xl font-medium" style={{ color: getTeamColor(team.id) }}>
+                                    <p className="text-5xl font-bold" style={{ color: getTeamColor(team.id) }}>
                                         {team.playerName}
                                     </p>
                                 </div>
