@@ -665,7 +665,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                                 `LZ${detailCard.row.Slot.match(/\d+/)?.[0] || ''}`) :
                                             detailCard.row.customDTRate && detailCard.row.customDTRate !== 1.5 && detailCard.row.Slot?.startsWith("DT") ?
                                                 ((detailCard.row.customDTRate && detailCard.row.customDTRate !== 1.5) ?
-                                                    `DT${detailCard.row.Slot.match(/\d+/)?.[0] || ''}-${Number(detailCard.row.customDTRate).toFixed(1)}倍` :
+                                                    `DT${detailCard.row.Slot.match(/\d+/)?.[0] || ''}-${Number(detailCard.row.customDTRate).toFixed(2)}倍` :
                                                     `DT${detailCard.row.Slot.match(/\d+/)?.[0] || ''}`) :
                                                 detailCard.row.Slot || 'NM1'
                                         }
