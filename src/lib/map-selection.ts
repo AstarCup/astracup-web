@@ -512,11 +512,12 @@ export const mapSelectionStorage = {
             // 检查是否只更新mod加成后的属性字段
             const statsKeys = ['ar', 'cs', 'od', 'hp', 'starRating', 'bpm'];
             const isOnlyStatsUpdate = Object.keys(updates).length > 0 && Object.keys(updates).every(key => statsKeys.includes(key));
-            // 检查是否只更新approved字段（管理员可以绕过创建者验证）
-            const isOnlyApprovedUpdate = Object.keys(updates).length === 1 && updates.approved !== undefined;
+            // 检查是否包含approved字段更新（管理员可以绕过创建者验证）
+            const isApprovedUpdate = updates.approved !== undefined;
 
-            // 如果不是只更新padding、stats或approved字段，并且用户不是管理员，则需要验证创建者身份
-            if (!isOnlyPaddingUpdate && !isOnlyStatsUpdate && !(isOnlyApprovedUpdate && isAdmin)) {
+            // 如果不是只更新padding或stats字段，并且用户不是管理员，则需要验证创建者身份
+            // 管理员更新approved字段时可以绕过创建者验证
+            if (!isOnlyPaddingUpdate && !isOnlyStatsUpdate && !(isApprovedUpdate && isAdmin)) {
                 whereClause += ' AND selectedBy = ?';
                 queryParams.push(selectedBy);
             }
@@ -534,7 +535,7 @@ export const mapSelectionStorage = {
                 affectedRows: updateResult.affectedRows,
                 changedRows: updateResult.changedRows,
                 isAdmin: isAdmin,
-                isOnlyApprovedUpdate: isOnlyApprovedUpdate
+                isApprovedUpdate: isApprovedUpdate
             });
             return updateResult.affectedRows > 0;
         } catch (error) {

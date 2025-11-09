@@ -1842,7 +1842,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredSelections
+                                    {selections
                                         .filter(selection => tempApprovedSelections.has(selection.id) && !selection.approved)
                                         .map(selection => (
                                             <tr key={selection.id} className="hover:bg-gray-50">
