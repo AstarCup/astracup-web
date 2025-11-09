@@ -2,6 +2,7 @@
 import mysql from 'mysql2/promise';
 import { getUserById } from './osu-api';
 import { get } from '@vercel/edge-config';
+import { verifyMapSelectionAuth } from './permissions';
 
 // 数据库连接配置（复用现有配置）
 const dbConfig = {
@@ -500,6 +501,9 @@ export const mapSelectionStorage = {
                 return false;
             }
 
+            // 检查当前用户是否为管理员
+            const isAdmin = await verifyAdminAuth(selectedBy);
+
             // 对于padding字段，任何有权限的用户都可以修改；其他字段只有创建者可以修改
             let whereClause = 'WHERE id = ?';
             const queryParams = [...params, id];
@@ -509,9 +513,16 @@ export const mapSelectionStorage = {
             // 检查是否只更新mod加成后的属性字段
             const statsKeys = ['ar', 'cs', 'od', 'hp', 'starRating', 'bpm'];
             const isOnlyStatsUpdate = Object.keys(updates).length > 0 && Object.keys(updates).every(key => statsKeys.includes(key));
+            // 检查是否包含approved字段更新（管理员可以绕过创建者验证）
+            const isApprovedUpdate = updates.approved !== undefined;
 
-            // 如果不是只更新padding或只更新stats字段，则需要验证创建者身份
-            if (!isOnlyPaddingUpdate && !isOnlyStatsUpdate) {
+            // 管理员可以更新任何approved字段，图池选择者可以更新任何选图的approved字段
+            // 其他用户只能更新自己创建的选图
+            // 例外：padding字段和stats字段任何有权限的用户都可以更新
+            const isMapSelector = await verifyMapSelectionAuth(selectedBy);
+            const canUpdateAnyApproved = isAdmin || (isApprovedUpdate && isMapSelector);
+
+            if (!isOnlyPaddingUpdate && !isOnlyStatsUpdate && !canUpdateAnyApproved) {
                 whereClause += ' AND selectedBy = ?';
                 queryParams.push(selectedBy);
             }
@@ -527,7 +538,9 @@ export const mapSelectionStorage = {
                 sql: `UPDATE map_selections SET ${setClause.join(', ')} ${whereClause}`,
                 params: queryParams,
                 affectedRows: updateResult.affectedRows,
-                changedRows: updateResult.changedRows
+                changedRows: updateResult.changedRows,
+                isAdmin: isAdmin,
+                isApprovedUpdate: isApprovedUpdate
             });
             return updateResult.affectedRows > 0;
         } catch (error) {

@@ -28,6 +28,11 @@ export interface MatchSettings {
   bluePlayer?: Player;
 }
 
+export interface TimerState {
+  remainingTime: number; // 剩余时间（秒）
+  isRunning: boolean;    // 是否正在运行
+}
+
 export const BO_FORMAT_WIN_SCORE: Record<string, number> = {
   'BO3': 2,
   'BO5': 3,

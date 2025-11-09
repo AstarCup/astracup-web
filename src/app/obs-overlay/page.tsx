@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import MatchSettings from "./components/MatchSettings";
 import TeamDisplay from "./components/TeamDisplay";
-import { Team, MatchSettings as MatchSettingsType, BO_FORMAT_WIN_SCORE } from "./types/match";
+import TimerDisplay from "./components/TimerDisplay";
+import { Team, MatchSettings as MatchSettingsType, TimerState, BO_FORMAT_WIN_SCORE } from "./types/match";
 import Image from "next/image";
 
 export default function ObsOverlay() {
@@ -58,6 +59,25 @@ export default function ObsOverlay() {
         ];
     });
 
+    // 计时器状态
+    const [timerState, setTimerState] = useState<TimerState>(() => {
+        try {
+            const savedTimerState = localStorage.getItem('timerState');
+            if (savedTimerState) {
+                const parsedTimerState = JSON.parse(savedTimerState);
+                console.log('初始化计时器数据:', parsedTimerState);
+                return parsedTimerState;
+            }
+        } catch (error) {
+            console.error('初始化计时器数据失败:', error);
+        }
+        // 默认值
+        return {
+            remainingTime: 0,
+            isRunning: false
+        };
+    });
+
     // 保存设置到本地存储
     useEffect(() => {
         const saveSettingsToStorage = () => {
@@ -87,6 +107,21 @@ export default function ObsOverlay() {
 
         saveTeamsToStorage();
     }, [teams]);
+
+    // 保存计时器状态到本地存储
+    useEffect(() => {
+        const saveTimerStateToStorage = () => {
+            try {
+                console.log('保存计时器状态到本地存储:', timerState);
+                localStorage.setItem('timerState', JSON.stringify(timerState));
+                console.log('计时器状态保存成功');
+            } catch (error) {
+                console.error('保存计时器状态到本地存储失败:', error);
+            }
+        };
+
+        saveTimerStateToStorage();
+    }, [timerState]);
 
     // 计算获胜所需分数
     const winScore = BO_FORMAT_WIN_SCORE[settings.boFormat];
@@ -139,7 +174,7 @@ export default function ObsOverlay() {
                 {/* 队伍显示区域 */}
                 <div style={{
                     display: 'flex',
-                    marginTop: '160px' // mt-40 对应 160px
+                    marginTop: '20px' // mt-40 对应 160px
                 }}>
                     {/* 红队 */}
                     <div style={{
@@ -178,7 +213,7 @@ export default function ObsOverlay() {
                             padding: '0.25rem 0.5rem',
                             fontWeight: 'bold',
                         }}>
-                            {settings.matchInfo} BO{settings.boFormat.slice(2)} (先得{winScore}分)
+                            {settings.matchInfo} BO{settings.boFormat.slice(2)} (抢{winScore}分)
                         </div>
 
                     </div>
@@ -197,13 +232,19 @@ export default function ObsOverlay() {
                     </div>
                 </div>
 
-                {/* 设置面板 */}
-                <div style={{ marginTop: '160px' }}>
-                    <MatchSettings
-                        settings={settings}
-                        onSettingsChange={setSettings}
-                    />
-                </div>
+                {/* 计时器显示 */}
+                <TimerDisplay timerState={timerState} />
+
+
+            </div>
+            {/* 设置面板 */}
+            <div style={{ marginTop: '160px' }}>
+                <MatchSettings
+                    settings={settings}
+                    onSettingsChange={setSettings}
+                    timerState={timerState}
+                    onTimerStateChange={setTimerState}
+                />
             </div>
         </div>
     );
