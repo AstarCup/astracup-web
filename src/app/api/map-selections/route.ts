@@ -379,6 +379,10 @@ export async function PUT(request: NextRequest) {
         console.log('updateMapSelection result:', success);
 
         if (!success) {
+            // 添加更详细的错误信息
+            const isAdmin = await verifyAdminAuth(selectedBy);
+            const isMapSelector = await verifyMapSelectionAuth(selectedBy);
+            console.log('Update failed - permissions:', { isAdmin, isMapSelector, updates });
             return NextResponse.json(
                 { error: '更新选图失败或您没有权限更新此选图' },
                 { status: 400 }

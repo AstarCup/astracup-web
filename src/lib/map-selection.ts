@@ -515,8 +515,8 @@ export const mapSelectionStorage = {
             // 检查是否包含approved字段更新（管理员可以绕过创建者验证）
             const isApprovedUpdate = updates.approved !== undefined;
 
-            // 如果不是只更新padding或stats字段，并且用户不是管理员，则需要验证创建者身份
-            // 管理员更新approved字段时可以绕过创建者验证
+            // 管理员可以更新任何approved字段，其他用户只能更新自己创建的选图
+            // 例外：padding字段和stats字段任何有权限的用户都可以更新
             if (!isOnlyPaddingUpdate && !isOnlyStatsUpdate && !(isApprovedUpdate && isAdmin)) {
                 whereClause += ' AND selectedBy = ?';
                 queryParams.push(selectedBy);
