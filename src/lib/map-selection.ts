@@ -500,6 +500,9 @@ export const mapSelectionStorage = {
                 return false;
             }
 
+            // 检查当前用户是否为管理员
+            const isAdmin = await verifyAdminAuth(selectedBy);
+
             // 对于padding字段，任何有权限的用户都可以修改；其他字段只有创建者可以修改
             let whereClause = 'WHERE id = ?';
             const queryParams = [...params, id];
@@ -509,9 +512,11 @@ export const mapSelectionStorage = {
             // 检查是否只更新mod加成后的属性字段
             const statsKeys = ['ar', 'cs', 'od', 'hp', 'starRating', 'bpm'];
             const isOnlyStatsUpdate = Object.keys(updates).length > 0 && Object.keys(updates).every(key => statsKeys.includes(key));
+            // 检查是否只更新approved字段（管理员可以绕过创建者验证）
+            const isOnlyApprovedUpdate = Object.keys(updates).length === 1 && updates.approved !== undefined;
 
-            // 如果不是只更新padding或只更新stats字段，则需要验证创建者身份
-            if (!isOnlyPaddingUpdate && !isOnlyStatsUpdate) {
+            // 如果不是只更新padding、stats或approved字段，并且用户不是管理员，则需要验证创建者身份
+            if (!isOnlyPaddingUpdate && !isOnlyStatsUpdate && !(isOnlyApprovedUpdate && isAdmin)) {
                 whereClause += ' AND selectedBy = ?';
                 queryParams.push(selectedBy);
             }
@@ -527,7 +532,9 @@ export const mapSelectionStorage = {
                 sql: `UPDATE map_selections SET ${setClause.join(', ')} ${whereClause}`,
                 params: queryParams,
                 affectedRows: updateResult.affectedRows,
-                changedRows: updateResult.changedRows
+                changedRows: updateResult.changedRows,
+                isAdmin: isAdmin,
+                isOnlyApprovedUpdate: isOnlyApprovedUpdate
             });
             return updateResult.affectedRows > 0;
         } catch (error) {
