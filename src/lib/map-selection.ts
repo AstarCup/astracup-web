@@ -2,6 +2,7 @@
 import mysql from 'mysql2/promise';
 import { getUserById } from './osu-api';
 import { get } from '@vercel/edge-config';
+import { verifyMapSelectionAuth } from './permissions';
 
 // 数据库连接配置（复用现有配置）
 const dbConfig = {
@@ -515,9 +516,13 @@ export const mapSelectionStorage = {
             // 检查是否包含approved字段更新（管理员可以绕过创建者验证）
             const isApprovedUpdate = updates.approved !== undefined;
 
-            // 管理员可以更新任何approved字段，其他用户只能更新自己创建的选图
+            // 管理员可以更新任何approved字段，图池选择者可以更新任何选图的approved字段
+            // 其他用户只能更新自己创建的选图
             // 例外：padding字段和stats字段任何有权限的用户都可以更新
-            if (!isOnlyPaddingUpdate && !isOnlyStatsUpdate && !(isApprovedUpdate && isAdmin)) {
+            const isMapSelector = await verifyMapSelectionAuth(selectedBy);
+            const canUpdateAnyApproved = isAdmin || (isApprovedUpdate && isMapSelector);
+
+            if (!isOnlyPaddingUpdate && !isOnlyStatsUpdate && !canUpdateAnyApproved) {
                 whereClause += ' AND selectedBy = ?';
                 queryParams.push(selectedBy);
             }
