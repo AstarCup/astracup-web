@@ -112,7 +112,7 @@ export default function Home() {
               style={{ zIndex: 2 }}>赛程安排</span>
           </a>
           <a
-            href="/mapool"
+            href="/mappool"
             className="p-6 flex flex-col items-center justify-center hover:transition-colors group relative bg-[#3D3D3D80] border-b-4 border-[#E93B66] hover:border-[#3BE9D8]"
           >
             <span className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[15deg]">
