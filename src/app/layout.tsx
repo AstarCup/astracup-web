@@ -3,7 +3,7 @@ import { AppContent } from './components/AppContent';
 import "./globals.css";
 
 // 页面标题映射
-export const pageTitles: Record<string, string> = {
+const pageTitles: Record<string, string> = {
   '/': '主页',
   '/news': '新闻',
   '/guide': '赛事规则',
