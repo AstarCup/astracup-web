@@ -204,7 +204,7 @@ export default function ObsOverlay() {
                             color: '#9ca3af',
                             marginBottom: '1rem'
                         }}>
-                            <Image src='AstaraCup.svg' alt="AstraCup" width={400} height={200} />
+                            <Image src='AstarCup.svg' alt="AstarCup" width={400} height={200} />
                         </div>
                         <div style={{
                             fontSize: '1.5rem',
