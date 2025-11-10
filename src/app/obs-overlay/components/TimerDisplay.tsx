@@ -5,9 +5,10 @@ import { TimerState } from "../types/match";
 
 interface TimerDisplayProps {
     timerState: TimerState;
+    mapPoolVisible?: boolean;
 }
 
-export default function TimerDisplay({ timerState }: TimerDisplayProps) {
+export default function TimerDisplay({ timerState, mapPoolVisible = false }: TimerDisplayProps) {
     const { remainingTime, isRunning } = timerState;
     const [displayText, setDisplayText] = useState<number | string>("");
     const [stageName, setStageName] = useState<string>("");
@@ -78,9 +79,10 @@ export default function TimerDisplay({ timerState }: TimerDisplayProps) {
     return (
         <div style={{
             position: 'absolute',
-            bottom: '80px', // 距离底部80px
-            left: '50%',
-            transform: 'translateX(-50%)',
+            bottom: mapPoolVisible ? '40px' : '80px', // 图池显示时距离底部40px，隐藏时80px
+            right: mapPoolVisible ? '40px' : 'auto', // 图池显示时在右下角
+            left: mapPoolVisible ? 'auto' : '50%', // 图池显示时取消居中
+            transform: mapPoolVisible ? 'none' : 'translateX(-50%)', // 图池显示时取消居中变换
             textAlign: 'center',
             zIndex: 1000,
             pointerEvents: 'none' // 确保不会干扰其他交互
@@ -103,7 +105,7 @@ export default function TimerDisplay({ timerState }: TimerDisplayProps) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '20px'
+                gap: '0px'
             }}>
                 <div style={{
                     fontSize: '120px',
@@ -111,7 +113,7 @@ export default function TimerDisplay({ timerState }: TimerDisplayProps) {
                     color: getDisplayColor(),
                     textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
                     fontFamily: 'Audiowide, monospace',
-                    minHeight: '140px', // 确保高度一致
+                    minHeight: '70px', // 确保高度一致
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
