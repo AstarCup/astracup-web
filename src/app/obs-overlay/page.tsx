@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import MatchSettings from "./components/MatchSettings";
 import TeamDisplay from "./components/TeamDisplay";
 import TimerDisplay from "./components/TimerDisplay";
+import MapPoolGrid from "./components/MapPoolGrid";
 import { Team, MatchSettings as MatchSettingsType, TimerState, BO_FORMAT_WIN_SCORE } from "./types/match";
+import { BeatmapCard, BanPickState, MapPoolSettings } from "./types/banpick";
 import Image from "next/image";
 
 export default function ObsOverlay() {
@@ -78,6 +80,52 @@ export default function ObsOverlay() {
         };
     });
 
+    // Ban/Pick状态
+    const [banPickState, setBanPickState] = useState<BanPickState>(() => {
+        try {
+            const savedBanPickState = localStorage.getItem('banPickState');
+            if (savedBanPickState) {
+                const parsedState = JSON.parse(savedBanPickState);
+                console.log('初始化Ban/Pick状态:', parsedState);
+                return parsedState;
+            }
+        } catch (error) {
+            console.error('初始化Ban/Pick状态失败:', error);
+        }
+        // 默认值
+        return {
+            currentTeam: 'red',
+            currentAction: 'ban',
+            remainingBans: { red: 2, blue: 2 },
+            remainingPicks: { red: 2, blue: 2 },
+            history: []
+        };
+    });
+
+    // 图池设置
+    const [mapPoolSettings, setMapPoolSettings] = useState<MapPoolSettings>(() => {
+        try {
+            const savedMapPoolSettings = localStorage.getItem('mapPoolSettings');
+            if (savedMapPoolSettings) {
+                const parsedSettings = JSON.parse(savedMapPoolSettings);
+                console.log('初始化图池设置:', parsedSettings);
+                return parsedSettings;
+            }
+        } catch (error) {
+            console.error('初始化图池设置失败:', error);
+        }
+        // 默认值 - 图池默认隐藏
+        return {
+            season: 's1',
+            category: 'qualification',
+            visible: false
+        };
+    });
+
+    // 图池数据
+    const [beatmaps, setBeatmaps] = useState<BeatmapCard[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+
     // 保存设置到本地存储
     useEffect(() => {
         const saveSettingsToStorage = () => {
@@ -123,6 +171,36 @@ export default function ObsOverlay() {
         saveTimerStateToStorage();
     }, [timerState]);
 
+    // 保存Ban/Pick状态到本地存储
+    useEffect(() => {
+        const saveBanPickStateToStorage = () => {
+            try {
+                console.log('保存Ban/Pick状态到本地存储:', banPickState);
+                localStorage.setItem('banPickState', JSON.stringify(banPickState));
+                console.log('Ban/Pick状态保存成功');
+            } catch (error) {
+                console.error('保存Ban/Pick状态到本地存储失败:', error);
+            }
+        };
+
+        saveBanPickStateToStorage();
+    }, [banPickState]);
+
+    // 保存图池设置到本地存储
+    useEffect(() => {
+        const saveMapPoolSettingsToStorage = () => {
+            try {
+                console.log('保存图池设置到本地存储:', mapPoolSettings);
+                localStorage.setItem('mapPoolSettings', JSON.stringify(mapPoolSettings));
+                console.log('图池设置保存成功');
+            } catch (error) {
+                console.error('保存图池设置到本地存储失败:', error);
+            }
+        };
+
+        saveMapPoolSettingsToStorage();
+    }, [mapPoolSettings]);
+
     // 计算获胜所需分数
     const winScore = BO_FORMAT_WIN_SCORE[settings.boFormat];
 
@@ -131,7 +209,6 @@ export default function ObsOverlay() {
         setTeams(prev => prev.map(team => {
             const isRed = team.id === 'red';
             const player = isRed ? settings.redPlayer : settings.bluePlayer;
-
             return {
                 ...team,
                 name: isRed ? settings.redTeamName : settings.blueTeamName,
@@ -151,6 +228,287 @@ export default function ObsOverlay() {
     const resetScores = () => {
         setTeams(prev => prev.map(team => ({ ...team, score: 0 })));
     };
+
+    // Ban/Pick状态管理函数
+    const handleTeamChange = (team: 'red' | 'blue') => {
+        setBanPickState(prev => ({ ...prev, currentTeam: team }));
+    };
+
+    const handleActionChange = (action: 'ban' | 'pick') => {
+        setBanPickState(prev => ({ ...prev, currentAction: action }));
+    };
+
+    const handleSeasonChange = (season: string) => {
+        setMapPoolSettings(prev => ({ ...prev, season }));
+    };
+
+    const handleCategoryChange = (category: string) => {
+        setMapPoolSettings(prev => ({ ...prev, category }));
+    };
+
+    const handleBeatmapLeftClick = (beatmap: BeatmapCard) => {
+        // 允许重复操作同一个谱面，不检查状态
+        const { currentTeam, currentAction } = banPickState;
+
+        console.log(`操作调试: beatmapId=${beatmap.beatmapId}, team=${currentTeam}, action=${currentAction}, currentHistory=`, banPickState.history);
+
+        if (currentAction === 'ban') {
+            // 更新谱面状态
+            setBeatmaps(prev => {
+                const updated = prev.map(b =>
+                    b.id === beatmap.id
+                        ? { ...b, status: 'banned' as const, bannedBy: currentTeam }
+                        : b
+                );
+                console.log(`Ban操作后谱面状态:`, updated.find(b => b.id === beatmap.id));
+                return updated;
+            });
+
+            // 更新ban/pick状态（不限制次数）
+            setBanPickState(prev => {
+                const newHistory = [
+                    ...prev.history,
+                    {
+                        team: currentTeam,
+                        action: 'ban' as const,
+                        beatmapId: beatmap.beatmapId,
+                        timestamp: Date.now()
+                    }
+                ];
+                console.log(`Ban操作后历史记录:`, newHistory);
+                console.log(`历史记录长度: ${newHistory.length}`);
+                return {
+                    ...prev,
+                    history: newHistory
+                };
+            });
+        } else if (currentAction === 'pick') {
+            // 更新谱面状态
+            setBeatmaps(prev => {
+                const updated = prev.map(b =>
+                    b.id === beatmap.id
+                        ? { ...b, status: 'picked' as const, pickedBy: currentTeam }
+                        : b
+                );
+                console.log(`Pick操作后谱面状态:`, updated.find(b => b.id === beatmap.id));
+                return updated;
+            });
+
+            // 更新ban/pick状态（不限制次数）
+            setBanPickState(prev => {
+                const newHistory = [
+                    ...prev.history,
+                    {
+                        team: currentTeam,
+                        action: 'pick' as const,
+                        beatmapId: beatmap.beatmapId,
+                        timestamp: Date.now()
+                    }
+                ];
+                console.log(`Pick操作后历史记录:`, newHistory);
+                console.log(`历史记录长度: ${newHistory.length}`);
+                return {
+                    ...prev,
+                    history: newHistory
+                };
+            });
+        }
+    };
+
+    const handleBeatmapRightClick = (beatmap: BeatmapCard) => {
+        if (beatmap.status === 'available') return;
+
+        // 取消操作
+        const { bannedBy, pickedBy } = beatmap;
+
+        if (bannedBy) {
+            // 恢复ban
+            setBeatmaps(prev => prev.map(b =>
+                b.id === beatmap.id
+                    ? { ...b, status: 'available', bannedBy: undefined }
+                    : b
+            ));
+
+            // 只删除最新的ban记录，而不是所有记录
+            setBanPickState(prev => {
+                const historyForBeatmap = prev.history.filter(record =>
+                    record.team === bannedBy && record.action === 'ban' && record.beatmapId === beatmap.beatmapId
+                );
+
+                if (historyForBeatmap.length === 0) return prev;
+
+                // 找到最新的记录并删除它
+                const latestRecord = historyForBeatmap[historyForBeatmap.length - 1];
+                const latestIndex = prev.history.findIndex(record =>
+                    record.team === latestRecord.team &&
+                    record.action === latestRecord.action &&
+                    record.beatmapId === latestRecord.beatmapId &&
+                    record.timestamp === latestRecord.timestamp
+                );
+
+                if (latestIndex === -1) return prev;
+
+                const newHistory = [...prev.history];
+                newHistory.splice(latestIndex, 1);
+
+                return {
+                    ...prev,
+                    history: newHistory
+                };
+            });
+        } else if (pickedBy) {
+            // 恢复pick
+            setBeatmaps(prev => prev.map(b =>
+                b.id === beatmap.id
+                    ? { ...b, status: 'available', pickedBy: undefined }
+                    : b
+            ));
+
+            // 只删除最新的pick记录，而不是所有记录
+            setBanPickState(prev => {
+                const historyForBeatmap = prev.history.filter(record =>
+                    record.team === pickedBy && record.action === 'pick' && record.beatmapId === beatmap.beatmapId
+                );
+
+                if (historyForBeatmap.length === 0) return prev;
+
+                // 找到最新的记录并删除它
+                const latestRecord = historyForBeatmap[historyForBeatmap.length - 1];
+                const latestIndex = prev.history.findIndex(record =>
+                    record.team === latestRecord.team &&
+                    record.action === latestRecord.action &&
+                    record.beatmapId === latestRecord.beatmapId &&
+                    record.timestamp === latestRecord.timestamp
+                );
+
+                if (latestIndex === -1) return prev;
+
+                const newHistory = [...prev.history];
+                newHistory.splice(latestIndex, 1);
+
+                return {
+                    ...prev,
+                    history: newHistory
+                };
+            });
+        }
+    };
+
+    const resetBanPickState = () => {
+        // 重置所有谱面状态
+        setBeatmaps(prev => prev.map(beatmap => ({
+            ...beatmap,
+            status: 'available',
+            bannedBy: undefined,
+            pickedBy: undefined
+        })));
+
+        // 重置ban/pick状态
+        setBanPickState({
+            currentTeam: 'red',
+            currentAction: 'ban',
+            remainingBans: { red: 2, blue: 2 },
+            remainingPicks: { red: 2, blue: 2 },
+            history: []
+        });
+    };
+
+    // 加载图池数据
+    useEffect(() => {
+        const fetchMapPoolData = async () => {
+            if (!mapPoolSettings.season || !mapPoolSettings.category) return;
+
+            setIsLoading(true);
+            try {
+                const response = await fetch(
+                    `/api/map-selections?season=${mapPoolSettings.season}&category=${mapPoolSettings.category}&approved=true`
+                );
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const approvedMaps = data.selections || [];
+
+                    // 转换为BeatmapCard格式
+                    const convertedBeatmaps: BeatmapCard[] = approvedMaps.map((map: any) => ({
+                        id: map.id,
+                        beatmapId: map.beatmapId,
+                        beatmapsetId: map.beatmapsetId,
+                        title: map.title,
+                        artist: map.artist,
+                        version: map.version,
+                        creator: map.creator,
+                        selectedMods: map.selectedMods,
+                        modPosition: map.modPosition,
+                        slot: `${map.selectedMods}${map.modPosition}`,
+                        coverUrl: map.coverUrl || `https://assets.ppy.sh/beatmaps/${map.beatmapsetId}/covers/cover.jpg`,
+                        starRating: map.starRating,
+                        status: 'available'
+                    }));
+
+                    setBeatmaps(convertedBeatmaps);
+                }
+            } catch (error) {
+                console.error('获取图池数据失败:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchMapPoolData();
+    }, [mapPoolSettings.season, mapPoolSettings.category]);
+
+    // 根据历史记录恢复卡片状态
+    useEffect(() => {
+        if (beatmaps.length === 0) return;
+
+        // 检查是否需要更新谱面状态
+        const needsUpdate = beatmaps.some(beatmap => {
+            const historyForBeatmap = banPickState.history.filter(
+                record => record.beatmapId === beatmap.beatmapId
+            );
+
+            if (historyForBeatmap.length === 0) {
+                return beatmap.status !== 'available' || beatmap.bannedBy !== undefined || beatmap.pickedBy !== undefined;
+            }
+
+            const latestRecord = historyForBeatmap[historyForBeatmap.length - 1];
+
+            if (latestRecord.action === 'ban') {
+                return beatmap.status !== 'banned' || beatmap.bannedBy !== latestRecord.team || beatmap.pickedBy !== undefined;
+            } else if (latestRecord.action === 'pick') {
+                return beatmap.status !== 'picked' || beatmap.pickedBy !== latestRecord.team || beatmap.bannedBy !== undefined;
+            }
+
+            return false;
+        });
+
+        if (!needsUpdate) return;
+
+        // 根据历史记录恢复卡片状态
+        const updatedBeatmaps: BeatmapCard[] = beatmaps.map(beatmap => {
+            // 查找该谱面的历史记录
+            const historyForBeatmap = banPickState.history.filter(
+                record => record.beatmapId === beatmap.beatmapId
+            );
+
+            if (historyForBeatmap.length === 0) {
+                return { ...beatmap, status: 'available' as const, bannedBy: undefined, pickedBy: undefined };
+            }
+
+            // 获取最新的操作记录
+            const latestRecord = historyForBeatmap[historyForBeatmap.length - 1];
+
+            if (latestRecord.action === 'ban') {
+                return { ...beatmap, status: 'banned' as const, bannedBy: latestRecord.team, pickedBy: undefined };
+            } else if (latestRecord.action === 'pick') {
+                return { ...beatmap, status: 'picked' as const, pickedBy: latestRecord.team, bannedBy: undefined };
+            }
+
+            return beatmap;
+        });
+
+        setBeatmaps(updatedBeatmaps);
+    }, [beatmaps, banPickState.history]);
 
     return (
         <div style={{
@@ -233,8 +591,28 @@ export default function ObsOverlay() {
                 </div>
 
                 {/* 计时器显示 */}
-                <TimerDisplay timerState={timerState} />
+                <TimerDisplay timerState={timerState} mapPoolVisible={mapPoolSettings.visible} />
 
+                {/* 图池显示区域 */}
+                {mapPoolSettings.visible && (
+                    <div style={{
+                        marginTop: '40px',
+                        padding: '0 40px'
+                    }}>
+                        {isLoading ? (
+                            <div className="text-center text-white text-lg py-8">
+                                正在加载图池数据...
+                            </div>
+                        ) : (
+                            <MapPoolGrid
+                                beatmaps={beatmaps}
+                                onBeatmapLeftClick={handleBeatmapLeftClick}
+                                onBeatmapRightClick={handleBeatmapRightClick}
+                                banPickHistory={banPickState.history}
+                            />
+                        )}
+                    </div>
+                )}
 
             </div>
             {/* 设置面板 */}
@@ -244,6 +622,11 @@ export default function ObsOverlay() {
                     onSettingsChange={setSettings}
                     timerState={timerState}
                     onTimerStateChange={setTimerState}
+                    banPickState={banPickState}
+                    onBanPickStateChange={setBanPickState}
+                    mapPoolSettings={mapPoolSettings}
+                    onMapPoolSettingsChange={setMapPoolSettings}
+                    onResetBanPick={resetBanPickState}
                 />
             </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { MatchSettings as MatchSettingsType, Player, TimerState } from "../types/match";
+import { BanPickState, MapPoolSettings } from "../types/banpick";
 import Image from "next/image";
 import Dropdown, { DropdownOption } from "@/app/components/ui/Dropdown";
 
@@ -10,15 +11,25 @@ interface MatchSettingsProps {
     onSettingsChange: (settings: MatchSettingsType) => void;
     timerState: TimerState;
     onTimerStateChange: (timerState: TimerState) => void;
+    banPickState: BanPickState;
+    onBanPickStateChange: (banPickState: BanPickState) => void;
+    mapPoolSettings: MapPoolSettings;
+    onMapPoolSettingsChange: (mapPoolSettings: MapPoolSettings) => void;
+    onResetBanPick: () => void;
 }
 
-type TabType = 'match' | 'timer';
+type TabType = 'match' | 'timer' | 'banpick';
 
 export default function MatchSettings({
     settings,
     onSettingsChange,
     timerState,
-    onTimerStateChange
+    onTimerStateChange,
+    banPickState,
+    onBanPickStateChange,
+    mapPoolSettings,
+    onMapPoolSettingsChange,
+    onResetBanPick
 }: MatchSettingsProps) {
     const [players, setPlayers] = useState<Player[]>([]);
     const [loading, setLoading] = useState(true);
@@ -181,6 +192,15 @@ export default function MatchSettings({
                 >
                     计时器控制
                 </button>
+                <button
+                    onClick={() => setActiveTab('banpick')}
+                    className={`px-4 py-2 text-2xl font-medium transition-colors ${activeTab === 'banpick'
+                        ? 'text-white border-b-2 border-[#E93B66]'
+                        : 'text-gray-400 hover:text-white'
+                        }`}
+                >
+                    Ban/Pick控制
+                </button>
             </div>
 
             {activeTab === 'match' ? (
@@ -271,7 +291,7 @@ export default function MatchSettings({
                         </div>
                     </div>
                 </>
-            ) : (
+            ) : activeTab === 'timer' ? (
                 /* 计时器控制面板 */
                 <div className="space-y-6">
                     <div className="text-center">
@@ -326,6 +346,160 @@ export default function MatchSettings({
                             className="px-6 py-4 bg-red-600 hover:bg-red-700 text-white rounded text-2xl transition-colors font-bold"
                         >
                             清除
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                /* Ban/Pick控制面板 */
+                <div className="space-y-6">
+                    {/* 队伍和操作类型选择 */}
+                    <div className="grid grid-cols-2 gap-6 mb-6">
+                        {/* 当前操作队伍 */}
+                        <div className="flex flex-col">
+                            <label className="text-2xl text-gray-200 mb-3 font-medium">当前操作队伍</label>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => onBanPickStateChange({ ...banPickState, currentTeam: 'red' })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${banPickState.currentTeam === 'red'
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    红队
+                                </button>
+                                <button
+                                    onClick={() => onBanPickStateChange({ ...banPickState, currentTeam: 'blue' })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${banPickState.currentTeam === 'blue'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    蓝队
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 当前操作类型 */}
+                        <div className="flex flex-col">
+                            <label className="text-2xl text-gray-200 mb-3 font-medium">当前操作类型</label>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => onBanPickStateChange({ ...banPickState, currentAction: 'ban' })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${banPickState.currentAction === 'ban'
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    Ban
+                                </button>
+                                <button
+                                    onClick={() => onBanPickStateChange({ ...banPickState, currentAction: 'pick' })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${banPickState.currentAction === 'pick'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    Pick
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 图池设置 */}
+                    <div className="grid grid-cols-3 gap-6 mb-6">
+                        {/* 赛季选择 */}
+                        <div className="flex flex-col">
+                            <label className="text-2xl text-gray-200 mb-2 font-medium">赛季</label>
+                            <Dropdown
+                                options={[
+                                    { value: 's1', label: '第1赛季' }
+                                ]}
+                                value={mapPoolSettings.season}
+                                onChange={(value) => onMapPoolSettingsChange({ ...mapPoolSettings, season: value })}
+                                darkMode={true}
+                                minWidth="12rem"
+                                fontSize={"text-xl"}
+                            />
+                        </div>
+
+                        {/* 类别选择 */}
+                        <div className="flex flex-col">
+                            <label className="text-2xl text-gray-200 mb-2 font-medium">类别</label>
+                            <Dropdown
+                                options={[
+                                    { value: 'qualification', label: 'QUA' },
+                                    { value: 'ro32', label: 'RO32' },
+                                    { value: 'ro16', label: 'RO16' },
+                                    { value: 'quarterfinals', label: 'QF' },
+                                    { value: 'semifinals', label: 'SF' },
+                                    { value: 'finals', label: 'F' },
+                                    { value: 'grandfinals', label: 'GF' }
+                                ]}
+                                value={mapPoolSettings.category}
+                                onChange={(value) => onMapPoolSettingsChange({ ...mapPoolSettings, category: value })}
+                                darkMode={true}
+                                minWidth="8rem"
+                                fontSize={"text-xl"}
+                            />
+                        </div>
+
+                        {/* 显示/隐藏图池 */}
+                        <div className="flex flex-col">
+                            <label className="text-2xl text-gray-200 mb-3 font-medium">图池显示</label>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => onMapPoolSettingsChange({ ...mapPoolSettings, visible: true })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${mapPoolSettings.visible
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    显示
+                                </button>
+                                <button
+                                    onClick={() => onMapPoolSettingsChange({ ...mapPoolSettings, visible: false })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${!mapPoolSettings.visible
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    隐藏
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 操作历史 */}
+                    <div className="mb-6">
+                        <label className="text-2xl text-gray-200 mb-3 font-medium">操作历史</label>
+                        <div className="bg-gray-700/50 p-4 rounded max-h-32 overflow-y-auto">
+                            {banPickState.history.length === 0 ? (
+                                <div className="text-gray-400 text-lg">暂无操作记录</div>
+                            ) : (
+                                banPickState.history.slice(-5).reverse().map((record, index) => (
+                                    <div key={index} className="text-white text-lg mb-2">
+                                        <span className={record.team === 'red' ? 'text-red-400' : 'text-blue-400'}>
+                                            {record.team === 'red' ? '红队' : '蓝队'}
+                                        </span>
+                                        <span className="mx-2">
+                                            {record.action === 'ban' ? 'Ban' : 'Pick'}
+                                        </span>
+                                        <span className="text-gray-300">
+                                            #{record.beatmapId}
+                                        </span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                    {/* 重置按钮 */}
+                    <div className="flex justify-end">
+                        <button
+                            onClick={onResetBanPick}
+                            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded text-2xl transition-colors font-bold"
+                        >
+                            重置Ban/Pick状态
                         </button>
                     </div>
                 </div>
