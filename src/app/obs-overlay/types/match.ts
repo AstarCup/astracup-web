@@ -79,7 +79,18 @@ export interface RefereeState {
 }
 
 export interface VictoryState {
-  isVisible: boolean;        // 是否显示胜利页面
-  winner: 'red' | 'blue' | null; // 获胜队伍
-  hideScorePanel: boolean;   // 是否隐藏比分面板
+    isVisible: boolean;
+    winner: 'red' | 'blue' | null;
+    hideScorePanel: boolean;
+}
+
+export interface OBSState {
+    isConnected: boolean;
+    scenes: string[];
+    sceneMappings: {
+        main: string;
+        mapPool: string;
+        victory: string;
+    };
+    currentScene: string;
 }

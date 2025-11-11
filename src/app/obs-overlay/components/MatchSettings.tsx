@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MatchSettings as MatchSettingsType, Player, TimerState, RollState, RefereeState, Team, VictoryState } from "../types/match";
+import { MatchSettings as MatchSettingsType, Player, TimerState, RollState, RefereeState, Team, VictoryState, OBSState } from "../types/match";
 import { BanPickState, MapPoolSettings } from "../types/banpick";
 import Image from "next/image";
 import Dropdown, { DropdownOption } from "@/app/components/ui/Dropdown";
@@ -51,6 +51,159 @@ export default function MatchSettings({
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<TabType>('match');
     const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
+    const [obsState, setObsState] = useState({
+        isConnected: false,
+        scenes: [] as string[],
+        sceneMappings: {
+            main: '',
+            mapPool: '',
+            victory: ''
+        },
+        currentScene: ''
+    });
+
+    // OBS 连接检测和初始化
+    useEffect(() => {
+        const checkOBSConnection = () => {
+            const isConnected = !!window.obsstudio;
+            setObsState(prev => ({
+                ...prev,
+                isConnected
+            }));
+
+            if (isConnected && window.obsstudio) {
+                // 安全地检查 OBS API 方法是否存在
+                const obs = window.obsstudio;
+
+                // 获取场景列表 - 使用回调函数
+                try {
+                    if (obs.getScenes && typeof obs.getScenes === 'function') {
+                        obs.getScenes((scenes: string[]) => {
+                            setObsState(prev => ({
+                                ...prev,
+                                scenes
+                            }));
+                        });
+                    }
+                } catch (error) {
+                    console.warn('调用getScenes失败:', error);
+                }
+
+                // 获取当前场景 - 使用回调函数
+                try {
+                    if (obs.getCurrentScene && typeof obs.getCurrentScene === 'function') {
+                        obs.getCurrentScene((scene: { name: string }) => {
+                            setObsState(prev => ({
+                                ...prev,
+                                currentScene: scene.name
+                            }));
+                        });
+                    }
+                } catch (error) {
+                    console.warn('调用getCurrentScene失败:', error);
+                }
+
+                // 监听场景变化事件
+                try {
+                    window.addEventListener('obsSceneChanged', (event: any) => {
+                        setObsState(prev => ({
+                            ...prev,
+                            currentScene: event.detail.name
+                        }));
+                    });
+                } catch (error) {
+                    console.warn('设置场景变化监听失败:', error);
+                }
+            }
+        };
+
+        checkOBSConnection();
+
+        // 定期检查连接状态
+        const interval = setInterval(checkOBSConnection, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // OBS 场景切换函数
+    const switchOBSScene = (sceneName: string) => {
+        if (!window.obsstudio) {
+            alert('OBS未连接，请在OBS浏览器源中启用访问权限');
+            return false;
+        }
+
+        try {
+            window.obsstudio.setCurrentScene(sceneName);
+            console.log(`切换到场景: ${sceneName}`);
+            return true;
+        } catch (error) {
+            console.error('场景切换失败:', error);
+            alert(`场景切换失败: ${error}`);
+            return false;
+        }
+    };
+
+    // 自动场景切换逻辑
+    useEffect(() => {
+        if (!obsState.isConnected) return;
+
+        console.log('自动场景切换检查:', {
+            mapPoolVisible: mapPoolSettings.visible,
+            victoryVisible: victoryState.isVisible,
+            mainScene: obsState.sceneMappings.main,
+            mapPoolScene: obsState.sceneMappings.mapPool,
+            victoryScene: obsState.sceneMappings.victory
+        });
+
+        // 优先级：胜利页面 > 图池 > 主场景
+        if (victoryState.isVisible && obsState.sceneMappings.victory) {
+            console.log('切换到胜利场景:', obsState.sceneMappings.victory);
+            switchOBSScene(obsState.sceneMappings.victory);
+        } else if (mapPoolSettings.visible && obsState.sceneMappings.mapPool) {
+            console.log('切换到图池场景:', obsState.sceneMappings.mapPool);
+            switchOBSScene(obsState.sceneMappings.mapPool);
+        } else if (obsState.sceneMappings.main) {
+            console.log('切换到主场景:', obsState.sceneMappings.main);
+            switchOBSScene(obsState.sceneMappings.main);
+        }
+    }, [
+        mapPoolSettings.visible,
+        victoryState.isVisible,
+        obsState.isConnected,
+        obsState.sceneMappings.main,
+        obsState.sceneMappings.mapPool,
+        obsState.sceneMappings.victory
+    ]);
+
+    // 场景映射配置处理
+    const handleSceneMappingChange = (type: 'main' | 'mapPool' | 'victory', sceneName: string) => {
+        setObsState(prev => ({
+            ...prev,
+            sceneMappings: {
+                ...prev.sceneMappings,
+                [type]: sceneName
+            }
+        }));
+
+        // 保存到本地存储
+        const savedMappings = JSON.parse(localStorage.getItem('obsSceneMappings') || '{}');
+        savedMappings[type] = sceneName;
+        localStorage.setItem('obsSceneMappings', JSON.stringify(savedMappings));
+    };
+
+    // 加载保存的场景映射
+    useEffect(() => {
+        const savedMappings = localStorage.getItem('obsSceneMappings');
+        if (savedMappings) {
+            const mappings = JSON.parse(savedMappings);
+            setObsState(prev => ({
+                ...prev,
+                sceneMappings: {
+                    ...prev.sceneMappings,
+                    ...mappings
+                }
+            }));
+        }
+    }, []);
 
     // 获取玩家列表
     useEffect(() => {
@@ -561,6 +714,114 @@ export default function MatchSettings({
                                 />
                             </div>
                         </div>
+                        <div className="col-span-2">
+                            {/* OBS场景控制 */}
+                            <div className="bg-gray-700/50 p-4 rounded-lg">
+                                <label className="text-2xl text-gray-200 mb-3 font-medium">OBS场景控制</label>
+                                <div className="text-gray-300 text-xl mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-3 h-3 rounded-full ${window.obsstudio ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                        <span>OBS状态: {window.obsstudio ? '已连接' : '未连接'}</span>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div className="flex flex-col">
+                                        <label className="text-xl text-gray-200 mb-2">主场景</label>
+                                        <Dropdown
+                                            options={[
+                                                { value: "", label: "选择主场景" },
+                                                ...obsState.scenes.map(scene => ({
+                                                    value: scene,
+                                                    label: scene
+                                                }))
+                                            ]}
+                                            value={obsState.sceneMappings.main}
+                                            onChange={(value) => handleSceneMappingChange('main', value)}
+                                            darkMode={true}
+                                            minWidth="15rem"
+                                            fontSize={"text-xl"}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <label className="text-xl text-gray-200 mb-2">图池场景</label>
+                                        <Dropdown
+                                            options={[
+                                                { value: "", label: "选择图池场景" },
+                                                ...obsState.scenes.map(scene => ({
+                                                    value: scene,
+                                                    label: scene
+                                                }))
+                                            ]}
+                                            value={obsState.sceneMappings.mapPool}
+                                            onChange={(value) => handleSceneMappingChange('mapPool', value)}
+                                            darkMode={true}
+                                            minWidth="15rem"
+                                            fontSize={"text-xl"}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <label className="text-xl text-gray-200 mb-2">胜利场景</label>
+                                        <Dropdown
+                                            options={[
+                                                { value: "", label: "选择胜利场景" },
+                                                ...obsState.scenes.map(scene => ({
+                                                    value: scene,
+                                                    label: scene
+                                                }))
+                                            ]}
+                                            value={obsState.sceneMappings.victory}
+                                            onChange={(value) => handleSceneMappingChange('victory', value)}
+                                            darkMode={true}
+                                            minWidth="15rem"
+                                            fontSize={"text-xl"}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="mt-4 flex gap-2">
+                                    <button
+                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-lg transition-colors"
+                                        onClick={() => {
+                                            if (window.obsstudio && window.obsstudio.getScenes && typeof window.obsstudio.getScenes === 'function') {
+                                                window.obsstudio.getScenes((scenes: string[]) => {
+                                                    console.log('可用场景:', scenes);
+                                                    alert(`可用场景: ${scenes.join(', ')}`);
+                                                });
+                                            } else {
+                                                alert('OBS未连接或API不可用，请在OBS浏览器源中启用访问权限');
+                                            }
+                                        }}
+                                    >
+                                        获取场景列表
+                                    </button>
+                                    <button
+                                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-lg transition-colors"
+                                        onClick={() => {
+                                            if (window.obsstudio && window.obsstudio.getCurrentScene && typeof window.obsstudio.getCurrentScene === 'function') {
+                                                window.obsstudio.getCurrentScene((scene: { name: string }) => {
+                                                    console.log('当前场景:', scene.name);
+                                                    alert(`当前场景: ${scene.name}`);
+                                                });
+                                            } else {
+                                                alert('OBS未连接或API不可用');
+                                            }
+                                        }}
+                                    >
+                                        获取当前场景
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {/* 清除存储按钮 */}
+                    <div className="mt-6 pt-4 border-t border-gray-600">
+                        <button
+                            onClick={handleClearStorage}
+                            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-2xl transition-colors"
+                        >
+                            重置所有
+                        </button>
                     </div>
                 </>
             ) : activeTab === 'timer' ? (
@@ -600,6 +861,30 @@ export default function MatchSettings({
                             className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded text-5xl transition-colors font-bold"
                         >
                             申请延时 3分钟
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <input
+                            type="number"
+                            placeholder="输入秒数"
+                            min="1"
+                            max="3600"
+                            className="px-4 py-4 bg-[#2D2D2D] text-white border border-gray-600 rounded text-5xl focus:outline-none focus:border-[#E93B66] transition-colors"
+                            id="customTimeInput"
+                        />
+                        <button
+                            onClick={() => {
+                                const input = document.getElementById('customTimeInput') as HTMLInputElement;
+                                const seconds = parseInt(input.value);
+                                if (seconds && seconds > 0 && seconds <= 3600) {
+                                    startTimer(seconds);
+                                    input.value = '';
+                                }
+                            }}
+                            className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded text-5xl transition-colors font-bold"
+                        >
+                            自定义时间开始
                         </button>
                     </div>
 
@@ -1163,15 +1448,7 @@ export default function MatchSettings({
                 </div>
             )}
 
-            {/* 清除存储按钮 */}
-            <div className="mt-6 pt-4 border-t border-gray-600">
-                <button
-                    onClick={handleClearStorage}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-2xl transition-colors"
-                >
-                    重置所有
-                </button>
-            </div>
+
         </div>
     );
 }
