@@ -48,6 +48,36 @@ export async function GET(
             console.log('count_50:', data.scores[0].statistics?.count_50);
             console.log('count_miss:', data.scores[0].statistics?.count_miss);
             console.log('=== End API Debug ===');
+
+            // 额外调试：尝试获取单个分数的详细信息
+            const firstScore = data.scores[0];
+            try {
+                console.log('=== Individual Score API Debug ===');
+                console.log('Attempting to fetch individual score details...');
+
+                // 尝试获取单个分数的详细信息
+                const individualScoreResponse = await fetch(
+                    `https://osu.ppy.sh/api/v2/scores/${firstScore.id}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+                if (individualScoreResponse.ok) {
+                    const individualScoreData = await individualScoreResponse.json();
+                    console.log('Individual score data:', JSON.stringify(individualScoreData, null, 2));
+                    console.log('Individual score statistics:', individualScoreData.statistics);
+                } else {
+                    console.log('Individual score API failed:', individualScoreResponse.status, individualScoreResponse.statusText);
+                    console.log('Score ID used:', firstScore.id);
+                }
+                console.log('=== End Individual Score Debug ===');
+            } catch (error) {
+                console.log('Error fetching individual score:', error);
+            }
         }
 
         // 转换数据格式用于前端展示
