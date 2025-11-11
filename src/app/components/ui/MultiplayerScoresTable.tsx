@@ -161,9 +161,8 @@ export default function MultiplayerScoresTable({
                                 >
                                     最大连击 <SortIcon column="max_combo" />
                                 </th>
-                                <th className="px-4 py-3 text-left">Mods</th>
                                 <th className="px-4 py-3 text-left">评级</th>
-                                <th className="px-4 py-3 text-left">状态</th>
+                                <th className="px-4 py-3 text-left">判定</th>
                                 <th
                                     className="px-4 py-3 text-left cursor-pointer hover:bg-gray-700 transition"
                                     onClick={() => handleSort('ended_at')}
@@ -211,33 +210,29 @@ export default function MultiplayerScoresTable({
                                         {score.max_combo.toLocaleString()}x
                                     </td>
                                     <td className="px-4 py-3">
-                                        <div className="flex flex-wrap gap-1">
-                                            {score.mods.length > 0 ? (
-                                                score.mods.map(mod => (
-                                                    <span
-                                                        key={mod}
-                                                        className={`px-2 py-1 rounded text-xs font-bold ${getModColorClass(mod)}`}
-                                                    >
-                                                        {mod}
-                                                    </span>
-                                                ))
-                                            ) : (
-                                                <span className="text-gray-400 text-sm">NM</span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-3">
                                         <span className={`font-bold ${getRankColorClass(score.rank)}`}>
                                             {score.rank}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span className={`px-2 py-1 rounded text-xs font-bold ${score.passed
-                                                ? 'bg-green-500 text-white'
-                                                : 'bg-red-500 text-white'
-                                            }`}>
-                                            {score.passed ? '通过' : '失败'}
-                                        </span>
+                                        <div className="text-xs space-y-1">
+                                            <div className="flex justify-between">
+                                                <span className="text-green-400">300:</span>
+                                                <span>{score.statistics.count_300}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-blue-400">100:</span>
+                                                <span>{score.statistics.count_100}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-yellow-400">50:</span>
+                                                <span>{score.statistics.count_50}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-red-400">Miss:</span>
+                                                <span>{score.statistics.count_miss}</span>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td className="px-4 py-3 text-sm">
                                         {formatTime(score.ended_at)}

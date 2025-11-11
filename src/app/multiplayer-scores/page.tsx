@@ -13,6 +13,20 @@ export default function MultiplayerScoresPage() {
     const [loadingScores, setLoadingScores] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // 从URL参数中提取房间链接并自动加载
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlParam = urlParams.get('url');
+
+        if (urlParam) {
+            setRoomUrl(urlParam);
+            const roomId = extractRoomIdFromUrl(urlParam);
+            if (roomId) {
+                loadRoomById(roomId);
+            }
+        }
+    }, []);
+
     // 从URL中提取房间ID
     const extractRoomIdFromUrl = (url: string): string | null => {
         try {
@@ -218,16 +232,14 @@ export default function MultiplayerScoresPage() {
                                     }`}
                                 onClick={() => handlePlaylistSelect(playlistItem.id)}
                             >
-                                <h3 className="font-bold mb-2">
-                                    #{playlistItem.playlist_order} - {playlistItem.beatmap.version}
+                                <h3 className="font-bold mb-2 text-lg">
+                                    {playlistItem.beatmap.beatmapset.artist} - {playlistItem.beatmap.beatmapset.title}
                                 </h3>
                                 <div className="text-sm space-y-1">
-                                    <p className="truncate">
-                                        {playlistItem.beatmap.beatmapset.artist} - {playlistItem.beatmap.beatmapset.title}
-                                    </p>
-                                    <p>难度: {playlistItem.beatmap.difficulty_rating}★</p>
-                                    <p>BPM: {Math.round(playlistItem.beatmap.bpm)}</p>
-                                    <p>长度: {Math.floor(playlistItem.beatmap.total_length / 60)}:{String(playlistItem.beatmap.total_length % 60).padStart(2, '0')}</p>
+                                    <p className="text-gray-300">难度: {playlistItem.beatmap.version}</p>
+                                    <p className="text-yellow-400 font-bold">{playlistItem.beatmap.difficulty_rating}★</p>
+                                    <p className="text-gray-400">BPM: {playlistItem.beatmap.bpm ? Math.round(playlistItem.beatmap.bpm) : 'N/A'}</p>
+                                    <p className="text-gray-400">长度: {Math.floor(playlistItem.beatmap.total_length / 60)}:{String(playlistItem.beatmap.total_length % 60).padStart(2, '0')}</p>
                                 </div>
                             </div>
                         ))}
@@ -245,18 +257,7 @@ export default function MultiplayerScoresPage() {
                 />
             )}
 
-            {/* 使用说明 */}
-            <div className="bg-[#3D3D3D] p-6 rounded-lg mt-8">
-                <h2 className="text-xl font-bold text-white mb-4">使用说明</h2>
-                <div className="text-gray-300 space-y-2">
-                    <p>• 在输入框中粘贴osu! multiplayer房间的完整链接</p>
-                    <p>• 例如: https://osu.ppy.sh/multiplayer/rooms/1774254</p>
-                    <p>• 点击"加载房间"按钮获取房间信息</p>
-                    <p>• 选择具体的图池（playlist）查看分数</p>
-                    <p>• 表格支持按各列排序，点击列标题即可</p>
-                    <p>• 点击"刷新数据"按钮可以重新获取最新分数</p>
-                </div>
-            </div>
+
         </div>
     );
 }
