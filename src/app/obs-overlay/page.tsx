@@ -350,6 +350,7 @@ export default function ObsOverlay() {
                         team: currentTeam,
                         action: 'ban' as const,
                         beatmapId: beatmap.beatmapId,
+                        modSlot: beatmap.slot, // 添加mod位信息
                         timestamp: Date.now()
                     }
                 ];
@@ -380,6 +381,7 @@ export default function ObsOverlay() {
                         team: currentTeam,
                         action: 'pick' as const,
                         beatmapId: beatmap.beatmapId,
+                        modSlot: beatmap.slot, // 添加mod位信息
                         timestamp: Date.now()
                     }
                 ];

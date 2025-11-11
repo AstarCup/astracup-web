@@ -334,28 +334,6 @@ export default function MatchSettings({
         });
     };
 
-    const handleRefereeTextChange = (text: string) => {
-        onRefereeStateChange({
-            ...refereeState,
-            refereeText: text
-        });
-    };
-
-    const addRefereeTextToHistory = () => {
-        if (!refereeState.refereeText.trim()) return;
-
-        const historyEntry = {
-            type: 'text' as const,
-            content: `裁判话语: ${refereeState.refereeText}`,
-            timestamp: Date.now()
-        };
-
-        onRefereeStateChange({
-            ...refereeState,
-            refereeText: '',
-            history: [...refereeState.history, historyEntry]
-        });
-    };
 
     const handleNextActionChange = (action: 'pick' | 'ban') => {
         onRefereeStateChange({
@@ -410,14 +388,27 @@ export default function MatchSettings({
             nextPickBanText = ' | NextPick/NextBan: 等待Roll点结果';
         }
 
-        // 生成剩余可操作图池
-        const availableMaps = refereeState.availableMaps.join(' ');
+        // 生成剩余可操作图池，按照 NM HD HR DT LZ TB 顺序排序
+        const sortedAvailableMaps = sortAvailableMaps(refereeState.availableMaps);
+        const availableMaps = sortedAvailableMaps.join(' ');
 
         return `${redTeam?.playerName} ${redTeam?.score} : ${blueTeam?.score} ${blueTeam?.playerName}${nextPickBanText} | 剩余可操作图池: ${availableMaps}`;
     };
 
+    // 排序函数：按照 NM HD HR DT LZ TB 顺序排序
+    const sortAvailableMaps = (maps: string[]) => {
+        const order = ['NM', 'HD', 'HR', 'DT', 'LZ', 'TB'];
+        return [...maps].sort((a, b) => {
+            const indexA = order.findIndex(item => a.includes(item));
+            const indexB = order.findIndex(item => b.includes(item));
+            return indexA - indexB;
+        });
+    };
+
     const { nextAction, nextTeam } = calculateNextAction();
     const refereeDisplayText = generateRefereeText();
+    const redTeam = teams.find(t => t.id === 'red');
+    const blueTeam = teams.find(t => t.id === 'blue');
 
     return (
         <div className="bg-[#3D3D3D] p-6 rounded-lg border-b-4 border-[#E93B66] mb-6 w-[50%]">
@@ -457,7 +448,7 @@ export default function MatchSettings({
                         : 'text-gray-400 hover:text-white'
                         }`}
                 >
-                    Ban/Pick控制
+                    图池设置
                 </button>
                 <button
                     onClick={() => setActiveTab('referee')}
@@ -466,7 +457,7 @@ export default function MatchSettings({
                         : 'text-gray-400 hover:text-white'
                         }`}
                 >
-                    裁判表
+                    裁判表 Ban/Pick控制
                 </button>
 
             </div>
@@ -667,7 +658,7 @@ export default function MatchSettings({
                                     <div key={index} className="text-white text-6xl mb-3 p-3 bg-gray-600/30 rounded">
                                         <div className="flex justify-between items-center mb-2">
                                             <span className={record.winner === 'red' ? 'text-red-400' : 'text-blue-400'}>
-                                                {record.winner === 'red' ? '红方获胜' : '蓝方获胜'}
+                                                {record.winner === 'red' ? '红方roll点大' : '蓝方roll点大'}
                                             </span>
                                             <span className="text-gray-400 text-2xl">
                                                 {new Date(record.timestamp).toLocaleTimeString()}
@@ -697,26 +688,103 @@ export default function MatchSettings({
             ) : activeTab === 'referee' ? (
                 /* 裁判表控制面板 */
                 <div className="space-y-6">
+                    {/* 队伍和操作类型选择 */}
+                    <div className="grid grid-cols-3 gap-6 mb-6">
+                        {/* 当前操作队伍 */}
+                        <div className="flex flex-col">
+                            <label className="text-4xl text-gray-200 mb-3 font-medium">当前操作队伍</label>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => onBanPickStateChange({ ...banPickState, currentTeam: 'red' })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-4xl font-bold transition-colors ${banPickState.currentTeam === 'red'
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    红队
+                                </button>
+                                <button
+                                    onClick={() => onBanPickStateChange({ ...banPickState, currentTeam: 'blue' })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-4xl font-bold transition-colors ${banPickState.currentTeam === 'blue'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    蓝队
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 当前操作类型 */}
+                        <div className="flex flex-col">
+                            <label className="text-4xl text-gray-200 mb-3 font-medium">当前操作类型</label>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => onBanPickStateChange({ ...banPickState, currentAction: 'ban' })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-4xl font-bold transition-colors ${banPickState.currentAction === 'ban'
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    Ban
+                                </button>
+                                <button
+                                    onClick={() => onBanPickStateChange({ ...banPickState, currentAction: 'pick' })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-4xl font-bold transition-colors ${banPickState.currentAction === 'pick'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    Pick
+                                </button>
+                            </div>
+                        </div>
+                        {/* 显示/隐藏图池 */}
+                        <div className="flex flex-col">
+                            <label className="text-4xl text-gray-200 mb-3 font-medium">图池显示</label>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => onMapPoolSettingsChange({ ...mapPoolSettings, visible: true })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-4xl font-bold transition-colors ${mapPoolSettings.visible
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    显示
+                                </button>
+                                <button
+                                    onClick={() => onMapPoolSettingsChange({ ...mapPoolSettings, visible: false })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-4xl font-bold transition-colors ${!mapPoolSettings.visible
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    隐藏
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* 分数控制 */}
                     <div className="grid grid-cols-2 gap-6 mb-6">
                         {/* 红队分数控制 */}
                         <div className="flex flex-col">
-                            <label className="text-2xl text-gray-200 mb-3 font-medium" style={{ color: getTeamColor('red') }}>
+                            <label className="text-4xl text-gray-200 mb-3 font-medium" style={{ color: getTeamColor('red') }}>
                                 红队分数
                             </label>
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => handleScoreChangeWithHistory('red', (teams.find(t => t.id === 'red')?.score || 0) - 1)}
-                                    className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded text-2xl font-bold transition-colors"
+                                    className="flex-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded text-4xl font-bold transition-colors"
                                 >
                                     -1
                                 </button>
-                                <div className="flex-1 text-center bg-gray-700 text-white text-3xl font-bold py-3 rounded">
+                                <div className="flex-1 text-center bg-gray-700 text-white text-4xl font-bold py-3 rounded">
                                     {teams.find(t => t.id === 'red')?.score || 0}
                                 </div>
                                 <button
                                     onClick={() => handleScoreChangeWithHistory('red', (teams.find(t => t.id === 'red')?.score || 0) + 1)}
-                                    className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded text-2xl font-bold transition-colors"
+                                    className="flex-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded text-4xl font-bold transition-colors"
                                 >
                                     +1
                                 </button>
@@ -725,22 +793,22 @@ export default function MatchSettings({
 
                         {/* 蓝队分数控制 */}
                         <div className="flex flex-col">
-                            <label className="text-2xl text-gray-200 mb-3 font-medium" style={{ color: getTeamColor('blue') }}>
+                            <label className="text-4xl text-gray-200 mb-3 font-medium" style={{ color: getTeamColor('blue') }}>
                                 蓝队分数
                             </label>
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => handleScoreChangeWithHistory('blue', (teams.find(t => t.id === 'blue')?.score || 0) - 1)}
-                                    className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded text-2xl font-bold transition-colors"
+                                    className="flex-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded text-4xl font-bold transition-colors"
                                 >
                                     -1
                                 </button>
-                                <div className="flex-1 text-center bg-gray-700 text-white text-3xl font-bold py-3 rounded">
+                                <div className="flex-1 text-center bg-gray-700 text-white text-4xl font-bold py-3 rounded">
                                     {teams.find(t => t.id === 'blue')?.score || 0}
                                 </div>
                                 <button
                                     onClick={() => handleScoreChangeWithHistory('blue', (teams.find(t => t.id === 'blue')?.score || 0) + 1)}
-                                    className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded text-2xl font-bold transition-colors"
+                                    className="flex-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded text-4xl font-bold transition-colors"
                                 >
                                     +1
                                 </button>
@@ -751,10 +819,10 @@ export default function MatchSettings({
                     {/* 裁判话语显示 */}
                     <div className="mb-6">
                         <div className="flex justify-between items-center mb-3">
-                            <label className="text-2xl text-gray-200 font-medium">裁判话语</label>
+                            <label className="text-4xl text-gray-200 font-medium">裁判话语</label>
                             <button
                                 onClick={() => copyResultText(refereeDisplayText, 'referee-text')}
-                                className={`px-4 py-2 text-white rounded text-xl transition-colors ${copiedStates['referee-text']
+                                className={`px-4 py-2 text-white rounded text-4xl transition-colors ${copiedStates['referee-text']
                                     ? 'bg-green-600 hover:bg-green-700'
                                     : 'bg-blue-600 hover:bg-blue-700'
                                     }`}
@@ -763,7 +831,7 @@ export default function MatchSettings({
                             </button>
                         </div>
                         <div className="bg-gray-700/50 p-4 rounded">
-                            <div className="text-white text-xl break-words">
+                            <div className="text-white text-6xl break-words">
                                 {refereeDisplayText}
                             </div>
                         </div>
@@ -773,19 +841,19 @@ export default function MatchSettings({
 
                     {/* NextPick/NextBan显示 */}
                     <div className="mb-6">
-                        <label className="text-2xl text-gray-200 mb-3 font-medium">下一步操作</label>
+                        <label className="text-4xl text-gray-200 mb-3 font-medium">下一步操作</label>
                         <div className="bg-gray-700/50 p-4 rounded">
-                            <div className="text-white text-xl">
+                            <div className="text-white text-4xl">
                                 {nextAction && nextTeam ? (
                                     <div>
                                         <span className={nextTeam === 'red' ? 'text-red-400' : 'text-blue-400'}>
-                                            {nextTeam === 'red' ? '红队' : '蓝队'}
+                                            {nextTeam === 'red' ? `红队${redTeam?.playerName}` : `蓝队${blueTeam?.playerName}`}
                                         </span>
                                         <span className="mx-2">
                                             {nextAction === 'pick' ? 'Pick' : 'Ban'}
                                         </span>
                                         <span className="text-gray-300">
-                                            | 剩余可操作图池: {refereeState.availableMaps.join(' ')}
+                                            | 剩余可操作图池: {sortAvailableMaps(refereeState.availableMaps).join(' ')}
                                         </span>
                                     </div>
                                 ) : (
@@ -796,7 +864,6 @@ export default function MatchSettings({
                             </div>
                         </div>
                     </div>
-
                     {/* NextPick/NextBan控制 */}
                     <div className="mb-6">
                         <label className="text-2xl text-gray-200 mb-3 font-medium">下一步操作类型</label>
@@ -821,172 +888,15 @@ export default function MatchSettings({
                             </button>
                         </div>
                     </div>
-
-                    {/* 裁判历史记录 */}
-                    <div className="mb-6">
-                        <div className="flex justify-between items-center mb-3">
-                            <label className="text-2xl text-gray-200 font-medium">裁判历史记录</label>
-                            {refereeState.history.length > 0 && (
-                                <button
-                                    onClick={clearRefereeHistory}
-                                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xl transition-colors"
-                                >
-                                    清除历史
-                                </button>
-                            )}
-                        </div>
-                        <div className="bg-gray-700/50 p-4 rounded max-h-48 overflow-y-auto">
-                            {refereeState.history.length === 0 ? (
-                                <div className="text-gray-400 text-lg text-center">暂无裁判记录</div>
-                            ) : (
-                                refereeState.history.slice().reverse().map((record, index) => (
-                                    <div key={index} className="text-white text-lg mb-3 p-3 bg-gray-600/30 rounded">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className={record.type === 'score' ? (record.team === 'red' ? 'text-red-400' : 'text-blue-400') : 'text-green-400'}>
-                                                {record.type === 'score' ? '分数变化' : '裁判话语'}
-                                            </span>
-                                            <span className="text-gray-400 text-sm">
-                                                {new Date(record.timestamp).toLocaleTimeString()}
-                                            </span>
-                                        </div>
-                                        <div className="text-gray-300">
-                                            {record.content}
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                /* Ban/Pick控制面板 */
-                <div className="space-y-6">
-                    {/* 队伍和操作类型选择 */}
-                    <div className="grid grid-cols-2 gap-6 mb-6">
-                        {/* 当前操作队伍 */}
-                        <div className="flex flex-col">
-                            <label className="text-2xl text-gray-200 mb-3 font-medium">当前操作队伍</label>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => onBanPickStateChange({ ...banPickState, currentTeam: 'red' })}
-                                    className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${banPickState.currentTeam === 'red'
-                                        ? 'bg-red-600 text-white'
-                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                        }`}
-                                >
-                                    红队
-                                </button>
-                                <button
-                                    onClick={() => onBanPickStateChange({ ...banPickState, currentTeam: 'blue' })}
-                                    className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${banPickState.currentTeam === 'blue'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                        }`}
-                                >
-                                    蓝队
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* 当前操作类型 */}
-                        <div className="flex flex-col">
-                            <label className="text-2xl text-gray-200 mb-3 font-medium">当前操作类型</label>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => onBanPickStateChange({ ...banPickState, currentAction: 'ban' })}
-                                    className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${banPickState.currentAction === 'ban'
-                                        ? 'bg-red-600 text-white'
-                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                        }`}
-                                >
-                                    Ban
-                                </button>
-                                <button
-                                    onClick={() => onBanPickStateChange({ ...banPickState, currentAction: 'pick' })}
-                                    className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${banPickState.currentAction === 'pick'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                        }`}
-                                >
-                                    Pick
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 图池设置 */}
-                    <div className="grid grid-cols-3 gap-6 mb-6">
-                        {/* 赛季选择 */}
-                        <div className="flex flex-col">
-                            <label className="text-2xl text-gray-200 mb-2 font-medium">赛季</label>
-                            <Dropdown
-                                options={[
-                                    { value: 's1', label: '第1赛季' }
-                                ]}
-                                value={mapPoolSettings.season}
-                                onChange={(value) => onMapPoolSettingsChange({ ...mapPoolSettings, season: value })}
-                                darkMode={true}
-                                minWidth="12rem"
-                                fontSize={"text-xl"}
-                            />
-                        </div>
-
-                        {/* 类别选择 */}
-                        <div className="flex flex-col">
-                            <label className="text-2xl text-gray-200 mb-2 font-medium">类别</label>
-                            <Dropdown
-                                options={[
-                                    { value: 'qualification', label: 'QUA' },
-                                    { value: 'ro32', label: 'RO32' },
-                                    { value: 'ro16', label: 'RO16' },
-                                    { value: 'quarterfinals', label: 'QF' },
-                                    { value: 'semifinals', label: 'SF' },
-                                    { value: 'finals', label: 'F' },
-                                    { value: 'grandfinals', label: 'GF' }
-                                ]}
-                                value={mapPoolSettings.category}
-                                onChange={(value) => onMapPoolSettingsChange({ ...mapPoolSettings, category: value })}
-                                darkMode={true}
-                                minWidth="8rem"
-                                fontSize={"text-xl"}
-                            />
-                        </div>
-
-                        {/* 显示/隐藏图池 */}
-                        <div className="flex flex-col">
-                            <label className="text-2xl text-gray-200 mb-3 font-medium">图池显示</label>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => onMapPoolSettingsChange({ ...mapPoolSettings, visible: true })}
-                                    className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${mapPoolSettings.visible
-                                        ? 'bg-green-600 text-white'
-                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                        }`}
-                                >
-                                    显示
-                                </button>
-                                <button
-                                    onClick={() => onMapPoolSettingsChange({ ...mapPoolSettings, visible: false })}
-                                    className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${!mapPoolSettings.visible
-                                        ? 'bg-red-600 text-white'
-                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                        }`}
-                                >
-                                    隐藏
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
                     {/* 操作历史 */}
                     <div className="mb-6">
-                        <label className="text-2xl text-gray-200 mb-3 font-medium">操作历史</label>
+                        <label className="text-4xl text-gray-200 mb-3 font-medium">操作历史</label>
                         <div className="bg-gray-700/50 p-4 rounded max-h-32 overflow-y-auto">
                             {banPickState.history.length === 0 ? (
-                                <div className="text-gray-400 text-lg">暂无操作记录</div>
+                                <div className="text-gray-400 text-4xl">暂无操作记录</div>
                             ) : (
                                 banPickState.history.slice(-5).reverse().map((record, index) => (
-                                    <div key={index} className="text-white text-lg mb-2">
+                                    <div key={index} className="text-white text-4xl mb-2">
                                         <span className={record.team === 'red' ? 'text-red-400' : 'text-blue-400'}>
                                             {record.team === 'red' ? '红队' : '蓝队'}
                                         </span>
@@ -994,7 +904,7 @@ export default function MatchSettings({
                                             {record.action === 'ban' ? 'Ban' : 'Pick'}
                                         </span>
                                         <span className="text-gray-300">
-                                            #{record.beatmapId}
+                                            {record.modSlot}
                                         </span>
                                     </div>
                                 ))
@@ -1011,6 +921,111 @@ export default function MatchSettings({
                             重置Ban/Pick状态
                         </button>
                     </div>
+                    {/* 分数历史记录 */}
+                    <div className="mb-6">
+                        <div className="flex justify-between items-center mb-3">
+                            <label className="text-2xl text-gray-200 font-medium">分数历史记录</label>
+                            {refereeState.history.length > 0 && (
+                                <button
+                                    onClick={clearRefereeHistory}
+                                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xl transition-colors"
+                                >
+                                    清除历史
+                                </button>
+                            )}
+                        </div>
+                        <div className="bg-gray-700/50 p-4 rounded max-h-48 overflow-y-auto">
+                            {refereeState.history.length === 0 ? (
+                                <div className="text-gray-400 text-4xl text-center">暂无分数记录</div>
+                            ) : (
+                                refereeState.history.slice().reverse().map((record, index) => (
+                                    <div key={index} className="text-white text-4xl mb-3 p-3 bg-gray-600/30 rounded">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className={record.type === 'score' ? (record.team === 'red' ? 'text-red-400' : 'text-blue-400') : 'text-green-400'}>
+                                                {record.type === 'score' ? '分数变化' : '裁判话语'}
+                                            </span>
+                                            <span className="text-gray-400 text-3xl">
+                                                {new Date(record.timestamp).toLocaleTimeString()}
+                                            </span>
+                                        </div>
+                                        <div className="text-gray-300">
+                                            {record.content}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                /* Ban/Pick控制面板 */
+                <div className="space-y-6">
+
+                    {/* 图池设置 */}
+                    <div className="grid grid-cols-3 gap-6 mb-6">
+                        {/* 赛季选择 */}
+                        <div className="flex flex-col">
+                            <label className="text-4xl text-gray-200 mb-2 font-medium">赛季</label>
+                            <Dropdown
+                                options={[
+                                    { value: 's1', label: '第1赛季' }
+                                ]}
+                                value={mapPoolSettings.season}
+                                onChange={(value) => onMapPoolSettingsChange({ ...mapPoolSettings, season: value })}
+                                darkMode={true}
+                                minWidth="25rem"
+                                fontSize={"text-4xl"}
+                            />
+                        </div>
+
+                        {/* 类别选择 */}
+                        <div className="flex flex-col">
+                            <label className="text-4xl text-gray-200 mb-2 font-medium">类别</label>
+                            <Dropdown
+                                options={[
+                                    { value: 'qualification', label: 'QUA' },
+                                    { value: 'ro32', label: 'RO32' },
+                                    { value: 'ro16', label: 'RO16' },
+                                    { value: 'quarterfinals', label: 'QF' },
+                                    { value: 'semifinals', label: 'SF' },
+                                    { value: 'finals', label: 'F' },
+                                    { value: 'grandfinals', label: 'GF' }
+                                ]}
+                                value={mapPoolSettings.category}
+                                onChange={(value) => onMapPoolSettingsChange({ ...mapPoolSettings, category: value })}
+                                darkMode={true}
+                                minWidth="25rem"
+                                fontSize={"text-4xl"}
+                            />
+                        </div>
+
+                        {/* 显示/隐藏图池 */}
+                        <div className="flex flex-col">
+                            <label className="text-4xl text-gray-200 mb-3 font-medium">图池显示</label>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => onMapPoolSettingsChange({ ...mapPoolSettings, visible: true })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-4xl font-bold transition-colors ${mapPoolSettings.visible
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    显示
+                                </button>
+                                <button
+                                    onClick={() => onMapPoolSettingsChange({ ...mapPoolSettings, visible: false })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-4xl font-bold transition-colors ${!mapPoolSettings.visible
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    隐藏
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+
                 </div>
             )}
 

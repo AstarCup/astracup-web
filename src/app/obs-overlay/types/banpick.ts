@@ -28,6 +28,7 @@ export interface BanPickState {
         team: 'red' | 'blue';
         action: 'ban' | 'pick';
         beatmapId: number;
+        modSlot: string; // 新增mod位信息，如 "NM1", "HD1" 等
         timestamp: number;
     }>;
 }
