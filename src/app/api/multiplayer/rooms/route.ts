@@ -11,9 +11,20 @@ export async function GET(request: NextRequest) {
         const mode = searchParams.get('mode') || 'active';
         const limit = searchParams.get('limit') || '50';
         const sort = searchParams.get('sort') || 'ended';
+        const roomId = searchParams.get('roomId');
+
+        let apiUrl: string;
+
+        if (roomId) {
+            // 查询特定房间
+            apiUrl = `https://osu.ppy.sh/api/v2/rooms/${roomId}`;
+        } else {
+            // 查询房间列表
+            apiUrl = `https://osu.ppy.sh/api/v2/rooms?mode=${mode}&limit=${limit}&sort=${sort}`;
+        }
 
         const response = await fetch(
-            `https://osu.ppy.sh/api/v2/rooms?mode=${mode}&limit=${limit}&sort=${sort}`,
+            apiUrl,
             {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -32,37 +43,68 @@ export async function GET(request: NextRequest) {
 
         const data = await response.json();
 
-        // 过滤掉有密码的房间，只返回公开房间
-        const publicRooms: MultiplayerRoom[] = data.rooms
-            ?.filter((room: any) => !room.has_password)
-            ?.map((room: any) => ({
-                id: room.id,
-                name: room.name,
-                category: room.category,
-                type: room.type,
-                starts_at: room.starts_at,
-                ends_at: room.ends_at,
-                max_attempts: room.max_attempts,
-                participant_count: room.participant_count,
-                channel_id: room.channel_id,
-                active: room.active,
-                has_password: room.has_password,
-                queue_mode: room.queue_mode,
-                auto_skip: room.auto_skip,
-                current_playlist_item: room.current_playlist_item,
-                current_user_score: room.current_user_score,
-                host: {
-                    id: room.host.id,
-                    username: room.host.username,
-                    avatar_url: room.host.avatar_url,
-                },
-                playlist: room.playlist || [],
-            })) || [];
+        let rooms: MultiplayerRoom[] = [];
+
+        if (roomId) {
+            // 单个房间查询 - 直接处理返回的房间对象
+            if (!data.has_password) {
+                rooms = [{
+                    id: data.id,
+                    name: data.name,
+                    category: data.category,
+                    type: data.type,
+                    starts_at: data.starts_at,
+                    ends_at: data.ends_at,
+                    max_attempts: data.max_attempts,
+                    participant_count: data.participant_count,
+                    channel_id: data.channel_id,
+                    active: data.active,
+                    has_password: data.has_password,
+                    queue_mode: data.queue_mode,
+                    auto_skip: data.auto_skip,
+                    current_playlist_item: data.current_playlist_item,
+                    current_user_score: data.current_user_score,
+                    host: {
+                        id: data.host.id,
+                        username: data.host.username,
+                        avatar_url: data.host.avatar_url,
+                    },
+                    playlist: data.playlist || [],
+                }];
+            }
+        } else {
+            // 房间列表查询 - 过滤掉有密码的房间
+            rooms = data.rooms
+                ?.filter((room: any) => !room.has_password)
+                ?.map((room: any) => ({
+                    id: room.id,
+                    name: room.name,
+                    category: room.category,
+                    type: room.type,
+                    starts_at: room.starts_at,
+                    ends_at: room.ends_at,
+                    max_attempts: room.max_attempts,
+                    participant_count: room.participant_count,
+                    channel_id: room.channel_id,
+                    active: room.active,
+                    has_password: room.has_password,
+                    queue_mode: room.queue_mode,
+                    auto_skip: room.auto_skip,
+                    current_playlist_item: room.current_playlist_item,
+                    current_user_score: room.current_user_score,
+                    host: {
+                        id: room.host.id,
+                        username: room.host.username,
+                        avatar_url: room.host.avatar_url,
+                    },
+                    playlist: room.playlist || [],
+                })) || [];
+        }
 
         return NextResponse.json({
             success: true,
-            rooms: publicRooms,
-            total: publicRooms.length,
+            rooms: rooms,
+            total: rooms.length,
         });
     } catch (error) {
         console.error('Error fetching multiplayer rooms:', error);

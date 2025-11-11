@@ -5,7 +5,7 @@ import MultiplayerScoresTable from "../components/ui/MultiplayerScoresTable";
 import { MultiplayerRoom, DisplayScore } from "@/lib/multiplayer-types";
 
 export default function MultiplayerScoresPage() {
-    const [rooms, setRooms] = useState<MultiplayerRoom[]>([]);
+    const [roomUrl, setRoomUrl] = useState('');
     const [selectedRoom, setSelectedRoom] = useState<MultiplayerRoom | null>(null);
     const [selectedPlaylist, setSelectedPlaylist] = useState<number | null>(null);
     const [scores, setScores] = useState<DisplayScore[]>([]);
@@ -13,27 +13,56 @@ export default function MultiplayerScoresPage() {
     const [loadingScores, setLoadingScores] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // 加载房间列表
-    const loadRooms = async () => {
+    // 从URL中提取房间ID
+    const extractRoomIdFromUrl = (url: string): string | null => {
+        try {
+            // 匹配 https://osu.ppy.sh/multiplayer/rooms/1774254 格式
+            const match = url.match(/multiplayer\/rooms\/(\d+)/);
+            return match ? match[1] : null;
+        } catch {
+            return null;
+        }
+    };
+
+    // 加载特定房间信息
+    const loadRoomById = async (roomId: string) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('/api/multiplayer/rooms?mode=active&limit=50&sort=ended');
+            // 通过房间ID获取房间信息
+            const response = await fetch(`/api/multiplayer/rooms?roomId=${roomId}`);
             const data = await response.json();
 
-            if (data.success) {
-                setRooms(data.rooms);
-                if (data.rooms.length > 0 && !selectedRoom) {
-                    setSelectedRoom(data.rooms[0]);
-                }
+            if (data.success && data.rooms.length > 0) {
+                const room = data.rooms[0];
+                setSelectedRoom(room);
+                setSelectedPlaylist(null);
+                setScores([]);
             } else {
-                setError(data.error || '加载房间失败');
+                setError('未找到该房间或房间不可访问');
+                setSelectedRoom(null);
+                setSelectedPlaylist(null);
+                setScores([]);
             }
         } catch (err) {
             setError('网络错误，无法加载房间数据');
-            console.error('Error loading rooms:', err);
+            console.error('Error loading room:', err);
+            setSelectedRoom(null);
+            setSelectedPlaylist(null);
+            setScores([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // 处理URL输入
+    const handleUrlSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const roomId = extractRoomIdFromUrl(roomUrl);
+        if (roomId) {
+            loadRoomById(roomId);
+        } else {
+            setError('请输入有效的osu! multiplayer房间链接');
         }
     };
 
@@ -64,24 +93,12 @@ export default function MultiplayerScoresPage() {
         }
     };
 
-    // 页面加载时获取房间列表
-    useEffect(() => {
-        loadRooms();
-    }, []);
-
-    // 当选择房间或playlist时加载分数
+    // 当选择playlist时加载分数
     useEffect(() => {
         if (selectedRoom && selectedPlaylist) {
             loadScores();
         }
     }, [selectedRoom, selectedPlaylist]);
-
-    // 处理房间选择
-    const handleRoomSelect = (room: MultiplayerRoom) => {
-        setSelectedRoom(room);
-        setSelectedPlaylist(null);
-        setScores([]);
-    };
 
     // 处理playlist选择
     const handlePlaylistSelect = (playlistId: number) => {
@@ -110,7 +127,7 @@ export default function MultiplayerScoresPage() {
                     osu! Multiplayer 分数查看
                 </h1>
                 <p className="text-gray-300">
-                    查看公开的osu! multiplayer房间的分数数据
+                    通过房间链接查看osu! multiplayer房间的分数数据
                 </p>
             </div>
 
@@ -121,51 +138,71 @@ export default function MultiplayerScoresPage() {
                 </div>
             )}
 
-            {/* 房间选择区域 */}
+            {/* URL输入区域 */}
             <div className="bg-[#3D3D3D] p-6 rounded-lg mb-6">
-                <h2 className="text-xl font-bold text-white mb-4">选择房间</h2>
-
-                {loading ? (
-                    <div className="text-center py-4 text-white">
-                        <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                        <p className="mt-2">加载房间列表中...</p>
+                <h2 className="text-xl font-bold text-white mb-4">输入房间链接</h2>
+                <form onSubmit={handleUrlSubmit} className="space-y-4">
+                    <div>
+                        <label htmlFor="roomUrl" className="block text-white mb-2">
+                            osu! multiplayer房间链接
+                        </label>
+                        <input
+                            type="url"
+                            id="roomUrl"
+                            value={roomUrl}
+                            onChange={(e) => setRoomUrl(e.target.value)}
+                            placeholder="https://osu.ppy.sh/multiplayer/rooms/1774254"
+                            className="w-full px-4 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-[#E93B66] focus:outline-none"
+                            required
+                        />
+                        <p className="text-gray-400 text-sm mt-1">
+                            请输入完整的osu! multiplayer房间链接
+                        </p>
                     </div>
-                ) : rooms.length === 0 ? (
-                    <div className="text-center py-4 text-white">
-                        <p>暂无公开的multiplayer房间</p>
-                        <button
-                            onClick={loadRooms}
-                            className="mt-2 px-4 py-2 bg-[#E93B66] text-white hover:bg-[#3BE9D8] transition font-bold"
-                        >
-                            重新加载
-                        </button>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {rooms.map(room => (
-                            <div
-                                key={room.id}
-                                className={`p-4 rounded cursor-pointer transition ${selectedRoom?.id === room.id
-                                        ? 'bg-[#E93B66] text-white'
-                                        : 'bg-gray-700 text-white hover:bg-gray-600'
-                                    }`}
-                                onClick={() => handleRoomSelect(room)}
-                            >
-                                <h3 className="font-bold text-lg mb-2">{room.name}</h3>
-                                <div className="text-sm space-y-1">
-                                    <p>类型: {room.category}</p>
-                                    <p>玩家数: {room.participant_count}</p>
-                                    <p>状态: {room.active ? '活跃' : '非活跃'}</p>
-                                    <p>房主: {room.host.username}</p>
-                                    {room.ends_at && (
-                                        <p>结束时间: {new Date(room.ends_at).toLocaleString('zh-CN')}</p>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="px-6 py-2 bg-[#E93B66] text-white hover:bg-[#3BE9D8] transition font-bold disabled:opacity-50"
+                    >
+                        {loading ? '加载中...' : '加载房间'}
+                    </button>
+                </form>
             </div>
+
+            {/* 房间信息显示 */}
+            {selectedRoom && (
+                <div className="bg-[#3D3D3D] p-6 rounded-lg mb-6">
+                    <h2 className="text-xl font-bold text-white mb-4">房间信息</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-white">
+                        <div>
+                            <p className="text-gray-400">房间名称</p>
+                            <p className="font-bold">{selectedRoom.name}</p>
+                        </div>
+                        <div>
+                            <p className="text-gray-400">类型</p>
+                            <p className="font-bold">{selectedRoom.category}</p>
+                        </div>
+                        <div>
+                            <p className="text-gray-400">玩家数</p>
+                            <p className="font-bold">{selectedRoom.participant_count}</p>
+                        </div>
+                        <div>
+                            <p className="text-gray-400">状态</p>
+                            <p className="font-bold">{selectedRoom.active ? '活跃' : '非活跃'}</p>
+                        </div>
+                        <div>
+                            <p className="text-gray-400">房主</p>
+                            <p className="font-bold">{selectedRoom.host.username}</p>
+                        </div>
+                        {selectedRoom.ends_at && (
+                            <div>
+                                <p className="text-gray-400">结束时间</p>
+                                <p className="font-bold">{new Date(selectedRoom.ends_at).toLocaleString('zh-CN')}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Playlist选择区域 */}
             {selectedRoom && selectedRoom.playlist.length > 0 && (
@@ -176,8 +213,8 @@ export default function MultiplayerScoresPage() {
                             <div
                                 key={playlistItem.id}
                                 className={`p-4 rounded cursor-pointer transition ${selectedPlaylist === playlistItem.id
-                                        ? 'bg-[#E93B66] text-white'
-                                        : 'bg-gray-700 text-white hover:bg-gray-600'
+                                    ? 'bg-[#E93B66] text-white'
+                                    : 'bg-gray-700 text-white hover:bg-gray-600'
                                     }`}
                                 onClick={() => handlePlaylistSelect(playlistItem.id)}
                             >
@@ -212,10 +249,10 @@ export default function MultiplayerScoresPage() {
             <div className="bg-[#3D3D3D] p-6 rounded-lg mt-8">
                 <h2 className="text-xl font-bold text-white mb-4">使用说明</h2>
                 <div className="text-gray-300 space-y-2">
-                    <p>• 此页面显示公开的osu! multiplayer房间的分数数据</p>
-                    <p>• 仅显示无密码的公开房间</p>
-                    <p>• 点击房间卡片选择要查看的房间</p>
-                    <p>• 点击图池卡片选择具体的谱面</p>
+                    <p>• 在输入框中粘贴osu! multiplayer房间的完整链接</p>
+                    <p>• 例如: https://osu.ppy.sh/multiplayer/rooms/1774254</p>
+                    <p>• 点击"加载房间"按钮获取房间信息</p>
+                    <p>• 选择具体的图池（playlist）查看分数</p>
                     <p>• 表格支持按各列排序，点击列标题即可</p>
                     <p>• 点击"刷新数据"按钮可以重新获取最新分数</p>
                 </div>
