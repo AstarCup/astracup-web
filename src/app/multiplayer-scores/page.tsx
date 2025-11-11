@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import MultiplayerScoresTable from "../components/ui/MultiplayerScoresTable";
+import TotalScoresByModTable from "../components/ui/TotalScoresByModTable";
 import { MultiplayerRoom, DisplayScore } from "@/lib/multiplayer-types";
 import { MapSelection } from "@/lib/map-selection";
 
@@ -18,6 +19,7 @@ export default function MultiplayerScoresPage() {
     const [loadingMapSelections, setLoadingMapSelections] = useState(false);
     const [loadingPlayers, setLoadingPlayers] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'byPlaylist' | 'byTotal'>('byPlaylist');
 
     // 从URL参数中提取房间链接并自动加载
     useEffect(() => {
@@ -105,7 +107,7 @@ export default function MultiplayerScoresPage() {
         }
     };
 
-    // 过滤分数数据，只保留已过审的玩家
+    // 过滤分数数据，只保留已过审的玩家，并重新计算排名
     const filterScores = (scores: DisplayScore[]): DisplayScore[] => {
         if (approvedPlayers.size === 0) {
             console.log('No approved players data available, showing all scores');
@@ -114,7 +116,17 @@ export default function MultiplayerScoresPage() {
 
         const filtered = scores.filter(score => approvedPlayers.has(score.user_id.toString()));
         console.log(`Filtered scores: ${filtered.length} out of ${scores.length} (${scores.length - filtered.length} removed)`);
-        return filtered;
+
+        // 按分数降序排序并重新计算排名
+        const sortedAndRanked = filtered
+            .sort((a, b) => b.total_score - a.total_score)
+            .map((score, index) => ({
+                ...score,
+                position: index + 1 // 重新计算排名
+            }));
+
+        console.log(`Re-ranked ${sortedAndRanked.length} scores`);
+        return sortedAndRanked;
     };
 
     // 加载特定房间信息
@@ -393,14 +405,50 @@ export default function MultiplayerScoresPage() {
                 </div>
             )}
 
-            {/* 分数表格 */}
+            {/* Tab切换和分数表格 */}
             {selectedRoom && selectedPlaylist && (
-                <MultiplayerScoresTable
-                    scores={filteredScores}
-                    title={getPageTitle()}
-                    loading={loadingScores || loadingPlayers}
-                    onRefresh={loadScores}
-                />
+                <div className="bg-[#3D3D3D] p-6 rounded-lg">
+                    {/* Tab切换 */}
+                    <div className="flex border-b border-gray-600 mb-6">
+                        <button
+                            className={`px-6 py-3 font-medium text-lg transition ${activeTab === 'byPlaylist'
+                                ? 'text-white border-b-2 border-[#E93B66]'
+                                : 'text-gray-400 hover:text-white'
+                                }`}
+                            onClick={() => setActiveTab('byPlaylist')}
+                        >
+                            按图池
+                        </button>
+                        <button
+                            className={`px-6 py-3 font-medium text-lg transition ${activeTab === 'byTotal'
+                                ? 'text-white border-b-2 border-[#E93B66]'
+                                : 'text-gray-400 hover:text-white'
+                                }`}
+                            onClick={() => setActiveTab('byTotal')}
+                        >
+                            按总分
+                        </button>
+                    </div>
+
+                    {/* 表格内容 */}
+                    {activeTab === 'byPlaylist' && (
+                        <MultiplayerScoresTable
+                            scores={filteredScores}
+                            title={getPageTitle()}
+                            loading={loadingScores || loadingPlayers}
+                            onRefresh={loadScores}
+                        />
+                    )}
+
+                    {activeTab === 'byTotal' && (
+                        <TotalScoresByModTable
+                            scores={scores as any}
+                            mapSelections={mapSelections}
+                            approvedPlayers={approvedPlayers}
+                            loading={loadingScores || loadingPlayers || loadingMapSelections}
+                        />
+                    )}
+                </div>
             )}
         </div>
     );
