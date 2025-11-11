@@ -36,7 +36,7 @@ export default function MapPoolGrid({ beatmaps, onBeatmapLeftClick, onBeatmapRig
             'HR': 'Hard Rock',
             'DT': 'Double Time',
             'FM': 'Free Mod',
-            'LZ': 'Lazer',
+            'LZ': 'Lazer Fun mod',
             'TB': 'Tiebreaker'
         };
         return labels[mod] || mod;
@@ -48,12 +48,12 @@ export default function MapPoolGrid({ beatmaps, onBeatmapLeftClick, onBeatmapRig
                 <div key={mod} className="mb-6">
                     {/* MOD分类标题 */}
                     <div className="flex justify-center mb-3">
-                        <div className={`px-4 py-2 rounded-lg text-white font-bold text-lg ${mod === 'NM' ? 'bg-gray-500' :
+                        <div className={`px-4 py-2 rounded-full text-white font-bold text-lg ${mod === 'NM' ? 'bg-gray-500' :
                             mod === 'HD' ? 'bg-yellow-500' :
                                 mod === 'HR' ? 'bg-red-500' :
                                     mod === 'DT' ? 'bg-purple-500' :
                                         mod === 'FM' ? 'bg-green-500' :
-                                            mod === 'LZ' ? 'bg-blue-500' :
+                                            mod === 'LZ' ? 'bg-pink-500' :
                                                 'bg-black'
                             }`}>
                             {getModLabel(mod)}

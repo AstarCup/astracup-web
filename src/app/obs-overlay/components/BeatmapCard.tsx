@@ -31,7 +31,7 @@ export default function BeatmapCard({ beatmap, onLeftClick, onRightClick, banPic
         if (beatmap.status === 'available') {
             return `${baseClass} bg-gray-800/80 hover:bg-gray-700/80`;
         } else if (beatmap.status === 'banned') {
-            const teamColor = beatmap.bannedBy === 'red' ? 'border-red-500' : 'border-blue-500';
+            const teamColor = beatmap.bannedBy === 'red' ? 'border-gray-500' : 'border-gray-500';
             return `${baseClass} ${teamColor} border-8`;
         } else if (beatmap.status === 'picked') {
             const teamColor = beatmap.pickedBy === 'red' ? 'border-red-500' : 'border-blue-500';
@@ -54,40 +54,15 @@ export default function BeatmapCard({ beatmap, onLeftClick, onRightClick, banPic
         return '';
     };
 
-    const getStatusText = () => {
-        if (beatmap.status === 'banned') {
-            return `BANNED${beatmap.bannedBy === 'red' ? '红队' : '蓝队'}`;
-        } else if (beatmap.status === 'picked') {
-            return `PICKED${beatmap.pickedBy === 'red' ? '红队' : '蓝队'}`;
-        }
-        return '';
+    const getTeamColor = (team: 'red' | 'blue') => {
+        return team === 'red' ? 'text-red-500' : 'text-blue-500';
     };
 
     const getStatusWithCount = () => {
         if (beatmap.status === 'banned') {
-            // 计算该队伍ban这个谱面的次数
-            const banCount = banPickHistory.filter(record =>
-                record.action === 'ban' &&
-                record.team === beatmap.bannedBy &&
-                record.beatmapId === beatmap.beatmapId
-            ).length;
-
-            // console.log(`Ban计数调试: beatmapId=${beatmap.beatmapId}, team=${beatmap.bannedBy}, count=${banCount}, history=`,
-            // banPickHistory.filter(record => record.action === 'ban' && record.team === beatmap.bannedBy && record.beatmapId === beatmap.beatmapId));
-
-            return `BANNED${beatmap.bannedBy === 'red' ? '红队' : '蓝队'}`;
+            return `BANNED${beatmap.bannedBy === 'red' ? `${getTeamColor('red')}红方` : `${getTeamColor('blue')}蓝方`}`;
         } else if (beatmap.status === 'picked') {
-            // 计算该队伍pick这个谱面的次数
-            const pickCount = banPickHistory.filter(record =>
-                record.action === 'pick' &&
-                record.team === beatmap.pickedBy &&
-                record.beatmapId === beatmap.beatmapId
-            ).length;
-
-            // console.log(`Pick计数调试: beatmapId=${beatmap.beatmapId}, team=${beatmap.pickedBy}, count=${pickCount}, history=`,
-            // banPickHistory.filter(record => record.action === 'pick' && record.team === beatmap.pickedBy && record.beatmapId === beatmap.beatmapId));
-
-            return `PICKED${beatmap.pickedBy === 'red' ? '红队' : '蓝队'}`;
+            return `PICKED${beatmap.pickedBy === 'red' ? `${getTeamColor('red')}红方` : `${getTeamColor('blue')}蓝方`}`;
         }
         return '';
     };
@@ -152,9 +127,25 @@ export default function BeatmapCard({ beatmap, onLeftClick, onRightClick, banPic
                         {/* Ban/Pick图标 */}
                         <div className="">
                             {beatmap.status === 'banned' ? (
-                                <span className="text-red-500 bg-white p-2 rounded flex"><Image src='/icons/banned.svg' width={30} height={30} alt="banned" />{getStatusWithCount()}</span> // Ban图标
+                                <span className="text-black bg-white/60 p-2 rounded flex items-center gap-2">
+                                    {/* <Image src='/icons/banned.svg' width={30} height={30} alt="banned" /> */}
+                                    BANNED
+                                    {beatmap.bannedBy === 'red' ? (
+                                        <span className="text-red-500">红方</span>
+                                    ) : (
+                                        <span className="text-blue-500">蓝方</span>
+                                    )}
+                                </span>
                             ) : (
-                                <span className="text-green-600 bg-white p-2 rounded flex"><Image src='/icons/picked.svg' width={30} height={30} alt="picked" />{getStatusWithCount()}</span> // Pick图标
+                                <span className={`${beatmap.pickedBy === 'red' ? 'text-red-500' : 'text-blue-500'} bg-white p-2 rounded flex items-center gap-2`}>
+                                    {/* <Image src='/icons/picked.svg' width={30} height={30} alt="picked" /> */}
+                                    PICKED
+                                    {beatmap.pickedBy === 'red' ? (
+                                        <span className="text-red-500">红方</span>
+                                    ) : (
+                                        <span className="text-blue-500">蓝方</span>
+                                    )}
+                                </span>
                             )}
                         </div>
                         {/* 状态文本 */}

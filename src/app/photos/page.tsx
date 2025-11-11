@@ -50,7 +50,7 @@ export default function Photos() {
                     <div className="text-center">
                         <h1 className="text-5xl font-bold text-white mb-4">荣誉榜</h1>
                         <p className="text-xl text-white/90 max-w-3xl mx-auto">
-                            记录每一届 AstaraCup 的冠亚季军得主，见证传奇的诞生
+                            记录每一届 AstarCup 的冠亚季军得主，见证传奇的诞生
                         </p>
                         <div className="mt-6 flex justify-center items-center space-x-6">
                             <div className="flex items-center space-x-2">
@@ -164,7 +164,7 @@ export default function Photos() {
                     <div className="bg-gradient-to-r from-[#1A1A1A] to-[#2A2A2A] p-8 border-b-4 border-[#E93B66]">
                         <h3 className="text-3xl font-bold text-white mb-4">成为传说的一部分</h3>
                         <p className="text-gray-400 mb-6 max-w-3xl mx-auto text-lg">
-                            每一位获奖者都是 AstaraCup 历史的见证者。他们的名字将永远刻在荣誉榜上，
+                            每一位获奖者都是 AstarCup 历史的见证者。他们的名字将永远刻在荣誉榜上，
                             激励着更多选手追求卓越，成就自己的传奇故事。（包括女装）
                         </p>
                         <div className="flex justify-center space-x-8">
