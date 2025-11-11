@@ -94,10 +94,10 @@ export async function GET(
                 rank: score.rank,
                 passed: score.passed,
                 statistics: {
-                    count_300: score.statistics?.count_300 || 0,
-                    count_100: score.statistics?.count_100 || 0,
-                    count_50: score.statistics?.count_50 || 0,
-                    count_miss: score.statistics?.count_miss || 0,
+                    count_300: score.statistics?.great || 0,
+                    count_100: score.statistics?.ok || 0,
+                    count_50: score.statistics?.meh || 0, // 注意：API中没有meh字段，可能需要处理
+                    count_miss: score.statistics?.miss || 0,
                 },
                 pp: score.pp,
                 ended_at: score.ended_at,

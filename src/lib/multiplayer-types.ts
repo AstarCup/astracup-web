@@ -113,12 +113,20 @@ export interface MultiplayerScore {
     max_combo: number;
     mods: MultiplayerMod[];
     statistics: {
-        count_300: number;
-        count_100: number;
-        count_50: number;
-        count_geki: number;
-        count_katu: number;
-        count_miss: number;
+        great?: number;
+        ok?: number;
+        meh?: number;
+        miss?: number;
+        ignore_hit?: number;
+        large_tick_hit?: number;
+        slider_tail_hit?: number;
+        // 兼容旧字段
+        count_300?: number;
+        count_100?: number;
+        count_50?: number;
+        count_geki?: number;
+        count_katu?: number;
+        count_miss?: number;
     };
     rank: string;
     started_at: string | null;
