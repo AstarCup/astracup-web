@@ -120,6 +120,16 @@ export default function MultiplayerScoresPage() {
             const data = await response.json();
 
             if (data.success) {
+                // 调试：打印前端接收到的第一个分数的statistics数据
+                if (data.scores.length > 0) {
+                    console.log('=== Frontend Debug - First Score Statistics ===');
+                    console.log('Statistics data received:', data.scores[0].statistics);
+                    console.log('count_300:', data.scores[0].statistics.count_300);
+                    console.log('count_100:', data.scores[0].statistics.count_100);
+                    console.log('count_50:', data.scores[0].statistics.count_50);
+                    console.log('count_miss:', data.scores[0].statistics.count_miss);
+                    console.log('=== End Frontend Debug ===');
+                }
                 setScores(data.scores);
             } else {
                 setError(data.error || '加载分数失败');
@@ -296,11 +306,10 @@ export default function MultiplayerScoresPage() {
 
                                     {/* 内容 */}
                                     <div className="relative z-10">
-                                        <div className="flex flex-wrap">
+                                        <div className="flex flex-row gap-2">
                                             {/* Mod位显示 */}
                                             {mapSelection && (
                                                 <div className="mb-2 flex items-center space-x-2">
-                                                    <span className="text-sm text-gray-300">Mod位:</span>
                                                     <div className="flex space-x-1">
                                                         <span className={`px-2 py-1 text-xs rounded font-bold ${getModColorClass(mapSelection.selectedMods)}`}>
                                                             {mapSelection.selectedMods}{mapSelection.modPosition}

@@ -36,6 +36,20 @@ export async function GET(
 
         const data: MultiplayerScoresResponse = await response.json();
 
+        // 调试：打印第一个分数的完整数据结构和statistics
+        if (data.scores.length > 0) {
+            console.log('=== API Debug - First Score Data ===');
+            console.log('Full score data:', JSON.stringify(data.scores[0], null, 2));
+            console.log('Statistics object:', data.scores[0].statistics);
+            console.log('Statistics type:', typeof data.scores[0].statistics);
+            console.log('Statistics keys:', Object.keys(data.scores[0].statistics || {}));
+            console.log('count_300:', data.scores[0].statistics?.count_300);
+            console.log('count_100:', data.scores[0].statistics?.count_100);
+            console.log('count_50:', data.scores[0].statistics?.count_50);
+            console.log('count_miss:', data.scores[0].statistics?.count_miss);
+            console.log('=== End API Debug ===');
+        }
+
         // 转换数据格式用于前端展示
         const displayScores: DisplayScore[] = data.scores
             .map((score, index) => ({

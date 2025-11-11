@@ -188,15 +188,11 @@ export default function MultiplayerScoresTable({
                                                 alt={score.username}
                                                 width={40}
                                                 height={40}
-                                                className="rounded-full"
+                                                className=""
                                                 unoptimized
                                             />
                                             <div>
                                                 <div className="font-medium">{score.username}</div>
-                                                <div className="text-sm text-gray-300 flex items-center">
-                                                    <span className={`fi fi-${score.country_code.toLowerCase()} mr-1`}></span>
-                                                    {score.country_code}
-                                                </div>
                                             </div>
                                         </div>
                                     </td>
