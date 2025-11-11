@@ -778,25 +778,46 @@ export default function ObsOverlay() {
 
             {/* 设置面板 */}
             <div style={{ marginTop: '160px' }}>
-                <MatchSettings
-                    settings={settings}
-                    onSettingsChange={setSettings}
-                    timerState={timerState}
-                    onTimerStateChange={setTimerState}
-                    banPickState={banPickState}
-                    onBanPickStateChange={setBanPickState}
-                    mapPoolSettings={mapPoolSettings}
-                    onMapPoolSettingsChange={setMapPoolSettings}
-                    onResetBanPick={resetBanPickState}
-                    rollState={rollState}
-                    onRollStateChange={setRollState}
-                    refereeState={refereeState}
-                    onRefereeStateChange={setRefereeState}
-                    teams={teams}
-                    onScoreChange={handleScoreChange}
-                    victoryState={victoryState}
-                    onVictoryStateChange={setVictoryState}
-                />
+                <div className="flex gap-4">
+                    <MatchSettings
+                        settings={settings}
+                        onSettingsChange={setSettings}
+                        timerState={timerState}
+                        onTimerStateChange={setTimerState}
+                        banPickState={banPickState}
+                        onBanPickStateChange={setBanPickState}
+                        mapPoolSettings={mapPoolSettings}
+                        onMapPoolSettingsChange={setMapPoolSettings}
+                        onResetBanPick={resetBanPickState}
+                        rollState={rollState}
+                        onRollStateChange={setRollState}
+                        refereeState={refereeState}
+                        onRefereeStateChange={setRefereeState}
+                        teams={teams}
+                        onScoreChange={handleScoreChange}
+                        victoryState={victoryState}
+                        onVictoryStateChange={setVictoryState}
+                    /><MatchSettings
+                        settings={settings}
+                        onSettingsChange={setSettings}
+                        timerState={timerState}
+                        onTimerStateChange={setTimerState}
+                        banPickState={banPickState}
+                        onBanPickStateChange={setBanPickState}
+                        mapPoolSettings={mapPoolSettings}
+                        onMapPoolSettingsChange={setMapPoolSettings}
+                        onResetBanPick={resetBanPickState}
+                        rollState={rollState}
+                        onRollStateChange={setRollState}
+                        refereeState={refereeState}
+                        onRefereeStateChange={setRefereeState}
+                        teams={teams}
+                        onScoreChange={handleScoreChange}
+                        victoryState={victoryState}
+                        onVictoryStateChange={setVictoryState}
+                    />
+                </div>
+
             </div>
         </div>
     );

@@ -561,6 +561,19 @@ export default function MatchSettings({
                                 />
                             </div>
                         </div>
+                        <div>
+                            {/* obs信息输入 */}
+                            {/* osu match link输入 */}
+                        </div>
+                    </div>
+                    {/* 清除存储按钮 */}
+                    <div className="mt-6 pt-4 border-t border-gray-600">
+                        <button
+                            onClick={handleClearStorage}
+                            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-2xl transition-colors"
+                        >
+                            重置所有
+                        </button>
                     </div>
                 </>
             ) : activeTab === 'timer' ? (
@@ -600,6 +613,30 @@ export default function MatchSettings({
                             className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded text-5xl transition-colors font-bold"
                         >
                             申请延时 3分钟
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <input
+                            type="number"
+                            placeholder="输入秒数"
+                            min="1"
+                            max="3600"
+                            className="px-4 py-4 bg-[#2D2D2D] text-white border border-gray-600 rounded text-5xl focus:outline-none focus:border-[#E93B66] transition-colors"
+                            id="customTimeInput"
+                        />
+                        <button
+                            onClick={() => {
+                                const input = document.getElementById('customTimeInput') as HTMLInputElement;
+                                const seconds = parseInt(input.value);
+                                if (seconds && seconds > 0 && seconds <= 3600) {
+                                    startTimer(seconds);
+                                    input.value = '';
+                                }
+                            }}
+                            className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded text-5xl transition-colors font-bold"
+                        >
+                            自定义时间开始
                         </button>
                     </div>
 
@@ -1163,15 +1200,7 @@ export default function MatchSettings({
                 </div>
             )}
 
-            {/* 清除存储按钮 */}
-            <div className="mt-6 pt-4 border-t border-gray-600">
-                <button
-                    onClick={handleClearStorage}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-2xl transition-colors"
-                >
-                    重置所有
-                </button>
-            </div>
+
         </div>
     );
 }
