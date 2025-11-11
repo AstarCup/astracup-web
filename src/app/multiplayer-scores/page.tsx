@@ -170,6 +170,9 @@ export default function MultiplayerScoresPage() {
             case 'HD': return 'bg-yellow-500 text-black';
             case 'HR': return 'bg-red-500 text-white';
             case 'DT': return 'bg-purple-500 text-white';
+            case 'FM': return 'bg-green-500 text-white';
+            case 'LZ': return 'bg-pink-500 text-white';
+            case 'TB': return 'bg-black-500 text-white';
             default: return 'bg-gray-500 text-white';
         }
     };
@@ -189,9 +192,6 @@ export default function MultiplayerScoresPage() {
                 <h1 className="text-3xl font-bold text-white mb-4">
                     osu! Multiplayer 分数查看
                 </h1>
-                <p className="text-gray-300">
-                    通过房间链接查看osu! multiplayer房间的分数数据
-                </p>
             </div>
 
             {/* 错误提示 */}
@@ -202,7 +202,7 @@ export default function MultiplayerScoresPage() {
             )}
 
             {/* URL输入区域 */}
-            <div className="bg-[#3D3D3D] p-6 rounded-lg mb-6">
+            {/* <div className="bg-[#3D3D3D] p-6 rounded-lg mb-6">
                 <h2 className="text-xl font-bold text-white mb-4">输入房间链接</h2>
                 <form onSubmit={handleUrlSubmit} className="space-y-4">
                     <div>
@@ -230,7 +230,7 @@ export default function MultiplayerScoresPage() {
                         {loading ? '加载中...' : '加载房间'}
                     </button>
                 </form>
-            </div>
+            </div> */}
 
             {/* 房间信息显示 */}
             {selectedRoom && (
@@ -296,32 +296,30 @@ export default function MultiplayerScoresPage() {
 
                                     {/* 内容 */}
                                     <div className="relative z-10">
-                                        <h3 className="font-bold mb-2 text-lg">
-                                            {playlistItem.beatmap.beatmapset.artist} - {playlistItem.beatmap.beatmapset.title}
-                                        </h3>
-
-                                        {/* Mod位显示 */}
-                                        {mapSelection && (
-                                            <div className="mb-2 flex items-center space-x-2">
-                                                <span className="text-sm text-gray-300">Mod位:</span>
-                                                <div className="flex space-x-1">
-                                                    <span className={`px-2 py-1 text-xs rounded font-bold ${getModColorClass(mapSelection.selectedMods)}`}>
-                                                        {mapSelection.selectedMods}{mapSelection.modPosition}
-                                                    </span>
-                                                    {mapSelection.customModName && (
-                                                        <span className="px-2 py-1 text-xs rounded bg-gray-600 text-white font-bold">
-                                                            {mapSelection.customModName}
+                                        <div className="flex flex-wrap">
+                                            {/* Mod位显示 */}
+                                            {mapSelection && (
+                                                <div className="mb-2 flex items-center space-x-2">
+                                                    <span className="text-sm text-gray-300">Mod位:</span>
+                                                    <div className="flex space-x-1">
+                                                        <span className={`px-2 py-1 text-xs rounded font-bold ${getModColorClass(mapSelection.selectedMods)}`}>
+                                                            {mapSelection.selectedMods}{mapSelection.modPosition}
                                                         </span>
-                                                    )}
+                                                        {mapSelection.customModName && (
+                                                            <span className="px-2 py-1 text-xs rounded bg-gray-600 text-white font-bold">
+                                                                {mapSelection.customModName}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
-
+                                            )}
+                                            <h3 className="font-bold mb-2 text-lg">
+                                                {playlistItem.beatmap.beatmapset.artist} - {playlistItem.beatmap.beatmapset.title}
+                                            </h3>
+                                        </div>
                                         <div className="text-sm space-y-1">
                                             <p className="text-gray-300">难度: {playlistItem.beatmap.version}</p>
                                             <p className="text-yellow-400 font-bold">{playlistItem.beatmap.difficulty_rating}★</p>
-                                            <p className="text-gray-400">BPM: {playlistItem.beatmap.bpm ? Math.round(playlistItem.beatmap.bpm) : 'N/A'}</p>
-                                            <p className="text-gray-400">长度: {Math.floor(playlistItem.beatmap.total_length / 60)}:{String(playlistItem.beatmap.total_length % 60).padStart(2, '0')}</p>
                                         </div>
                                     </div>
                                 </div>
