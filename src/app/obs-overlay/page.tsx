@@ -5,7 +5,8 @@ import MatchSettings from "./components/MatchSettings";
 import TeamDisplay from "./components/TeamDisplay";
 import TimerDisplay from "./components/TimerDisplay";
 import MapPoolGrid from "./components/MapPoolGrid";
-import { Team, MatchSettings as MatchSettingsType, TimerState, BO_FORMAT_WIN_SCORE } from "./types/match";
+import RollDisplay from "./components/RollDisplay";
+import { Team, MatchSettings as MatchSettingsType, TimerState, RollState, RefereeState, BO_FORMAT_WIN_SCORE } from "./types/match";
 import { BeatmapCard, BanPickState, MapPoolSettings } from "./types/banpick";
 import Image from "next/image";
 
@@ -122,6 +123,53 @@ export default function ObsOverlay() {
         };
     });
 
+    // Roll点状态
+    const [rollState, setRollState] = useState<RollState>(() => {
+        try {
+            const savedRollState = localStorage.getItem('rollState');
+            if (savedRollState) {
+                const parsedRollState = JSON.parse(savedRollState);
+                console.log('初始化Roll点状态:', parsedRollState);
+                return parsedRollState;
+            }
+        } catch (error) {
+            console.error('初始化Roll点状态失败:', error);
+        }
+        // 默认值
+        return {
+            isRolling: false,
+            isVisible: false,
+            redRoll: 0,
+            blueRoll: 0,
+            winner: null,
+            resultText: '',
+            showResult: false,
+            history: []
+        };
+    });
+
+    // 裁判表状态
+    const [refereeState, setRefereeState] = useState<RefereeState>(() => {
+        try {
+            const savedRefereeState = localStorage.getItem('refereeState');
+            if (savedRefereeState) {
+                const parsedRefereeState = JSON.parse(savedRefereeState);
+                console.log('初始化裁判表状态:', parsedRefereeState);
+                return parsedRefereeState;
+            }
+        } catch (error) {
+            console.error('初始化裁判表状态失败:', error);
+        }
+        // 默认值
+        return {
+            refereeText: '',
+            nextAction: 'ban',
+            nextTeam: null,
+            availableMaps: [],
+            history: []
+        };
+    });
+
     // 图池数据
     const [beatmaps, setBeatmaps] = useState<BeatmapCard[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -200,6 +248,36 @@ export default function ObsOverlay() {
 
         saveMapPoolSettingsToStorage();
     }, [mapPoolSettings]);
+
+    // 保存Roll点状态到本地存储
+    useEffect(() => {
+        const saveRollStateToStorage = () => {
+            try {
+                console.log('保存Roll点状态到本地存储:', rollState);
+                localStorage.setItem('rollState', JSON.stringify(rollState));
+                console.log('Roll点状态保存成功');
+            } catch (error) {
+                console.error('保存Roll点状态到本地存储失败:', error);
+            }
+        };
+
+        saveRollStateToStorage();
+    }, [rollState]);
+
+    // 保存裁判表状态到本地存储
+    useEffect(() => {
+        const saveRefereeStateToStorage = () => {
+            try {
+                console.log('保存裁判表状态到本地存储:', refereeState);
+                localStorage.setItem('refereeState', JSON.stringify(refereeState));
+                console.log('裁判表状态保存成功');
+            } catch (error) {
+                console.error('保存裁判表状态到本地存储失败:', error);
+            }
+        };
+
+        saveRefereeStateToStorage();
+    }, [refereeState]);
 
     // 计算获胜所需分数
     const winScore = BO_FORMAT_WIN_SCORE[settings.boFormat];
@@ -510,6 +588,36 @@ export default function ObsOverlay() {
         setBeatmaps(updatedBeatmaps);
     }, [beatmaps, banPickState.history]);
 
+    // 更新裁判表中的可用图池列表
+    useEffect(() => {
+        if (beatmaps.length === 0) return;
+
+        // 获取所有可用的图池槽位（未被ban或pick的）
+        const availableMaps = beatmaps
+            .filter(beatmap => beatmap.status === 'available')
+            .map(beatmap => beatmap.slot)
+            .sort((a, b) => {
+                // 排序：先按mod类型，再按数字
+                const modA = a.replace(/\d+$/, '');
+                const modB = b.replace(/\d+$/, '');
+                const numA = parseInt(a.replace(/[^\d]/g, '')) || 0;
+                const numB = parseInt(b.replace(/[^\d]/g, '')) || 0;
+
+                if (modA !== modB) {
+                    return modA.localeCompare(modB);
+                }
+                return numA - numB;
+            });
+
+        // 只有当可用图池发生变化时才更新状态
+        if (JSON.stringify(availableMaps) !== JSON.stringify(refereeState.availableMaps)) {
+            setRefereeState(prev => ({
+                ...prev,
+                availableMaps
+            }));
+        }
+    }, [beatmaps, banPickState.history, refereeState.availableMaps]);
+
     return (
         <div style={{
             minHeight: '100vh',
@@ -615,6 +723,9 @@ export default function ObsOverlay() {
                 )}
 
             </div>
+            {/* Roll点显示 */}
+            <RollDisplay rollState={rollState} />
+
             {/* 设置面板 */}
             <div style={{ marginTop: '160px' }}>
                 <MatchSettings
@@ -627,6 +738,12 @@ export default function ObsOverlay() {
                     mapPoolSettings={mapPoolSettings}
                     onMapPoolSettingsChange={setMapPoolSettings}
                     onResetBanPick={resetBanPickState}
+                    rollState={rollState}
+                    onRollStateChange={setRollState}
+                    refereeState={refereeState}
+                    onRefereeStateChange={setRefereeState}
+                    teams={teams}
+                    onScoreChange={handleScoreChange}
                 />
             </div>
         </div>

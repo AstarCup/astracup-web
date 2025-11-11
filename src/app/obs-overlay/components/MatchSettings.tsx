@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MatchSettings as MatchSettingsType, Player, TimerState } from "../types/match";
+import { MatchSettings as MatchSettingsType, Player, TimerState, RollState, RefereeState, Team } from "../types/match";
 import { BanPickState, MapPoolSettings } from "../types/banpick";
 import Image from "next/image";
 import Dropdown, { DropdownOption } from "@/app/components/ui/Dropdown";
@@ -16,9 +16,15 @@ interface MatchSettingsProps {
     mapPoolSettings: MapPoolSettings;
     onMapPoolSettingsChange: (mapPoolSettings: MapPoolSettings) => void;
     onResetBanPick: () => void;
+    rollState: RollState;
+    onRollStateChange: (rollState: RollState) => void;
+    refereeState: RefereeState;
+    onRefereeStateChange: (refereeState: RefereeState) => void;
+    teams: Team[];
+    onScoreChange: (teamId: 'red' | 'blue', newScore: number) => void;
 }
 
-type TabType = 'match' | 'timer' | 'banpick';
+type TabType = 'match' | 'timer' | 'banpick' | 'roll' | 'referee';
 
 export default function MatchSettings({
     settings,
@@ -29,11 +35,18 @@ export default function MatchSettings({
     onBanPickStateChange,
     mapPoolSettings,
     onMapPoolSettingsChange,
-    onResetBanPick
+    onResetBanPick,
+    rollState,
+    onRollStateChange,
+    refereeState,
+    onRefereeStateChange,
+    teams,
+    onScoreChange
 }: MatchSettingsProps) {
     const [players, setPlayers] = useState<Player[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<TabType>('match');
+    const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
 
     // 获取玩家列表
     useEffect(() => {
@@ -170,6 +183,242 @@ export default function MatchSettings({
         // 这里可以添加清除阶段名称的逻辑，但需要从父组件传递
     };
 
+    // Roll点控制函数
+    const startRoll = () => {
+        // 生成随机数（1-100）
+        const redRoll = Math.floor(Math.random() * 100) + 1;
+        const blueRoll = Math.floor(Math.random() * 100) + 1;
+
+        // 判断获胜队伍
+        let winner: 'red' | 'blue';
+        let resultText: string;
+
+        if (redRoll > blueRoll) {
+            winner = 'red';
+            resultText = `红方 ${redRoll} : ${blueRoll} 蓝方 | 由红方${settings.redPlayer?.inGameName || '红方玩家'}决定ban/pick顺序`;
+        } else if (blueRoll > redRoll) {
+            winner = 'blue';
+            resultText = `红方 ${redRoll} : ${blueRoll} 蓝方 | 由蓝方${settings.bluePlayer?.inGameName || '蓝方玩家'}决定ban/pick顺序`;
+        } else {
+            // 平局，重新roll
+            winner = redRoll >= blueRoll ? 'red' : 'blue';
+            resultText = `红方 ${redRoll} : ${blueRoll} 蓝方 | 平局，重新roll点`;
+        }
+
+        const newHistory = [
+            ...rollState.history,
+            {
+                redRoll,
+                blueRoll,
+                winner,
+                timestamp: Date.now(),
+                resultText
+            }
+        ];
+
+        // 1. 点击roll点 -> 开始滚动动画，并立即更新历史记录
+        onRollStateChange({
+            ...rollState,
+            isRolling: true,
+            isVisible: true,
+            showResult: false,
+            redRoll: 0,
+            blueRoll: 0,
+            winner: null,
+            resultText: '',
+            history: newHistory  // 立即更新历史记录
+        });
+
+        // 2. 2秒后结束滚动动画 -> 展示结果5秒
+        setTimeout(() => {
+            onRollStateChange({
+                ...rollState,
+                isRolling: false,
+                isVisible: true,
+                showResult: true,
+                redRoll,
+                blueRoll,
+                winner,
+                resultText,
+                history: newHistory
+            });
+
+            // 3. 5秒后隐藏，保持历史记录
+            setTimeout(() => {
+                onRollStateChange({
+                    ...rollState,
+                    isVisible: false,
+                    showResult: false,
+                    isRolling: false,
+                    redRoll: 0,
+                    blueRoll: 0,
+                    winner: null,
+                    resultText: '',
+                    history: newHistory  // 保持历史记录
+                });
+            }, 5000);
+        }, 2000);
+    };
+
+    const clearRollHistory = () => {
+        onRollStateChange({
+            ...rollState,
+            history: []
+        });
+    };
+
+    // 复制结果文本到剪贴板
+    const copyResultText = (text: string, recordId: string) => {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                // 设置复制成功状态
+                setCopiedStates(prev => ({
+                    ...prev,
+                    [recordId]: true
+                }));
+
+                // 2秒后恢复原文本
+                setTimeout(() => {
+                    setCopiedStates(prev => ({
+                        ...prev,
+                        [recordId]: false
+                    }));
+                }, 2000);
+            }).catch(() => {
+                // 如果现代API失败，使用传统方法
+                copyToClipboardFallback(text);
+            });
+        } else {
+            // 使用传统方法
+            copyToClipboardFallback(text);
+        }
+    };
+
+    const copyToClipboardFallback = (text: string) => {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+        } catch (err) {
+            console.error('复制失败:', err);
+        }
+        document.body.removeChild(textArea);
+    };
+
+    // 裁判表功能函数
+    const handleScoreChangeWithHistory = (teamId: 'red' | 'blue', newScore: number) => {
+        const oldScore = teams.find(t => t.id === teamId)?.score || 0;
+        onScoreChange(teamId, newScore);
+
+        // 记录分数变化历史
+        const historyEntry = {
+            type: 'score' as const,
+            team: teamId,
+            content: `${teamId === 'red' ? '红队' : '蓝队'}得分 ${oldScore} → ${newScore}`,
+            timestamp: Date.now(),
+            details: {
+                oldScore,
+                newScore
+            }
+        };
+
+        onRefereeStateChange({
+            ...refereeState,
+            history: [...refereeState.history, historyEntry]
+        });
+    };
+
+    const handleRefereeTextChange = (text: string) => {
+        onRefereeStateChange({
+            ...refereeState,
+            refereeText: text
+        });
+    };
+
+    const addRefereeTextToHistory = () => {
+        if (!refereeState.refereeText.trim()) return;
+
+        const historyEntry = {
+            type: 'text' as const,
+            content: `裁判话语: ${refereeState.refereeText}`,
+            timestamp: Date.now()
+        };
+
+        onRefereeStateChange({
+            ...refereeState,
+            refereeText: '',
+            history: [...refereeState.history, historyEntry]
+        });
+    };
+
+    const handleNextActionChange = (action: 'pick' | 'ban') => {
+        onRefereeStateChange({
+            ...refereeState,
+            nextAction: action
+        });
+    };
+
+    const clearRefereeHistory = () => {
+        onRefereeStateChange({
+            ...refereeState,
+            history: []
+        });
+    };
+
+    // 计算NextPick/NextBan逻辑
+    const calculateNextAction = () => {
+        // 如果没有历史操作，检查roll点
+        if (banPickState.history.length === 0) {
+            if (rollState.history.length > 0) {
+                const lastRoll = rollState.history[rollState.history.length - 1];
+                return {
+                    nextAction: refereeState.nextAction || 'ban',
+                    nextTeam: lastRoll.winner
+                };
+            }
+            return { nextAction: null, nextTeam: null };
+        }
+
+        // 根据历史操作判断下一个操作
+        const lastAction = banPickState.history[banPickState.history.length - 1];
+        const nextTeam = lastAction.team === 'red' ? 'blue' : 'red';
+
+        // 直接使用用户设置的下一个操作类型
+        return {
+            nextAction: refereeState.nextAction || 'ban',
+            nextTeam
+        };
+    };
+
+    // 生成裁判话语文本
+    const generateRefereeText = () => {
+        const redTeam = teams.find(t => t.id === 'red');
+        const blueTeam = teams.find(t => t.id === 'blue');
+        const { nextAction, nextTeam } = calculateNextAction();
+
+        let nextPickBanText = '';
+        if (nextAction && nextTeam) {
+            const nextPlayerName = nextTeam === 'red' ? redTeam?.playerName : blueTeam?.playerName;
+            nextPickBanText = ` | Next${nextAction === 'pick' ? 'Pick' : 'Ban'}: ${nextPlayerName}`;
+        } else {
+            nextPickBanText = ' | NextPick/NextBan: 等待Roll点结果';
+        }
+
+        // 生成剩余可操作图池
+        const availableMaps = refereeState.availableMaps.join(' ');
+
+        return `${redTeam?.playerName} ${redTeam?.score} : ${blueTeam?.score} ${blueTeam?.playerName}${nextPickBanText} | 剩余可操作图池: ${availableMaps}`;
+    };
+
+    const { nextAction, nextTeam } = calculateNextAction();
+    const refereeDisplayText = generateRefereeText();
+
     return (
         <div className="bg-[#3D3D3D] p-6 rounded-lg border-b-4 border-[#E93B66] mb-6 w-[50%]">
             {/* Tab切换 */}
@@ -193,6 +442,15 @@ export default function MatchSettings({
                     计时器控制
                 </button>
                 <button
+                    onClick={() => setActiveTab('roll')}
+                    className={`px-4 py-2 text-2xl font-medium transition-colors ${activeTab === 'roll'
+                        ? 'text-white border-b-2 border-[#E93B66]'
+                        : 'text-gray-400 hover:text-white'
+                        }`}
+                >
+                    Roll点控制
+                </button>
+                <button
                     onClick={() => setActiveTab('banpick')}
                     className={`px-4 py-2 text-2xl font-medium transition-colors ${activeTab === 'banpick'
                         ? 'text-white border-b-2 border-[#E93B66]'
@@ -201,6 +459,16 @@ export default function MatchSettings({
                 >
                     Ban/Pick控制
                 </button>
+                <button
+                    onClick={() => setActiveTab('referee')}
+                    className={`px-4 py-2 text-2xl font-medium transition-colors ${activeTab === 'referee'
+                        ? 'text-white border-b-2 border-[#E93B66]'
+                        : 'text-gray-400 hover:text-white'
+                        }`}
+                >
+                    裁判表
+                </button>
+
             </div>
 
             {activeTab === 'match' ? (
@@ -304,13 +572,13 @@ export default function MatchSettings({
                     <div className="grid grid-cols-2 gap-4">
                         <button
                             onClick={() => startTimer(300)}
-                            className="px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded text-2xl transition-colors font-bold"
+                            className="px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded text-5xl transition-colors font-bold"
                         >
                             准备阶段 5分钟
                         </button>
                         <button
                             onClick={() => startTimer(600)}
-                            className="px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-2xl transition-colors font-bold"
+                            className="px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-5xl transition-colors font-bold"
                         >
                             玩家入场 10分钟
                         </button>
@@ -319,13 +587,13 @@ export default function MatchSettings({
                     <div className="grid grid-cols-2 gap-4">
                         <button
                             onClick={() => startTimer(120)}
-                            className="px-6 py-4 bg-green-600 hover:bg-green-700 text-white rounded text-2xl transition-colors font-bold"
+                            className="px-6 py-4 bg-green-600 hover:bg-green-700 text-white rounded text-5xl transition-colors font-bold"
                         >
                             选择图池 120秒
                         </button>
                         <button
                             onClick={() => startTimer(180)}
-                            className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded text-2xl transition-colors font-bold"
+                            className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded text-5xl transition-colors font-bold"
                         >
                             申请延时 3分钟
                         </button>
@@ -334,7 +602,7 @@ export default function MatchSettings({
                     <div className="grid grid-cols-2 gap-4">
                         <button
                             onClick={toggleTimer}
-                            className={`px-6 py-4 rounded text-2xl transition-colors font-bold ${timerState.isRunning
+                            className={`px-6 py-4 rounded text-5xl transition-colors font-bold ${timerState.isRunning
                                 ? 'bg-yellow-600 hover:bg-yellow-700'
                                 : 'bg-green-600 hover:bg-green-700'
                                 } text-white`}
@@ -343,10 +611,251 @@ export default function MatchSettings({
                         </button>
                         <button
                             onClick={clearTimer}
-                            className="px-6 py-4 bg-red-600 hover:bg-red-700 text-white rounded text-2xl transition-colors font-bold"
+                            className="px-6 py-4 bg-red-600 hover:bg-red-700 text-white rounded text-5xl transition-colors font-bold"
                         >
                             清除
                         </button>
+                    </div>
+                </div>
+            ) : activeTab === 'roll' ? (
+                /* Roll点控制面板 */
+                <div className="space-y-6">
+                    <div className="flex gap-4" >
+                        {/* 开始Roll点按钮 */}
+                        <div className="flex justify-center">
+                            <button
+                                onClick={startRoll}
+                                disabled={rollState.isRolling}
+                                className={`px-8 py-6 rounded-lg text-3xl font-bold transition-colors ${rollState.isRolling
+                                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-[#E93B66] to-[#3BE9D8] hover:from-[#ff4d7a] hover:to-[#4df9e8] text-white shadow-lg'
+                                    }`}
+                            >
+                                {rollState.isRolling ? 'Roll点中...' : '开始Roll点'}
+                            </button>
+                        </div>
+                        {/* 当前状态显示 */}
+                        <div className="text-center">
+                            <div className="text-3xl text-gray-200 mb-4">
+                                状态: {rollState.isRolling ? 'Roll点中...' : rollState.showResult ? '显示结果' : '准备就绪'}
+                            </div>
+                            {rollState.history.length > 0 && (
+                                <div className="text-xl text-gray-400">
+                                    历史记录: {rollState.history.length} 次
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    {/* 历史记录显示 */}
+                    <div className="mb-6">
+                        <div className="flex justify-between items-center mb-3">
+                            <label className="text-2xl text-gray-200 font-medium">Roll点历史记录</label>
+                            {rollState.history.length > 0 && (
+                                <button
+                                    onClick={clearRollHistory}
+                                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xl transition-colors"
+                                >
+                                    清除历史
+                                </button>
+                            )}
+                        </div>
+                        <div className="bg-gray-700/50 p-4 rounded">
+                            {rollState.history.length === 0 ? (
+                                <div className="text-gray-400 text-lg text-center">暂无Roll点记录</div>
+                            ) : (
+                                rollState.history.slice().reverse().map((record, index) => (
+                                    <div key={index} className="text-white text-6xl mb-3 p-3 bg-gray-600/30 rounded">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className={record.winner === 'red' ? 'text-red-400' : 'text-blue-400'}>
+                                                {record.winner === 'red' ? '红方获胜' : '蓝方获胜'}
+                                            </span>
+                                            <span className="text-gray-400 text-2xl">
+                                                {new Date(record.timestamp).toLocaleTimeString()}
+                                            </span>
+                                        </div>
+                                        <div className="flex">
+                                            <div className="text-gray-300 mb-2">
+                                                {record.resultText}
+                                            </div>
+                                            <button
+                                                onClick={() => copyResultText(record.resultText, `record-${record.timestamp}`)}
+                                                className={`px-3 py-1 text-white text-5xl transition-colors ${copiedStates[`record-${record.timestamp}`]
+                                                    ? 'bg-green-600 hover:bg-green-700'
+                                                    : 'bg-blue-600 hover:bg-blue-700'
+                                                    }`}
+                                            >
+                                                {copiedStates[`record-${record.timestamp}`] ? '复制成功' : '复制结果'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                </div>
+            ) : activeTab === 'referee' ? (
+                /* 裁判表控制面板 */
+                <div className="space-y-6">
+                    {/* 分数控制 */}
+                    <div className="grid grid-cols-2 gap-6 mb-6">
+                        {/* 红队分数控制 */}
+                        <div className="flex flex-col">
+                            <label className="text-2xl text-gray-200 mb-3 font-medium" style={{ color: getTeamColor('red') }}>
+                                红队分数
+                            </label>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => handleScoreChangeWithHistory('red', (teams.find(t => t.id === 'red')?.score || 0) - 1)}
+                                    className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded text-2xl font-bold transition-colors"
+                                >
+                                    -1
+                                </button>
+                                <div className="flex-1 text-center bg-gray-700 text-white text-3xl font-bold py-3 rounded">
+                                    {teams.find(t => t.id === 'red')?.score || 0}
+                                </div>
+                                <button
+                                    onClick={() => handleScoreChangeWithHistory('red', (teams.find(t => t.id === 'red')?.score || 0) + 1)}
+                                    className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded text-2xl font-bold transition-colors"
+                                >
+                                    +1
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 蓝队分数控制 */}
+                        <div className="flex flex-col">
+                            <label className="text-2xl text-gray-200 mb-3 font-medium" style={{ color: getTeamColor('blue') }}>
+                                蓝队分数
+                            </label>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => handleScoreChangeWithHistory('blue', (teams.find(t => t.id === 'blue')?.score || 0) - 1)}
+                                    className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded text-2xl font-bold transition-colors"
+                                >
+                                    -1
+                                </button>
+                                <div className="flex-1 text-center bg-gray-700 text-white text-3xl font-bold py-3 rounded">
+                                    {teams.find(t => t.id === 'blue')?.score || 0}
+                                </div>
+                                <button
+                                    onClick={() => handleScoreChangeWithHistory('blue', (teams.find(t => t.id === 'blue')?.score || 0) + 1)}
+                                    className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded text-2xl font-bold transition-colors"
+                                >
+                                    +1
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 裁判话语显示 */}
+                    <div className="mb-6">
+                        <div className="flex justify-between items-center mb-3">
+                            <label className="text-2xl text-gray-200 font-medium">裁判话语</label>
+                            <button
+                                onClick={() => copyResultText(refereeDisplayText, 'referee-text')}
+                                className={`px-4 py-2 text-white rounded text-xl transition-colors ${copiedStates['referee-text']
+                                    ? 'bg-green-600 hover:bg-green-700'
+                                    : 'bg-blue-600 hover:bg-blue-700'
+                                    }`}
+                            >
+                                {copiedStates['referee-text'] ? '复制成功' : '复制裁判话语'}
+                            </button>
+                        </div>
+                        <div className="bg-gray-700/50 p-4 rounded">
+                            <div className="text-white text-xl break-words">
+                                {refereeDisplayText}
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    {/* NextPick/NextBan显示 */}
+                    <div className="mb-6">
+                        <label className="text-2xl text-gray-200 mb-3 font-medium">下一步操作</label>
+                        <div className="bg-gray-700/50 p-4 rounded">
+                            <div className="text-white text-xl">
+                                {nextAction && nextTeam ? (
+                                    <div>
+                                        <span className={nextTeam === 'red' ? 'text-red-400' : 'text-blue-400'}>
+                                            {nextTeam === 'red' ? '红队' : '蓝队'}
+                                        </span>
+                                        <span className="mx-2">
+                                            {nextAction === 'pick' ? 'Pick' : 'Ban'}
+                                        </span>
+                                        <span className="text-gray-300">
+                                            | 剩余可操作图池: {refereeState.availableMaps.join(' ')}
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div className="text-gray-400">
+                                        等待Roll点结果或操作历史...
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* NextPick/NextBan控制 */}
+                    <div className="mb-6">
+                        <label className="text-2xl text-gray-200 mb-3 font-medium">下一步操作类型</label>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => handleNextActionChange('pick')}
+                                className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${refereeState.nextAction === 'pick'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                    }`}
+                            >
+                                NextPick
+                            </button>
+                            <button
+                                onClick={() => handleNextActionChange('ban')}
+                                className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${refereeState.nextAction === 'ban'
+                                    ? 'bg-red-600 text-white'
+                                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                    }`}
+                            >
+                                NextBan
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* 裁判历史记录 */}
+                    <div className="mb-6">
+                        <div className="flex justify-between items-center mb-3">
+                            <label className="text-2xl text-gray-200 font-medium">裁判历史记录</label>
+                            {refereeState.history.length > 0 && (
+                                <button
+                                    onClick={clearRefereeHistory}
+                                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xl transition-colors"
+                                >
+                                    清除历史
+                                </button>
+                            )}
+                        </div>
+                        <div className="bg-gray-700/50 p-4 rounded max-h-48 overflow-y-auto">
+                            {refereeState.history.length === 0 ? (
+                                <div className="text-gray-400 text-lg text-center">暂无裁判记录</div>
+                            ) : (
+                                refereeState.history.slice().reverse().map((record, index) => (
+                                    <div key={index} className="text-white text-lg mb-3 p-3 bg-gray-600/30 rounded">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className={record.type === 'score' ? (record.team === 'red' ? 'text-red-400' : 'text-blue-400') : 'text-green-400'}>
+                                                {record.type === 'score' ? '分数变化' : '裁判话语'}
+                                            </span>
+                                            <span className="text-gray-400 text-sm">
+                                                {new Date(record.timestamp).toLocaleTimeString()}
+                                            </span>
+                                        </div>
+                                        <div className="text-gray-300">
+                                            {record.content}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
                 </div>
             ) : (
