@@ -442,9 +442,10 @@ export default function MultiplayerScoresPage() {
 
                     {activeTab === 'byTotal' && (
                         <TotalScoresByModTable
-                            scores={scores as any}
+                            scores={scores}
                             mapSelections={mapSelections}
                             approvedPlayers={approvedPlayers}
+                            currentBeatmapId={getSelectedPlaylistInfo()?.beatmap.id}
                             loading={loadingScores || loadingPlayers || loadingMapSelections}
                         />
                     )}

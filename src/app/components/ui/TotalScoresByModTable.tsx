@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { DisplayScore, MultiplayerScore } from "@/lib/multiplayer-types";
+import { DisplayScore } from "@/lib/multiplayer-types";
 import { MapSelection } from "@/lib/map-selection";
 
 interface TotalScoresByModTableProps {
-    scores: MultiplayerScore[];
+    scores: DisplayScore[];
     mapSelections: MapSelection[];
     approvedPlayers: Set<string>;
+    currentBeatmapId?: number;
     loading?: boolean;
 }
 
@@ -25,6 +26,7 @@ export default function TotalScoresByModTable({
     scores,
     mapSelections,
     approvedPlayers,
+    currentBeatmapId,
     loading = false
 }: TotalScoresByModTableProps) {
     const [sortBy, setSortBy] = useState<'username' | 'totalScore'>('totalScore');
@@ -53,13 +55,13 @@ export default function TotalScoresByModTable({
         // 初始化所有已过审玩家
         approvedPlayers.forEach(osuId => {
             // 从分数数据中查找玩家信息
-            const playerScore = scores.find(score => score.user.id.toString() === osuId);
+            const playerScore = scores.find(score => score.user_id.toString() === osuId);
             if (playerScore) {
                 playerMap.set(osuId, {
                     userId: osuId,
-                    username: playerScore.user.username,
-                    avatarUrl: playerScore.user.avatar_url,
-                    countryCode: playerScore.user.country_code,
+                    username: playerScore.username,
+                    avatarUrl: playerScore.avatar_url,
+                    countryCode: playerScore.country_code,
                     scores: {},
                     totalScore: 0
                 });
@@ -67,24 +69,27 @@ export default function TotalScoresByModTable({
         });
 
         // 填充每个玩家的mod位分数
-        scores.forEach(score => {
-            if (!approvedPlayers.has(score.user.id.toString())) return;
-
-            // 找到对应的map selection
+        if (currentBeatmapId) {
+            // 找到当前beatmap对应的map selection
             const mapSelection = mapSelections.find(
-                selection => selection.beatmapId === score.beatmap_id
+                selection => selection.beatmapId === currentBeatmapId
             );
 
             if (mapSelection) {
                 const modPosition = `${mapSelection.selectedMods}${mapSelection.modPosition}`;
-                const player = playerMap.get(score.user.id.toString());
 
-                if (player) {
-                    player.scores[modPosition] = score.total_score;
-                    player.totalScore += score.total_score;
-                }
+                // 为每个玩家填充当前mod位的分数
+                scores.forEach(score => {
+                    if (!approvedPlayers.has(score.user_id.toString())) return;
+
+                    const player = playerMap.get(score.user_id.toString());
+                    if (player) {
+                        player.scores[modPosition] = score.total_score;
+                        player.totalScore += score.total_score;
+                    }
+                });
             }
-        });
+        }
 
         return Array.from(playerMap.values());
     };
