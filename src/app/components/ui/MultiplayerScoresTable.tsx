@@ -171,7 +171,7 @@ export default function MultiplayerScoresTable({
                                 </th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="text-black">
                             {sortedScores.map((score, index) => (
                                 <tr
                                     key={`${score.user_id}-${score.ended_at}`}
@@ -218,19 +218,19 @@ export default function MultiplayerScoresTable({
                                         <div className="text-xs space-y-1">
                                             <div className="flex justify-between">
                                                 <span className="text-green-400">300:</span>
-                                                <span>{score.statistics.count_300}</span>
+                                                <span>{score.statistics?.count_300 || 0}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-blue-400">100:</span>
-                                                <span>{score.statistics.count_100}</span>
+                                                <span>{score.statistics?.count_100 || 0}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-yellow-400">50:</span>
-                                                <span>{score.statistics.count_50}</span>
+                                                <span>{score.statistics?.count_50 || 0}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-red-400">Miss:</span>
-                                                <span>{score.statistics.count_miss}</span>
+                                                <span>{score.statistics?.count_miss || 0}</span>
                                             </div>
                                         </div>
                                     </td>
