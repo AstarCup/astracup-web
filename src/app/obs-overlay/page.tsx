@@ -6,9 +6,10 @@ import TeamDisplay from "./components/TeamDisplay";
 import TimerDisplay from "./components/TimerDisplay";
 import MapPoolGrid from "./components/MapPoolGrid";
 import RollDisplay from "./components/RollDisplay";
-import { Team, MatchSettings as MatchSettingsType, TimerState, RollState, RefereeState, BO_FORMAT_WIN_SCORE } from "./types/match";
+import { Team, MatchSettings as MatchSettingsType, TimerState, RollState, RefereeState, VictoryState, BO_FORMAT_WIN_SCORE } from "./types/match";
 import { BeatmapCard, BanPickState, MapPoolSettings } from "./types/banpick";
 import Image from "next/image";
+import VictoryDisplay from "./components/VictoryDisplay";
 
 export default function ObsOverlay() {
     // 使用函数初始化状态，确保从localStorage加载数据
@@ -170,6 +171,26 @@ export default function ObsOverlay() {
         };
     });
 
+    // 胜利状态
+    const [victoryState, setVictoryState] = useState<VictoryState>(() => {
+        try {
+            const savedVictoryState = localStorage.getItem('victoryState');
+            if (savedVictoryState) {
+                const parsedVictoryState = JSON.parse(savedVictoryState);
+                console.log('初始化胜利状态:', parsedVictoryState);
+                return parsedVictoryState;
+            }
+        } catch (error) {
+            console.error('初始化胜利状态失败:', error);
+        }
+        // 默认值
+        return {
+            isVisible: false,
+            winner: null,
+            hideScorePanel: false
+        };
+    });
+
     // 图池数据
     const [beatmaps, setBeatmaps] = useState<BeatmapCard[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -278,6 +299,21 @@ export default function ObsOverlay() {
 
         saveRefereeStateToStorage();
     }, [refereeState]);
+
+    // 保存胜利状态到本地存储
+    useEffect(() => {
+        const saveVictoryStateToStorage = () => {
+            try {
+                console.log('保存胜利状态到本地存储:', victoryState);
+                localStorage.setItem('victoryState', JSON.stringify(victoryState));
+                console.log('胜利状态保存成功');
+            } catch (error) {
+                console.error('保存胜利状态到本地存储失败:', error);
+            }
+        };
+
+        saveVictoryStateToStorage();
+    }, [victoryState]);
 
     // 计算获胜所需分数
     const winScore = BO_FORMAT_WIN_SCORE[settings.boFormat];
@@ -639,89 +675,101 @@ export default function ObsOverlay() {
                     position: 'relative'
                 }}
             >
-                {/* 队伍显示区域 */}
-                <div style={{
-                    display: 'flex',
-                    marginTop: '20px' // mt-40 对应 160px
-                }}>
-                    {/* 红队 */}
-                    <div style={{
-                        flex: '2',
-                        display: 'flex',
-                        justifyContent: 'flex-start'
-                    }}>
-                        <TeamDisplay
-                            team={teams.find(t => t.id === 'red')!}
-                            onScoreChange={handleScoreChange}
-                            winScore={winScore}
-                        />
-                    </div>
+                {/* 胜利页面显示 */}
+                {victoryState.isVisible && victoryState.winner && (
+                    <VictoryDisplay
+                        team={teams.find(t => t.id === victoryState.winner!)!}
+                    />
+                )}
 
-                    {/* 比分分隔线 */}
-                    <div style={{
-                        position: 'relative',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flex: '1'
-                    }}>
+                {/* 正常比赛界面 - 当不显示胜利页面或需要显示比分面板时 */}
+                {(!victoryState.isVisible || !victoryState.hideScorePanel) && (
+                    <>
+                        {/* 队伍显示区域 */}
                         <div style={{
-                            fontSize: '2.25rem',
-                            fontWeight: 'bold',
-                            color: '#9ca3af',
-                            marginBottom: '1rem'
+                            display: 'flex',
+                            marginTop: '20px' // mt-40 对应 160px
                         }}>
-                            <Image src='AstarCup.svg' alt="AstarCup" width={400} height={200} />
-                        </div>
-                        <div style={{
-                            fontSize: '1.5rem',
-                            color: 'black',
-                            backgroundColor: 'white',
-                            padding: '0.25rem 0.5rem',
-                            fontWeight: 'bold',
-                        }}>
-                            {settings.matchInfo} BO{settings.boFormat.slice(2)} (抢{winScore}分)
-                        </div>
-
-                    </div>
-
-                    {/* 蓝队 */}
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        flex: '2'
-                    }}>
-                        <TeamDisplay
-                            team={teams.find(t => t.id === 'blue')!}
-                            onScoreChange={handleScoreChange}
-                            winScore={winScore}
-                        />
-                    </div>
-                </div>
-
-                {/* 计时器显示 */}
-                <TimerDisplay timerState={timerState} mapPoolVisible={mapPoolSettings.visible} />
-
-                {/* 图池显示区域 */}
-                {mapPoolSettings.visible && (
-                    <div style={{
-                        marginTop: '40px',
-                        padding: '0 40px'
-                    }}>
-                        {isLoading ? (
-                            <div className="text-center text-white text-lg py-8">
-                                正在加载图池数据...
+                            {/* 红队 */}
+                            <div style={{
+                                flex: '2',
+                                display: 'flex',
+                                justifyContent: 'flex-start'
+                            }}>
+                                <TeamDisplay
+                                    team={teams.find(t => t.id === 'red')!}
+                                    onScoreChange={handleScoreChange}
+                                    winScore={winScore}
+                                />
                             </div>
-                        ) : (
-                            <MapPoolGrid
-                                beatmaps={beatmaps}
-                                onBeatmapLeftClick={handleBeatmapLeftClick}
-                                onBeatmapRightClick={handleBeatmapRightClick}
-                                banPickHistory={banPickState.history}
-                            />
+
+                            {/* 比分分隔线 */}
+                            <div style={{
+                                position: 'relative',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flex: '1'
+                            }}>
+                                <div style={{
+                                    fontSize: '2.25rem',
+                                    fontWeight: 'bold',
+                                    color: '#9ca3af',
+                                    marginBottom: '1rem'
+                                }}>
+                                    <Image src='AstarCup.svg' alt="AstarCup" width={400} height={200} />
+                                </div>
+                                <div style={{
+                                    fontSize: '1.5rem',
+                                    color: 'black',
+                                    backgroundColor: 'white',
+                                    padding: '0.25rem 0.5rem',
+                                    fontWeight: 'bold',
+                                }}>
+                                    {settings.matchInfo} BO{settings.boFormat.slice(2)} (抢{winScore}分)
+                                </div>
+
+                            </div>
+
+                            {/* 蓝队 */}
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                flex: '2'
+                            }}>
+                                <TeamDisplay
+                                    team={teams.find(t => t.id === 'blue')!}
+                                    onScoreChange={handleScoreChange}
+                                    winScore={winScore}
+                                />
+                            </div>
+                        </div>
+
+                        {/* 计时器显示 */}
+                        <TimerDisplay timerState={timerState} mapPoolVisible={mapPoolSettings.visible} />
+
+                        {/* 图池显示区域 */}
+                        {mapPoolSettings.visible && (
+                            <div style={{
+                                marginTop: '40px',
+                                padding: '0 40px'
+                            }}>
+                                {isLoading ? (
+                                    <div className="text-center text-white text-lg py-8">
+                                        正在加载图池数据...
+                                    </div>
+                                ) : (
+                                    <MapPoolGrid
+                                        beatmaps={beatmaps}
+                                        onBeatmapLeftClick={handleBeatmapLeftClick}
+                                        onBeatmapRightClick={handleBeatmapRightClick}
+                                        banPickHistory={banPickState.history}
+                                    />
+                                )}
+                            </div>
                         )}
-                    </div>
+                    </>
                 )}
 
             </div>
@@ -746,6 +794,8 @@ export default function ObsOverlay() {
                     onRefereeStateChange={setRefereeState}
                     teams={teams}
                     onScoreChange={handleScoreChange}
+                    victoryState={victoryState}
+                    onVictoryStateChange={setVictoryState}
                 />
             </div>
         </div>

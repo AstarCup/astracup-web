@@ -102,7 +102,7 @@ export default function Footer() {
                     alignItems: 'flex-start'
                 }}>
                     <span style={{ fontSize: '1rem', marginBottom: '8px' }}>
-                        © {new Date().getFullYear()} Astara Cup. All rights reserved.
+                        © {new Date().getFullYear()} AstarCup. All rights reserved.
                     </span>
                     <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>
                         <p>Ciallo～ (∠・ω&lt; )⌒☆</p>

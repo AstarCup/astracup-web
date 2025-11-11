@@ -77,3 +77,9 @@ export interface RefereeState {
     };
   }>;
 }
+
+export interface VictoryState {
+  isVisible: boolean;        // 是否显示胜利页面
+  winner: 'red' | 'blue' | null; // 获胜队伍
+  hideScorePanel: boolean;   // 是否隐藏比分面板
+}

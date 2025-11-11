@@ -277,7 +277,7 @@ export default function Navbar() {
                     <div className="flex justify-between items-center h-30">
                         {/* Logo */}
                         <div className="text-xl font-bold">
-                            <Link href="/"><Image src='/AstaraCup.svg' alt='AstataCup' width={220} height={90} /></Link>
+                            <Link href="/"><Image src='/AstarCup.svg' alt='AstataCup' width={220} height={90} /></Link>
                         </div>
 
                         {/* Right Side Container */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MatchSettings as MatchSettingsType, Player, TimerState, RollState, RefereeState, Team } from "../types/match";
+import { MatchSettings as MatchSettingsType, Player, TimerState, RollState, RefereeState, Team, VictoryState } from "../types/match";
 import { BanPickState, MapPoolSettings } from "../types/banpick";
 import Image from "next/image";
 import Dropdown, { DropdownOption } from "@/app/components/ui/Dropdown";
@@ -22,9 +22,11 @@ interface MatchSettingsProps {
     onRefereeStateChange: (refereeState: RefereeState) => void;
     teams: Team[];
     onScoreChange: (teamId: 'red' | 'blue', newScore: number) => void;
+    victoryState: VictoryState;
+    onVictoryStateChange: (victoryState: VictoryState) => void;
 }
 
-type TabType = 'match' | 'timer' | 'banpick' | 'roll' | 'referee';
+type TabType = 'match' | 'timer' | 'banpick' | 'roll' | 'referee' | 'victory';
 
 export default function MatchSettings({
     settings,
@@ -41,7 +43,9 @@ export default function MatchSettings({
     refereeState,
     onRefereeStateChange,
     teams,
-    onScoreChange
+    onScoreChange,
+    victoryState,
+    onVictoryStateChange
 }: MatchSettingsProps) {
     const [players, setPlayers] = useState<Player[]>([]);
     const [loading, setLoading] = useState(true);
@@ -458,6 +462,15 @@ export default function MatchSettings({
                         }`}
                 >
                     裁判表 Ban/Pick控制
+                </button>
+                <button
+                    onClick={() => setActiveTab('victory')}
+                    className={`px-4 py-2 text-2xl font-medium transition-colors ${activeTab === 'victory'
+                        ? 'text-white border-b-2 border-[#E93B66]'
+                        : 'text-gray-400 hover:text-white'
+                        }`}
+                >
+                    胜利页面控制
                 </button>
 
             </div>
@@ -955,6 +968,127 @@ export default function MatchSettings({
                                 ))
                             )}
                         </div>
+                    </div>
+                </div>
+            ) : activeTab === 'victory' ? (
+                /* 胜利页面控制面板 */
+                <div className="space-y-6">
+                    {/* 当前状态显示 */}
+                    <div className="text-center">
+                        <div className="text-3xl text-gray-200 mb-4">
+                            当前状态: {victoryState.isVisible ? '显示胜利页面' : '隐藏胜利页面'}
+                        </div>
+                        {victoryState.winner && (
+                            <div className="text-xl text-gray-400">
+                                获胜队伍: {victoryState.winner === 'red' ? '红队' : '蓝队'}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 胜利队伍选择 */}
+                    <div className="grid grid-cols-2 gap-6 mb-6">
+                        <div className="flex flex-col">
+                            <label className="text-4xl text-gray-200 mb-3 font-medium">选择获胜队伍</label>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => onVictoryStateChange({
+                                        ...victoryState,
+                                        winner: 'red'
+                                    })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-4xl font-bold transition-colors ${victoryState.winner === 'red'
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    红队胜利
+                                </button>
+                                <button
+                                    onClick={() => onVictoryStateChange({
+                                        ...victoryState,
+                                        winner: 'blue'
+                                    })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-4xl font-bold transition-colors ${victoryState.winner === 'blue'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    蓝队胜利
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 显示控制 */}
+                    <div className="grid grid-cols-2 gap-6 mb-6">
+                        <div className="flex flex-col">
+                            <label className="text-4xl text-gray-200 mb-3 font-medium">胜利页面显示</label>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => onVictoryStateChange({
+                                        ...victoryState,
+                                        isVisible: true,
+                                        hideScorePanel: true
+                                    })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-4xl font-bold transition-colors ${victoryState.isVisible
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    显示胜利页面
+                                </button>
+                                <button
+                                    onClick={() => onVictoryStateChange({
+                                        ...victoryState,
+                                        isVisible: false,
+                                        hideScorePanel: false
+                                    })}
+                                    className={`flex-1 px-4 py-3 rounded-lg text-4xl font-bold transition-colors ${!victoryState.isVisible
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    隐藏胜利页面
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 快速操作按钮 */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <button
+                            onClick={() => onVictoryStateChange({
+                                isVisible: true,
+                                winner: 'red',
+                                hideScorePanel: true
+                            })}
+                            className="px-6 py-4 bg-red-600 hover:bg-red-700 text-white rounded text-5xl transition-colors font-bold"
+                        >
+                            红队胜利
+                        </button>
+                        <button
+                            onClick={() => onVictoryStateChange({
+                                isVisible: true,
+                                winner: 'blue',
+                                hideScorePanel: true
+                            })}
+                            className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded text-5xl transition-colors font-bold"
+                        >
+                            蓝队胜利
+                        </button>
+                    </div>
+
+                    {/* 重置按钮 */}
+                    <div className="flex justify-end">
+                        <button
+                            onClick={() => onVictoryStateChange({
+                                isVisible: false,
+                                winner: null,
+                                hideScorePanel: false
+                            })}
+                            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded text-2xl transition-colors font-bold"
+                        >
+                            重置胜利状态
+                        </button>
                     </div>
                 </div>
             ) : (
