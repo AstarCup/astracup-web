@@ -18,7 +18,7 @@ export default function ObsOverlay() {
             const savedSettings = localStorage.getItem('matchSettings');
             if (savedSettings) {
                 const parsedSettings = JSON.parse(savedSettings);
-                console.log('初始化设置数据:', parsedSettings);
+                // console.log('初始化设置数据:', parsedSettings);
                 return parsedSettings;
             }
         } catch (error) {
@@ -38,7 +38,7 @@ export default function ObsOverlay() {
             const savedTeams = localStorage.getItem('matchTeams');
             if (savedTeams) {
                 const parsedTeams = JSON.parse(savedTeams);
-                console.log('初始化队伍数据:', parsedTeams);
+                // console.log('初始化队伍数据:', parsedTeams);
                 return parsedTeams;
             }
         } catch (error) {
@@ -69,7 +69,7 @@ export default function ObsOverlay() {
             const savedTimerState = localStorage.getItem('timerState');
             if (savedTimerState) {
                 const parsedTimerState = JSON.parse(savedTimerState);
-                console.log('初始化计时器数据:', parsedTimerState);
+                // console.log('初始化计时器数据:', parsedTimerState);
                 return parsedTimerState;
             }
         } catch (error) {
@@ -88,7 +88,7 @@ export default function ObsOverlay() {
             const savedBanPickState = localStorage.getItem('banPickState');
             if (savedBanPickState) {
                 const parsedState = JSON.parse(savedBanPickState);
-                console.log('初始化Ban/Pick状态:', parsedState);
+                // console.log('初始化Ban/Pick状态:', parsedState);
                 return parsedState;
             }
         } catch (error) {
@@ -110,7 +110,7 @@ export default function ObsOverlay() {
             const savedMapPoolSettings = localStorage.getItem('mapPoolSettings');
             if (savedMapPoolSettings) {
                 const parsedSettings = JSON.parse(savedMapPoolSettings);
-                console.log('初始化图池设置:', parsedSettings);
+                // console.log('初始化图池设置:', parsedSettings);
                 return parsedSettings;
             }
         } catch (error) {
@@ -130,7 +130,7 @@ export default function ObsOverlay() {
             const savedRollState = localStorage.getItem('rollState');
             if (savedRollState) {
                 const parsedRollState = JSON.parse(savedRollState);
-                console.log('初始化Roll点状态:', parsedRollState);
+                // console.log('初始化Roll点状态:', parsedRollState);
                 return parsedRollState;
             }
         } catch (error) {
@@ -155,7 +155,7 @@ export default function ObsOverlay() {
             const savedRefereeState = localStorage.getItem('refereeState');
             if (savedRefereeState) {
                 const parsedRefereeState = JSON.parse(savedRefereeState);
-                console.log('初始化裁判表状态:', parsedRefereeState);
+                // console.log('初始化裁判表状态:', parsedRefereeState);
                 return parsedRefereeState;
             }
         } catch (error) {
@@ -177,7 +177,7 @@ export default function ObsOverlay() {
             const savedVictoryState = localStorage.getItem('victoryState');
             if (savedVictoryState) {
                 const parsedVictoryState = JSON.parse(savedVictoryState);
-                console.log('初始化胜利状态:', parsedVictoryState);
+                // console.log('初始化胜利状态:', parsedVictoryState);
                 return parsedVictoryState;
             }
         } catch (error) {
@@ -199,9 +199,9 @@ export default function ObsOverlay() {
     useEffect(() => {
         const saveSettingsToStorage = () => {
             try {
-                console.log('保存设置到本地存储:', settings);
+                // console.log('保存设置到本地存储:', settings);
                 localStorage.setItem('matchSettings', JSON.stringify(settings));
-                console.log('设置保存成功');
+                // console.log('设置保存成功');
             } catch (error) {
                 console.error('保存设置到本地存储失败:', error);
             }
@@ -214,9 +214,9 @@ export default function ObsOverlay() {
     useEffect(() => {
         const saveTeamsToStorage = () => {
             try {
-                console.log('保存队伍数据到本地存储:', teams);
+                // console.log('保存队伍数据到本地存储:', teams);
                 localStorage.setItem('matchTeams', JSON.stringify(teams));
-                console.log('队伍数据保存成功');
+                // console.log('队伍数据保存成功');
             } catch (error) {
                 console.error('保存队伍数据到本地存储失败:', error);
             }
@@ -229,9 +229,9 @@ export default function ObsOverlay() {
     useEffect(() => {
         const saveTimerStateToStorage = () => {
             try {
-                console.log('保存计时器状态到本地存储:', timerState);
+                // console.log('保存计时器状态到本地存储:', timerState);
                 localStorage.setItem('timerState', JSON.stringify(timerState));
-                console.log('计时器状态保存成功');
+                // console.log('计时器状态保存成功');
             } catch (error) {
                 console.error('保存计时器状态到本地存储失败:', error);
             }
@@ -244,9 +244,9 @@ export default function ObsOverlay() {
     useEffect(() => {
         const saveBanPickStateToStorage = () => {
             try {
-                console.log('保存Ban/Pick状态到本地存储:', banPickState);
+                // console.log('保存Ban/Pick状态到本地存储:', banPickState);
                 localStorage.setItem('banPickState', JSON.stringify(banPickState));
-                console.log('Ban/Pick状态保存成功');
+                // console.log('Ban/Pick状态保存成功');
             } catch (error) {
                 console.error('保存Ban/Pick状态到本地存储失败:', error);
             }
@@ -259,9 +259,9 @@ export default function ObsOverlay() {
     useEffect(() => {
         const saveMapPoolSettingsToStorage = () => {
             try {
-                console.log('保存图池设置到本地存储:', mapPoolSettings);
+                // console.log('保存图池设置到本地存储:', mapPoolSettings);
                 localStorage.setItem('mapPoolSettings', JSON.stringify(mapPoolSettings));
-                console.log('图池设置保存成功');
+                // console.log('图池设置保存成功');
             } catch (error) {
                 console.error('保存图池设置到本地存储失败:', error);
             }
@@ -274,9 +274,9 @@ export default function ObsOverlay() {
     useEffect(() => {
         const saveRollStateToStorage = () => {
             try {
-                console.log('保存Roll点状态到本地存储:', rollState);
+                // console.log('保存Roll点状态到本地存储:', rollState);
                 localStorage.setItem('rollState', JSON.stringify(rollState));
-                console.log('Roll点状态保存成功');
+                // console.log('Roll点状态保存成功');
             } catch (error) {
                 console.error('保存Roll点状态到本地存储失败:', error);
             }
@@ -289,9 +289,9 @@ export default function ObsOverlay() {
     useEffect(() => {
         const saveRefereeStateToStorage = () => {
             try {
-                console.log('保存裁判表状态到本地存储:', refereeState);
+                // console.log('保存裁判表状态到本地存储:', refereeState);
                 localStorage.setItem('refereeState', JSON.stringify(refereeState));
-                console.log('裁判表状态保存成功');
+                // console.log('裁判表状态保存成功');
             } catch (error) {
                 console.error('保存裁判表状态到本地存储失败:', error);
             }
@@ -304,9 +304,9 @@ export default function ObsOverlay() {
     useEffect(() => {
         const saveVictoryStateToStorage = () => {
             try {
-                console.log('保存胜利状态到本地存储:', victoryState);
+                // console.log('保存胜利状态到本地存储:', victoryState);
                 localStorage.setItem('victoryState', JSON.stringify(victoryState));
-                console.log('胜利状态保存成功');
+                // console.log('胜利状态保存成功');
             } catch (error) {
                 console.error('保存胜利状态到本地存储失败:', error);
             }
@@ -364,7 +364,7 @@ export default function ObsOverlay() {
         // 允许重复操作同一个谱面，不检查状态
         const { currentTeam, currentAction } = banPickState;
 
-        console.log(`操作调试: beatmapId=${beatmap.beatmapId}, team=${currentTeam}, action=${currentAction}, currentHistory=`, banPickState.history);
+        // console.log(`操作调试: beatmapId=${beatmap.beatmapId}, team=${currentTeam}, action=${currentAction}, currentHistory=`, banPickState.history);
 
         if (currentAction === 'ban') {
             // 更新谱面状态
@@ -374,7 +374,7 @@ export default function ObsOverlay() {
                         ? { ...b, status: 'banned' as const, bannedBy: currentTeam }
                         : b
                 );
-                console.log(`Ban操作后谱面状态:`, updated.find(b => b.id === beatmap.id));
+                // console.log(`Ban操作后谱面状态:`, updated.find(b => b.id === beatmap.id));
                 return updated;
             });
 
@@ -390,8 +390,8 @@ export default function ObsOverlay() {
                         timestamp: Date.now()
                     }
                 ];
-                console.log(`Ban操作后历史记录:`, newHistory);
-                console.log(`历史记录长度: ${newHistory.length}`);
+                // console.log(`Ban操作后历史记录:`, newHistory);
+                // console.log(`历史记录长度: ${newHistory.length}`);
                 return {
                     ...prev,
                     history: newHistory
@@ -405,7 +405,7 @@ export default function ObsOverlay() {
                         ? { ...b, status: 'picked' as const, pickedBy: currentTeam }
                         : b
                 );
-                console.log(`Pick操作后谱面状态:`, updated.find(b => b.id === beatmap.id));
+                // console.log(`Pick操作后谱面状态:`, updated.find(b => b.id === beatmap.id));
                 return updated;
             });
 
@@ -421,8 +421,8 @@ export default function ObsOverlay() {
                         timestamp: Date.now()
                     }
                 ];
-                console.log(`Pick操作后历史记录:`, newHistory);
-                console.log(`历史记录长度: ${newHistory.length}`);
+                // console.log(`Pick操作后历史记录:`, newHistory);
+                // console.log(`历史记录长度: ${newHistory.length}`);
                 return {
                     ...prev,
                     history: newHistory

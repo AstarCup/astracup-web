@@ -3,14 +3,17 @@
 import { useState, useEffect } from "react";
 import MultiplayerScoresTable from "../components/ui/MultiplayerScoresTable";
 import { MultiplayerRoom, DisplayScore } from "@/lib/multiplayer-types";
+import { MapSelection } from "@/lib/map-selection";
 
 export default function MultiplayerScoresPage() {
     const [roomUrl, setRoomUrl] = useState('');
     const [selectedRoom, setSelectedRoom] = useState<MultiplayerRoom | null>(null);
     const [selectedPlaylist, setSelectedPlaylist] = useState<number | null>(null);
     const [scores, setScores] = useState<DisplayScore[]>([]);
+    const [mapSelections, setMapSelections] = useState<MapSelection[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingScores, setLoadingScores] = useState(false);
+    const [loadingMapSelections, setLoadingMapSelections] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // 从URL参数中提取房间链接并自动加载
@@ -38,11 +41,35 @@ export default function MultiplayerScoresPage() {
         }
     };
 
+    // 加载map-selections数据
+    const loadMapSelections = async () => {
+        setLoadingMapSelections(true);
+        try {
+            const response = await fetch('/api/map-selections?approved=true');
+            const data = await response.json();
+
+            if (data.success) {
+                setMapSelections(data.selections);
+            } else {
+                console.error('Failed to load map selections:', data.error);
+                setMapSelections([]);
+            }
+        } catch (err) {
+            console.error('Error loading map selections:', err);
+            setMapSelections([]);
+        } finally {
+            setLoadingMapSelections(false);
+        }
+    };
+
     // 加载特定房间信息
     const loadRoomById = async (roomId: string) => {
         setLoading(true);
         setError(null);
         try {
+            // 先加载map-selections数据
+            await loadMapSelections();
+
             // 通过房间ID获取房间信息
             const response = await fetch(`/api/multiplayer/rooms?roomId=${roomId}`);
             const data = await response.json();
@@ -123,6 +150,28 @@ export default function MultiplayerScoresPage() {
     const getSelectedPlaylistInfo = () => {
         if (!selectedRoom || !selectedPlaylist) return null;
         return selectedRoom.playlist.find(item => item.id === selectedPlaylist);
+    };
+
+    // 根据beatmap ID匹配map-selection数据
+    const getMapSelectionForPlaylistItem = (playlistItem: any): MapSelection | null => {
+        if (!mapSelections.length) return null;
+
+        // 通过beatmap ID匹配
+        const matchedSelection = mapSelections.find(
+            selection => selection.beatmapId === playlistItem.beatmap.id
+        );
+
+        return matchedSelection || null;
+    };
+
+    // 获取mod颜色class
+    const getModColorClass = (mod: string): string => {
+        switch (mod) {
+            case 'HD': return 'bg-yellow-500 text-black';
+            case 'HR': return 'bg-red-500 text-white';
+            case 'DT': return 'bg-purple-500 text-white';
+            default: return 'bg-gray-500 text-white';
+        }
     };
 
     // 生成页面标题
@@ -223,26 +272,61 @@ export default function MultiplayerScoresPage() {
                 <div className="bg-[#3D3D3D] p-6 rounded-lg mb-6">
                     <h2 className="text-xl font-bold text-white mb-4">选择图池</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {selectedRoom.playlist.map(playlistItem => (
-                            <div
-                                key={playlistItem.id}
-                                className={`p-4 rounded cursor-pointer transition ${selectedPlaylist === playlistItem.id
-                                    ? 'bg-[#E93B66] text-white'
-                                    : 'bg-gray-700 text-white hover:bg-gray-600'
-                                    }`}
-                                onClick={() => handlePlaylistSelect(playlistItem.id)}
-                            >
-                                <h3 className="font-bold mb-2 text-lg">
-                                    {playlistItem.beatmap.beatmapset.artist} - {playlistItem.beatmap.beatmapset.title}
-                                </h3>
-                                <div className="text-sm space-y-1">
-                                    <p className="text-gray-300">难度: {playlistItem.beatmap.version}</p>
-                                    <p className="text-yellow-400 font-bold">{playlistItem.beatmap.difficulty_rating}★</p>
-                                    <p className="text-gray-400">BPM: {playlistItem.beatmap.bpm ? Math.round(playlistItem.beatmap.bpm) : 'N/A'}</p>
-                                    <p className="text-gray-400">长度: {Math.floor(playlistItem.beatmap.total_length / 60)}:{String(playlistItem.beatmap.total_length % 60).padStart(2, '0')}</p>
+                        {selectedRoom.playlist.map(playlistItem => {
+                            const mapSelection = getMapSelectionForPlaylistItem(playlistItem);
+                            const hasCover = mapSelection?.coverUrl;
+
+                            return (
+                                <div
+                                    key={playlistItem.id}
+                                    className={`p-4 rounded cursor-pointer transition relative overflow-hidden ${selectedPlaylist === playlistItem.id
+                                        ? 'bg-[#E93B66] text-white'
+                                        : 'bg-gray-700 text-white hover:bg-gray-600'
+                                        }`}
+                                    onClick={() => handlePlaylistSelect(playlistItem.id)}
+                                    style={{
+                                        backgroundImage: hasCover ? `url(${mapSelection.coverUrl})` : undefined,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center',
+                                        backgroundBlendMode: 'overlay'
+                                    }}
+                                >
+                                    {/* 半透明遮罩层 */}
+                                    <div className={`absolute inset-0 ${hasCover ? 'bg-black/70' : ''} ${selectedPlaylist === playlistItem.id ? 'bg-[#E93B66]/80' : ''}`}></div>
+
+                                    {/* 内容 */}
+                                    <div className="relative z-10">
+                                        <h3 className="font-bold mb-2 text-lg">
+                                            {playlistItem.beatmap.beatmapset.artist} - {playlistItem.beatmap.beatmapset.title}
+                                        </h3>
+
+                                        {/* Mod位显示 */}
+                                        {mapSelection && (
+                                            <div className="mb-2 flex items-center space-x-2">
+                                                <span className="text-sm text-gray-300">Mod位:</span>
+                                                <div className="flex space-x-1">
+                                                    <span className={`px-2 py-1 text-xs rounded font-bold ${getModColorClass(mapSelection.selectedMods)}`}>
+                                                        {mapSelection.selectedMods}{mapSelection.modPosition}
+                                                    </span>
+                                                    {mapSelection.customModName && (
+                                                        <span className="px-2 py-1 text-xs rounded bg-gray-600 text-white font-bold">
+                                                            {mapSelection.customModName}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="text-sm space-y-1">
+                                            <p className="text-gray-300">难度: {playlistItem.beatmap.version}</p>
+                                            <p className="text-yellow-400 font-bold">{playlistItem.beatmap.difficulty_rating}★</p>
+                                            <p className="text-gray-400">BPM: {playlistItem.beatmap.bpm ? Math.round(playlistItem.beatmap.bpm) : 'N/A'}</p>
+                                            <p className="text-gray-400">长度: {Math.floor(playlistItem.beatmap.total_length / 60)}:{String(playlistItem.beatmap.total_length % 60).padStart(2, '0')}</p>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -256,8 +340,6 @@ export default function MultiplayerScoresPage() {
                     onRefresh={loadScores}
                 />
             )}
-
-
         </div>
     );
 }
