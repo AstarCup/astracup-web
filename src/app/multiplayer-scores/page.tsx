@@ -10,10 +10,13 @@ export default function MultiplayerScoresPage() {
     const [selectedRoom, setSelectedRoom] = useState<MultiplayerRoom | null>(null);
     const [selectedPlaylist, setSelectedPlaylist] = useState<number | null>(null);
     const [scores, setScores] = useState<DisplayScore[]>([]);
+    const [filteredScores, setFilteredScores] = useState<DisplayScore[]>([]);
     const [mapSelections, setMapSelections] = useState<MapSelection[]>([]);
+    const [approvedPlayers, setApprovedPlayers] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(false);
     const [loadingScores, setLoadingScores] = useState(false);
     const [loadingMapSelections, setLoadingMapSelections] = useState(false);
+    const [loadingPlayers, setLoadingPlayers] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // 从URL参数中提取房间链接并自动加载
@@ -29,6 +32,17 @@ export default function MultiplayerScoresPage() {
             }
         }
     }, []);
+
+    // 页面加载时获取已过审的玩家数据
+    useEffect(() => {
+        loadApprovedPlayers();
+    }, []);
+
+    // 当分数数据或已过审玩家数据变化时，过滤分数
+    useEffect(() => {
+        const filtered = filterScores(scores);
+        setFilteredScores(filtered);
+    }, [scores, approvedPlayers]);
 
     // 从URL中提取房间ID
     const extractRoomIdFromUrl = (url: string): string | null => {
@@ -60,6 +74,47 @@ export default function MultiplayerScoresPage() {
         } finally {
             setLoadingMapSelections(false);
         }
+    };
+
+    // 加载已过审的玩家数据
+    const loadApprovedPlayers = async () => {
+        setLoadingPlayers(true);
+        try {
+            const response = await fetch('/api/edge-registrations');
+            const data = await response.json();
+
+            if (data.registrations) {
+                // 创建已过审玩家的Set（使用osuId作为标识）
+                const approvedSet = new Set<string>();
+                data.registrations.forEach((reg: any) => {
+                    if (reg.approved) {
+                        approvedSet.add(reg.osuId);
+                    }
+                });
+                setApprovedPlayers(approvedSet);
+                console.log(`Loaded ${approvedSet.size} approved players`);
+            } else {
+                console.error('Failed to load approved players:', data.error);
+                setApprovedPlayers(new Set());
+            }
+        } catch (err) {
+            console.error('Error loading approved players:', err);
+            setApprovedPlayers(new Set());
+        } finally {
+            setLoadingPlayers(false);
+        }
+    };
+
+    // 过滤分数数据，只保留已过审的玩家
+    const filterScores = (scores: DisplayScore[]): DisplayScore[] => {
+        if (approvedPlayers.size === 0) {
+            console.log('No approved players data available, showing all scores');
+            return scores;
+        }
+
+        const filtered = scores.filter(score => approvedPlayers.has(score.user_id.toString()));
+        console.log(`Filtered scores: ${filtered.length} out of ${scores.length} (${scores.length - filtered.length} removed)`);
+        return filtered;
     };
 
     // 加载特定房间信息
@@ -341,9 +396,9 @@ export default function MultiplayerScoresPage() {
             {/* 分数表格 */}
             {selectedRoom && selectedPlaylist && (
                 <MultiplayerScoresTable
-                    scores={scores}
+                    scores={filteredScores}
                     title={getPageTitle()}
-                    loading={loadingScores}
+                    loading={loadingScores || loadingPlayers}
                     onRefresh={loadScores}
                 />
             )}

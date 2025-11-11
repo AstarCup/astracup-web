@@ -38,22 +38,22 @@ export async function GET(
 
         // 调试：打印第一个分数的完整数据结构和statistics
         if (data.scores.length > 0) {
-            console.log('=== API Debug - First Score Data ===');
-            console.log('Full score data:', JSON.stringify(data.scores[0], null, 2));
-            console.log('Statistics object:', data.scores[0].statistics);
-            console.log('Statistics type:', typeof data.scores[0].statistics);
-            console.log('Statistics keys:', Object.keys(data.scores[0].statistics || {}));
-            console.log('count_300:', data.scores[0].statistics?.count_300);
-            console.log('count_100:', data.scores[0].statistics?.count_100);
-            console.log('count_50:', data.scores[0].statistics?.count_50);
-            console.log('count_miss:', data.scores[0].statistics?.count_miss);
-            console.log('=== End API Debug ===');
+            // console.log('=== API Debug - First Score Data ===');
+            // console.log('Full score data:', JSON.stringify(data.scores[0], null, 2));
+            // console.log('Statistics object:', data.scores[0].statistics);
+            // console.log('Statistics type:', typeof data.scores[0].statistics);
+            // console.log('Statistics keys:', Object.keys(data.scores[0].statistics || {}));
+            // console.log('count_300:', data.scores[0].statistics?.count_300);
+            // console.log('count_100:', data.scores[0].statistics?.count_100);
+            // console.log('count_50:', data.scores[0].statistics?.count_50);
+            // console.log('count_miss:', data.scores[0].statistics?.count_miss);
+            // console.log('=== End API Debug ===');
 
             // 额外调试：尝试获取单个分数的详细信息
             const firstScore = data.scores[0];
             try {
-                console.log('=== Individual Score API Debug ===');
-                console.log('Attempting to fetch individual score details...');
+                // console.log('=== Individual Score API Debug ===');
+                // console.log('Attempting to fetch individual score details...');
 
                 // 尝试获取单个分数的详细信息
                 const individualScoreResponse = await fetch(
@@ -68,15 +68,15 @@ export async function GET(
 
                 if (individualScoreResponse.ok) {
                     const individualScoreData = await individualScoreResponse.json();
-                    console.log('Individual score data:', JSON.stringify(individualScoreData, null, 2));
-                    console.log('Individual score statistics:', individualScoreData.statistics);
+                    // console.log('Individual score data:', JSON.stringify(individualScoreData, null, 2));
+                    // console.log('Individual score statistics:', individualScoreData.statistics);
                 } else {
-                    console.log('Individual score API failed:', individualScoreResponse.status, individualScoreResponse.statusText);
-                    console.log('Score ID used:', firstScore.id);
+                    // console.log('Individual score API failed:', individualScoreResponse.status, individualScoreResponse.statusText);
+                    // console.log('Score ID used:', firstScore.id);
                 }
-                console.log('=== End Individual Score Debug ===');
+                // console.log('=== End Individual Score Debug ===');
             } catch (error) {
-                console.log('Error fetching individual score:', error);
+                // console.log('Error fetching individual score:', error);
             }
         }
 
