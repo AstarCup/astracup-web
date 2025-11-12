@@ -526,7 +526,7 @@ export default function TotalScoresByModTable({
                                                     <SortIcon column={modPosition} />
                                                 </span>
                                                 {hasValidAverages && mapPoolAverages[modPosition] > 0 && (
-                                                    <div className="absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
+                                                    <div className="absolute top-full mt-1 left-1/2 transform bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
                                                         平均分: {mapPoolAverages[modPosition].toLocaleString()}
                                                     </div>
                                                 )}
