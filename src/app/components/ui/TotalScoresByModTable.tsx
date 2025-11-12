@@ -389,7 +389,7 @@ export default function TotalScoresByModTable({
                         <thead>
                             <tr className="border-b border-gray-600 bg-[#2D2D2D]">
                                 <th
-                                    className="px-4 py-3 text-center cursor-pointer hover:bg-gray-700 transition sticky left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
+                                    className="px-4 py-1 text-center cursor-pointer hover:bg-gray-700 transition sticky left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
                                     onClick={() => handleSort('totalRank')}
                                 >
                                     <div className="flex items-center justify-center">
@@ -398,7 +398,7 @@ export default function TotalScoresByModTable({
                                     </div>
                                 </th>
                                 <th
-                                    className="px-4 py-3 text-left cursor-pointer hover:bg-gray-700 transition sticky left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
+                                    className="px-6 py-1 text-left cursor-pointer hover:bg-gray-700 transition sticky left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
                                     onClick={() => handleSort('username')}
                                 >
                                     <div className="flex items-center">
@@ -426,7 +426,7 @@ export default function TotalScoresByModTable({
                                                 <div className="absolute inset-0 bg-black/80"></div>
                                             )}
                                             <div className="flex flex-col items-center relative z-10">
-                                                <span className={`px-2 py-1 text-xs rounded font-bold ${getModColorClass(modPosition)}`}>
+                                                <span className={`px-2 py-1 text-xl rounded font-bold ${getModColorClass(modPosition)}`}>
                                                     {getModDisplayName(modPosition)}
                                                     <SortIcon column={modPosition} />
                                                 </span>
@@ -435,7 +435,7 @@ export default function TotalScoresByModTable({
                                     );
                                 })}
                                 <th
-                                    className="px-4 py-3 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600"
+                                    className="px-4 py-1 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600"
                                     onClick={() => handleSort('zSum')}
                                 >
                                     <div className="flex items-center justify-center">
@@ -444,7 +444,7 @@ export default function TotalScoresByModTable({
                                     </div>
                                 </th>
                                 <th
-                                    className="px-4 py-3 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600"
+                                    className="px-4 py-1 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600"
                                     onClick={() => handleSort('rating')}
                                 >
                                     <div className="flex items-center justify-center">
@@ -453,7 +453,7 @@ export default function TotalScoresByModTable({
                                     </div>
                                 </th>
                                 <th
-                                    className="px-4 py-3 text-left cursor-pointer hover:bg-gray-700 transition bg-[#2D2D2D]"
+                                    className="px-4 py-1 text-left cursor-pointer hover:bg-gray-700 transition bg-[#2D2D2D]"
                                     onClick={() => handleSort('totalScore')}
                                 >
                                     <div className="flex items-center">
@@ -469,7 +469,7 @@ export default function TotalScoresByModTable({
                                     key={player.userId}
                                     className="border-b border-gray-700 hover:bg-gray-600 transition"
                                 >
-                                    <td className="px-4 py-3 text-center font-mono sticky left-0 z-10 bg-[#3D3D3D] border-r border-gray-600">
+                                    <td className="px-4 py-1 text-center font-mono sticky left-0 z-10 bg-[#3D3D3D] border-r border-gray-600">
                                         {player.totalRank ? (
                                             <span className={getScoreRankStyle(player.totalRank)}>
                                                 {player.totalRank}
@@ -478,7 +478,7 @@ export default function TotalScoresByModTable({
                                             <span className="text-gray-500">-</span>
                                         )}
                                     </td>
-                                    <td className="px-4 py-3 sticky left-0 z-10 bg-[#3D3D3D] border-r border-gray-600">
+                                    <td className="px-4 py-1 sticky left-0 z-10 bg-[#3D3D3D] border-r border-gray-600">
                                         <div className="flex items-center space-x-3">
                                             <Image
                                                 src={player.avatarUrl}
@@ -499,7 +499,7 @@ export default function TotalScoresByModTable({
                                         return (
                                             <td
                                                 key={modPosition}
-                                                className="px-4 py-3 text-center font-mono border-r border-gray-600 last:border-r-0"
+                                                className="px-4 py-1 text-center font-mono border-r border-gray-600 last:border-r-0"
                                             >
                                                 {score ? (
                                                     <span className={getScoreRankStyle(rank)}>
@@ -511,17 +511,17 @@ export default function TotalScoresByModTable({
                                             </td>
                                         );
                                     })}
-                                    <td className="px-4 py-3 text-center font-mono border-r border-gray-600">
+                                    <td className="px-4 py-1 text-center font-mono border-r border-gray-600">
                                         <span className="text-black font-bold">
                                             {player.zSum.toFixed(2)}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-3 text-center font-mono border-r border-gray-600">
+                                    <td className="px-4 py-1 text-center font-mono border-r border-gray-600">
                                         <span className="text-black font-bold">
                                             {player.rating.toFixed(2)}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-3 font-mono text-black font-bold">
+                                    <td className="px-4 py-1 font-mono text-black font-bold">
                                         {player.totalScore.toLocaleString()}
                                     </td>
                                 </tr>
