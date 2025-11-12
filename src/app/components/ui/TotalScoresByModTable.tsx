@@ -384,12 +384,12 @@ export default function TotalScoresByModTable({
                     <p className="text-sm text-gray-400 mt-2">等待玩家完成比赛后数据将显示在这里</p>
                 </div>
             ) : (
-                <div className="overflow-x-auto w-[1200px]">
+                <div className="overflow-x-auto w-full">
                     <table className="w-full bg-[#3D3D3D] text-white">
                         <thead>
                             <tr className="border-b border-gray-600 bg-[#2D2D2D]">
                                 <th
-                                    className="px-4 py-3 text-center cursor-pointer hover:bg-gray-700 transition left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
+                                    className="px-4 py-3 text-center cursor-pointer hover:bg-gray-700 transition sticky left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
                                     onClick={() => handleSort('totalRank')}
                                 >
                                     <div className="flex items-center justify-center">
@@ -398,7 +398,7 @@ export default function TotalScoresByModTable({
                                     </div>
                                 </th>
                                 <th
-                                    className="px-4 py-3 text-left cursor-pointer hover:bg-gray-700 transition left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
+                                    className="px-4 py-3 text-left cursor-pointer hover:bg-gray-700 transition sticky left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
                                     onClick={() => handleSort('username')}
                                 >
                                     <div className="flex items-center">
@@ -413,7 +413,7 @@ export default function TotalScoresByModTable({
                                     return (
                                         <th
                                             key={modPosition}
-                                            className="px-3 py-2 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600 last:border-r-0 relative overflow-hidden"
+                                            className="px-3 py-2 text-center cursor-pointer hover:bg-gray-700 sticky transition border-r border-gray-600 last:border-r-0 relative overflow-hidden"
                                             onClick={() => handleSort(modPosition)}
                                             style={{
                                                 backgroundImage: hasCover ? `url(${mapSelection.coverUrl})` : undefined,
