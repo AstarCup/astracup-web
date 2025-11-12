@@ -438,58 +438,6 @@ export default function TotalScoresByModTable({
                 </div>
             ) : (
                 <div className="overflow-x-auto w-full">
-                    {/* 图池平均分表格 - 只在有有效数据时显示 */}
-                    {hasValidAverages && (
-                        <div className="mb-4">
-                            <h3 className="text-lg font-bold text-white mb-2">图池平均分</h3>
-                            <table className="w-full bg-[#3D3D3D] text-white table-auto">
-                                <thead>
-                                    <tr className="border-b border-gray-600 bg-[#2D2D2D]">
-                                        {modPositions.map(modPosition => {
-                                            const mapSelection = getMapSelectionForModPosition(modPosition);
-                                            const hasCover = mapSelection?.coverUrl;
-                                            return (
-                                                <th
-                                                    key={modPosition}
-                                                    className="px-3 py-2 text-center border-r border-gray-600 last:border-r-0 relative overflow-hidden"
-                                                    style={{
-                                                        backgroundImage: hasCover ? `url(${mapSelection.coverUrl})` : undefined,
-                                                        backgroundSize: 'cover',
-                                                        backgroundPosition: 'center'
-                                                    }}
-                                                >
-                                                    {/* 半透明遮罩层 */}
-                                                    {hasCover && (
-                                                        <div className="absolute inset-0 bg-black/50"></div>
-                                                    )}
-                                                    <div className="flex flex-col items-center relative z-10">
-                                                        <span className={`px-2 py-1 text-2xl rounded font-bold text-shadow-lg ${getModColorClass(modPosition)}`}>
-                                                            {getModDisplayName(modPosition)}
-                                                        </span>
-                                                    </div>
-                                                </th>
-                                            );
-                                        })}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        {modPositions.map(modPosition => (
-                                            <td
-                                                key={modPosition}
-                                                className="px-4 py-3 text-center font-mono border-r border-gray-600 last:border-r-0"
-                                            >
-                                                <span className="text-black font-bold">
-                                                    {mapPoolAverages[modPosition] ? mapPoolAverages[modPosition].toLocaleString() : '-'}
-                                                </span>
-                                            </td>
-                                        ))}
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-
                     {/* 玩家总分表格 */}
                     <table className="w-full bg-[#3D3D3D] text-white table-auto">
                         <thead>
@@ -530,11 +478,16 @@ export default function TotalScoresByModTable({
                                             {hasCover && (
                                                 <div className="absolute inset-0 bg-black/50"></div>
                                             )}
-                                            <div className="flex flex-col items-center relative z-10">
+                                            <div className="flex flex-col items-center relative z-10 group">
                                                 <span className={`px-2 py-1 text-2xl rounded font-bold text-shadow-lg ${getModColorClass(modPosition)}`}>
                                                     {getModDisplayName(modPosition)}
                                                     <SortIcon column={modPosition} />
                                                 </span>
+                                                {hasValidAverages && mapPoolAverages[modPosition] > 0 && (
+                                                    <div className="absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
+                                                        平均分: {mapPoolAverages[modPosition].toLocaleString()}
+                                                    </div>
+                                                )}
                                             </div>
                                         </th>
                                     );
