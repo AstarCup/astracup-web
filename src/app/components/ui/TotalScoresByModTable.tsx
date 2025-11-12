@@ -42,7 +42,6 @@ export default function TotalScoresByModTable({
 }: TotalScoresByModTableProps) {
     const [sortBy, setSortBy] = useState<'username' | 'totalScore' | string>('totalScore');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-    const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
 
     // 获取唯一的mod位列表，按mod类型和位置排序
     const modOrder = ['NM', 'HD', 'HR', 'DT', 'FM', 'LZ', 'TB'];
@@ -284,7 +283,28 @@ export default function TotalScoresByModTable({
         return result;
     };
 
+    // 计算图池平均分
+    const calculateMapPoolAverages = () => {
+        const playerScores = processPlayerScores();
+        const averages: { [modPosition: string]: number } = {};
+
+        modPositions.forEach(modPosition => {
+            const validScores = playerScores
+                .map(player => player.scores[modPosition])
+                .filter(score => score !== null) as number[];
+
+            if (validScores.length > 0) {
+                averages[modPosition] = Math.round(validScores.reduce((sum, score) => sum + score, 0) / validScores.length);
+            } else {
+                averages[modPosition] = 0;
+            }
+        });
+
+        return averages;
+    };
+
     const playerScores = processPlayerScores();
+    const mapPoolAverages = calculateMapPoolAverages();
 
     // 排序玩家数据
     const sortedPlayers = [...playerScores].sort((a, b) => {
@@ -399,6 +419,57 @@ export default function TotalScoresByModTable({
                 </div>
             ) : (
                 <div className="overflow-x-auto w-full">
+                    {/* 图池平均分表格 */}
+                    <div className="mb-4">
+                        <h3 className="text-lg font-bold text-white mb-2">图池平均分</h3>
+                        <table className="w-full bg-[#3D3D3D] text-white table-auto">
+                            <thead>
+                                <tr className="border-b border-gray-600 bg-[#2D2D2D]">
+                                    {modPositions.map(modPosition => {
+                                        const mapSelection = getMapSelectionForModPosition(modPosition);
+                                        const hasCover = mapSelection?.coverUrl;
+                                        return (
+                                            <th
+                                                key={modPosition}
+                                                className="px-3 py-2 text-center border-r border-gray-600 last:border-r-0 relative overflow-hidden"
+                                                style={{
+                                                    backgroundImage: hasCover ? `url(${mapSelection.coverUrl})` : undefined,
+                                                    backgroundSize: 'cover',
+                                                    backgroundPosition: 'center'
+                                                }}
+                                            >
+                                                {/* 半透明遮罩层 */}
+                                                {hasCover && (
+                                                    <div className="absolute inset-0 bg-black/50"></div>
+                                                )}
+                                                <div className="flex flex-col items-center relative z-10">
+                                                    <span className={`px-2 py-1 text-2xl rounded font-bold text-shadow-lg ${getModColorClass(modPosition)}`}>
+                                                        {getModDisplayName(modPosition)}
+                                                    </span>
+                                                </div>
+                                            </th>
+                                        );
+                                    })}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    {modPositions.map(modPosition => (
+                                        <td
+                                            key={modPosition}
+                                            className="px-4 py-3 text-center font-mono border-r border-gray-600 last:border-r-0"
+                                        >
+                                            <span className="text-white font-bold">
+                                                {mapPoolAverages[modPosition] ? mapPoolAverages[modPosition].toLocaleString() : '-'}
+                                            </span>
+                                        </td>
+                                    ))}
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* 玩家总分表格 */}
                     <table className="w-full bg-[#3D3D3D] text-white table-auto">
                         <thead>
                             <tr className="border-b border-gray-600 bg-[#2D2D2D]">
@@ -474,148 +545,70 @@ export default function TotalScoresByModTable({
                                         <SortIcon column="totalScore" />
                                     </div>
                                 </th>
-                                <th className="px-4 py-3 text-center bg-[#2D2D2D] min-w-[80px]">
-                                    详情
-                                </th>
                             </tr>
                         </thead>
                         <tbody className="text-black">
                             {sortedPlayers.map((player, index) => (
-                                <>
-                                    <tr
-                                        key={player.userId}
-                                        className="border-b border-gray-700 hover:bg-gray-600 transition"
-                                    >
-                                        <td className="px-4 py-3 text-center font-mono sticky left-0 z-10 bg-[#3D3D3D] border-r border-gray-600">
-                                            {player.totalRank ? (
-                                                <span className={getScoreRankStyle(player.totalRank)}>
-                                                    {player.totalRank}
-                                                </span>
-                                            ) : (
-                                                <span className="text-gray-500">-</span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-3 sticky left-0 z-10 bg-[#3D3D3D] border-r border-gray-600">
-                                            <div className="flex items-center space-x-3">
-                                                <Image
-                                                    src={player.avatarUrl}
-                                                    alt={player.username}
-                                                    width={40}
-                                                    height={40}
-                                                    className="rounded"
-                                                    unoptimized
-                                                />
-                                                <div className="min-w-0 flex-1">
-                                                    <div className="font-medium text-white truncate">{player.username}</div>
-                                                </div>
+                                <tr
+                                    key={player.userId}
+                                    className="border-b border-gray-700 hover:bg-gray-600 transition"
+                                >
+                                    <td className="px-4 py-3 text-center font-mono sticky left-0 z-10 bg-[#3D3D3D] border-r border-gray-600">
+                                        {player.totalRank ? (
+                                            <span className={getScoreRankStyle(player.totalRank)}>
+                                                {player.totalRank}
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-500">-</span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-3 sticky left-0 z-10 bg-[#3D3D3D] border-r border-gray-600">
+                                        <div className="flex items-center space-x-3">
+                                            <Image
+                                                src={player.avatarUrl}
+                                                alt={player.username}
+                                                width={40}
+                                                height={40}
+                                                className="rounded"
+                                                unoptimized
+                                            />
+                                            <div className="min-w-0 flex-1">
+                                                <div className="font-medium text-white truncate">{player.username}</div>
                                             </div>
-                                        </td>
-                                        {modPositions.map(modPosition => {
-                                            const score = player.scores[modPosition];
-                                            const rank = player.ranks[modPosition];
-                                            return (
-                                                <td
-                                                    key={modPosition}
-                                                    className="px-4 py-3 text-center font-mono border-r border-gray-600 last:border-r-0"
-                                                >
-                                                    {score ? (
-                                                        <span className={getScoreRankStyle(rank)}>
-                                                            {score.toLocaleString()}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-gray-500">-</span>
-                                                    )}
-                                                </td>
-                                            );
-                                        })}
-                                        <td className="px-4 py-3 text-center font-mono border-r border-gray-600">
-                                            <span className="text-black font-bold">
-                                                {player.zSum.toFixed(2)}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-center font-mono border-r border-gray-600">
-                                            <span className="text-black font-bold">
-                                                {player.rating.toFixed(2)}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 font-mono text-black font-bold">
-                                            {player.totalScore.toLocaleString()}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <button
-                                                onClick={() => setExpandedPlayer(expandedPlayer === player.userId ? null : player.userId)}
-                                                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded transition"
+                                        </div>
+                                    </td>
+                                    {modPositions.map(modPosition => {
+                                        const score = player.scores[modPosition];
+                                        const rank = player.ranks[modPosition];
+                                        return (
+                                            <td
+                                                key={modPosition}
+                                                className="px-4 py-3 text-center font-mono border-r border-gray-600 last:border-r-0"
                                             >
-                                                {expandedPlayer === player.userId ? '收起' : '展开'}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {expandedPlayer === player.userId && (
-                                        <tr>
-                                            <td colSpan={modPositions.length + 7} className="p-4 bg-gray-800">
-                                                <div className="bg-[#2D2D2D] rounded-lg p-4">
-                                                    <h3 className="text-lg font-bold text-white mb-3">
-                                                        {player.username} 的图池平均分详情
-                                                    </h3>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div className="bg-[#3D3D3D] p-4 rounded-lg">
-                                                            <h4 className="text-white font-semibold mb-2">基础统计</h4>
-                                                            <div className="grid grid-cols-2 gap-2 text-sm">
-                                                                <div className="text-gray-300">已玩图池数量:</div>
-                                                                <div className="text-white font-bold">{player.playedMaps}</div>
-                                                                <div className="text-gray-300">图池平均分:</div>
-                                                                <div className="text-white font-bold">{player.averageScore.toLocaleString()}</div>
-                                                                <div className="text-gray-300">总分:</div>
-                                                                <div className="text-white font-bold">{player.totalScore.toLocaleString()}</div>
-                                                                <div className="text-gray-300">zSum:</div>
-                                                                <div className="text-white font-bold">{player.zSum.toFixed(2)}</div>
-                                                                <div className="text-gray-300">Rating:</div>
-                                                                <div className="text-white font-bold">{player.rating.toFixed(2)}</div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="bg-[#3D3D3D] p-4 rounded-lg">
-                                                            <h4 className="text-white font-semibold mb-2">各图池分数详情</h4>
-                                                            <div className="max-h-40 overflow-y-auto">
-                                                                <table className="w-full text-sm">
-                                                                    <thead>
-                                                                        <tr className="border-b border-gray-600">
-                                                                            <th className="text-left text-gray-300 py-1">图池</th>
-                                                                            <th className="text-right text-gray-300 py-1">分数</th>
-                                                                            <th className="text-right text-gray-300 py-1">排名</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {modPositions.map(modPosition => {
-                                                                            const score = player.scores[modPosition];
-                                                                            const rank = player.ranks[modPosition];
-                                                                            return (
-                                                                                <tr key={modPosition} className="border-b border-gray-700">
-                                                                                    <td className="py-1 text-white">{getModDisplayName(modPosition)}</td>
-                                                                                    <td className="py-1 text-right text-white">
-                                                                                        {score ? score.toLocaleString() : '-'}
-                                                                                    </td>
-                                                                                    <td className="py-1 text-right">
-                                                                                        {rank ? (
-                                                                                            <span className={getScoreRankStyle(rank)}>
-                                                                                                {rank}
-                                                                                            </span>
-                                                                                        ) : (
-                                                                                            <span className="text-gray-500">-</span>
-                                                                                        )}
-                                                                                    </td>
-                                                                                </tr>
-                                                                            );
-                                                                        })}
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                {score ? (
+                                                    <span className={getScoreRankStyle(rank)}>
+                                                        {score.toLocaleString()}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-gray-500">-</span>
+                                                )}
                                             </td>
-                                        </tr>
-                                    )}
-                                </>
+                                        );
+                                    })}
+                                    <td className="px-4 py-3 text-center font-mono border-r border-gray-600">
+                                        <span className="text-black font-bold">
+                                            {player.zSum.toFixed(2)}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-center font-mono border-r border-gray-600">
+                                        <span className="text-black font-bold">
+                                            {player.rating.toFixed(2)}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 font-mono text-black font-bold">
+                                        {player.totalScore.toLocaleString()}
+                                    </td>
+                                </tr>
                             ))}
                         </tbody>
                     </table>
