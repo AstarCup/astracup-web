@@ -133,7 +133,13 @@ export default function MultiplayerScoresPage() {
 
     // 加载所有图池的分数数据
     const loadAllScores = async () => {
-        if (!selectedRoom) return;
+        console.log('loadAllScores函数开始执行');
+        console.log('selectedRoom:', selectedRoom);
+
+        if (!selectedRoom) {
+            console.log('loadAllScores: selectedRoom为空，提前返回');
+            return;
+        }
 
         setLoadingAllScores(true);
         setError(null);
