@@ -306,6 +306,9 @@ export default function TotalScoresByModTable({
     const playerScores = processPlayerScores();
     const mapPoolAverages = calculateMapPoolAverages();
 
+    // 检查是否有有效的平均分数据
+    const hasValidAverages = Object.values(mapPoolAverages).some(average => average > 0);
+
     // 排序玩家数据
     const sortedPlayers = [...playerScores].sort((a, b) => {
         if (sortBy === 'totalRank') {
@@ -419,55 +422,57 @@ export default function TotalScoresByModTable({
                 </div>
             ) : (
                 <div className="overflow-x-auto w-full">
-                    {/* 图池平均分表格 */}
-                    <div className="mb-4">
-                        <h3 className="text-lg font-bold text-white mb-2">图池平均分</h3>
-                        <table className="w-full bg-[#3D3D3D] text-white table-auto">
-                            <thead>
-                                <tr className="border-b border-gray-600 bg-[#2D2D2D]">
-                                    {modPositions.map(modPosition => {
-                                        const mapSelection = getMapSelectionForModPosition(modPosition);
-                                        const hasCover = mapSelection?.coverUrl;
-                                        return (
-                                            <th
+                    {/* 图池平均分表格 - 只在有有效数据时显示 */}
+                    {hasValidAverages && (
+                        <div className="mb-4">
+                            <h3 className="text-lg font-bold text-white mb-2">图池平均分</h3>
+                            <table className="w-full bg-[#3D3D3D] text-white table-auto">
+                                <thead>
+                                    <tr className="border-b border-gray-600 bg-[#2D2D2D]">
+                                        {modPositions.map(modPosition => {
+                                            const mapSelection = getMapSelectionForModPosition(modPosition);
+                                            const hasCover = mapSelection?.coverUrl;
+                                            return (
+                                                <th
+                                                    key={modPosition}
+                                                    className="px-3 py-2 text-center border-r border-gray-600 last:border-r-0 relative overflow-hidden"
+                                                    style={{
+                                                        backgroundImage: hasCover ? `url(${mapSelection.coverUrl})` : undefined,
+                                                        backgroundSize: 'cover',
+                                                        backgroundPosition: 'center'
+                                                    }}
+                                                >
+                                                    {/* 半透明遮罩层 */}
+                                                    {hasCover && (
+                                                        <div className="absolute inset-0 bg-black/50"></div>
+                                                    )}
+                                                    <div className="flex flex-col items-center relative z-10">
+                                                        <span className={`px-2 py-1 text-2xl rounded font-bold text-shadow-lg ${getModColorClass(modPosition)}`}>
+                                                            {getModDisplayName(modPosition)}
+                                                        </span>
+                                                    </div>
+                                                </th>
+                                            );
+                                        })}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        {modPositions.map(modPosition => (
+                                            <td
                                                 key={modPosition}
-                                                className="px-3 py-2 text-center border-r border-gray-600 last:border-r-0 relative overflow-hidden"
-                                                style={{
-                                                    backgroundImage: hasCover ? `url(${mapSelection.coverUrl})` : undefined,
-                                                    backgroundSize: 'cover',
-                                                    backgroundPosition: 'center'
-                                                }}
+                                                className="px-4 py-3 text-center font-mono border-r border-gray-600 last:border-r-0"
                                             >
-                                                {/* 半透明遮罩层 */}
-                                                {hasCover && (
-                                                    <div className="absolute inset-0 bg-black/50"></div>
-                                                )}
-                                                <div className="flex flex-col items-center relative z-10">
-                                                    <span className={`px-2 py-1 text-2xl rounded font-bold text-shadow-lg ${getModColorClass(modPosition)}`}>
-                                                        {getModDisplayName(modPosition)}
-                                                    </span>
-                                                </div>
-                                            </th>
-                                        );
-                                    })}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    {modPositions.map(modPosition => (
-                                        <td
-                                            key={modPosition}
-                                            className="px-4 py-3 text-center font-mono border-r border-gray-600 last:border-r-0"
-                                        >
-                                            <span className="text-white font-bold">
-                                                {mapPoolAverages[modPosition] ? mapPoolAverages[modPosition].toLocaleString() : '-'}
-                                            </span>
-                                        </td>
-                                    ))}
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                                                <span className="text-black font-bold">
+                                                    {mapPoolAverages[modPosition] ? mapPoolAverages[modPosition].toLocaleString() : '-'}
+                                                </span>
+                                            </td>
+                                        ))}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
 
                     {/* 玩家总分表格 */}
                     <table className="w-full bg-[#3D3D3D] text-white table-auto">
