@@ -144,21 +144,30 @@ export default function MultiplayerScoresPage() {
 
             const allScoresPromises = selectedRoom.playlist.map(async (playlistItem) => {
                 console.log(`正在加载图池 ${playlistItem.id} 的分数...`);
-                const response = await fetch(
-                    `/api/multiplayer/rooms/${selectedRoom.id}/playlists/${playlistItem.id}/scores?limit=100&sort=score_desc`
-                );
-                const data = await response.json();
+                const url = `/api/multiplayer/rooms/${selectedRoom.id}/playlists/${playlistItem.id}/scores?limit=100&sort=score_desc`;
+                console.log(`API URL: ${url}`);
 
-                if (data.success) {
-                    console.log(`图池 ${playlistItem.id} 加载成功，分数数量:`, data.scores.length);
-                    // 为每个分数添加 playlistId 信息
-                    return data.scores.map((score: DisplayScore) => ({
-                        ...score,
-                        playlistId: playlistItem.id,
-                        beatmapId: playlistItem.beatmap.id
-                    }));
-                } else {
-                    console.error(`Failed to load scores for playlist ${playlistItem.id}:`, data.error);
+                try {
+                    const response = await fetch(url);
+                    console.log(`图池 ${playlistItem.id} 响应状态:`, response.status, response.statusText);
+
+                    const data = await response.json();
+                    console.log(`图池 ${playlistItem.id} 响应数据:`, data);
+
+                    if (data.success) {
+                        console.log(`图池 ${playlistItem.id} 加载成功，分数数量:`, data.scores.length);
+                        // 为每个分数添加 playlistId 信息
+                        return data.scores.map((score: DisplayScore) => ({
+                            ...score,
+                            playlistId: playlistItem.id,
+                            beatmapId: playlistItem.beatmap.id
+                        }));
+                    } else {
+                        console.error(`Failed to load scores for playlist ${playlistItem.id}:`, data.error);
+                        return [];
+                    }
+                } catch (err) {
+                    console.error(`Error loading scores for playlist ${playlistItem.id}:`, err);
                     return [];
                 }
             });
