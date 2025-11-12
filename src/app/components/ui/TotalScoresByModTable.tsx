@@ -409,17 +409,15 @@ export default function TotalScoresByModTable({
                                 {modPositions.map(modPosition => {
                                     const mapSelection = getMapSelectionForModPosition(modPosition);
                                     const hasCover = mapSelection?.coverUrl;
-
                                     return (
                                         <th
                                             key={modPosition}
-                                            className="px-3 py-2 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600 last:border-r-0 relative overflow-hidden min-w-[120px]"
+                                            className="px-3 py-2 text-center cursor-pointer hover:bg-gray-700 sticky transition border-r border-gray-600 last:border-r-0 relative overflow-hidden"
                                             onClick={() => handleSort(modPosition)}
                                             style={{
                                                 backgroundImage: hasCover ? `url(${mapSelection.coverUrl})` : undefined,
                                                 backgroundSize: 'cover',
-                                                backgroundPosition: 'center',
-                                                backgroundBlendMode: 'overlay'
+                                                backgroundPosition: 'center'
                                             }}
                                         >
                                             {/* 半透明遮罩层 */}
