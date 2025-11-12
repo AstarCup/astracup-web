@@ -138,13 +138,19 @@ export default function MultiplayerScoresPage() {
         setLoadingAllScores(true);
         setError(null);
         try {
+            console.log('开始加载所有图池分数数据...');
+            console.log('房间ID:', selectedRoom.id);
+            console.log('图池数量:', selectedRoom.playlist.length);
+
             const allScoresPromises = selectedRoom.playlist.map(async (playlistItem) => {
+                console.log(`正在加载图池 ${playlistItem.id} 的分数...`);
                 const response = await fetch(
                     `/api/multiplayer/rooms/${selectedRoom.id}/playlists/${playlistItem.id}/scores?limit=100&sort=score_desc`
                 );
                 const data = await response.json();
 
                 if (data.success) {
+                    console.log(`图池 ${playlistItem.id} 加载成功，分数数量:`, data.scores.length);
                     // 为每个分数添加 playlistId 信息
                     return data.scores.map((score: DisplayScore) => ({
                         ...score,
@@ -159,6 +165,8 @@ export default function MultiplayerScoresPage() {
 
             const allScoresResults = await Promise.all(allScoresPromises);
             const flattenedScores = allScoresResults.flat();
+            console.log('所有图池分数数据加载完成，总分数数量:', flattenedScores.length);
+            console.log('分数数据示例:', flattenedScores.slice(0, 3));
             setAllScores(flattenedScores);
         } catch (err) {
             setError('网络错误，无法加载所有分数数据');
@@ -389,6 +397,27 @@ export default function MultiplayerScoresPage() {
                     </div>
                 </div>
             )}
+            {/* Tab切换 - 放在顶部 */}
+            <div className="flex border-b border-gray-600 mb-6">
+                <button
+                    className={`px-6 py-3 font-medium text-lg transition ${activeTab === 'byPlaylist'
+                        ? 'text-white border-b-2 border-[#E93B66]'
+                        : 'text-gray-400 hover:text-white'
+                        }`}
+                    onClick={() => setActiveTab('byPlaylist')}
+                >
+                    按图池
+                </button>
+                <button
+                    className={`px-6 py-3 font-medium text-lg transition ${activeTab === 'byTotal'
+                        ? 'text-white border-b-2 border-[#E93B66]'
+                        : 'text-gray-400 hover:text-white'
+                        }`}
+                    onClick={() => setActiveTab('byTotal')}
+                >
+                    按总分
+                </button>
+            </div>
 
             {/* Playlist选择区域 - 只在按图池tab时显示 */}
             {activeTab === 'byPlaylist' && selectedRoom && selectedRoom.playlist.length > 0 && (
@@ -454,28 +483,6 @@ export default function MultiplayerScoresPage() {
             {/* Tab切换和分数表格 */}
             {selectedRoom && (
                 <div className="bg-[#3D3D3D] p-6 rounded-lg">
-                    {/* Tab切换 - 放在顶部 */}
-                    <div className="flex border-b border-gray-600 mb-6">
-                        <button
-                            className={`px-6 py-3 font-medium text-lg transition ${activeTab === 'byPlaylist'
-                                ? 'text-white border-b-2 border-[#E93B66]'
-                                : 'text-gray-400 hover:text-white'
-                                }`}
-                            onClick={() => setActiveTab('byPlaylist')}
-                        >
-                            按图池
-                        </button>
-                        <button
-                            className={`px-6 py-3 font-medium text-lg transition ${activeTab === 'byTotal'
-                                ? 'text-white border-b-2 border-[#E93B66]'
-                                : 'text-gray-400 hover:text-white'
-                                }`}
-                            onClick={() => setActiveTab('byTotal')}
-                        >
-                            按总分
-                        </button>
-                    </div>
-
                     {/* 表格内容 */}
                     {activeTab === 'byPlaylist' && (
                         <>

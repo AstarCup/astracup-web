@@ -52,6 +52,11 @@ export default function TotalScoresByModTable({
 
     // 处理数据：按玩家分组，计算总分
     const processPlayerScores = (): PlayerModScores[] => {
+        console.log('开始处理总分数据...');
+        console.log('输入分数数量:', scores.length);
+        console.log('已过审玩家数量:', approvedPlayers.size);
+        console.log('地图选择数据数量:', mapSelections.length);
+
         const playerMap = new Map<string, PlayerModScores>();
 
         // 初始化所有已过审玩家
@@ -67,8 +72,23 @@ export default function TotalScoresByModTable({
                     scores: {},
                     totalScore: 0
                 });
+            } else {
+                // 如果玩家没有分数数据，仍然初始化一个空的玩家记录
+                // 这确保所有已过审玩家都会出现在表格中
+                console.log(`玩家 ${osuId} 没有分数数据，但仍然初始化`);
+                // 注意：这里我们无法获取玩家信息，所以需要从其他地方获取或留空
+                playerMap.set(osuId, {
+                    userId: osuId,
+                    username: `玩家 ${osuId}`,
+                    avatarUrl: '',
+                    countryCode: '',
+                    scores: {},
+                    totalScore: 0
+                });
             }
         });
+
+        console.log('初始化的玩家数量:', playerMap.size);
 
         // 填充每个玩家的所有mod位分数
         scores.forEach(score => {
@@ -81,6 +101,12 @@ export default function TotalScoresByModTable({
             const playlistId = (score as any).playlistId;
             const beatmapId = (score as any).beatmapId;
 
+            console.log(`处理玩家 ${score.username} 的分数:`, {
+                playlistId,
+                beatmapId,
+                totalScore: score.total_score
+            });
+
             if (playlistId && selectedRoom) {
                 // 找到对应的playlist item
                 const playlistItem = selectedRoom.playlist.find((item: any) => item.id === playlistId);
@@ -89,6 +115,9 @@ export default function TotalScoresByModTable({
                     const mapSelection = mapSelections.find(selection =>
                         selection.beatmapId === playlistItem.beatmap.id
                     );
+
+                    console.log(`找到playlist item:`, playlistItem.beatmap.id);
+                    console.log(`找到map selection:`, mapSelection);
 
                     if (mapSelection) {
                         const modPosition = `${mapSelection.selectedMods}${mapSelection.modPosition}`;
@@ -103,13 +132,16 @@ export default function TotalScoresByModTable({
                                 player.totalScore += score.total_score;
                             }
                             player.scores[modPosition] = score.total_score;
+                            console.log(`为玩家 ${score.username} 设置 ${modPosition} 分数: ${score.total_score}`);
                         }
                     }
                 }
             }
         });
 
-        return Array.from(playerMap.values());
+        const result = Array.from(playerMap.values());
+        console.log('处理完成，玩家分数结果:', result);
+        return result;
     };
 
     const playerScores = processPlayerScores();
