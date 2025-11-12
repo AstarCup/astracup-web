@@ -131,26 +131,21 @@ export default function MultiplayerScoresPage() {
         return sortedAndRanked;
     };
 
-    // 加载所有图池的分数数据
-    const loadAllScores = async () => {
-        console.log('loadAllScores函数开始执行');
-        console.log('selectedRoom:', selectedRoom);
-
-        if (!selectedRoom) {
-            console.log('loadAllScores: selectedRoom为空，提前返回');
-            return;
-        }
+    // 加载所有图池的分数数据（不依赖状态）
+    const loadAllScoresWithRoom = async (room: MultiplayerRoom) => {
+        console.log('loadAllScoresWithRoom函数开始执行');
+        console.log('传入的房间对象:', room);
 
         setLoadingAllScores(true);
         setError(null);
         try {
             console.log('开始加载所有图池分数数据...');
-            console.log('房间ID:', selectedRoom.id);
-            console.log('图池数量:', selectedRoom.playlist.length);
+            console.log('房间ID:', room.id);
+            console.log('图池数量:', room.playlist.length);
 
-            const allScoresPromises = selectedRoom.playlist.map(async (playlistItem) => {
+            const allScoresPromises = room.playlist.map(async (playlistItem) => {
                 console.log(`正在加载图池 ${playlistItem.id} 的分数...`);
-                const url = `/api/multiplayer/rooms/${selectedRoom.id}/playlists/${playlistItem.id}/scores?limit=100&sort=score_desc`;
+                const url = `/api/multiplayer/rooms/${room.id}/playlists/${playlistItem.id}/scores?limit=100&sort=score_desc`;
                 console.log(`API URL: ${url}`);
 
                 try {
@@ -192,6 +187,19 @@ export default function MultiplayerScoresPage() {
         }
     };
 
+    // 加载所有图池的分数数据（依赖状态）
+    const loadAllScores = async () => {
+        console.log('loadAllScores函数开始执行');
+        console.log('selectedRoom:', selectedRoom);
+
+        if (!selectedRoom) {
+            console.log('loadAllScores: selectedRoom为空，提前返回');
+            return;
+        }
+
+        return loadAllScoresWithRoom(selectedRoom);
+    };
+
     // 加载特定房间信息
     const loadRoomById = async (roomId: string) => {
         setLoading(true);
@@ -217,10 +225,9 @@ export default function MultiplayerScoresPage() {
                 setScores([]);
                 setAllScores([]);
 
-                // 自动加载所有图池的分数
+                // 直接传递房间对象给loadAllScores，避免依赖状态更新
                 console.log('开始调用loadAllScores...');
-                await loadAllScores();
-                console.log('loadAllScores调用完成');
+                loadAllScoresWithRoom(room);
             } else {
                 console.error('未找到该房间或房间不可访问:', data);
                 setError('未找到该房间或房间不可访问');
