@@ -24,6 +24,9 @@ interface PlayerModScores {
     ranks: { [modPosition: string]: number | null }; // mod位 -> 排名
     totalScore: number;
     totalRank: number | null; // 总分排名
+    zScores: { [modPosition: string]: number | null }; // mod位 -> zscore
+    zSum: number; // zscore总和
+    rating: number; // zscore平均值
 }
 
 export default function TotalScoresByModTable({
@@ -81,7 +84,10 @@ export default function TotalScoresByModTable({
                     scores: {},
                     ranks: {},
                     totalScore: 0,
-                    totalRank: null
+                    totalRank: null,
+                    zScores: {},
+                    zSum: 0,
+                    rating: 0
                 });
             } else {
                 // 如果玩家没有分数数据，从已报名数据中查找玩家信息
@@ -96,7 +102,10 @@ export default function TotalScoresByModTable({
                         scores: {},
                         ranks: {},
                         totalScore: 0,
-                        totalRank: null
+                        totalRank: null,
+                        zScores: {},
+                        zSum: 0,
+                        rating: 0
                     });
                 } else {
                     // 如果连已报名数据中也没有，使用默认信息
@@ -109,7 +118,10 @@ export default function TotalScoresByModTable({
                         scores: {},
                         ranks: {},
                         totalScore: 0,
-                        totalRank: null
+                        totalRank: null,
+                        zScores: {},
+                        zSum: 0,
+                        rating: 0
                     });
                 }
             }
@@ -189,6 +201,55 @@ export default function TotalScoresByModTable({
             });
         });
 
+        // 计算每个mod位的zscore
+        modPositions.forEach(modPosition => {
+            // 获取该mod位所有有分数的玩家
+            const playersWithScores = result.filter(player => player.scores[modPosition] !== null);
+
+            if (playersWithScores.length < 2) {
+                // 如果少于2个玩家有分数，无法计算标准差，跳过
+                playersWithScores.forEach(player => {
+                    player.zScores[modPosition] = null;
+                });
+                return;
+            }
+
+            // 提取所有分数
+            const scores = playersWithScores.map(player => player.scores[modPosition] || 0);
+
+            // 计算平均值
+            const mean = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+
+            // 计算标准差
+            const variance = scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) / scores.length;
+            const stdDev = Math.sqrt(variance);
+
+            // 如果标准差为0，所有分数相同，zscore都为0
+            if (stdDev === 0) {
+                playersWithScores.forEach(player => {
+                    player.zScores[modPosition] = 0;
+                });
+                return;
+            }
+
+            // 计算每个玩家的zscore
+            playersWithScores.forEach(player => {
+                const score = player.scores[modPosition] || 0;
+                const zScore = (score - mean) / stdDev;
+                player.zScores[modPosition] = zScore;
+            });
+        });
+
+        // 计算每个玩家的zSum和rating
+        result.forEach(player => {
+            // 计算zSum（所有有zscore的mod位之和）
+            const validZScores = Object.values(player.zScores).filter(z => z !== null) as number[];
+            player.zSum = validZScores.reduce((sum, z) => sum + z, 0);
+
+            // 计算rating（zscore平均值）
+            player.rating = validZScores.length > 0 ? player.zSum / validZScores.length : 0;
+        });
+
         // 计算总分排名
         const playersWithTotalScores = result.filter(player => player.totalScore > 0);
         playersWithTotalScores.sort((a, b) => b.totalScore - a.totalScore);
@@ -224,6 +285,10 @@ export default function TotalScoresByModTable({
             return sortOrder === 'asc'
                 ? a.username.localeCompare(b.username)
                 : b.username.localeCompare(a.username);
+        } else if (sortBy === 'zSum') {
+            return sortOrder === 'asc' ? a.zSum - b.zSum : b.zSum - a.zSum;
+        } else if (sortBy === 'rating') {
+            return sortOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating;
         } else {
             // mod位排序
             const scoreA = a.scores[sortBy] || 0;
@@ -371,6 +436,24 @@ export default function TotalScoresByModTable({
                                     );
                                 })}
                                 <th
+                                    className="px-4 py-3 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600"
+                                    onClick={() => handleSort('zSum')}
+                                >
+                                    <div className="flex items-center justify-center">
+                                        <span>zSum</span>
+                                        <SortIcon column="zSum" />
+                                    </div>
+                                </th>
+                                <th
+                                    className="px-4 py-3 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600"
+                                    onClick={() => handleSort('rating')}
+                                >
+                                    <div className="flex items-center justify-center">
+                                        <span>Rating</span>
+                                        <SortIcon column="rating" />
+                                    </div>
+                                </th>
+                                <th
                                     className="px-4 py-3 text-left cursor-pointer hover:bg-gray-700 transition bg-[#2D2D2D]"
                                     onClick={() => handleSort('totalScore')}
                                 >
@@ -429,6 +512,16 @@ export default function TotalScoresByModTable({
                                             </td>
                                         );
                                     })}
+                                    <td className="px-4 py-3 text-center font-mono border-r border-gray-600">
+                                        <span className="text-black font-bold">
+                                            {player.zSum.toFixed(2)}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-center font-mono border-r border-gray-600">
+                                        <span className="text-black font-bold">
+                                            {player.rating.toFixed(2)}
+                                        </span>
+                                    </td>
                                     <td className="px-4 py-3 font-mono text-black font-bold">
                                         {player.totalScore.toLocaleString()}
                                     </td>
