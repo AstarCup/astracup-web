@@ -319,7 +319,7 @@ export default function TotalScoresByModTable({
                     <p className="text-sm text-gray-400 mt-2">等待玩家完成比赛后数据将显示在这里</p>
                 </div>
             ) : (
-                <div className="overflow-x-auto rounded-lg border border-gray-600">
+                <div className="overflow-x-auto">
                     <table className="w-full bg-[#3D3D3D] text-white">
                         <thead>
                             <tr className="border-b border-gray-600 bg-[#2D2D2D]">
