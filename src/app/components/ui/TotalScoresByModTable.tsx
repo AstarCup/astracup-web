@@ -386,8 +386,8 @@ export default function TotalScoresByModTable({
             ) : (
                 <div className="overflow-x-auto w-full">
                     <table className="w-full bg-[#3D3D3D] text-white">
-                        <thead className="flex flex-warp">
-                            <tr className="border-b border-gray-600 bg-[#2D2D2D]">
+                        <thead className="">
+                            <tr className="border-b border-gray-600 bg-[#2D2D2D] flex flex-wrap">
                                 <th
                                     className="px-4 py-1 text-center cursor-pointer hover:bg-gray-700 transition sticky left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
                                     onClick={() => handleSort('totalRank')}
