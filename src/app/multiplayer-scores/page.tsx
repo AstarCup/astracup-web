@@ -390,8 +390,8 @@ export default function MultiplayerScoresPage() {
                 </div>
             )}
 
-            {/* Playlist选择区域 */}
-            {selectedRoom && selectedRoom.playlist.length > 0 && (
+            {/* Playlist选择区域 - 只在按图池tab时显示 */}
+            {activeTab === 'byPlaylist' && selectedRoom && selectedRoom.playlist.length > 0 && (
                 <div className="bg-[#3D3D3D] p-6 rounded-lg mb-6">
                     <h2 className="text-xl font-bold text-white mb-4">选择图池</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
