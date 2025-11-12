@@ -364,8 +364,8 @@ export default function TotalScoresByModTable({
                                             <div className="flex flex-col items-center relative z-10">
                                                 <span className={`px-2 py-1 text-xs rounded font-bold ${getModColorClass(modPosition)}`}>
                                                     {getModDisplayName(modPosition)}
+                                                    <SortIcon column={modPosition} />
                                                 </span>
-                                                <SortIcon column={modPosition} />
                                             </div>
                                         </th>
                                     );
