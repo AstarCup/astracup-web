@@ -38,6 +38,7 @@ export default function MultiplayerScoresPage() {
                 loadRoomById(roomId);
             }
         }
+
         if (roomIdParam) {
             loadRoomById(roomIdParam);
         }
@@ -399,7 +400,7 @@ export default function MultiplayerScoresPage() {
                             required
                         />
                         <p className="text-gray-400 text-sm mt-1">
-                            请输入完整的osu! multiplayer房间链接
+                            请输入完整的osu! multiplayer房间链接，或使用简化的URL参数：?room=房间ID
                         </p>
                     </div>
                     <button

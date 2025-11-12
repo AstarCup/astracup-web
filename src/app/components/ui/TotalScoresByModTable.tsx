@@ -389,7 +389,7 @@ export default function TotalScoresByModTable({
                         <thead>
                             <tr className="border-b border-gray-600 bg-[#2D2D2D]">
                                 <th
-                                    className="px-4 py-3 text-center cursor-pointer hover:bg-gray-700 transition sticky left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
+                                    className="px-4 py-3 text-center cursor-pointer hover:bg-gray-700 transition left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
                                     onClick={() => handleSort('totalRank')}
                                 >
                                     <div className="flex items-center justify-center">
@@ -398,7 +398,7 @@ export default function TotalScoresByModTable({
                                     </div>
                                 </th>
                                 <th
-                                    className="px-4 py-3 text-left cursor-pointer hover:bg-gray-700 transition sticky left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
+                                    className="px-4 py-3 text-left cursor-pointer hover:bg-gray-700 transition left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
                                     onClick={() => handleSort('username')}
                                 >
                                     <div className="flex items-center">
@@ -424,10 +424,10 @@ export default function TotalScoresByModTable({
                                         >
                                             {/* 半透明遮罩层 */}
                                             {hasCover && (
-                                                <div className="absolute inset-0 bg-black/50"></div>
+                                                <div className="absolute inset-0"></div>
                                             )}
                                             <div className="flex flex-col items-center relative z-10">
-                                                <span className={`px-2 py-1 text-xs rounded font-bold ${getModColorClass(modPosition)}`}>
+                                                <span className={`px-2 py-1 text-2xl font-bold ${getModColorClass(modPosition)}`}>
                                                     {getModDisplayName(modPosition)}
                                                     <SortIcon column={modPosition} />
                                                 </span>
