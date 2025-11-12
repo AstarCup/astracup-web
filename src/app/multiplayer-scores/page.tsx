@@ -29,19 +29,18 @@ export default function MultiplayerScoresPage() {
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const urlParam = urlParams.get('url');
-        const roomParam = urlParams.get('room');
+        const roomIdParam = urlParams.get('room');
 
-        // 优先使用room参数，如果没有则使用url参数
-        if (roomParam) {
-            // 直接使用room参数作为房间ID
-            setRoomUrl(`https://osu.ppy.sh/multiplayer/rooms/${roomParam}`);
-            loadRoomById(roomParam);
-        } else if (urlParam) {
+        if (urlParam) {
             setRoomUrl(urlParam);
             const roomId = extractRoomIdFromUrl(urlParam);
             if (roomId) {
                 loadRoomById(roomId);
             }
+        }
+
+        if (roomIdParam) {
+            loadRoomById(roomIdParam);
         }
     }, []);
 
@@ -218,18 +217,7 @@ export default function MultiplayerScoresPage() {
         }
     };
 
-    // 加载所有图池的分数数据（依赖状态）
-    const loadAllScores = async () => {
-        // console.log('loadAllScores函数开始执行');
-        // console.log('selectedRoom:', selectedRoom);
 
-        if (!selectedRoom) {
-            // console.log('loadAllScores: selectedRoom为空，提前返回');
-            return;
-        }
-
-        return loadAllScoresWithRoom(selectedRoom);
-    };
 
     // 加载特定房间信息
     const loadRoomById = async (roomId: string) => {
@@ -243,7 +231,7 @@ export default function MultiplayerScoresPage() {
 
             // 通过房间ID获取房间信息
             const response = await fetch(`/api/multiplayer/rooms?roomId=${roomId}`);
-            // console.log('房间信息API响应状态:', response.status);
+            console.log('房间信息API响应状态:', response.status);
 
             const data = await response.json();
             // console.log('房间信息API响应数据:', data);
@@ -412,7 +400,7 @@ export default function MultiplayerScoresPage() {
                             required
                         />
                         <p className="text-gray-400 text-sm mt-1">
-                            请输入完整的osu! multiplayer房间链接
+                            请输入完整的osu! multiplayer房间链接，或使用简化的URL参数：?room=房间ID
                         </p>
                     </div>
                     <button
