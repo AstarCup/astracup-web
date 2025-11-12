@@ -387,18 +387,18 @@ export default function TotalScoresByModTable({
                 <div className="overflow-x-auto w-full">
                     <table className="w-full bg-[#3D3D3D] text-white">
                         <thead>
-                            <tr className="border-b border-gray-600 bg-[#2D2D2D] flex">
+                            <tr className="border-b border-gray-600 bg-[#2D2D2D]">
                                 <th
-                                    className="px-4 py-1 text-center cursor-pointer hover:bg-gray-700 transition sticky left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
-                                    onClick={() => handleSort('totalRank')}
+                                    className="px-6 py-3 text-left cursor-pointer hover:bg-gray-700 transition sticky left-0 bg-[#2D2D2D] z-10 border-r border-gray-600 min-w-[200px]"
+                                    onClick={() => handleSort('username')}
                                 >
-                                    <div className="flex items-center justify-center">
+                                    <div className="flex items-center">
                                         <span>排名</span>
                                         <SortIcon column="totalRank" />
                                     </div>
                                 </th>
                                 <th
-                                    className="px-6 py-1 text-left cursor-pointer hover:bg-gray-700 transition sticky left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
+                                    className="px-8 py-1 text-left cursor-pointer hover:bg-gray-700 transition sticky left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
                                     onClick={() => handleSort('username')}
                                 >
                                     <div className="flex items-center">
