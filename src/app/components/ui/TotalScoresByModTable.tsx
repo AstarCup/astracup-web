@@ -27,6 +27,8 @@ interface PlayerModScores {
     zScores: { [modPosition: string]: number | null }; // mod位 -> zscore
     zSum: number; // zscore总和
     rating: number; // zscore平均值
+    averageScore: number; // 图池平均分
+    playedMaps: number; // 已玩图池数量
 }
 
 export default function TotalScoresByModTable({
@@ -40,6 +42,7 @@ export default function TotalScoresByModTable({
 }: TotalScoresByModTableProps) {
     const [sortBy, setSortBy] = useState<'username' | 'totalScore' | string>('totalScore');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [refreshKey, setRefreshKey] = useState(0); // 用于强制重新计算
 
     // 获取唯一的mod位列表，按mod类型和位置排序
     const modOrder = ['NM', 'HD', 'HR', 'DT', 'FM', 'LZ', 'TB'];
@@ -87,7 +90,9 @@ export default function TotalScoresByModTable({
                     totalRank: null,
                     zScores: {},
                     zSum: 0,
-                    rating: 0
+                    rating: 0,
+                    averageScore: 0,
+                    playedMaps: 0
                 });
             } else {
                 // 如果玩家没有分数数据，从已报名数据中查找玩家信息
@@ -105,7 +110,9 @@ export default function TotalScoresByModTable({
                         totalRank: null,
                         zScores: {},
                         zSum: 0,
-                        rating: 0
+                        rating: 0,
+                        averageScore: 0,
+                        playedMaps: 0
                     });
                 } else {
                     // 如果连已报名数据中也没有，使用默认信息
@@ -121,7 +128,9 @@ export default function TotalScoresByModTable({
                         totalRank: null,
                         zScores: {},
                         zSum: 0,
-                        rating: 0
+                        rating: 0,
+                        averageScore: 0,
+                        playedMaps: 0
                     });
                 }
             }
@@ -248,6 +257,11 @@ export default function TotalScoresByModTable({
 
             // 计算rating（zscore平均值）
             player.rating = validZScores.length > 0 ? player.zSum / validZScores.length : 0;
+
+            // 计算图池平均分和已玩图池数量
+            const validScores = Object.values(player.scores).filter(score => score !== null) as number[];
+            player.playedMaps = validScores.length;
+            player.averageScore = player.playedMaps > 0 ? Math.round(validScores.reduce((sum, score) => sum + score, 0) / player.playedMaps) : 0;
         });
 
         // 计算总分排名
@@ -270,7 +284,79 @@ export default function TotalScoresByModTable({
         return result;
     };
 
+    // 计算图池平均分 - 直接从传入的scores数据计算
+    const calculateMapPoolAverages = () => {
+        const averages: { [modPosition: string]: number } = {};
+
+        // 为每个mod位初始化
+        modPositions.forEach(modPosition => {
+            averages[modPosition] = 0;
+        });
+
+        // 统计每个mod位的分数和数量，按玩家分组取最高分
+        const modPlayerScores: { [modPosition: string]: { [userId: string]: number } } = {};
+        modPositions.forEach(modPosition => {
+            modPlayerScores[modPosition] = {};
+        });
+
+        // 遍历所有分数数据，按mod位和玩家分组
+        scores.forEach(score => {
+            if (!approvedPlayers.has(score.user_id.toString())) return;
+
+            // 通过playlistId找到对应的map selection
+            const playlistId = (score as any).playlistId;
+            const beatmapId = (score as any).beatmapId;
+
+            if (playlistId && selectedRoom) {
+                // 找到对应的playlist item
+                const playlistItem = selectedRoom.playlist.find((item: any) => item.id === playlistId);
+                if (playlistItem) {
+                    // 找到这个playlist对应的map selection
+                    const mapSelection = mapSelections.find(selection =>
+                        selection.beatmapId === playlistItem.beatmap.id
+                    );
+
+                    if (mapSelection) {
+                        const modPosition = `${mapSelection.selectedMods}${mapSelection.modPosition}`;
+                        const userId = score.user_id.toString();
+
+                        // 只取每个玩家在该mod位的最高分
+                        if (modPlayerScores[modPosition]) {
+                            const currentScore = modPlayerScores[modPosition][userId];
+                            if (!currentScore || score.total_score > currentScore) {
+                                modPlayerScores[modPosition][userId] = score.total_score;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 计算每个mod位的平均分
+        modPositions.forEach(modPosition => {
+            const playerScores = Object.values(modPlayerScores[modPosition]);
+            if (playerScores.length > 0) {
+                const sum = playerScores.reduce((total, score) => total + score, 0);
+                averages[modPosition] = Math.round(sum / playerScores.length);
+            } else {
+                averages[modPosition] = 0;
+            }
+        });
+
+        return averages;
+    };
+
+    // 使用 refreshKey 强制重新计算
     const playerScores = processPlayerScores();
+    const mapPoolAverages = calculateMapPoolAverages();
+
+    // 检查是否有有效的平均分数据
+    const hasValidAverages = Object.values(mapPoolAverages).some(average => average > 0);
+
+    // 手动刷新函数
+    const handleRefresh = () => {
+        setRefreshKey(prev => prev + 1);
+    };
 
     // 排序玩家数据
     const sortedPlayers = [...playerScores].sort((a, b) => {
@@ -376,16 +462,26 @@ export default function TotalScoresByModTable({
         <div className="mb-8">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-white">按总分</h2>
+                {/* <button
+                    onClick={handleRefresh}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center space-x-2"
+                >
+                    <span>刷新数据</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button> */}
             </div>
-
+            {/* 显示图池平均分数 */}
             {sortedPlayers.length === 0 ? (
                 <div className="text-center py-8 text-white bg-[#3D3D3D] rounded-lg border border-gray-600">
                     <p className="text-lg">暂无总分数据</p>
                     <p className="text-sm text-gray-400 mt-2">等待玩家完成比赛后数据将显示在这里</p>
                 </div>
             ) : (
-                <div className="overflow-x-auto">
-                    <table className="w-full bg-[#3D3D3D] text-white">
+                <div className="overflow-x-auto w-full">
+                    {/* 玩家总分表格 */}
+                    <table className="w-full bg-[#3D3D3D] text-white table-auto">
                         <thead>
                             <tr className="border-b border-gray-600 bg-[#2D2D2D]">
                                 <th
@@ -409,17 +505,15 @@ export default function TotalScoresByModTable({
                                 {modPositions.map(modPosition => {
                                     const mapSelection = getMapSelectionForModPosition(modPosition);
                                     const hasCover = mapSelection?.coverUrl;
-
                                     return (
                                         <th
                                             key={modPosition}
-                                            className="px-3 py-2 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600 last:border-r-0 relative overflow-hidden"
+                                            className="px-3 py-2 text-center cursor-pointer hover:bg-gray-700 sticky transition border-r border-gray-600 last:border-r-0 relative overflow-hidden"
                                             onClick={() => handleSort(modPosition)}
                                             style={{
                                                 backgroundImage: hasCover ? `url(${mapSelection.coverUrl})` : undefined,
                                                 backgroundSize: 'cover',
-                                                backgroundPosition: 'center',
-                                                backgroundBlendMode: 'overlay'
+                                                backgroundPosition: 'center'
                                             }}
                                         >
                                             {/* 半透明遮罩层 */}
@@ -431,12 +525,17 @@ export default function TotalScoresByModTable({
                                                     {getModDisplayName(modPosition)}
                                                     <SortIcon column={modPosition} />
                                                 </span>
+                                                {hasValidAverages && mapPoolAverages[modPosition] > 0 && (
+                                                    <div className="absolute transform bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
+                                                        avg {mapPoolAverages[modPosition].toLocaleString()}
+                                                    </div>
+                                                )}
                                             </div>
                                         </th>
                                     );
                                 })}
                                 <th
-                                    className="px-4 py-3 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600"
+                                    className="px-4 py-3 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600 min-w-[100px]"
                                     onClick={() => handleSort('zSum')}
                                 >
                                     <div className="flex items-center justify-center">
@@ -445,7 +544,7 @@ export default function TotalScoresByModTable({
                                     </div>
                                 </th>
                                 <th
-                                    className="px-4 py-3 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600"
+                                    className="px-4 py-3 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600 min-w-[100px]"
                                     onClick={() => handleSort('rating')}
                                 >
                                     <div className="flex items-center justify-center">
@@ -454,7 +553,7 @@ export default function TotalScoresByModTable({
                                     </div>
                                 </th>
                                 <th
-                                    className="px-4 py-3 text-left cursor-pointer hover:bg-gray-700 transition bg-[#2D2D2D]"
+                                    className="px-4 py-3 text-left cursor-pointer hover:bg-gray-700 transition bg-[#2D2D2D] min-w-[120px]"
                                     onClick={() => handleSort('totalScore')}
                                 >
                                     <div className="flex items-center">
@@ -479,7 +578,7 @@ export default function TotalScoresByModTable({
                                             <span className="text-gray-500">-</span>
                                         )}
                                     </td>
-                                    <td className="px-4 py-3 sticky left-0 z-10 bg-[#3D3D3D] border-r border-gray-600">
+                                    <td className="px-6 py-3 sticky left-0 z-10 bg-[#3D3D3D] border-r border-gray-600">
                                         <div className="flex items-center space-x-3">
                                             <Image
                                                 src={player.avatarUrl}
@@ -489,8 +588,8 @@ export default function TotalScoresByModTable({
                                                 className="rounded"
                                                 unoptimized
                                             />
-                                            <div>
-                                                <div className="font-medium text-white">{player.username}</div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="font-medium text-white truncate">{player.username}</div>
                                             </div>
                                         </div>
                                     </td>
