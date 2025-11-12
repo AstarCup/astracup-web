@@ -284,18 +284,60 @@ export default function TotalScoresByModTable({
         return result;
     };
 
-    // 计算图池平均分
+    // 计算图池平均分 - 直接从传入的scores数据计算
     const calculateMapPoolAverages = () => {
-        const playerScores = processPlayerScores();
         const averages: { [modPosition: string]: number } = {};
 
+        // 为每个mod位初始化
         modPositions.forEach(modPosition => {
-            const validScores = playerScores
-                .map(player => player.scores[modPosition])
-                .filter(score => score !== null) as number[];
+            averages[modPosition] = 0;
+        });
 
-            if (validScores.length > 0) {
-                averages[modPosition] = Math.round(validScores.reduce((sum, score) => sum + score, 0) / validScores.length);
+        // 统计每个mod位的分数和数量，按玩家分组取最高分
+        const modPlayerScores: { [modPosition: string]: { [userId: string]: number } } = {};
+        modPositions.forEach(modPosition => {
+            modPlayerScores[modPosition] = {};
+        });
+
+        // 遍历所有分数数据，按mod位和玩家分组
+        scores.forEach(score => {
+            if (!approvedPlayers.has(score.user_id.toString())) return;
+
+            // 通过playlistId找到对应的map selection
+            const playlistId = (score as any).playlistId;
+            const beatmapId = (score as any).beatmapId;
+
+            if (playlistId && selectedRoom) {
+                // 找到对应的playlist item
+                const playlistItem = selectedRoom.playlist.find((item: any) => item.id === playlistId);
+                if (playlistItem) {
+                    // 找到这个playlist对应的map selection
+                    const mapSelection = mapSelections.find(selection =>
+                        selection.beatmapId === playlistItem.beatmap.id
+                    );
+
+                    if (mapSelection) {
+                        const modPosition = `${mapSelection.selectedMods}${mapSelection.modPosition}`;
+                        const userId = score.user_id.toString();
+
+                        // 只取每个玩家在该mod位的最高分
+                        if (modPlayerScores[modPosition]) {
+                            const currentScore = modPlayerScores[modPosition][userId];
+                            if (!currentScore || score.total_score > currentScore) {
+                                modPlayerScores[modPosition][userId] = score.total_score;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 计算每个mod位的平均分
+        modPositions.forEach(modPosition => {
+            const playerScores = Object.values(modPlayerScores[modPosition]);
+            if (playerScores.length > 0) {
+                const sum = playerScores.reduce((total, score) => total + score, 0);
+                averages[modPosition] = Math.round(sum / playerScores.length);
             } else {
                 averages[modPosition] = 0;
             }
