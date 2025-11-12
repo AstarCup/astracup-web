@@ -15,11 +15,13 @@ export default function MultiplayerScoresPage() {
     const [filteredScores, setFilteredScores] = useState<DisplayScore[]>([]);
     const [mapSelections, setMapSelections] = useState<MapSelection[]>([]);
     const [approvedPlayers, setApprovedPlayers] = useState<Set<string>>(new Set());
+    const [registrations, setRegistrations] = useState<any[]>([]); // 存储已报名数据
     const [loading, setLoading] = useState(false);
     const [loadingScores, setLoadingScores] = useState(false);
     const [loadingAllScores, setLoadingAllScores] = useState(false); // 加载所有分数的状态
     const [loadingMapSelections, setLoadingMapSelections] = useState(false);
     const [loadingPlayers, setLoadingPlayers] = useState(false);
+    const [loadingRegistrations, setLoadingRegistrations] = useState(false); // 加载已报名数据的状态
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'byPlaylist' | 'byTotal'>('byPlaylist');
 
@@ -37,9 +39,10 @@ export default function MultiplayerScoresPage() {
         }
     }, []);
 
-    // 页面加载时获取已过审的玩家数据
+    // 页面加载时获取已过审的玩家数据和已报名数据
     useEffect(() => {
         loadApprovedPlayers();
+        loadRegistrations();
     }, []);
 
     // 当分数数据或已过审玩家数据变化时，过滤分数
@@ -96,7 +99,7 @@ export default function MultiplayerScoresPage() {
                     }
                 });
                 setApprovedPlayers(approvedSet);
-                // console.log(`Loaded ${approvedSet.size} approved players`);
+                // // console.log(`Loaded ${approvedSet.size} approved players`);
             } else {
                 console.error('Failed to load approved players:', data.error);
                 setApprovedPlayers(new Set());
@@ -109,15 +112,37 @@ export default function MultiplayerScoresPage() {
         }
     };
 
+    // 加载已报名数据
+    const loadRegistrations = async () => {
+        setLoadingRegistrations(true);
+        try {
+            const response = await fetch('/api/edge-registrations');
+            const data = await response.json();
+
+            if (data.registrations) {
+                setRegistrations(data.registrations);
+                // console.log(`Loaded ${data.registrations.length} registrations`);
+            } else {
+                console.error('Failed to load registrations:', data.error);
+                setRegistrations([]);
+            }
+        } catch (err) {
+            console.error('Error loading registrations:', err);
+            setRegistrations([]);
+        } finally {
+            setLoadingRegistrations(false);
+        }
+    };
+
     // 过滤分数数据，只保留已过审的玩家，并重新计算排名
     const filterScores = (scores: DisplayScore[]): DisplayScore[] => {
         if (approvedPlayers.size === 0) {
-            // console.log('No approved players data available, showing all scores');
+            // // console.log('No approved players data available, showing all scores');
             return scores;
         }
 
         const filtered = scores.filter(score => approvedPlayers.has(score.user_id.toString()));
-        // console.log(`Filtered scores: ${filtered.length} out of ${scores.length} (${scores.length - filtered.length} removed)`);
+        // // console.log(`Filtered scores: ${filtered.length} out of ${scores.length} (${scores.length - filtered.length} removed)`);
 
         // 按分数降序排序并重新计算排名
         const sortedAndRanked = filtered
@@ -127,36 +152,36 @@ export default function MultiplayerScoresPage() {
                 position: index + 1 // 重新计算排名
             }));
 
-        // console.log(`Re-ranked ${sortedAndRanked.length} scores`);
+        // // console.log(`Re-ranked ${sortedAndRanked.length} scores`);
         return sortedAndRanked;
     };
 
     // 加载所有图池的分数数据（不依赖状态）
     const loadAllScoresWithRoom = async (room: MultiplayerRoom) => {
-        console.log('loadAllScoresWithRoom函数开始执行');
-        console.log('传入的房间对象:', room);
+        // console.log('loadAllScoresWithRoom函数开始执行');
+        // console.log('传入的房间对象:', room);
 
         setLoadingAllScores(true);
         setError(null);
         try {
-            console.log('开始加载所有图池分数数据...');
-            console.log('房间ID:', room.id);
-            console.log('图池数量:', room.playlist.length);
+            // console.log('开始加载所有图池分数数据...');
+            // console.log('房间ID:', room.id);
+            // console.log('图池数量:', room.playlist.length);
 
             const allScoresPromises = room.playlist.map(async (playlistItem) => {
-                console.log(`正在加载图池 ${playlistItem.id} 的分数...`);
+                // console.log(`正在加载图池 ${playlistItem.id} 的分数...`);
                 const url = `/api/multiplayer/rooms/${room.id}/playlists/${playlistItem.id}/scores?limit=100&sort=score_desc`;
-                console.log(`API URL: ${url}`);
+                // console.log(`API URL: ${url}`);
 
                 try {
                     const response = await fetch(url);
-                    console.log(`图池 ${playlistItem.id} 响应状态:`, response.status, response.statusText);
+                    // console.log(`图池 ${playlistItem.id} 响应状态:`, response.status, response.statusText);
 
                     const data = await response.json();
-                    console.log(`图池 ${playlistItem.id} 响应数据:`, data);
+                    // console.log(`图池 ${playlistItem.id} 响应数据:`, data);
 
                     if (data.success) {
-                        console.log(`图池 ${playlistItem.id} 加载成功，分数数量:`, data.scores.length);
+                        // console.log(`图池 ${playlistItem.id} 加载成功，分数数量:`, data.scores.length);
                         // 为每个分数添加 playlistId 信息
                         return data.scores.map((score: DisplayScore) => ({
                             ...score,
@@ -175,8 +200,8 @@ export default function MultiplayerScoresPage() {
 
             const allScoresResults = await Promise.all(allScoresPromises);
             const flattenedScores = allScoresResults.flat();
-            console.log('所有图池分数数据加载完成，总分数数量:', flattenedScores.length);
-            console.log('分数数据示例:', flattenedScores.slice(0, 3));
+            // console.log('所有图池分数数据加载完成，总分数数量:', flattenedScores.length);
+            // console.log('分数数据示例:', flattenedScores.slice(0, 3));
             setAllScores(flattenedScores);
         } catch (err) {
             setError('网络错误，无法加载所有分数数据');
@@ -189,11 +214,11 @@ export default function MultiplayerScoresPage() {
 
     // 加载所有图池的分数数据（依赖状态）
     const loadAllScores = async () => {
-        console.log('loadAllScores函数开始执行');
-        console.log('selectedRoom:', selectedRoom);
+        // console.log('loadAllScores函数开始执行');
+        // console.log('selectedRoom:', selectedRoom);
 
         if (!selectedRoom) {
-            console.log('loadAllScores: selectedRoom为空，提前返回');
+            // console.log('loadAllScores: selectedRoom为空，提前返回');
             return;
         }
 
@@ -205,28 +230,28 @@ export default function MultiplayerScoresPage() {
         setLoading(true);
         setError(null);
         try {
-            console.log('开始加载房间信息，房间ID:', roomId);
+            // console.log('开始加载房间信息，房间ID:', roomId);
 
             // 先加载map-selections数据
             await loadMapSelections();
 
             // 通过房间ID获取房间信息
             const response = await fetch(`/api/multiplayer/rooms?roomId=${roomId}`);
-            console.log('房间信息API响应状态:', response.status);
+            // console.log('房间信息API响应状态:', response.status);
 
             const data = await response.json();
-            console.log('房间信息API响应数据:', data);
+            // console.log('房间信息API响应数据:', data);
 
             if (data.success && data.rooms.length > 0) {
                 const room = data.rooms[0];
-                console.log('成功加载房间信息:', room);
+                // console.log('成功加载房间信息:', room);
                 setSelectedRoom(room);
                 setSelectedPlaylist(null);
                 setScores([]);
                 setAllScores([]);
 
                 // 直接传递房间对象给loadAllScores，避免依赖状态更新
-                console.log('开始调用loadAllScores...');
+                // console.log('开始调用loadAllScores...');
                 loadAllScoresWithRoom(room);
             } else {
                 console.error('未找到该房间或房间不可访问:', data);
@@ -274,13 +299,13 @@ export default function MultiplayerScoresPage() {
             if (data.success) {
                 // 调试：打印前端接收到的第一个分数的statistics数据
                 if (data.scores.length > 0) {
-                    // console.log('=== Frontend Debug - First Score Statistics ===');
-                    // console.log('Statistics data received:', data.scores[0].statistics);
-                    // console.log('count_300:', data.scores[0].statistics.count_300);
-                    // console.log('count_100:', data.scores[0].statistics.count_100);
-                    // console.log('count_50:', data.scores[0].statistics.count_50);
-                    // console.log('count_miss:', data.scores[0].statistics.count_miss);
-                    // console.log('=== End Frontend Debug ===');
+                    // // console.log('=== Frontend Debug - First Score Statistics ===');
+                    // // console.log('Statistics data received:', data.scores[0].statistics);
+                    // // console.log('count_300:', data.scores[0].statistics.count_300);
+                    // // console.log('count_100:', data.scores[0].statistics.count_100);
+                    // // console.log('count_50:', data.scores[0].statistics.count_50);
+                    // // console.log('count_miss:', data.scores[0].statistics.count_miss);
+                    // // console.log('=== End Frontend Debug ===');
                 }
                 setScores(data.scores);
             } else {
@@ -542,6 +567,7 @@ export default function MultiplayerScoresPage() {
                             currentBeatmapId={undefined} // 按总分不需要当前图池ID
                             loading={loadingAllScores || loadingPlayers || loadingMapSelections}
                             selectedRoom={selectedRoom} // 传递房间信息用于匹配
+                            registrations={registrations} // 传递已报名数据用于获取玩家信息
                         />
                     )}
                 </div>

@@ -12,6 +12,7 @@ interface TotalScoresByModTableProps {
     currentBeatmapId?: number;
     loading?: boolean;
     selectedRoom?: any; // 添加房间信息用于匹配
+    registrations?: any[]; // 添加已报名数据用于获取玩家信息
 }
 
 interface PlayerModScores {
@@ -29,33 +30,39 @@ export default function TotalScoresByModTable({
     approvedPlayers,
     currentBeatmapId,
     loading = false,
-    selectedRoom
+    selectedRoom,
+    registrations = []
 }: TotalScoresByModTableProps) {
     const [sortBy, setSortBy] = useState<'username' | 'totalScore' | string>('totalScore');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
     // 获取唯一的mod位列表，按mod类型和位置排序
+    const modOrder = ['NM', 'HD', 'HR', 'DT', 'FM', 'LZ', 'TB'];
     const modPositions = Array.from(new Set(
         mapSelections.map(selection => `${selection.selectedMods}${selection.modPosition}`)
     )).sort((a, b) => {
-        // 先按mod类型排序，再按位置排序
+        // 先按mod类型排序（按指定顺序），再按位置排序
         const modA = a.replace(/\d+$/, '');
         const modB = b.replace(/\d+$/, '');
         const posA = parseInt(a.replace(/\D/g, '')) || 0;
         const posB = parseInt(b.replace(/\D/g, '')) || 0;
 
-        if (modA !== modB) {
-            return modA.localeCompare(modB);
+        const indexA = modOrder.indexOf(modA);
+        const indexB = modOrder.indexOf(modB);
+
+        if (indexA !== indexB) {
+            return indexA - indexB;
         }
         return posA - posB;
     });
 
     // 处理数据：按玩家分组，计算总分
     const processPlayerScores = (): PlayerModScores[] => {
-        console.log('开始处理总分数据...');
-        console.log('输入分数数量:', scores.length);
-        console.log('已过审玩家数量:', approvedPlayers.size);
-        console.log('地图选择数据数量:', mapSelections.length);
+        // console.log('开始处理总分数据...');
+        // console.log('输入分数数量:', scores.length);
+        // console.log('已过审玩家数量:', approvedPlayers.size);
+        // console.log('地图选择数据数量:', mapSelections.length);
+        // console.log('已报名数据数量:', registrations.length);
 
         const playerMap = new Map<string, PlayerModScores>();
 
@@ -73,22 +80,34 @@ export default function TotalScoresByModTable({
                     totalScore: 0
                 });
             } else {
-                // 如果玩家没有分数数据，仍然初始化一个空的玩家记录
-                // 这确保所有已过审玩家都会出现在表格中
-                console.log(`玩家 ${osuId} 没有分数数据，但仍然初始化`);
-                // 注意：这里我们无法获取玩家信息，所以需要从其他地方获取或留空
-                playerMap.set(osuId, {
-                    userId: osuId,
-                    username: `玩家 ${osuId}`,
-                    avatarUrl: '',
-                    countryCode: '',
-                    scores: {},
-                    totalScore: 0
-                });
+                // 如果玩家没有分数数据，从已报名数据中查找玩家信息
+                const registration = registrations.find(reg => reg.osuId === osuId);
+                if (registration) {
+                    // console.log(`玩家 ${osuId} 没有分数数据，但从已报名数据中获取信息`);
+                    playerMap.set(osuId, {
+                        userId: osuId,
+                        username: registration.username,
+                        avatarUrl: registration.avatar_url || '',
+                        countryCode: registration.country || '',
+                        scores: {},
+                        totalScore: 0
+                    });
+                } else {
+                    // 如果连已报名数据中也没有，使用默认信息
+                    // console.log(`玩家 ${osuId} 没有分数数据，也没有已报名数据，使用默认信息`);
+                    playerMap.set(osuId, {
+                        userId: osuId,
+                        username: `玩家 ${osuId}`,
+                        avatarUrl: '',
+                        countryCode: '',
+                        scores: {},
+                        totalScore: 0
+                    });
+                }
             }
         });
 
-        console.log('初始化的玩家数量:', playerMap.size);
+        // console.log('初始化的玩家数量:', playerMap.size);
 
         // 填充每个玩家的所有mod位分数
         scores.forEach(score => {
@@ -101,11 +120,11 @@ export default function TotalScoresByModTable({
             const playlistId = (score as any).playlistId;
             const beatmapId = (score as any).beatmapId;
 
-            console.log(`处理玩家 ${score.username} 的分数:`, {
-                playlistId,
-                beatmapId,
-                totalScore: score.total_score
-            });
+            // console.log(`处理玩家 ${score.username} 的分数:`, {
+            // playlistId,
+            // beatmapId,
+            // totalScore: score.total_score
+            // });
 
             if (playlistId && selectedRoom) {
                 // 找到对应的playlist item
@@ -116,8 +135,8 @@ export default function TotalScoresByModTable({
                         selection.beatmapId === playlistItem.beatmap.id
                     );
 
-                    console.log(`找到playlist item:`, playlistItem.beatmap.id);
-                    console.log(`找到map selection:`, mapSelection);
+                    // console.log(`找到playlist item:`, playlistItem.beatmap.id);
+                    // console.log(`找到map selection:`, mapSelection);
 
                     if (mapSelection) {
                         const modPosition = `${mapSelection.selectedMods}${mapSelection.modPosition}`;
@@ -132,7 +151,7 @@ export default function TotalScoresByModTable({
                                 player.totalScore += score.total_score;
                             }
                             player.scores[modPosition] = score.total_score;
-                            console.log(`为玩家 ${score.username} 设置 ${modPosition} 分数: ${score.total_score}`);
+                            // console.log(`为玩家 ${score.username} 设置 ${modPosition} 分数: ${score.total_score}`);
                         }
                     }
                 }
@@ -140,7 +159,7 @@ export default function TotalScoresByModTable({
         });
 
         const result = Array.from(playerMap.values());
-        console.log('处理完成，玩家分数结果:', result);
+        // console.log('处理完成，玩家分数结果:', result);
         return result;
     };
 
@@ -202,6 +221,16 @@ export default function TotalScoresByModTable({
         return `${modType}${position}`;
     };
 
+    // 根据modPosition找到对应的map selection
+    const getMapSelectionForModPosition = (modPosition: string): MapSelection | null => {
+        const modType = modPosition.replace(/\d+$/, '');
+        const position = parseInt(modPosition.replace(/\D/g, '')) || 0;
+
+        return mapSelections.find(selection =>
+            selection.selectedMods === modType && selection.modPosition === position
+        ) || null;
+    };
+
     if (loading) {
         return (
             <div className="text-center py-8 text-white">
@@ -236,20 +265,35 @@ export default function TotalScoresByModTable({
                                         <SortIcon column="username" />
                                     </div>
                                 </th>
-                                {modPositions.map(modPosition => (
-                                    <th
-                                        key={modPosition}
-                                        className="px-3 py-2 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600 last:border-r-0"
-                                        onClick={() => handleSort(modPosition)}
-                                    >
-                                        <div className="flex flex-col items-center">
-                                            <span className={`px-2 py-1 text-xs rounded font-bold ${getModColorClass(modPosition)}`}>
-                                                {getModDisplayName(modPosition)}
-                                            </span>
-                                            <SortIcon column={modPosition} />
-                                        </div>
-                                    </th>
-                                ))}
+                                {modPositions.map(modPosition => {
+                                    const mapSelection = getMapSelectionForModPosition(modPosition);
+                                    const hasCover = mapSelection?.coverUrl;
+
+                                    return (
+                                        <th
+                                            key={modPosition}
+                                            className="px-3 py-2 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600 last:border-r-0 relative overflow-hidden"
+                                            onClick={() => handleSort(modPosition)}
+                                            style={{
+                                                backgroundImage: hasCover ? `url(${mapSelection.coverUrl})` : undefined,
+                                                backgroundSize: 'cover',
+                                                backgroundPosition: 'center',
+                                                backgroundBlendMode: 'overlay'
+                                            }}
+                                        >
+                                            {/* 半透明遮罩层 */}
+                                            {hasCover && (
+                                                <div className="absolute inset-0 bg-black/50"></div>
+                                            )}
+                                            <div className="flex flex-col items-center relative z-10">
+                                                <span className={`px-2 py-1 text-xs rounded font-bold ${getModColorClass(modPosition)}`}>
+                                                    {getModDisplayName(modPosition)}
+                                                </span>
+                                                <SortIcon column={modPosition} />
+                                            </div>
+                                        </th>
+                                    );
+                                })}
                                 <th
                                     className="px-4 py-3 text-left cursor-pointer hover:bg-gray-700 transition bg-[#2D2D2D]"
                                     onClick={() => handleSort('totalScore')}
@@ -267,7 +311,7 @@ export default function TotalScoresByModTable({
                                     key={player.userId}
                                     className="border-b border-gray-700 hover:bg-gray-600 transition"
                                 >
-                                    <td className="px-4 py-3 sticky left-0 bg-[#3D3D3D] z-10 border-r border-gray-600">
+                                    <td className="px-4 py-3 sticky left-0 z-10 border-r border-gray-600">
                                         <div className="flex items-center space-x-3">
                                             <Image
                                                 src={player.avatarUrl}
@@ -290,7 +334,7 @@ export default function TotalScoresByModTable({
                                                 className="px-4 py-3 text-center font-mono border-r border-gray-600 last:border-r-0"
                                             >
                                                 {score ? (
-                                                    <span className="text-white">
+                                                    <span className="text-black font-bold">
                                                         {score.toLocaleString()}
                                                     </span>
                                                 ) : (
