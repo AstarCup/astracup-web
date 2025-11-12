@@ -191,23 +191,32 @@ export default function MultiplayerScoresPage() {
         setLoading(true);
         setError(null);
         try {
+            console.log('开始加载房间信息，房间ID:', roomId);
+
             // 先加载map-selections数据
             await loadMapSelections();
 
             // 通过房间ID获取房间信息
             const response = await fetch(`/api/multiplayer/rooms?roomId=${roomId}`);
+            console.log('房间信息API响应状态:', response.status);
+
             const data = await response.json();
+            console.log('房间信息API响应数据:', data);
 
             if (data.success && data.rooms.length > 0) {
                 const room = data.rooms[0];
+                console.log('成功加载房间信息:', room);
                 setSelectedRoom(room);
                 setSelectedPlaylist(null);
                 setScores([]);
                 setAllScores([]);
 
                 // 自动加载所有图池的分数
-                loadAllScores();
+                console.log('开始调用loadAllScores...');
+                await loadAllScores();
+                console.log('loadAllScores调用完成');
             } else {
+                console.error('未找到该房间或房间不可访问:', data);
                 setError('未找到该房间或房间不可访问');
                 setSelectedRoom(null);
                 setSelectedPlaylist(null);
@@ -215,8 +224,8 @@ export default function MultiplayerScoresPage() {
                 setAllScores([]);
             }
         } catch (err) {
-            setError('网络错误，无法加载房间数据');
             console.error('Error loading room:', err);
+            setError('网络错误，无法加载房间数据');
             setSelectedRoom(null);
             setSelectedPlaylist(null);
             setScores([]);
