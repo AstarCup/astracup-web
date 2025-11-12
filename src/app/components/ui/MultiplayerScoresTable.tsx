@@ -221,6 +221,10 @@ export default function MultiplayerScoresTable({
                                                 <span>{score.statistics?.count_100 || 0}</span>
                                             </div>
                                             <div className="flex justify-between">
+                                                <span className="text-blue-400">50:</span>
+                                                <span>{score.statistics?.count_50 || 0}</span>
+                                            </div>
+                                            <div className="flex justify-between">
                                                 <span className="text-red-400">Miss:</span>
                                                 <span>{score.statistics?.count_miss || 0}</span>
                                             </div>

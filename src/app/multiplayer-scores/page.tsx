@@ -11,11 +11,13 @@ export default function MultiplayerScoresPage() {
     const [selectedRoom, setSelectedRoom] = useState<MultiplayerRoom | null>(null);
     const [selectedPlaylist, setSelectedPlaylist] = useState<number | null>(null);
     const [scores, setScores] = useState<DisplayScore[]>([]);
+    const [allScores, setAllScores] = useState<DisplayScore[]>([]); // 存储所有图池的分数
     const [filteredScores, setFilteredScores] = useState<DisplayScore[]>([]);
     const [mapSelections, setMapSelections] = useState<MapSelection[]>([]);
     const [approvedPlayers, setApprovedPlayers] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(false);
     const [loadingScores, setLoadingScores] = useState(false);
+    const [loadingAllScores, setLoadingAllScores] = useState(false); // 加载所有分数的状态
     const [loadingMapSelections, setLoadingMapSelections] = useState(false);
     const [loadingPlayers, setLoadingPlayers] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -94,7 +96,7 @@ export default function MultiplayerScoresPage() {
                     }
                 });
                 setApprovedPlayers(approvedSet);
-                console.log(`Loaded ${approvedSet.size} approved players`);
+                // console.log(`Loaded ${approvedSet.size} approved players`);
             } else {
                 console.error('Failed to load approved players:', data.error);
                 setApprovedPlayers(new Set());
@@ -110,12 +112,12 @@ export default function MultiplayerScoresPage() {
     // 过滤分数数据，只保留已过审的玩家，并重新计算排名
     const filterScores = (scores: DisplayScore[]): DisplayScore[] => {
         if (approvedPlayers.size === 0) {
-            console.log('No approved players data available, showing all scores');
+            // console.log('No approved players data available, showing all scores');
             return scores;
         }
 
         const filtered = scores.filter(score => approvedPlayers.has(score.user_id.toString()));
-        console.log(`Filtered scores: ${filtered.length} out of ${scores.length} (${scores.length - filtered.length} removed)`);
+        // console.log(`Filtered scores: ${filtered.length} out of ${scores.length} (${scores.length - filtered.length} removed)`);
 
         // 按分数降序排序并重新计算排名
         const sortedAndRanked = filtered
@@ -125,8 +127,46 @@ export default function MultiplayerScoresPage() {
                 position: index + 1 // 重新计算排名
             }));
 
-        console.log(`Re-ranked ${sortedAndRanked.length} scores`);
+        // console.log(`Re-ranked ${sortedAndRanked.length} scores`);
         return sortedAndRanked;
+    };
+
+    // 加载所有图池的分数数据
+    const loadAllScores = async () => {
+        if (!selectedRoom) return;
+
+        setLoadingAllScores(true);
+        setError(null);
+        try {
+            const allScoresPromises = selectedRoom.playlist.map(async (playlistItem) => {
+                const response = await fetch(
+                    `/api/multiplayer/rooms/${selectedRoom.id}/playlists/${playlistItem.id}/scores?limit=100&sort=score_desc`
+                );
+                const data = await response.json();
+
+                if (data.success) {
+                    // 为每个分数添加 playlistId 信息
+                    return data.scores.map((score: DisplayScore) => ({
+                        ...score,
+                        playlistId: playlistItem.id,
+                        beatmapId: playlistItem.beatmap.id
+                    }));
+                } else {
+                    console.error(`Failed to load scores for playlist ${playlistItem.id}:`, data.error);
+                    return [];
+                }
+            });
+
+            const allScoresResults = await Promise.all(allScoresPromises);
+            const flattenedScores = allScoresResults.flat();
+            setAllScores(flattenedScores);
+        } catch (err) {
+            setError('网络错误，无法加载所有分数数据');
+            console.error('Error loading all scores:', err);
+            setAllScores([]);
+        } finally {
+            setLoadingAllScores(false);
+        }
     };
 
     // 加载特定房间信息
@@ -146,11 +186,16 @@ export default function MultiplayerScoresPage() {
                 setSelectedRoom(room);
                 setSelectedPlaylist(null);
                 setScores([]);
+                setAllScores([]);
+
+                // 自动加载所有图池的分数
+                loadAllScores();
             } else {
                 setError('未找到该房间或房间不可访问');
                 setSelectedRoom(null);
                 setSelectedPlaylist(null);
                 setScores([]);
+                setAllScores([]);
             }
         } catch (err) {
             setError('网络错误，无法加载房间数据');
@@ -158,6 +203,7 @@ export default function MultiplayerScoresPage() {
             setSelectedRoom(null);
             setSelectedPlaylist(null);
             setScores([]);
+            setAllScores([]);
         } finally {
             setLoading(false);
         }
@@ -189,13 +235,13 @@ export default function MultiplayerScoresPage() {
             if (data.success) {
                 // 调试：打印前端接收到的第一个分数的statistics数据
                 if (data.scores.length > 0) {
-                    console.log('=== Frontend Debug - First Score Statistics ===');
-                    console.log('Statistics data received:', data.scores[0].statistics);
-                    console.log('count_300:', data.scores[0].statistics.count_300);
-                    console.log('count_100:', data.scores[0].statistics.count_100);
-                    console.log('count_50:', data.scores[0].statistics.count_50);
-                    console.log('count_miss:', data.scores[0].statistics.count_miss);
-                    console.log('=== End Frontend Debug ===');
+                    // console.log('=== Frontend Debug - First Score Statistics ===');
+                    // console.log('Statistics data received:', data.scores[0].statistics);
+                    // console.log('count_300:', data.scores[0].statistics.count_300);
+                    // console.log('count_100:', data.scores[0].statistics.count_100);
+                    // console.log('count_50:', data.scores[0].statistics.count_50);
+                    // console.log('count_miss:', data.scores[0].statistics.count_miss);
+                    // console.log('=== End Frontend Debug ===');
                 }
                 setScores(data.scores);
             } else {
@@ -406,9 +452,9 @@ export default function MultiplayerScoresPage() {
             )}
 
             {/* Tab切换和分数表格 */}
-            {selectedRoom && selectedPlaylist && (
+            {selectedRoom && (
                 <div className="bg-[#3D3D3D] p-6 rounded-lg">
-                    {/* Tab切换 */}
+                    {/* Tab切换 - 放在顶部 */}
                     <div className="flex border-b border-gray-600 mb-6">
                         <button
                             className={`px-6 py-3 font-medium text-lg transition ${activeTab === 'byPlaylist'
@@ -432,21 +478,32 @@ export default function MultiplayerScoresPage() {
 
                     {/* 表格内容 */}
                     {activeTab === 'byPlaylist' && (
-                        <MultiplayerScoresTable
-                            scores={filteredScores}
-                            title={getPageTitle()}
-                            loading={loadingScores || loadingPlayers}
-                            onRefresh={loadScores}
-                        />
+                        <>
+                            {/* 按图池需要选择具体图池 */}
+                            {selectedPlaylist ? (
+                                <MultiplayerScoresTable
+                                    scores={filteredScores}
+                                    title={getPageTitle()}
+                                    loading={loadingScores || loadingPlayers}
+                                    onRefresh={loadScores}
+                                />
+                            ) : (
+                                <div className="text-center py-8 text-white">
+                                    <p className="text-lg">请先选择一个图池</p>
+                                    <p className="text-sm text-gray-400 mt-2">在上方图池选择区域选择一个图池来查看分数</p>
+                                </div>
+                            )}
+                        </>
                     )}
 
                     {activeTab === 'byTotal' && (
                         <TotalScoresByModTable
-                            scores={scores}
+                            scores={allScores}
                             mapSelections={mapSelections}
                             approvedPlayers={approvedPlayers}
-                            currentBeatmapId={getSelectedPlaylistInfo()?.beatmap.id}
-                            loading={loadingScores || loadingPlayers || loadingMapSelections}
+                            currentBeatmapId={undefined} // 按总分不需要当前图池ID
+                            loading={loadingAllScores || loadingPlayers || loadingMapSelections}
+                            selectedRoom={selectedRoom} // 传递房间信息用于匹配
                         />
                     )}
                 </div>

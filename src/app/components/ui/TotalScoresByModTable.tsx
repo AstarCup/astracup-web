@@ -11,6 +11,7 @@ interface TotalScoresByModTableProps {
     approvedPlayers: Set<string>;
     currentBeatmapId?: number;
     loading?: boolean;
+    selectedRoom?: any; // 添加房间信息用于匹配
 }
 
 interface PlayerModScores {
@@ -27,9 +28,10 @@ export default function TotalScoresByModTable({
     mapSelections,
     approvedPlayers,
     currentBeatmapId,
-    loading = false
+    loading = false,
+    selectedRoom
 }: TotalScoresByModTableProps) {
-    const [sortBy, setSortBy] = useState<'username' | 'totalScore'>('totalScore');
+    const [sortBy, setSortBy] = useState<'username' | 'totalScore' | string>('totalScore');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
     // 获取唯一的mod位列表，按mod类型和位置排序
@@ -54,7 +56,7 @@ export default function TotalScoresByModTable({
 
         // 初始化所有已过审玩家
         approvedPlayers.forEach(osuId => {
-            // 从分数数据中查找玩家信息
+            // 从分数数据中查找玩家信息（使用第一个找到的分数来获取玩家信息）
             const playerScore = scores.find(score => score.user_id.toString() === osuId);
             if (playerScore) {
                 playerMap.set(osuId, {
@@ -68,28 +70,44 @@ export default function TotalScoresByModTable({
             }
         });
 
-        // 填充每个玩家的mod位分数
-        if (currentBeatmapId) {
-            // 找到当前beatmap对应的map selection
-            const mapSelection = mapSelections.find(
-                selection => selection.beatmapId === currentBeatmapId
-            );
+        // 填充每个玩家的所有mod位分数
+        scores.forEach(score => {
+            if (!approvedPlayers.has(score.user_id.toString())) return;
 
-            if (mapSelection) {
-                const modPosition = `${mapSelection.selectedMods}${mapSelection.modPosition}`;
+            const player = playerMap.get(score.user_id.toString());
+            if (!player) return;
 
-                // 为每个玩家填充当前mod位的分数
-                scores.forEach(score => {
-                    if (!approvedPlayers.has(score.user_id.toString())) return;
+            // 通过playlistId找到对应的map selection
+            const playlistId = (score as any).playlistId;
+            const beatmapId = (score as any).beatmapId;
 
-                    const player = playerMap.get(score.user_id.toString());
-                    if (player) {
-                        player.scores[modPosition] = score.total_score;
-                        player.totalScore += score.total_score;
+            if (playlistId && selectedRoom) {
+                // 找到对应的playlist item
+                const playlistItem = selectedRoom.playlist.find((item: any) => item.id === playlistId);
+                if (playlistItem) {
+                    // 找到这个playlist对应的map selection
+                    const mapSelection = mapSelections.find(selection =>
+                        selection.beatmapId === playlistItem.beatmap.id
+                    );
+
+                    if (mapSelection) {
+                        const modPosition = `${mapSelection.selectedMods}${mapSelection.modPosition}`;
+
+                        // 如果这个mod位已经有分数了，取最高分
+                        const existingScore = player.scores[modPosition];
+                        if (!existingScore || score.total_score > existingScore) {
+                            // 更新总分：减去旧的分数（如果有），加上新的分数
+                            if (existingScore) {
+                                player.totalScore = player.totalScore - existingScore + score.total_score;
+                            } else {
+                                player.totalScore += score.total_score;
+                            }
+                            player.scores[modPosition] = score.total_score;
+                        }
                     }
-                });
+                }
             }
-        }
+        });
 
         return Array.from(playerMap.values());
     };
@@ -100,14 +118,19 @@ export default function TotalScoresByModTable({
     const sortedPlayers = [...playerScores].sort((a, b) => {
         if (sortBy === 'totalScore') {
             return sortOrder === 'asc' ? a.totalScore - b.totalScore : b.totalScore - a.totalScore;
-        } else {
+        } else if (sortBy === 'username') {
             return sortOrder === 'asc'
                 ? a.username.localeCompare(b.username)
                 : b.username.localeCompare(a.username);
+        } else {
+            // mod位排序
+            const scoreA = a.scores[sortBy] || 0;
+            const scoreB = b.scores[sortBy] || 0;
+            return sortOrder === 'asc' ? scoreA - scoreB : scoreB - scoreA;
         }
     });
 
-    const handleSort = (column: 'username' | 'totalScore') => {
+    const handleSort = (column: 'username' | 'totalScore' | string) => {
         if (sortBy === column) {
             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
         } else {
@@ -116,7 +139,7 @@ export default function TotalScoresByModTable({
         }
     };
 
-    const SortIcon = ({ column }: { column: 'username' | 'totalScore' }) => {
+    const SortIcon = ({ column }: { column: 'username' | 'totalScore' | string }) => {
         if (sortBy !== column) return null;
         return (
             <span className="ml-1 text-blue-400">
@@ -160,9 +183,6 @@ export default function TotalScoresByModTable({
         <div className="mb-8">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-white">按总分</h2>
-                <div className="text-sm text-gray-400">
-                    显示 {sortedPlayers.length} 位已过审玩家
-                </div>
             </div>
 
             {sortedPlayers.length === 0 ? (
@@ -187,15 +207,14 @@ export default function TotalScoresByModTable({
                                 {modPositions.map(modPosition => (
                                     <th
                                         key={modPosition}
-                                        className="px-3 py-2 text-center border-r border-gray-600 last:border-r-0"
+                                        className="px-3 py-2 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600 last:border-r-0"
+                                        onClick={() => handleSort(modPosition)}
                                     >
                                         <div className="flex flex-col items-center">
                                             <span className={`px-2 py-1 text-xs rounded font-bold ${getModColorClass(modPosition)}`}>
                                                 {getModDisplayName(modPosition)}
                                             </span>
-                                            <span className="text-xs text-gray-400 mt-1">
-                                                {mapSelections.find(s => `${s.selectedMods}${s.modPosition}` === modPosition)?.version || '地图'}
-                                            </span>
+                                            <SortIcon column={modPosition} />
                                         </div>
                                     </th>
                                 ))}
@@ -228,11 +247,6 @@ export default function TotalScoresByModTable({
                                             />
                                             <div>
                                                 <div className="font-medium text-white">{player.username}</div>
-                                                {player.countryCode && (
-                                                    <div className="text-xs text-gray-400">
-                                                        {player.countryCode}
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
                                     </td>
@@ -253,7 +267,7 @@ export default function TotalScoresByModTable({
                                             </td>
                                         );
                                     })}
-                                    <td className="px-4 py-3 font-mono text-white font-bold bg-[#2D2D2D]">
+                                    <td className="px-4 py-3 font-mono text-black font-bold">
                                         {player.totalScore.toLocaleString()}
                                     </td>
                                 </tr>
