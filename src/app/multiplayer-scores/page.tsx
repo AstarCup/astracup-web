@@ -29,8 +29,14 @@ export default function MultiplayerScoresPage() {
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const urlParam = urlParams.get('url');
+        const roomParam = urlParams.get('room');
 
-        if (urlParam) {
+        // 优先使用room参数，如果没有则使用url参数
+        if (roomParam) {
+            // 直接使用room参数作为房间ID
+            setRoomUrl(`https://osu.ppy.sh/multiplayer/rooms/${roomParam}`);
+            loadRoomById(roomParam);
+        } else if (urlParam) {
             setRoomUrl(urlParam);
             const roomId = extractRoomIdFromUrl(urlParam);
             if (roomId) {
