@@ -526,8 +526,8 @@ export default function TotalScoresByModTable({
                                                     <SortIcon column={modPosition} />
                                                 </span>
                                                 {hasValidAverages && mapPoolAverages[modPosition] > 0 && (
-                                                    <div className="absolute transform bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
-                                                        avg {mapPoolAverages[modPosition].toLocaleString()}
+                                                    <div className="absolute mt-1 transform bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
+                                                        平均分: {mapPoolAverages[modPosition].toLocaleString()}
                                                     </div>
                                                 )}
                                             </div>
