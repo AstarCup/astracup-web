@@ -21,7 +21,9 @@ interface PlayerModScores {
     avatarUrl: string;
     countryCode: string;
     scores: { [modPosition: string]: number | null }; // mod位 -> 分数
+    ranks: { [modPosition: string]: number | null }; // mod位 -> 排名
     totalScore: number;
+    totalRank: number | null; // 总分排名
 }
 
 export default function TotalScoresByModTable({
@@ -77,7 +79,9 @@ export default function TotalScoresByModTable({
                     avatarUrl: playerScore.avatar_url,
                     countryCode: playerScore.country_code,
                     scores: {},
-                    totalScore: 0
+                    ranks: {},
+                    totalScore: 0,
+                    totalRank: null
                 });
             } else {
                 // 如果玩家没有分数数据，从已报名数据中查找玩家信息
@@ -90,7 +94,9 @@ export default function TotalScoresByModTable({
                         avatarUrl: registration.avatar_url || '',
                         countryCode: registration.country || '',
                         scores: {},
-                        totalScore: 0
+                        ranks: {},
+                        totalScore: 0,
+                        totalRank: null
                     });
                 } else {
                     // 如果连已报名数据中也没有，使用默认信息
@@ -101,7 +107,9 @@ export default function TotalScoresByModTable({
                         avatarUrl: '',
                         countryCode: '',
                         scores: {},
-                        totalScore: 0
+                        ranks: {},
+                        totalScore: 0,
+                        totalRank: null
                     });
                 }
             }
@@ -159,6 +167,44 @@ export default function TotalScoresByModTable({
         });
 
         const result = Array.from(playerMap.values());
+
+        // 计算每个mod位的玩家排名
+        modPositions.forEach(modPosition => {
+            // 获取该mod位所有有分数的玩家
+            const playersWithScores = result.filter(player => player.scores[modPosition] !== null);
+
+            // 按分数降序排序
+            playersWithScores.sort((a, b) => (b.scores[modPosition] || 0) - (a.scores[modPosition] || 0));
+
+            // 分配排名（处理并列情况）
+            let currentRank = 1;
+            let currentScore = playersWithScores[0]?.scores[modPosition] || 0;
+
+            playersWithScores.forEach((player, index) => {
+                if (player.scores[modPosition] !== currentScore) {
+                    currentRank = index + 1;
+                    currentScore = player.scores[modPosition] || 0;
+                }
+                player.ranks[modPosition] = currentRank;
+            });
+        });
+
+        // 计算总分排名
+        const playersWithTotalScores = result.filter(player => player.totalScore > 0);
+        playersWithTotalScores.sort((a, b) => b.totalScore - a.totalScore);
+
+        // 分配总分排名（处理并列情况）
+        let currentTotalRank = 1;
+        let currentTotalScore = playersWithTotalScores[0]?.totalScore || 0;
+
+        playersWithTotalScores.forEach((player, index) => {
+            if (player.totalScore !== currentTotalScore) {
+                currentTotalRank = index + 1;
+                currentTotalScore = player.totalScore;
+            }
+            player.totalRank = currentTotalRank;
+        });
+
         // console.log('处理完成，玩家分数结果:', result);
         return result;
     };
@@ -167,7 +213,12 @@ export default function TotalScoresByModTable({
 
     // 排序玩家数据
     const sortedPlayers = [...playerScores].sort((a, b) => {
-        if (sortBy === 'totalScore') {
+        if (sortBy === 'totalRank') {
+            // 按排名排序（排名为null的排在最后）
+            const rankA = a.totalRank || Number.MAX_SAFE_INTEGER;
+            const rankB = b.totalRank || Number.MAX_SAFE_INTEGER;
+            return sortOrder === 'asc' ? rankA - rankB : rankB - rankA;
+        } else if (sortBy === 'totalScore') {
             return sortOrder === 'asc' ? a.totalScore - b.totalScore : b.totalScore - a.totalScore;
         } else if (sortBy === 'username') {
             return sortOrder === 'asc'
@@ -231,6 +282,22 @@ export default function TotalScoresByModTable({
         ) || null;
     };
 
+    // 根据排名获取分数样式
+    const getScoreRankStyle = (rank: number | null): string => {
+        if (!rank) return 'text-black font-bold';
+
+        switch (rank) {
+            case 1:
+                return 'text-yellow-500 font-bold'; // 金色
+            case 2:
+                return 'text-gray-400 font-bold'; // 暗银色
+            case 3:
+                return 'text-amber-700 font-bold'; // 铜色
+            default:
+                return 'text-white font-bold';
+        }
+    };
+
     if (loading) {
         return (
             <div className="text-center py-8 text-white">
@@ -256,6 +323,15 @@ export default function TotalScoresByModTable({
                     <table className="w-full bg-[#3D3D3D] text-white">
                         <thead>
                             <tr className="border-b border-gray-600 bg-[#2D2D2D]">
+                                <th
+                                    className="px-4 py-3 text-center cursor-pointer hover:bg-gray-700 transition sticky left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
+                                    onClick={() => handleSort('totalRank')}
+                                >
+                                    <div className="flex items-center justify-center">
+                                        <span>排名</span>
+                                        <SortIcon column="totalRank" />
+                                    </div>
+                                </th>
                                 <th
                                     className="px-4 py-3 text-left cursor-pointer hover:bg-gray-700 transition sticky left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
                                     onClick={() => handleSort('username')}
@@ -311,7 +387,16 @@ export default function TotalScoresByModTable({
                                     key={player.userId}
                                     className="border-b border-gray-700 hover:bg-gray-600 transition"
                                 >
-                                    <td className="px-4 py-3 sticky left-0 z-10 border-r border-gray-600">
+                                    <td className="px-4 py-3 text-center font-mono sticky left-0 z-10 bg-[#3D3D3D] border-r border-gray-600">
+                                        {player.totalRank ? (
+                                            <span className={getScoreRankStyle(player.totalRank)}>
+                                                {player.totalRank}
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-500">-</span>
+                                        )}
+                                    </td>
+                                    <td className="px-4 py-3 sticky left-0 z-10 bg-[#3D3D3D] border-r border-gray-600">
                                         <div className="flex items-center space-x-3">
                                             <Image
                                                 src={player.avatarUrl}
@@ -328,13 +413,14 @@ export default function TotalScoresByModTable({
                                     </td>
                                     {modPositions.map(modPosition => {
                                         const score = player.scores[modPosition];
+                                        const rank = player.ranks[modPosition];
                                         return (
                                             <td
                                                 key={modPosition}
                                                 className="px-4 py-3 text-center font-mono border-r border-gray-600 last:border-r-0"
                                             >
                                                 {score ? (
-                                                    <span className="text-black font-bold">
+                                                    <span className={getScoreRankStyle(rank)}>
                                                         {score.toLocaleString()}
                                                     </span>
                                                 ) : (
