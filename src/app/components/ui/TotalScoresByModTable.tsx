@@ -254,14 +254,14 @@ export default function TotalScoresByModTable({
     const getModColorClass = (mod: string): string => {
         const modType = mod.replace(/\d+$/, '');
         switch (modType) {
-            case 'NM': return 'bg-blue-500 text-white';
-            case 'HD': return 'bg-yellow-500 text-black';
-            case 'HR': return 'bg-red-500 text-white';
-            case 'DT': return 'bg-purple-500 text-white';
-            case 'FM': return 'bg-green-500 text-white';
-            case 'LZ': return 'bg-pink-500 text-white';
-            case 'TB': return 'bg-gray-800 text-white';
-            default: return 'bg-gray-500 text-white';
+            case 'NM': return 'text-blue-500';
+            case 'HD': return 'text-yellow-500';
+            case 'HR': return 'text-red-500';
+            case 'DT': return 'text-purple-500';
+            case 'FM': return 'text-green-500';
+            case 'LZ': return 'text-pink-500';
+            case 'TB': return 'text-gray-800';
+            default: return 'text-gray-500';
         }
     };
 
