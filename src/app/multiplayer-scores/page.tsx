@@ -29,6 +29,7 @@ export default function MultiplayerScoresPage() {
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const urlParam = urlParams.get('url');
+        const roomIdParam = urlParams.get('room');
 
         if (urlParam) {
             setRoomUrl(urlParam);
@@ -36,6 +37,9 @@ export default function MultiplayerScoresPage() {
             if (roomId) {
                 loadRoomById(roomId);
             }
+        }
+        if (roomIdParam) {
+            loadRoomById(roomIdParam);
         }
     }, []);
 
