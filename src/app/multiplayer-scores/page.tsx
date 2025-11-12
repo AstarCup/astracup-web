@@ -216,18 +216,7 @@ export default function MultiplayerScoresPage() {
         }
     };
 
-    // 加载所有图池的分数数据（依赖状态）
-    const loadAllScores = async () => {
-        // console.log('loadAllScores函数开始执行');
-        // console.log('selectedRoom:', selectedRoom);
 
-        if (!selectedRoom) {
-            // console.log('loadAllScores: selectedRoom为空，提前返回');
-            return;
-        }
-
-        return loadAllScoresWithRoom(selectedRoom);
-    };
 
     // 加载特定房间信息
     const loadRoomById = async (roomId: string) => {
@@ -241,7 +230,7 @@ export default function MultiplayerScoresPage() {
 
             // 通过房间ID获取房间信息
             const response = await fetch(`/api/multiplayer/rooms?roomId=${roomId}`);
-            // console.log('房间信息API响应状态:', response.status);
+            console.log('房间信息API响应状态:', response.status);
 
             const data = await response.json();
             // console.log('房间信息API响应数据:', data);
