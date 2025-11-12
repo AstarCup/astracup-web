@@ -294,7 +294,7 @@ export default function TotalScoresByModTable({
             case 3:
                 return 'text-amber-700 font-bold'; // 铜色
             default:
-                return 'text-white font-bold';
+                return 'text-black font-bold';
         }
     };
 
