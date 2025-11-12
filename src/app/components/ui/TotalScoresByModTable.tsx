@@ -284,7 +284,7 @@ export default function TotalScoresByModTable({
 
     // 根据排名获取分数样式
     const getScoreRankStyle = (rank: number | null): string => {
-        if (!rank) return 'text-black font-bold';
+        if (!rank) return 'text-white font-bold';
 
         switch (rank) {
             case 1:
