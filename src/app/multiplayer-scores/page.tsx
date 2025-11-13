@@ -267,16 +267,6 @@ export default function MultiplayerScoresPage() {
         }
     };
 
-    // 处理URL输入
-    const handleUrlSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        const roomId = extractRoomIdFromUrl(roomUrl);
-        if (roomId) {
-            loadRoomById(roomId);
-        } else {
-            setError('请输入有效的osu! multiplayer房间链接');
-        }
-    };
 
     // 加载分数数据
     const loadScores = async () => {
@@ -364,58 +354,27 @@ export default function MultiplayerScoresPage() {
         if (playlistInfo && selectedRoom) {
             return `${selectedRoom.name} - ${playlistInfo.beatmap.version}`;
         }
-        return "osu! Multiplayer 分数查看";
+        return "分数查看";
     };
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto py-8 max-w-full">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-white mb-4">
+                <h1 className="text-3xl font-bold text-white p-6">
                     osu! Multiplayer 分数查看
                 </h1>
             </div>
 
             {/* 错误提示 */}
             {error && (
-                <div className="bg-red-500 text-white p-4 rounded mb-6">
+                <div className="bg-red-500 text-white p-4 mb-6">
                     {error}
                 </div>
             )}
 
-            {/* URL输入区域 */}
-            {/* <div className="bg-[#3D3D3D] p-6 rounded-lg mb-6">
-                <h2 className="text-xl font-bold text-white mb-4">输入房间链接</h2>
-                <form onSubmit={handleUrlSubmit} className="space-y-4">
-                    <div>
-                        <label htmlFor="roomUrl" className="block text-white mb-2">
-                            osu! multiplayer房间链接
-                        </label>
-                        <input
-                            type="url"
-                            id="roomUrl"
-                            value={roomUrl}
-                            onChange={(e) => setRoomUrl(e.target.value)}
-                            placeholder="https://osu.ppy.sh/multiplayer/rooms/1774254"
-                            className="w-full px-4 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-[#E93B66] focus:outline-none"
-                            required
-                        />
-                        <p className="text-gray-400 text-sm mt-1">
-                            请输入完整的osu! multiplayer房间链接，或使用简化的URL参数：?room=房间ID
-                        </p>
-                    </div>
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="px-6 py-2 bg-[#E93B66] text-white hover:bg-[#3BE9D8] transition font-bold disabled:opacity-50"
-                    >
-                        {loading ? '加载中...' : '加载房间'}
-                    </button>
-                </form>
-            </div> */}
-
             {/* 房间信息显示 */}
             {selectedRoom && (
-                <div className="bg-[#3D3D3D] p-6 rounded-lg mb-6">
+                <div className="bg-[#3D3D3D] p-6 mb-6">
                     <h2 className="text-xl font-bold text-white mb-4">房间信息</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-white">
                         <div>
@@ -471,9 +430,9 @@ export default function MultiplayerScoresPage() {
 
             {/* Playlist选择区域 - 只在按图池tab时显示 */}
             {activeTab === 'byPlaylist' && selectedRoom && selectedRoom.playlist.length > 0 && (
-                <div className="bg-[#3D3D3D] p-6 rounded-lg mb-6">
+                <div className="bg-[#3D3D3D] p-6 mb-6">
                     <h2 className="text-xl font-bold text-white mb-4">选择图池</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="flex gap-4 overflow-x-auto">
                         {selectedRoom.playlist.map(playlistItem => {
                             const mapSelection = getMapSelectionForPlaylistItem(playlistItem);
                             const hasCover = mapSelection?.coverUrl;
@@ -498,30 +457,30 @@ export default function MultiplayerScoresPage() {
 
                                     {/* 内容 */}
                                     <div className="relative z-10">
-                                        <div className="flex flex-row gap-2">
+                                        <div className="flex flex-row">
                                             {/* Mod位显示 */}
                                             {mapSelection && (
-                                                <div className="mb-2 flex items-center space-x-2">
+                                                <div className="flex items-center space-x-2">
                                                     <div className="flex space-x-1">
-                                                        <span className={`px-2 py-1 text-xs rounded font-bold ${getModColorClass(mapSelection.selectedMods)}`}>
+                                                        <span className={`px-2 text-xs font-bold ${getModColorClass(mapSelection.selectedMods)}`}>
                                                             {mapSelection.selectedMods}{mapSelection.modPosition}
                                                         </span>
                                                         {mapSelection.customModName && (
-                                                            <span className="px-2 py-1 text-xs rounded bg-gray-600 text-white font-bold">
+                                                            <span className="px-2 text-xs bg-gray-600 text-white font-bold">
                                                                 {mapSelection.customModName}
                                                             </span>
                                                         )}
                                                     </div>
                                                 </div>
                                             )}
-                                            <h3 className="font-bold mb-2 text-lg">
+                                            {/* <h3 className="font-bold mb-2 text-lg">
                                                 {playlistItem.beatmap.beatmapset.artist} - {playlistItem.beatmap.beatmapset.title}
-                                            </h3>
+                                            </h3> */}
                                         </div>
-                                        <div className="text-sm space-y-1">
+                                        {/* <div className="text-sm space-y-1">
                                             <p className="text-gray-300">难度: {playlistItem.beatmap.version}</p>
                                             <p className="text-yellow-400 font-bold">{playlistItem.beatmap.difficulty_rating}★</p>
-                                        </div>
+                                        </div> */}
                                     </div>
                                 </div>
                             );
@@ -532,7 +491,7 @@ export default function MultiplayerScoresPage() {
 
             {/* Tab切换和分数表格 */}
             {selectedRoom && (
-                <div className="bg-[#3D3D3D] p-6 rounded-lg">
+                <div className="bg-[#3D3D3D] p-6">
                     {/* 表格内容 */}
                     {activeTab === 'byPlaylist' && (
                         <>

@@ -452,29 +452,20 @@ export default function TotalScoresByModTable({
     if (loading) {
         return (
             <div className="text-center py-8 text-white">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                <div className="inline-block animate-spin h-8 w-8 border-b-2 border-white"></div>
                 <p className="mt-2">加载总分数据中...</p>
             </div>
         );
     }
 
     return (
-        <div className="mb-8">
-            <div className="flex justify-between items-center mb-4">
+        <div className="">
+            <div className="flex justify-between items-center ">
                 <h2 className="text-xl font-bold text-white">按总分</h2>
-                {/* <button
-                    onClick={handleRefresh}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center space-x-2"
-                >
-                    <span>刷新数据</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                </button> */}
             </div>
             {/* 显示图池平均分数 */}
             {sortedPlayers.length === 0 ? (
-                <div className="text-center py-8 text-white bg-[#3D3D3D] rounded-lg border border-gray-600">
+                <div className="text-center py-8 text-white bg-[#3D3D3D]">
                     <p className="text-lg">暂无总分数据</p>
                     <p className="text-sm text-gray-400 mt-2">等待玩家完成比赛后数据将显示在这里</p>
                 </div>
@@ -485,16 +476,16 @@ export default function TotalScoresByModTable({
                         <thead>
                             <tr className="border-b border-gray-600 bg-[#2D2D2D]">
                                 <th
-                                    className="px-4 py-3 text-center cursor-pointer hover:bg-gray-700 transition left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
+                                    className="px-2 py-3 text-center cursor-pointer hover:bg-gray-700 transition bg-[#2D2D2D] z-10 border-r border-gray-600 min-w-[80px]"
                                     onClick={() => handleSort('totalRank')}
                                 >
-                                    <div className="flex items-center justify-center">
-                                        <span>排名</span>
+                                    <div className="flex text-center">
+                                        <span></span>
                                         <SortIcon column="totalRank" />
                                     </div>
                                 </th>
                                 <th
-                                    className="px-4 py-3 text-left cursor-pointer hover:bg-gray-700 transition left-0 bg-[#2D2D2D] z-10 border-r border-gray-600"
+                                    className="px-6 py-3 text-left cursor-pointer hover:bg-gray-700 transition bg-[#2D2D2D] z-10 border-r border-gray-600 min-w-[280px]"
                                     onClick={() => handleSort('username')}
                                 >
                                     <div className="flex items-center">
@@ -508,7 +499,7 @@ export default function TotalScoresByModTable({
                                     return (
                                         <th
                                             key={modPosition}
-                                            className="px-3 py-2 text-center cursor-pointer hover:bg-gray-700 sticky transition border-r border-gray-600 last:border-r-0 relative overflow-hidden"
+                                            className="px-3 py-2 text-center cursor-pointer hover:bg-gray-700 transition border-r border-gray-600 last:border-r-0 relative overflow-hidden"
                                             onClick={() => handleSort(modPosition)}
                                             style={{
                                                 backgroundImage: hasCover ? `url(${mapSelection.coverUrl})` : undefined,
@@ -518,16 +509,16 @@ export default function TotalScoresByModTable({
                                         >
                                             {/* 半透明遮罩层 */}
                                             {hasCover && (
-                                                <div className="absolute inset-0"></div>
+                                                <div className="absolute inset-0 bg-black/50"></div>
                                             )}
-                                            <div className="flex flex-col items-center relative z-10">
-                                                <span className={`px-2 py-1 text-2xl font-bold ${getModColorClass(modPosition)}`}>
+                                            <div className="flex flex-col items-center relative z-10 group">
+                                                <span className={`px-2 py-1 text-2xl rounded font-bold text-shadow-lg ${getModColorClass(modPosition)}`}>
                                                     {getModDisplayName(modPosition)}
                                                     <SortIcon column={modPosition} />
                                                 </span>
                                                 {hasValidAverages && mapPoolAverages[modPosition] > 0 && (
-                                                    <div className="absolute mt-1 transform bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
-                                                        平均分: {mapPoolAverages[modPosition].toLocaleString()}
+                                                    <div className="absolute transform bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20 whitespace-nowrap">
+                                                        avg {mapPoolAverages[modPosition].toLocaleString()}
                                                     </div>
                                                 )}
                                             </div>
@@ -569,7 +560,7 @@ export default function TotalScoresByModTable({
                                     key={player.userId}
                                     className="border-b border-gray-700 hover:bg-gray-600 transition"
                                 >
-                                    <td className="px-4 py-3 text-center font-mono sticky left-0 z-10 bg-[#3D3D3D] border-r border-gray-600">
+                                    <td className="px-4 py-3 text-center font-mono  z-10 bg-[#3D3D3D] border-r border-gray-600">
                                         {player.totalRank ? (
                                             <span className={getScoreRankStyle(player.totalRank)}>
                                                 {player.totalRank}
@@ -578,7 +569,7 @@ export default function TotalScoresByModTable({
                                             <span className="text-gray-500">-</span>
                                         )}
                                     </td>
-                                    <td className="px-6 py-3 sticky left-0 z-10 bg-[#3D3D3D] border-r border-gray-600">
+                                    <td className="px-6 py-3 z-10 bg-[#3D3D3D] border-r border-gray-600">
                                         <div className="flex items-center space-x-3">
                                             <Image
                                                 src={player.avatarUrl}
