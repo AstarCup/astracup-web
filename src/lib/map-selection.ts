@@ -433,7 +433,7 @@ export const mapSelectionStorage = {
     },
 
     // 更新选图信息
-    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved' | 'padding' | 'customModName' | 'customDTRate'>>, selectedBy: string): Promise<boolean> {
+    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved' | 'padding' | 'customModName' | 'customDTRate' | 'title' | 'version' | 'category' | 'totalLength'>>, selectedBy: string): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
 
@@ -470,6 +470,24 @@ export const mapSelectionStorage = {
                 params.push(updates.customDTRate);
             }
 
+            // 新增：基础属性更新
+            if (updates.title !== undefined) {
+                setClause.push('title = ?');
+                params.push(updates.title);
+            }
+            if (updates.version !== undefined) {
+                setClause.push('version = ?');
+                params.push(updates.version);
+            }
+            if (updates.category !== undefined) {
+                setClause.push('category = ?');
+                params.push(updates.category);
+            }
+            if (updates.totalLength !== undefined) {
+                setClause.push('totalLength = ?');
+                params.push(updates.totalLength);
+            }
+
             // update modded attributes
             if ((updates as any).ar !== undefined) {
                 setClause.push('ar = ?');
@@ -503,26 +521,18 @@ export const mapSelectionStorage = {
 
             // 检查当前用户是否为管理员
             const isAdmin = await verifyAdminAuth(selectedBy);
+            const isMapSelector = await verifyMapSelectionAuth(selectedBy);
 
-            // 对于padding字段，任何有权限的用户都可以修改；其他字段只有创建者可以修改
+            // 权限逻辑：
+            // 1. 管理员可以更新任何字段
+            // 2. 选图员可以更新任何字段（包括非自己创建的选图）
+            // 3. 其他用户只能更新自己创建的选图
             let whereClause = 'WHERE id = ?';
             const queryParams = [...params, id];
 
-            // 检查是否只更新padding字段
-            const isOnlyPaddingUpdate = Object.keys(updates).length === 1 && updates.padding !== undefined;
-            // 检查是否只更新mod加成后的属性字段
-            const statsKeys = ['ar', 'cs', 'od', 'hp', 'starRating', 'bpm'];
-            const isOnlyStatsUpdate = Object.keys(updates).length > 0 && Object.keys(updates).every(key => statsKeys.includes(key));
-            // 检查是否包含approved字段更新（管理员可以绕过创建者验证）
-            const isApprovedUpdate = updates.approved !== undefined;
-
-            // 管理员可以更新任何approved字段，图池选择者可以更新任何选图的approved字段
-            // 其他用户只能更新自己创建的选图
-            // 例外：padding字段和stats字段任何有权限的用户都可以更新
-            const isMapSelector = await verifyMapSelectionAuth(selectedBy);
-            const canUpdateAnyApproved = isAdmin || (isApprovedUpdate && isMapSelector);
-
-            if (!isOnlyPaddingUpdate && !isOnlyStatsUpdate && !canUpdateAnyApproved) {
+            // 管理员和选图员可以更新任何选图
+            if (!isAdmin && !isMapSelector) {
+                // 非管理员和非选图员只能更新自己创建的选图
                 whereClause += ' AND selectedBy = ?';
                 queryParams.push(selectedBy);
             }
@@ -540,7 +550,7 @@ export const mapSelectionStorage = {
                 affectedRows: updateResult.affectedRows,
                 changedRows: updateResult.changedRows,
                 isAdmin: isAdmin,
-                isApprovedUpdate: isApprovedUpdate
+                isMapSelector: isMapSelector
             });
             return updateResult.affectedRows > 0;
         } catch (error) {
