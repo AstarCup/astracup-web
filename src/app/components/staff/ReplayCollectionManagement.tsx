@@ -58,6 +58,8 @@ interface PaddingMap {
     _CS: string;
     _AR: string;
     _OD: string;
+    // 提名者信息
+    selectedByUsername?: string;
 }
 
 export default function ReplayCollectionManagement({ user, permissions }: ReplayCollectionManagementProps) {
@@ -279,6 +281,8 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                         _CS: map.cs.toFixed(1),
                         _AR: map.ar.toFixed(1),
                         _OD: map.od.toFixed(1),
+                        // 提名者信息 - 用于详细信息卡片显示
+                        selectedByUsername: map.selectedByUsername || map.selectedBy || '未知',
                     }));
 
                     setPaddingMaps(formattedData);
