@@ -433,7 +433,7 @@ export const mapSelectionStorage = {
     },
 
     // 更新选图信息
-    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved' | 'padding' | 'customModName' | 'customDTRate'>>, selectedBy: string): Promise<boolean> {
+    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved' | 'padding' | 'customModName' | 'customDTRate' | 'title' | 'version' | 'category' | 'totalLength'>>, selectedBy: string): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
 
@@ -468,6 +468,24 @@ export const mapSelectionStorage = {
             if (updates.customDTRate !== undefined) {
                 setClause.push('customDTRate = ?');
                 params.push(updates.customDTRate);
+            }
+
+            // 新增：基础属性更新
+            if (updates.title !== undefined) {
+                setClause.push('title = ?');
+                params.push(updates.title);
+            }
+            if (updates.version !== undefined) {
+                setClause.push('version = ?');
+                params.push(updates.version);
+            }
+            if (updates.category !== undefined) {
+                setClause.push('category = ?');
+                params.push(updates.category);
+            }
+            if (updates.totalLength !== undefined) {
+                setClause.push('totalLength = ?');
+                params.push(updates.totalLength);
             }
 
             // update modded attributes
