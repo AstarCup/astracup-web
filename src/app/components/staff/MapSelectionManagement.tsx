@@ -2269,23 +2269,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     MOD
                                 </label>
-                                <Dropdown
-                                    options={MOD_OPTIONS.map(mod => ({
-                                        value: mod,
-                                        label: mod
-                                    }))}
-                                    value={editDialog.selection.selectedMods}
-                                    onChange={(value) => {
-                                        const select = document.getElementById('edit-selectedMods') as HTMLSelectElement;
-                                        if (select) select.value = value;
-                                    }}
-                                    placeholder="选择MOD"
-                                    minWidth="100%"
-                                />
                                 <select
                                     id="edit-selectedMods"
                                     defaultValue={editDialog.selection.selectedMods}
-                                    className="hidden"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                     {MOD_OPTIONS.map(mod => (
                                         <option key={mod} value={mod}>{mod}</option>
@@ -2298,20 +2285,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     阶段
                                 </label>
-                                <Dropdown
-                                    options={CATEGORY_OPTIONS}
-                                    value={editDialog.selection.category}
-                                    onChange={(value) => {
-                                        const select = document.getElementById('edit-category') as HTMLSelectElement;
-                                        if (select) select.value = value;
-                                    }}
-                                    placeholder="选择阶段"
-                                    minWidth="100%"
-                                />
                                 <select
                                     id="edit-category"
                                     defaultValue={editDialog.selection.category}
-                                    className="hidden"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                     {CATEGORY_OPTIONS.map(cat => (
                                         <option key={cat.value} value={cat.value}>{cat.label}</option>

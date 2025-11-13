@@ -292,7 +292,17 @@ export async function PUT(request: NextRequest) {
             padding,
             selectedBy,
             // optional modded stats to update
-            moddedStats
+            moddedStats,
+            // 新增：基础属性更新
+            title,
+            version,
+            ar,
+            od,
+            cs,
+            hp,
+            bpm,
+            totalLength,
+            category
         } = await request.json();
 
         if (!id || !selectedBy) {
@@ -303,11 +313,33 @@ export async function PUT(request: NextRequest) {
         }
 
         // 准备更新数据
-        const updates: { selectedMods?: string; comment?: string; approved?: boolean; padding?: boolean; ar?: number; cs?: number; od?: number; hp?: number; starRating?: number; bpm?: number } = {};
+        const updates: { 
+            selectedMods?: string; 
+            comment?: string; 
+            approved?: boolean; 
+            padding?: boolean; 
+            ar?: number; 
+            cs?: number; 
+            od?: number; 
+            hp?: number; 
+            starRating?: number; 
+            bpm?: number;
+            // 新增：基础属性
+            title?: string;
+            version?: string;
+            totalLength?: number;
+            category?: string;
+        } = {};
+        
         if (selectedMods !== undefined) updates.selectedMods = selectedMods;
         if (comment !== undefined) updates.comment = comment;
         if (approved !== undefined) updates.approved = approved;
         if (padding !== undefined) updates.padding = padding;
+        if (title !== undefined) updates.title = title;
+        if (version !== undefined) updates.version = version;
+        if (category !== undefined) updates.category = category;
+        if (totalLength !== undefined) updates.totalLength = totalLength;
+        
         // 更新mod加成后的属性
         if (moddedStats) {
             if (moddedStats.ar !== undefined) updates.ar = moddedStats.ar;
@@ -316,6 +348,13 @@ export async function PUT(request: NextRequest) {
             if (moddedStats.hp !== undefined) updates.hp = moddedStats.hp;
             if (moddedStats.starRating !== undefined) updates.starRating = moddedStats.starRating;
             if (moddedStats.bpm !== undefined) updates.bpm = moddedStats.bpm;
+        } else {
+            // 直接更新基础属性
+            if (ar !== undefined) updates.ar = ar;
+            if (od !== undefined) updates.od = od;
+            if (cs !== undefined) updates.cs = cs;
+            if (hp !== undefined) updates.hp = hp;
+            if (bpm !== undefined) updates.bpm = bpm;
         }
 
         if (Object.keys(updates).length === 0) {
