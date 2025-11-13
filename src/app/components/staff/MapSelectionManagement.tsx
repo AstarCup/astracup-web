@@ -87,13 +87,12 @@ const MOD_OPTIONS = [
 ];
 
 const CATEGORY_OPTIONS = [
-    { value: 'qualification', label: '资格赛' },
-    { value: 'ro32', label: '32强赛' },
-    { value: 'ro16', label: '16强赛' },
-    { value: 'quarterfinals', label: '四分之一决赛' },
-    { value: 'semifinals', label: '半决赛' },
-    { value: 'finals', label: '决赛' },
-    { value: 'grandfinals', label: '总决赛' }
+    { value: 'qualification', label: 'QUA' },
+    { value: 'ro16', label: 'RO16' },
+    { value: 'quarterfinals', label: 'QF' },
+    { value: 'semifinals', label: 'SF' },
+    { value: 'finals', label: 'F' },
+    { value: 'grandfinals', label: 'GF' }
 ];
 
 interface MapSelectionManagementProps {
@@ -137,9 +136,27 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
     // Map selection data
     const [selections, setSelections] = useState<MapSelection[]>([]);
-    const [season, setSeason] = useState('s1');
-    const [category, setCategory] = useState('qualification');
-    const [modFilter, setModFilter] = useState<string>('all'); // 新增：mod筛选状态
+
+    // 从本地存储加载初始值
+    const [season, setSeason] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('mapSelection_season') || 's1';
+        }
+        return 's1';
+    });
+    const [category, setCategory] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('mapSelection_category') || 'qualification';
+        }
+        return 'qualification';
+    });
+    const [modFilter, setModFilter] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('mapSelection_modFilter') || 'all';
+        }
+        return 'all';
+    });
+
     const [searchQuery, setSearchQuery] = useState<string>(''); // 新增：搜索查询状态
     const [sortByRating, setSortByRating] = useState<boolean>(false); // 新增：按评分排序状态
 
@@ -389,6 +406,28 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             </div>
         );
     }
+
+    // 自定义 onChange 处理函数 - 保存到本地存储
+    const handleSeasonChange = (value: string) => {
+        setSeason(value);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('mapSelection_season', value);
+        }
+    };
+
+    const handleCategoryChange = (value: string) => {
+        setCategory(value);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('mapSelection_category', value);
+        }
+    };
+
+    const handleModFilterChange = (value: string) => {
+        setModFilter(value);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('mapSelection_modFilter', value);
+        }
+    };
 
     // 右键菜单处理函数
     const handleContextMenu = (e: React.MouseEvent, selection: MapSelection) => {
@@ -1207,21 +1246,21 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         <Dropdown
                             options={availableSeasons}
                             value={season}
-                            onChange={setSeason}
+                            onChange={handleSeasonChange}
                             placeholder="选择赛季"
                             minWidth="8rem"
                         />
                         <Dropdown
                             options={CATEGORY_OPTIONS}
                             value={category}
-                            onChange={setCategory}
+                            onChange={handleCategoryChange}
                             placeholder="选择阶段"
                             minWidth="8rem"
                         />
                         <Dropdown
                             options={getModFilterOptions()}
                             value={modFilter}
-                            onChange={setModFilter}
+                            onChange={handleModFilterChange}
                             placeholder="筛选MOD"
                             minWidth="6rem"
                         />

@@ -121,7 +121,20 @@ export default function AdminPage() {
     const [registrations, setRegistrations] = useState<TournamentRegistration[]>([]);
     const [registrationsLoading, setRegistrationsLoading] = useState(false);
     const [processingUser, setProcessingUser] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState('overview');
+    const [activeTab, setActiveTab] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('staffDashboard_activeTab') || 'overview';
+        }
+        return 'overview';
+    });
+
+    // 自定义Tab切换处理函数 - 保存到本地存储
+    const handleTabChange = (tab: string) => {
+        setActiveTab(tab);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('staffDashboard_activeTab', tab);
+        }
+    };
 
     // 房间管理状态
     const [rooms, setRooms] = useState<MatchRoom[]>([]);
@@ -713,7 +726,7 @@ export default function AdminPage() {
                     <div className="flex space-x-1 overflow-x-auto">
                         {/* 概览 - 所有工作人员都可以访问 */}
                         <button
-                            onClick={() => setActiveTab('overview')}
+                            onClick={() => handleTabChange('overview')}
                             className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'overview'
                                 ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
@@ -725,7 +738,7 @@ export default function AdminPage() {
 
                         {/* 比赛管理 - 所有工作人员都可以访问 */}
                         <button
-                            onClick={() => setActiveTab('matches')}
+                            onClick={() => handleTabChange('matches')}
                             className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'matches'
                                 ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
@@ -738,7 +751,7 @@ export default function AdminPage() {
                         {/* 直播裁判 - 管理员、裁判员、直播员 */}
                         {(permissions.isAdmin || permissions.isReferee || permissions.isStreamer) && (
                             <button
-                                onClick={() => setActiveTab('streaming')}
+                                onClick={() => handleTabChange('streaming')}
                                 className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'streaming'
                                     ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
@@ -752,7 +765,7 @@ export default function AdminPage() {
                         {/* 选图管理 - 地图选择员或管理员 */}
                         {(permissions.isMapSelector || permissions.isAdmin) && (
                             <button
-                                onClick={() => setActiveTab('map-selection')}
+                                onClick={() => handleTabChange('map-selection')}
                                 className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'map-selection'
                                     ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
@@ -766,7 +779,7 @@ export default function AdminPage() {
                         {/* 回放收集 - 重播测试员或管理员 */}
                         {(permissions.isReplayTester || permissions.isAdmin) && (
                             <button
-                                onClick={() => setActiveTab('replays')}
+                                onClick={() => handleTabChange('replays')}
                                 className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'replays'
                                     ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
@@ -780,7 +793,7 @@ export default function AdminPage() {
                         {/* 比赛房间管理 - 仅管理员 */}
                         {permissions.isAdmin && (
                             <button
-                                onClick={() => setActiveTab('rooms')}
+                                onClick={() => handleTabChange('rooms')}
                                 className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'rooms'
                                     ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
@@ -794,7 +807,7 @@ export default function AdminPage() {
                         {/* 对战列表管理 - 仅管理员 */}
                         {permissions.isAdmin && (
                             <button
-                                onClick={() => setActiveTab('matchups')}
+                                onClick={() => handleTabChange('matchups')}
                                 className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'matchups'
                                     ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
@@ -808,7 +821,7 @@ export default function AdminPage() {
                         {/* 用户管理 - 仅管理员 */}
                         {permissions.isAdmin && (
                             <button
-                                onClick={() => setActiveTab('users')}
+                                onClick={() => handleTabChange('users')}
                                 className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'users'
                                     ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
@@ -822,7 +835,7 @@ export default function AdminPage() {
                         {/* 系统设置 - 仅管理员 */}
                         {permissions.isAdmin && (
                             <button
-                                onClick={() => setActiveTab('settings')}
+                                onClick={() => handleTabChange('settings')}
                                 className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'settings'
                                     ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'

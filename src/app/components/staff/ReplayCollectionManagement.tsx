@@ -74,13 +74,31 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
     };
     const [isLoading, setIsLoading] = useState(true);
     const [paddingMaps, setPaddingMaps] = useState<PaddingMap[]>([]);
-    const [selectedSeason, setSelectedSeason] = useState('s1');
-    const [selectedCategory, setSelectedCategory] = useState('qualification');
+
+    // 从本地存储加载初始值
+    const [selectedSeason, setSelectedSeason] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('replayCollection_season') || 's1';
+        }
+        return 's1';
+    });
+    const [selectedCategory, setSelectedCategory] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('replayCollection_category') || 'qualification';
+        }
+        return 'qualification';
+    });
+    const [selectedModFilter, setSelectedModFilter] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('replayCollection_modFilter') || 'all';
+        }
+        return 'all';
+    });
+
     const [uploading, setUploading] = useState(false);
     const [uploadedUsers, setUploadedUsers] = useState<{ [key: string]: string[] }>({}); // { mapId: [username, ...] }
     const [highlightedMapId, setHighlightedMapId] = useState<number | null>(null);
     const [hoveredMapId, setHoveredMapId] = useState<number | null>(null);
-    const [selectedModFilter, setSelectedModFilter] = useState<string>('all');
     const [downloadingAll, setDownloadingAll] = useState(false);
     const [availableSeasons, setAvailableSeasons] = useState([
         { value: 's1', label: '第一赛季' }
@@ -150,6 +168,28 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         setTimeout(() => {
             setHighlightedMapId(null);
         }, 7000);
+    };
+
+    // 自定义 onChange 处理函数 - 保存到本地存储
+    const handleSeasonChange = (value: string) => {
+        setSelectedSeason(value);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('replayCollection_season', value);
+        }
+    };
+
+    const handleCategoryChange = (value: string) => {
+        setSelectedCategory(value);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('replayCollection_category', value);
+        }
+    };
+
+    const handleModFilterChange = (value: string) => {
+        setSelectedModFilter(value);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('replayCollection_modFilter', value);
+        }
     };
 
     // 根据mod筛选地图
@@ -451,21 +491,21 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                         <Dropdown
                             options={availableSeasons}
                             value={selectedSeason}
-                            onChange={setSelectedSeason}
+                            onChange={handleSeasonChange}
                             placeholder="选择赛季"
                             minWidth="8rem"
                         />
                         <Dropdown
                             options={availableCategories}
                             value={selectedCategory}
-                            onChange={setSelectedCategory}
+                            onChange={handleCategoryChange}
                             placeholder="选择阶段"
                             minWidth="8rem"
                         />
                         <Dropdown
                             options={getModFilterOptions()}
                             value={selectedModFilter}
-                            onChange={setSelectedModFilter}
+                            onChange={handleModFilterChange}
                             placeholder="筛选MOD"
                             minWidth="6rem"
                         />
