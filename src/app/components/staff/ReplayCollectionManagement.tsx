@@ -60,6 +60,9 @@ interface PaddingMap {
     _OD: string;
     // 提名者信息
     selectedByUsername?: string;
+    // LZ自定义mod名称和DT倍率
+    customModName?: string;
+    customDTRate?: number;
 }
 
 export default function ReplayCollectionManagement({ user, permissions }: ReplayCollectionManagementProps) {
@@ -283,6 +286,9 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                         _OD: map.od.toFixed(1),
                         // 提名者信息 - 用于详细信息卡片显示
                         selectedByUsername: map.selectedByUsername || map.selectedBy || '未知',
+                        // LZ自定义mod名称和DT倍率 - 用于表格显示
+                        customModName: map.customModName || '',
+                        customDTRate: map.customDTRate || 1.5,
                     }));
 
                     setPaddingMaps(formattedData);
