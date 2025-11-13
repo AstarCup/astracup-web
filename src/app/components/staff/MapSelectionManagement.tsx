@@ -239,6 +239,17 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         selection: null
     });
 
+    // 编辑对话框状态
+    const [editDialog, setEditDialog] = useState<{
+        show: boolean;
+        selection: MapSelection | null;
+        isSubmitting: boolean;
+    }>({
+        show: false,
+        selection: null,
+        isSubmitting: false
+    });
+
     // 检查权限并加载数据
     useEffect(() => {
         const checkAccessAndLoadData = async () => {
@@ -941,6 +952,57 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         } catch (error) {
             console.error('Toggle padding error:', error);
             showError('操作时出错');
+        }
+    };
+
+    // 更新选图属性
+    const updateSelectionAttributes = async (selectionId: number, updates: {
+        title?: string;
+        version?: string;
+        ar?: number;
+        od?: number;
+        cs?: number;
+        hp?: number;
+        bpm?: number;
+        totalLength?: number;
+        selectedMods?: string;
+        category?: string;
+        comment?: string;
+    }) => {
+        setEditDialog(prev => ({ ...prev, isSubmitting: true }));
+
+        try {
+            const response = await fetch('/api/map-selections', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: selectionId,
+                    selectedBy: userForState.id.toString(),
+                    ...updates
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                showSuccess('属性更新成功');
+                // 关闭编辑对话框
+                setEditDialog({
+                    show: false,
+                    selection: null,
+                    isSubmitting: false
+                });
+                // 刷新选图列表
+                await fetchSelections();
+            } else {
+                showError(data.error || '属性更新失败');
+                setEditDialog(prev => ({ ...prev, isSubmitting: false }));
+            }
+        } catch (error) {
+            console.error('Update selection attributes error:', error);
+            showError('属性更新时出错');
+            setEditDialog(prev => ({ ...prev, isSubmitting: false }));
         }
     };
 
@@ -2026,6 +2088,22 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 <Image src='/icons/loading-black.svg' alt='refresh map' width={30} height={30} />
                                 刷新MOD属性
                             </button>
+
+                            {/* 修改属性选项 */}
+                            <button
+                                onClick={() => {
+                                    setEditDialog({
+                                        show: true,
+                                        selection: contextMenu.selection,
+                                        isSubmitting: false
+                                    });
+                                    closeContextMenu();
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                            >
+                                <Image src='/icons/settings-3-fill.svg' alt='edit' width={30} height={30} />
+                                修改属性
+                            </button>
                         </>
                     )}
 
@@ -2056,6 +2134,244 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         closeContextMenu();
                     }}
                 />
+            )}
+
+            {/* 编辑属性对话框 */}
+            {editDialog.show && editDialog.selection && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto rounded-lg">
+                        <h3 className="text-xl font-bold text-gray-800 mb-4">修改选图属性</h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            {/* 标题 */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    标题
+                                </label>
+                                <input
+                                    type="text"
+                                    defaultValue={editDialog.selection.title}
+                                    id="edit-title"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+
+                            {/* 难度名 */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    难度名
+                                </label>
+                                <input
+                                    type="text"
+                                    defaultValue={editDialog.selection.version}
+                                    id="edit-version"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+
+                            {/* AR */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    AR
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    max="10"
+                                    defaultValue={editDialog.selection.ar}
+                                    id="edit-ar"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+
+                            {/* OD */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    OD
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    max="10"
+                                    defaultValue={editDialog.selection.od}
+                                    id="edit-od"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+
+                            {/* CS */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    CS
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    max="10"
+                                    defaultValue={editDialog.selection.cs}
+                                    id="edit-cs"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+
+                            {/* HP */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    HP
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    max="10"
+                                    defaultValue={editDialog.selection.hp}
+                                    id="edit-hp"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+
+                            {/* BPM */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    BPM
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    defaultValue={editDialog.selection.bpm}
+                                    id="edit-bpm"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+
+                            {/* 时长（秒） */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    时长（秒）
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    defaultValue={editDialog.selection.totalLength}
+                                    id="edit-totalLength"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    当前时长: {formatLength(editDialog.selection.totalLength)}
+                                </p>
+                            </div>
+
+                            {/* MOD */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    MOD
+                                </label>
+                                <Dropdown
+                                    options={MOD_OPTIONS.map(mod => ({
+                                        value: mod,
+                                        label: mod
+                                    }))}
+                                    value={editDialog.selection.selectedMods}
+                                    onChange={(value) => {
+                                        const select = document.getElementById('edit-selectedMods') as HTMLSelectElement;
+                                        if (select) select.value = value;
+                                    }}
+                                    placeholder="选择MOD"
+                                    minWidth="100%"
+                                />
+                                <select
+                                    id="edit-selectedMods"
+                                    defaultValue={editDialog.selection.selectedMods}
+                                    className="hidden"
+                                >
+                                    {MOD_OPTIONS.map(mod => (
+                                        <option key={mod} value={mod}>{mod}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* 阶段 */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    阶段
+                                </label>
+                                <Dropdown
+                                    options={CATEGORY_OPTIONS}
+                                    value={editDialog.selection.category}
+                                    onChange={(value) => {
+                                        const select = document.getElementById('edit-category') as HTMLSelectElement;
+                                        if (select) select.value = value;
+                                    }}
+                                    placeholder="选择阶段"
+                                    minWidth="100%"
+                                />
+                                <select
+                                    id="edit-category"
+                                    defaultValue={editDialog.selection.category}
+                                    className="hidden"
+                                >
+                                    {CATEGORY_OPTIONS.map(cat => (
+                                        <option key={cat.value} value={cat.value}>{cat.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* 备注 */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                备注
+                            </label>
+                            <textarea
+                                defaultValue={editDialog.selection.comment}
+                                id="edit-comment"
+                                rows={3}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+
+                        <div className="flex gap-4 justify-end">
+                            <button
+                                onClick={() => setEditDialog({
+                                    show: false,
+                                    selection: null,
+                                    isSubmitting: false
+                                })}
+                                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors"
+                            >
+                                取消
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (!editDialog.selection) return;
+
+                                    const updates = {
+                                        title: (document.getElementById('edit-title') as HTMLInputElement)?.value,
+                                        version: (document.getElementById('edit-version') as HTMLInputElement)?.value,
+                                        ar: parseFloat((document.getElementById('edit-ar') as HTMLInputElement)?.value || '0'),
+                                        od: parseFloat((document.getElementById('edit-od') as HTMLInputElement)?.value || '0'),
+                                        cs: parseFloat((document.getElementById('edit-cs') as HTMLInputElement)?.value || '0'),
+                                        hp: parseFloat((document.getElementById('edit-hp') as HTMLInputElement)?.value || '0'),
+                                        bpm: parseFloat((document.getElementById('edit-bpm') as HTMLInputElement)?.value || '0'),
+                                        totalLength: parseInt((document.getElementById('edit-totalLength') as HTMLInputElement)?.value || '0'),
+                                        selectedMods: (document.getElementById('edit-selectedMods') as HTMLSelectElement)?.value,
+                                        category: (document.getElementById('edit-category') as HTMLSelectElement)?.value,
+                                        comment: (document.getElementById('edit-comment') as HTMLTextAreaElement)?.value
+                                    };
+
+                                    updateSelectionAttributes(editDialog.selection.id, updates);
+                                }}
+                                disabled={editDialog.isSubmitting}
+                                className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 text-white px-4 py-2 rounded transition-colors"
+                            >
+                                {editDialog.isSubmitting ? '保存中...' : '保存'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
