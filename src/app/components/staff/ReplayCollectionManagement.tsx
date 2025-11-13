@@ -58,6 +58,11 @@ interface PaddingMap {
     _CS: string;
     _AR: string;
     _OD: string;
+    // 提名者信息
+    selectedByUsername?: string;
+    // LZ自定义mod名称和DT倍率
+    customModName?: string;
+    customDTRate?: number;
 }
 
 export default function ReplayCollectionManagement({ user, permissions }: ReplayCollectionManagementProps) {
@@ -69,23 +74,42 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
     };
     const [isLoading, setIsLoading] = useState(true);
     const [paddingMaps, setPaddingMaps] = useState<PaddingMap[]>([]);
-    const [selectedSeason, setSelectedSeason] = useState('s1');
-    const [selectedCategory, setSelectedCategory] = useState('qualification');
+
+    // 从本地存储加载初始值
+    const [selectedSeason, setSelectedSeason] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('replayCollection_season') || 's1';
+        }
+        return 's1';
+    });
+    const [selectedCategory, setSelectedCategory] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('replayCollection_category') || 'qualification';
+        }
+        return 'qualification';
+    });
+    const [selectedModFilter, setSelectedModFilter] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('replayCollection_modFilter') || 'all';
+        }
+        return 'all';
+    });
+
     const [uploading, setUploading] = useState(false);
     const [uploadedUsers, setUploadedUsers] = useState<{ [key: string]: string[] }>({}); // { mapId: [username, ...] }
     const [highlightedMapId, setHighlightedMapId] = useState<number | null>(null);
     const [hoveredMapId, setHoveredMapId] = useState<number | null>(null);
-    const [selectedModFilter, setSelectedModFilter] = useState<string>('all');
     const [downloadingAll, setDownloadingAll] = useState(false);
     const [availableSeasons, setAvailableSeasons] = useState([
         { value: 's1', label: '第一赛季' }
     ]);
     const availableCategories = [
-        { value: 'qualification', label: '资格赛' },
-        { value: 'group', label: '小组赛' },
-        { value: 'quarterfinal', label: '四分之一决赛' },
-        { value: 'semifinal', label: '半决赛' },
-        { value: 'final', label: '决赛' }
+        { value: 'qualification', label: 'QUA' },
+        { value: 'ro16', label: 'RO16' },
+        { value: 'quarterfinals', label: 'QF' },
+        { value: 'semifinals', label: 'SF' },
+        { value: 'finals', label: 'F' },
+        { value: 'grandfinals', label: 'GF' }
     ];
 
     const formatLength = (seconds: number): string => {
@@ -94,7 +118,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
-    // 根据mod名返回对应的颜色class
+    // 根据mod名返回对应的颜色class (用于卡片展示)
     const getModColor = (mod: string): string => {
         switch (mod) {
             case 'NM': return 'text-gray-600';
@@ -123,7 +147,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         }
     };
 
-    // 获取用户名列表 - 直接返回用户名
+    // 获取用户名列表 - 直接返回用户名 (用于卡片展示)
     const getUsernamesList = (usernames: string[]): string => {
         if (usernames.length === 0) return '暂无';
         return usernames.join(', ');
@@ -144,6 +168,28 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         setTimeout(() => {
             setHighlightedMapId(null);
         }, 7000);
+    };
+
+    // 自定义 onChange 处理函数 - 保存到本地存储
+    const handleSeasonChange = (value: string) => {
+        setSelectedSeason(value);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('replayCollection_season', value);
+        }
+    };
+
+    const handleCategoryChange = (value: string) => {
+        setSelectedCategory(value);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('replayCollection_category', value);
+        }
+    };
+
+    const handleModFilterChange = (value: string) => {
+        setSelectedModFilter(value);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('replayCollection_modFilter', value);
+        }
     };
 
     // 根据mod筛选地图
@@ -223,7 +269,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         }
     }, [user, permissions]); // 当用户或权限改变时执行
 
-    // 单独的useEffect来加载地图数据
+    // 加载地图数据 - 完全适配MapoolTable组件
     useEffect(() => {
         const loadMapData = async () => {
             if (!user) return;
@@ -242,7 +288,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                     const data = await response.json();
                     console.log('Received data:', data);
 
-                    // 转换数据格式以匹配MapoolTable期望的格式，同时保留原始数据用于卡片展示
+                    // 转换数据格式以完全匹配MapoolTable期望的格式
                     const formattedData = (data.selections || []).map((map: any) => ({
                         // 原始数据字段
                         id: map.id,
@@ -255,22 +301,34 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                         totalLength: map.totalLength,
                         bpm: map.bpm,
                         creator: map.creator,
+                        beatmapsetId: map.beatmapsetId,
+                        beatmapId: map.beatmapId,
+                        ar: map.ar,
+                        cs: map.cs,
+                        od: map.od,
+                        hp: map.hp,
+                        comment: map.comment,
                         // MapoolTable需要的格式化字段
-                        SID: map.beatmapsetId, // beatmapset ID for cover image
-                        BID: map.beatmapId, // beatmap ID
-                        Slot: `${map.selectedMods}${map.modPosition}`, // MOD and position
-                        MapInfo: `${map.artist} - ${map.title} [${map.version}]`, // song info
-                        _Creator: map.creator, // creator
-                        SR: map.starRating.toFixed(2), // star rating
-                        CS: map.cs.toFixed(1), // circle size
-                        AR: map.ar.toFixed(1), // approach rate
-                        OD: map.od.toFixed(1), // overall difficulty
-                        BPM: map.bpm, // BPM
-                        HitLength: formatLength(map.totalLength), // length
-                        Notes: map.comment || '-', // notes/comments
-                        _CS: map.cs.toFixed(1), // original CS for tooltip
-                        _AR: map.ar.toFixed(1), // original AR for tooltip
-                        _OD: map.od.toFixed(1), // original OD for tooltip
+                        SID: map.beatmapsetId,
+                        BID: map.beatmapId,
+                        Slot: `${map.selectedMods}${map.modPosition}`,
+                        MapInfo: `${map.artist} - ${map.title} [${map.version}]`,
+                        _Creator: map.creator,
+                        SR: map.starRating.toFixed(2),
+                        CS: map.cs.toFixed(1),
+                        AR: map.ar.toFixed(1),
+                        OD: map.od.toFixed(1),
+                        BPM: map.bpm,
+                        HitLength: formatLength(map.totalLength),
+                        Notes: map.comment || '-',
+                        _CS: map.cs.toFixed(1),
+                        _AR: map.ar.toFixed(1),
+                        _OD: map.od.toFixed(1),
+                        // 提名者信息 - 用于详细信息卡片显示
+                        selectedByUsername: map.selectedByUsername || map.selectedBy || '未知',
+                        // LZ自定义mod名称和DT倍率 - 用于表格显示
+                        customModName: map.customModName || '',
+                        customDTRate: map.customDTRate || 1.5,
                     }));
 
                     setPaddingMaps(formattedData);
@@ -433,26 +491,35 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                         <Dropdown
                             options={availableSeasons}
                             value={selectedSeason}
-                            onChange={setSelectedSeason}
+                            onChange={handleSeasonChange}
                             placeholder="选择赛季"
                             minWidth="8rem"
                         />
                         <Dropdown
                             options={availableCategories}
                             value={selectedCategory}
-                            onChange={setSelectedCategory}
+                            onChange={handleCategoryChange}
                             placeholder="选择阶段"
                             minWidth="8rem"
                         />
                         <Dropdown
                             options={getModFilterOptions()}
                             value={selectedModFilter}
-                            onChange={setSelectedModFilter}
+                            onChange={handleModFilterChange}
                             placeholder="筛选MOD"
                             minWidth="6rem"
                         />
                     </div>
-                    <MapoolTable data={getFilteredMaps()} title="Padding状态图池" onRowRightClick={handleTableRowRightClick} showUploadJump={true} uploadedUsers={uploadedUsers} season={selectedSeason} category={selectedCategory} />
+                    {/* MapoolTable 组件 - 完全负责表格展示 */}
+                    <MapoolTable
+                        data={getFilteredMaps()}
+                        title="Padding状态图池"
+                        onRowRightClick={handleTableRowRightClick}
+                        showUploadJump={true}
+                        uploadedUsers={uploadedUsers}
+                        season={selectedSeason}
+                        category={selectedCategory}
+                    />
                     <div className="mt-6" id="upload-section">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-bold">回放文件上传</h3>

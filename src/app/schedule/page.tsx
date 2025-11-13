@@ -123,7 +123,10 @@ export default function Schedule() {
     return (
         <div className="max-w-9xl mx-auto p-6">
             <h1 className="text-3xl font-bold mb-6 text-white">赛程安排</h1>
-
+            <div className='mb-8'>
+                <h2 className="text-2xl font-semibold mb-4 text-white">QUA成绩</h2>
+                <a href='/multiplayer-scores?room=1774254' className='text-[#E93B66] font-semibold'>Playlist 1774254</a>
+            </div>
             <div className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4 text-white">比赛时间表</h2>
                 <div className="overflow-x-auto">

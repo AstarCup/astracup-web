@@ -75,7 +75,6 @@ export default function Mapool() {
 
     const CATEGORY_OPTIONS = [
         { value: 'qualification', label: 'QUA' },
-        { value: 'ro32', label: 'RO32' },
         { value: 'ro16', label: 'RO16' },
         { value: 'quarterfinals', label: 'QF' },
         { value: 'semifinals', label: 'SF' },
