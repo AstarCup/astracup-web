@@ -192,12 +192,37 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         }
     };
 
+    // 根据mod顺序排序地图
+    const sortMapsByModOrder = (maps: PaddingMap[]): PaddingMap[] => {
+        // 定义mod排序顺序
+        const modOrder = ['NM', 'HD', 'HR', 'DT', 'LZ', 'FM', 'TB'];
+
+        return [...maps].sort((a, b) => {
+            // 首先按mod类型排序
+            const modAIndex = modOrder.indexOf(a.selectedMods);
+            const modBIndex = modOrder.indexOf(b.selectedMods);
+
+            // 如果mod类型不同，按指定顺序排序
+            if (modAIndex !== modBIndex) {
+                return modAIndex - modBIndex;
+            }
+
+            // 如果mod类型相同，按mod位置排序
+            return a.modPosition - b.modPosition;
+        });
+    };
+
     // 根据mod筛选地图
     const getFilteredMaps = () => {
+        let filteredMaps;
         if (selectedModFilter === 'all') {
-            return paddingMaps;
+            filteredMaps = paddingMaps;
+        } else {
+            filteredMaps = paddingMaps.filter(map => map.selectedMods === selectedModFilter);
         }
-        return paddingMaps.filter(map => map.selectedMods === selectedModFilter);
+
+        // 对筛选后的地图按mod顺序排序
+        return sortMapsByModOrder(filteredMaps);
     };
 
     // 获取可用的mod选项（包含数量统计）
