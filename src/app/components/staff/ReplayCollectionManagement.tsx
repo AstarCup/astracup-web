@@ -58,6 +58,9 @@ interface PaddingMap {
     _CS: string;
     _AR: string;
     _OD: string;
+    // 最大连击数
+    maxCombo?: number;
+    MaxCombo?: number;
     // 提名者信息
     selectedByUsername?: string;
     // LZ自定义mod名称和DT倍率
@@ -349,6 +352,9 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                         _CS: map.cs.toFixed(1),
                         _AR: map.ar.toFixed(1),
                         _OD: map.od.toFixed(1),
+                        // 最大连击数 - 用于表格显示
+                        maxCombo: map.maxCombo || map.MaxCombo || 0,
+                        MaxCombo: map.maxCombo || map.MaxCombo || 0,
                         // 提名者信息 - 用于详细信息卡片显示
                         selectedByUsername: map.selectedByUsername || map.selectedBy || '未知',
                         // LZ自定义mod名称和DT倍率 - 用于表格显示
