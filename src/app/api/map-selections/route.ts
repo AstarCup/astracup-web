@@ -301,6 +301,7 @@ export async function PUT(request: NextRequest) {
             cs,
             hp,
             bpm,
+            starRating,
             totalLength,
             category,
             // 新增：LZ mod和DT自定义字段
@@ -347,6 +348,7 @@ export async function PUT(request: NextRequest) {
         if (totalLength !== undefined) updates.totalLength = totalLength;
         if (customModName !== undefined) updates.customModName = customModName;
         if (customDTRate !== undefined) updates.customDTRate = customDTRate;
+        if (starRating !== undefined) updates.starRating = starRating;
 
         // 更新mod加成后的属性
         if (moddedStats) {

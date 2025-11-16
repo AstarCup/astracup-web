@@ -433,7 +433,7 @@ export const mapSelectionStorage = {
     },
 
     // 更新选图信息
-    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved' | 'padding' | 'customModName' | 'customDTRate' | 'title' | 'version' | 'category' | 'totalLength'>>, selectedBy: string): Promise<boolean> {
+    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved' | 'padding' | 'customModName' | 'customDTRate' | 'title' | 'version' | 'category' | 'totalLength' | 'starRating' | 'bpm' | 'ar' | 'cs' | 'od' | 'hp'>>, selectedBy: string): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
 
@@ -489,29 +489,29 @@ export const mapSelectionStorage = {
             }
 
             // update modded attributes
-            if ((updates as any).ar !== undefined) {
+            if (updates.ar !== undefined) {
                 setClause.push('ar = ?');
-                params.push((updates as any).ar);
+                params.push(updates.ar);
             }
-            if ((updates as any).cs !== undefined) {
+            if (updates.cs !== undefined) {
                 setClause.push('cs = ?');
-                params.push((updates as any).cs);
+                params.push(updates.cs);
             }
-            if ((updates as any).od !== undefined) {
+            if (updates.od !== undefined) {
                 setClause.push('od = ?');
-                params.push((updates as any).od);
+                params.push(updates.od);
             }
-            if ((updates as any).hp !== undefined) {
+            if (updates.hp !== undefined) {
                 setClause.push('hp = ?');
-                params.push((updates as any).hp);
+                params.push(updates.hp);
             }
-            if ((updates as any).starRating !== undefined) {
+            if (updates.starRating !== undefined) {
                 setClause.push('starRating = ?');
-                params.push((updates as any).starRating);
+                params.push(updates.starRating);
             }
-            if ((updates as any).bpm !== undefined) {
+            if (updates.bpm !== undefined) {
                 setClause.push('bpm = ?');
-                params.push((updates as any).bpm);
+                params.push(updates.bpm);
             }
 
             if (setClause.length === 0) {
