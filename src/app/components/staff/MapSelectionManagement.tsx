@@ -979,6 +979,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         cs?: number;
         hp?: number;
         bpm?: number;
+        starRating?: number;
         totalLength?: number;
         selectedMods?: string;
         category?: string;
@@ -2294,6 +2295,22 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 />
                             </div>
 
+                            {/* 星数 */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    星数 (★)
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    max="20"
+                                    defaultValue={editDialog.selection.starRating}
+                                    id="edit-starRating"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+
                             {/* 时长（秒） */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2432,6 +2449,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         cs?: number;
                                         hp?: number;
                                         bpm?: number;
+                                        starRating?: number;
                                         totalLength?: number;
                                         selectedMods?: string;
                                         category?: string;
@@ -2446,6 +2464,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         cs: parseFloat((document.getElementById('edit-cs') as HTMLInputElement)?.value || '0'),
                                         hp: parseFloat((document.getElementById('edit-hp') as HTMLInputElement)?.value || '0'),
                                         bpm: parseFloat((document.getElementById('edit-bpm') as HTMLInputElement)?.value || '0'),
+                                        starRating: parseFloat((document.getElementById('edit-starRating') as HTMLInputElement)?.value || '0'),
                                         totalLength: parseInt((document.getElementById('edit-totalLength') as HTMLInputElement)?.value || '0'),
                                         selectedMods: (document.getElementById('edit-selectedMods') as HTMLSelectElement)?.value,
                                         category: (document.getElementById('edit-category') as HTMLSelectElement)?.value,
