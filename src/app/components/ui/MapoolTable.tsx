@@ -638,7 +638,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
             {/* 详细信息卡片 */}
             {detailCard?.visible && detailCard.row && (
                 <div
-                    className="fixed shadow-lg min-w-[300px] max-w-sm transition-all duration-200 z-999"
+                    className="fixed shadow-lg w-[500px] transition-all duration-200 z-999"
                     style={{
                         left: detailCard.position.x,
                         top: detailCard.position.y,
