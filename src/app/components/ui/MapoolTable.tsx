@@ -547,7 +547,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                         <a className={slotClass}>{row.Slot}</a>
                                         {/* 自定义mod名称气泡 - 显示在右上角 */}
                                         {(row.customModName || (row.customDTRate && row.customDTRate !== 1.5)) && (
-                                            <div className="absolute -top-1 -right-1 bg-red-600 text-white text-xs px-1 rounded-full min-w-4 h-4 flex items-center justify-center font-bold shadow-md p-1">
+                                            <div className="absolute -top-3 left-10 bg-[#e93b66] text-white text-xs px-1 py-1 rounded-full flex items-center justify-center font-bold shadow-md whitespace-nowrap">
                                                 {row.customModName ? row.customModName : `${Number(row.customDTRate).toFixed(2)}x`}
                                             </div>
                                         )}
