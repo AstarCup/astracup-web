@@ -52,8 +52,33 @@ export default function Mapool() {
     const [availableSeasons, setAvailableSeasons] = useState([
         { value: 's1', label: '第1赛季' }
     ]);
-    const [currentSeason, setCurrentSeason] = useState('s1');
-    const [selectedCategory, setSelectedCategory] = useState('qualification');
+    const [currentSeason, setCurrentSeason] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('mappool_season') || 's1';
+        }
+        return 's1';
+    });
+    const [selectedCategory, setSelectedCategory] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('mappool_category') || 'qualification';
+        }
+        return 'qualification';
+    });
+
+    // 自定义 onChange 处理函数 - 保存到本地存储
+    const handleSeasonChange = (value: string) => {
+        setCurrentSeason(value);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('mappool_season', value);
+        }
+    };
+
+    const handleCategoryChange = (value: string) => {
+        setSelectedCategory(value);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('mappool_category', value);
+        }
+    };
 
     // 当config加载完成后，更新赛季信息 - 只在初始加载时设置一次
     useEffect(() => {
@@ -66,6 +91,9 @@ export default function Mapool() {
 
             setAvailableSeasons([{ value: seasonValue, label: seasonLabel }]);
             setCurrentSeason(seasonValue);
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('mappool_season', seasonValue);
+            }
         }
     }, [tournamentSettings, currentSeason]);
 
@@ -232,7 +260,7 @@ export default function Mapool() {
                         label: season.label
                     }))}
                     value={currentSeason}
-                    onChange={setCurrentSeason}
+                    onChange={handleSeasonChange}
                     minWidth="8rem"
                     darkMode={true}
                 />
@@ -243,7 +271,7 @@ export default function Mapool() {
                         label: option.label
                     }))}
                     value={selectedCategory}
-                    onChange={setSelectedCategory}
+                    onChange={handleCategoryChange}
                     minWidth="6rem"
                     darkMode={true}
                 />

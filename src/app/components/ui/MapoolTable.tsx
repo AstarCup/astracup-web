@@ -470,20 +470,20 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                 </div>
             </div>
             <div className="overflow-x-auto relative">
-                <table className="table-fixed min-w-[1800px]">
+                <table className="table-fixed min-w-[2000px]">
                     <thead>
                         <tr className="sticky top-0 bg-white z-10">
                             <th className="w-10 flex-1">MOD</th>
                             <th className="text-left w-16 flex-1">BID</th>
                             <th className="text-left w-13 flex-2">封面</th>
                             <th className="text-left w-80 flex-5">歌曲名</th>
-                            <th className="text-left w-15 flex-1">谱师</th>
+                            <th className="text-left w-15 flex-2">谱师</th>
                             <th className="text-left w-15 flex-1">星级</th>
                             <th className="text-left w-10 flex-1">CS</th>
                             <th className="text-left w-10 flex-1">AR</th>
                             <th className="text-left w-10 flex-1">OD</th>
                             <th className="text-left w-10 flex-1">BPM</th>
-                            <th className="text-left w-10 flex-2">maxCombo</th>
+                            <th className="text-left w-10 flex-3">maxCombo</th>
                             <th className="text-left w-10 flex-1">时长</th>
                             <th className="w-40 flex-none">备注</th>
                         </tr>
