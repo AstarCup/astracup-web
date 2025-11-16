@@ -216,6 +216,7 @@ export interface BeatmapInfo {
     star_rating: number;
     bpm: number;
     total_length: number;
+    max_combo: number;      // 最大连击数
     ar: number;             // Approach Rate
     cs: number;             // Circle Size
     od: number;             // Overall Difficulty
@@ -306,6 +307,7 @@ export async function getBeatmapInfo(beatmapId: number): Promise<BeatmapInfo | n
             star_rating: data.difficulty_rating || 0,
             bpm: data.bpm || 0,
             total_length: data.total_length || 0,
+            max_combo: data.max_combo || 0,
             ar: data.ar || 0,
             cs: data.cs || 0,
             od: data.accuracy || 0,  // accuracy 对应 OD
@@ -354,6 +356,7 @@ export async function getBeatmapsetInfo(beatmapsetId: number): Promise<BeatmapIn
             star_rating: beatmap.difficulty_rating || 0,
             bpm: beatmap.bpm || 0,
             total_length: beatmap.total_length || 0,
+            max_combo: beatmap.max_combo || 0,
             ar: beatmap.ar || 0,
             cs: beatmap.cs || 0,
             od: beatmap.accuracy || 0,
