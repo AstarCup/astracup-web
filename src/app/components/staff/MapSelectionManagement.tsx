@@ -156,6 +156,12 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
         return 'all';
     });
+    const [paddingFilter, setPaddingFilter] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('mapSelection_paddingFilter') || 'all';
+        }
+        return 'all';
+    });
 
     const [searchQuery, setSearchQuery] = useState<string>(''); // 新增：搜索查询状态
     const [sortByRating, setSortByRating] = useState<boolean>(false); // 新增：按评分排序状态
@@ -437,6 +443,13 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         setModFilter(value);
         if (typeof window !== 'undefined') {
             localStorage.setItem('mapSelection_modFilter', value);
+        }
+    };
+
+    const handlePaddingFilterChange = (value: string) => {
+        setPaddingFilter(value);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('mapSelection_paddingFilter', value);
         }
     };
 
@@ -1122,6 +1135,16 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 return false;
             }
 
+            // 测图状态筛选
+            if (paddingFilter !== 'all') {
+                if (paddingFilter === 'padding' && !selection.padding) {
+                    return false;
+                }
+                if (paddingFilter === 'not-padding' && selection.padding) {
+                    return false;
+                }
+            }
+
             // 搜索筛选
             if (searchQuery.trim()) {
                 const query = searchQuery.toLowerCase().trim();
@@ -1251,6 +1274,18 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         return options;
     };
 
+    // 获取测图状态筛选选项（包含数量统计）
+    const getPaddingFilterOptions = () => {
+        const paddingCount = selections.filter(s => s.padding).length;
+        const notPaddingCount = selections.filter(s => !s.padding).length;
+
+        return [
+            { value: 'all', label: '全部', count: selections.length },
+            { value: 'padding', label: '提交测图中', count: paddingCount },
+            { value: 'not-padding', label: '非测图', count: notPaddingCount }
+        ];
+    };
+
     // 按mod类型分组选图
     const getSelectionsByMod = () => {
         const grouped: { [key: string]: MapSelection[] } = {};
@@ -1329,6 +1364,14 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             onChange={handleModFilterChange}
                             placeholder="筛选MOD"
                             minWidth="6rem"
+                        />
+
+                        <Dropdown
+                            options={getPaddingFilterOptions()}
+                            value={paddingFilter}
+                            onChange={handlePaddingFilterChange}
+                            placeholder="测图状态"
+                            minWidth="8rem"
                         />
 
                         {/* 搜索框 */}
