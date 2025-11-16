@@ -25,6 +25,7 @@ interface BeatmapInfo {
     star_rating: number;
     bpm: number;
     total_length: number;
+    max_combo: number;
     ar: number;
     cs: number;
     od: number;
@@ -693,6 +694,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     totalLength: selectedMods === 'DT' && customDTRate !== '' ?
                         Math.round(beatmapPreview.total_length / (customDTRate as number)) :
                         beatmapPreview.total_length,
+                    maxCombo: beatmapPreview.max_combo || 0,
                     ar: moddedStats?.ar ?? beatmapPreview.ar,
                     cs: moddedStats?.cs ?? beatmapPreview.cs,
                     od: moddedStats?.od ?? beatmapPreview.od,
@@ -724,7 +726,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             bpm: moddedStats.bpm,
                             totalLength: selectedMods === 'DT' && customDTRate !== '' ?
                                 Math.round(beatmapPreview.total_length / (customDTRate as number)) :
-                                beatmapPreview.total_length
+                                beatmapPreview.total_length,
+                            maxCombo: beatmapPreview.max_combo || 0
                         }
                         : undefined
                 })
