@@ -25,6 +25,7 @@ interface BeatmapInfo {
     star_rating: number;
     bpm: number;
     total_length: number;
+    max_combo: number;
     ar: number;
     cs: number;
     od: number;
@@ -693,6 +694,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     totalLength: selectedMods === 'DT' && customDTRate !== '' ?
                         Math.round(beatmapPreview.total_length / (customDTRate as number)) :
                         beatmapPreview.total_length,
+                    maxCombo: beatmapPreview.max_combo || 0,
                     ar: moddedStats?.ar ?? beatmapPreview.ar,
                     cs: moddedStats?.cs ?? beatmapPreview.cs,
                     od: moddedStats?.od ?? beatmapPreview.od,
@@ -724,7 +726,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             bpm: moddedStats.bpm,
                             totalLength: selectedMods === 'DT' && customDTRate !== '' ?
                                 Math.round(beatmapPreview.total_length / (customDTRate as number)) :
-                                beatmapPreview.total_length
+                                beatmapPreview.total_length,
+                            maxCombo: beatmapPreview.max_combo || 0
                         }
                         : undefined
                 })
@@ -884,15 +887,17 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 Math.round(latestBeatmap.total_length / selection.customDTRate) :
                                 latestBeatmap.total_length
                         },
-                        // 同时更新基础beatmap信息，包括计算后的DT时长
+                        // 同时更新基础beatmap信息
                         title: latestBeatmap.title,
                         artist: latestBeatmap.artist,
                         version: latestBeatmap.version,
                         creator: latestBeatmap.creator,
+                        coverUrl: latestBeatmap.cover_url,
+                        // 直接传递maxCombo和totalLength字段
+                        maxCombo: latestBeatmap.max_combo || 0,
                         totalLength: selection.selectedMods === 'DT' && selection.customDTRate ?
                             Math.round(latestBeatmap.total_length / selection.customDTRate) :
-                            latestBeatmap.total_length,
-                        coverUrl: latestBeatmap.cover_url
+                            latestBeatmap.total_length
                     })
                 });
 
@@ -1498,6 +1503,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             <div className="text-center font-medium">AR</div>
                                             <div className="text-center font-medium">OD</div>
                                             <div className="text-center font-medium">HP</div>
+
                                             <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.cs !== undefined ? (moddedStats.cs > beatmapPreview.cs + 0.01 ? 'text-red-500' : moddedStats.cs < beatmapPreview.cs - 0.01 ? 'text-green-500' : '') : ''}`}>
                                                 {(() => {
                                                     const val = moddedStats?.cs ?? beatmapPreview.cs;
@@ -1538,14 +1544,19 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                     return val.toFixed(1);
                                                 })()}
                                             </div>
-                                            <div className="text-center font-medium col-span-2">Length</div>
+
+                                            <div className="text-center font-medium">Length</div>
+                                            <div className="text-center font-medium">MaxCombo</div>
                                             <div className="text-center font-medium">BPM</div>
                                             <div className="text-center font-medium">★</div>
-                                            <div className={`text-center font-bold text-base col-span-2 ${selectedMods === 'DT' && customDTRate !== '' ? 'text-red-500' : ''}`}>
+                                            <div className={`text-center font-bold text-base ${selectedMods === 'DT' && customDTRate !== '' ? 'text-red-500' : ''}`}>
                                                 {selectedMods === 'DT' && customDTRate !== '' ?
                                                     formatLength(Math.round(beatmapPreview.total_length / (customDTRate as number))) + ' ▼' :
                                                     formatLength(beatmapPreview.total_length)
                                                 }
+                                            </div>
+                                            <div className="text-center font-bold text-lg">
+                                                {beatmapPreview.max_combo || 0}
                                             </div>
                                             <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.bpm !== undefined ? (moddedStats.bpm > beatmapPreview.bpm + 0.01 ? 'text-red-500' : moddedStats.bpm < beatmapPreview.bpm - 0.01 ? 'text-green-500' : '') : ''}`}>
                                                 {(() => {
@@ -1874,21 +1885,21 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                                             {/* 属性信息 */}
                                             <div className="mb-3 text-xs text-gray-600">
-                                                <div className="grid grid-cols-5 gap-1">
+                                                <div className="grid grid-cols-4 gap-1">
                                                     <div className="text-center font-medium">CS</div>
                                                     <div className="text-center font-medium">AR</div>
                                                     <div className="text-center font-medium">OD</div>
                                                     <div className="text-center font-medium">HP</div>
-                                                    <div className="text-center font-medium">Combo</div>
                                                     <div className="text-center font-bold text-lg">{selection.cs.toFixed(1)}</div>
                                                     <div className="text-center font-bold text-lg">{selection.ar.toFixed(1)}</div>
                                                     <div className="text-center font-bold text-lg">{selection.od.toFixed(1)}</div>
                                                     <div className="text-center font-bold text-lg">{selection.hp.toFixed(1)}</div>
-                                                    <div className="text-center font-bold text-lg">{selection.maxCombo}</div>
-                                                    <div className="text-center font-medium col-span-2">Length</div>
+                                                    <div className="text-center font-medium">Length</div>
+                                                    <div className="text-center font-medium">MaxCombo</div>
                                                     <div className="text-center font-medium">BPM</div>
                                                     <div className="text-center font-medium">★</div>
-                                                    <div className="text-center font-bold text-base col-span-2">{formatLength(selection.totalLength)}</div>
+                                                    <div className="text-center font-bold text-base">{formatLength(selection.totalLength)}</div>
+                                                    <div className="text-center font-bold text-lg">{selection.maxCombo}</div>
                                                     <div className="text-center font-bold text-base">{selection.bpm}</div>
                                                     <div className="text-center font-bold text-base">{selection.starRating.toFixed(2)}</div>
                                                 </div>

@@ -470,22 +470,22 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                 </div>
             </div>
             <div className="overflow-x-auto relative">
-                <table className="table-fixed min-w-[1800px]">
+                <table className="table-fixed min-w-[2000px]">
                     <thead>
                         <tr className="sticky top-0 bg-white z-10">
                             <th className="w-10 flex-1">MOD</th>
                             <th className="text-left w-16 flex-1">BID</th>
-                            <th className="text-left w-13 flex-2">封面</th>
+                            <th className="w-13 flex-2">封面</th>
                             <th className="text-left w-80 flex-5">歌曲名</th>
-                            <th className="text-left w-15 flex-1">谱师</th>
+                            <th className="text-left w-15 flex-2">谱师</th>
                             <th className="text-left w-15 flex-1">星级</th>
                             <th className="text-left w-10 flex-1">CS</th>
                             <th className="text-left w-10 flex-1">AR</th>
                             <th className="text-left w-10 flex-1">OD</th>
                             <th className="text-left w-10 flex-1">BPM</th>
-                            <th className="text-left w-10 flex-1">连击</th>
+                            <th className="text-left w-10 flex-3">maxCB</th>
                             <th className="text-left w-10 flex-1">时长</th>
-                            <th className="w-40 flex-none">备注</th>
+                            <th className="w-40 text-left flex-none">备注</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -603,7 +603,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                     <td title={`原生AR: ${row._AR}`}>{row.AR}</td>
                                     <td title={`原生OD: ${row._OD}`}>{row.OD}</td>
                                     <td title="BPM">{Math.round(row.BPM)}</td>
-                                    <td title="最大连击数">{row.maxCombo || row.MaxCombo || "-"}</td>
+                                    <td title="最大连击数">{row.maxCombo || row.MaxCombo || "-"}x</td>
                                     <td>{row.HitLength}</td>
                                     <td>{row.Notes || "-"}</td>
                                 </tr>
@@ -638,7 +638,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
             {/* 详细信息卡片 */}
             {detailCard?.visible && detailCard.row && (
                 <div
-                    className="fixed shadow-lg max-w-sm transition-all duration-200 z-999"
+                    className="fixed shadow-lg min-w-[300px] max-w-sm transition-all duration-200 z-999"
                     style={{
                         left: detailCard.position.x,
                         top: detailCard.position.y,
@@ -692,10 +692,12 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                 <div className="text-center font-bold text-lg">{Number(detailCard.row.ar || detailCard.row.AR || 0).toFixed(1)}</div>
                                 <div className="text-center font-bold text-lg">{Number(detailCard.row.od || detailCard.row.OD || 0).toFixed(1)}</div>
                                 <div className="text-center font-bold text-lg">{Number(detailCard.row.hp || 0).toFixed(1)}</div>
-                                <div className="text-center font-medium col-span-2">Length</div>
+                                <div className="text-center font-medium">Length</div>
+                                <div className="text-center font-medium">MaxCombo</div>
                                 <div className="text-center font-medium">BPM</div>
                                 <div className="text-center font-medium">★</div>
-                                <div className="text-center font-bold text-base col-span-2">{formatLength(detailCard.row.totalLength || detailCard.row.HitLength || 0)}</div>
+                                <div className="text-center font-bold text-base">{formatLength(detailCard.row.totalLength || detailCard.row.HitLength || 0)}</div>
+                                <div className="text-center font-bold text-lg">{Number(detailCard.row.maxCombo || detailCard.row.MaxCombo || 0).toFixed(0)}</div>
                                 <div className="text-center font-bold text-base">{Math.round(detailCard.row.bpm || detailCard.row.BPM || 0)}</div>
                                 <div className="text-center font-bold text-base">{Number(detailCard.row.starRating || detailCard.row.SR || 0).toFixed(2)}</div>
                             </div>
