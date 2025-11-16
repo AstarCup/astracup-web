@@ -1498,7 +1498,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                                     {/* 属性信息 */}
                                     <div className="mb-3 text-xs text-gray-600">
-                                        <div className="grid grid-cols-5 gap-1">
+                                        <div className="grid grid-cols-4 gap-1">
                                             <div className="text-center font-medium">CS</div>
                                             <div className="text-center font-medium">AR</div>
                                             <div className="text-center font-medium">OD</div>
@@ -1885,7 +1885,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                                             {/* 属性信息 */}
                                             <div className="mb-3 text-xs text-gray-600">
-                                                <div className="grid grid-cols-5 gap-1">
+                                                <div className="grid grid-cols-4 gap-1">
                                                     <div className="text-center font-medium">CS</div>
                                                     <div className="text-center font-medium">AR</div>
                                                     <div className="text-center font-medium">OD</div>
