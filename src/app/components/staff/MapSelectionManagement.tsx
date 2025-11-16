@@ -1857,8 +1857,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     <div className="mb-6 flex border-b border-gray-300">
                         <button
                             onClick={() => setActiveTab('cards')}
-                            className={`px-4 py-2 font-medium text-sm transition-colors flex ${activeTab === 'cards'
-                                ? 'border-b-2 border-blue-500 text-blue-600'
+                            className={`px-4 py-2 font-medium text-2xl transition-colors flex ${activeTab === 'cards'
+                                ? 'border-b-4 border-pink-500 text-pink-600'
                                 : 'text-gray-500 hover:text-white'
                                 }`}
                         >
@@ -1866,8 +1866,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         </button>
                         <button
                             onClick={() => setActiveTab('table')}
-                            className={`px-4 py-2 font-medium text-sm transition-colors flex ${activeTab === 'table'
-                                ? 'border-b-2 border-blue-500 text-blue-600'
+                            className={`px-4 py-2 font-medium text-2xl transition-colors flex ${activeTab === 'table'
+                                ? 'border-b-4 border-pink-500 text-pink-600'
                                 : 'text-gray-500 hover:text-white'
                                 }`}
                         >
