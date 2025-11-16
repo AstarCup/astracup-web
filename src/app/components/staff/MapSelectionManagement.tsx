@@ -884,14 +884,11 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 Math.round(latestBeatmap.total_length / selection.customDTRate) :
                                 latestBeatmap.total_length
                         },
-                        // 同时更新基础beatmap信息，包括计算后的DT时长
+                        // 同时更新基础beatmap信息
                         title: latestBeatmap.title,
                         artist: latestBeatmap.artist,
                         version: latestBeatmap.version,
                         creator: latestBeatmap.creator,
-                        totalLength: selection.selectedMods === 'DT' && selection.customDTRate ?
-                            Math.round(latestBeatmap.total_length / selection.customDTRate) :
-                            latestBeatmap.total_length,
                         coverUrl: latestBeatmap.cover_url
                     })
                 });
