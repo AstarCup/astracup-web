@@ -483,6 +483,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                             <th className="text-left w-10 flex-1">AR</th>
                             <th className="text-left w-10 flex-1">OD</th>
                             <th className="text-left w-10 flex-1">BPM</th>
+                            <th className="text-left w-10 flex-1">连击</th>
                             <th className="text-left w-10 flex-1">时长</th>
                             <th className="w-40 flex-none">备注</th>
                         </tr>
@@ -602,6 +603,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                     <td title={`原生AR: ${row._AR}`}>{row.AR}</td>
                                     <td title={`原生OD: ${row._OD}`}>{row.OD}</td>
                                     <td title="BPM">{Math.round(row.BPM)}</td>
+                                    <td title="最大连击数">{row.maxCombo || row.MaxCombo || "-"}</td>
                                     <td>{row.HitLength}</td>
                                     <td>{row.Notes || "-"}</td>
                                 </tr>

@@ -38,6 +38,7 @@ export interface MapSelection {
     starRating: number;         // 星级
     bpm: number;                // BPM
     totalLength: number;        // 总长度（秒）
+    maxCombo: number;           // 最大连击数
     ar: number;                 // Approach Rate
     cs: number;                 // Circle Size
     od: number;                 // Overall Difficulty
@@ -270,6 +271,21 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
             }
         }
 
+        // 检查并添加maxCombo字段
+        try {
+            await connection.execute(`SELECT maxCombo FROM map_selections LIMIT 1`);
+        } catch (error: unknown) {
+            const mysqlError = error as { code?: string };
+            if (mysqlError.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding maxCombo field...');
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN maxCombo INT NOT NULL DEFAULT 0 AFTER totalLength
+                `);
+                console.log('Successfully added maxCombo field');
+            }
+        }
+
         connection.release();
         console.log('Map selection database initialized successfully');
     } catch (error) {
@@ -313,6 +329,7 @@ export const mapSelectionStorage = {
                 starRating: parseFloat(row.starRating),
                 bpm: parseFloat(row.bpm),
                 totalLength: row.totalLength,
+                maxCombo: row.maxCombo || 0,
                 ar: parseFloat(row.ar) || 0,
                 cs: parseFloat(row.cs) || 0,
                 od: parseFloat(row.od) || 0,
@@ -347,9 +364,9 @@ export const mapSelectionStorage = {
             const [result] = await connection.execute(`
                 INSERT INTO map_selections (
                     beatmapId, beatmapsetId, title, artist, version, creator,
-                    starRating, bpm, totalLength, ar, cs, od, hp, selectedMods, modPosition, customDTRate, customModName, comment,
+                    starRating, bpm, totalLength, maxCombo, ar, cs, od, hp, selectedMods, modPosition, customDTRate, customModName, comment,
                     selectedBy, selectedByUsername, selectedByAvatar, selectedAt, season, category, url, coverUrl, approved
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)
             `, [
                 selection.beatmapId,
                 selection.beatmapsetId,
@@ -360,6 +377,7 @@ export const mapSelectionStorage = {
                 selection.starRating,
                 selection.bpm,
                 selection.totalLength,
+                selection.maxCombo,
                 selection.ar,
                 selection.cs,
                 selection.od,
@@ -433,7 +451,7 @@ export const mapSelectionStorage = {
     },
 
     // 更新选图信息
-    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved' | 'padding' | 'customModName' | 'customDTRate' | 'title' | 'version' | 'category' | 'totalLength'>>, selectedBy: string): Promise<boolean> {
+    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved' | 'padding' | 'customModName' | 'customDTRate' | 'title' | 'version' | 'category' | 'totalLength' | 'maxCombo' | 'starRating' | 'bpm' | 'ar' | 'cs' | 'od' | 'hp'>>, selectedBy: string): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
 
@@ -488,30 +506,35 @@ export const mapSelectionStorage = {
                 params.push(updates.totalLength);
             }
 
+            if (updates.maxCombo !== undefined) {
+                setClause.push('maxCombo = ?');
+                params.push(updates.maxCombo);
+            }
+
             // update modded attributes
-            if ((updates as any).ar !== undefined) {
+            if (updates.ar !== undefined) {
                 setClause.push('ar = ?');
-                params.push((updates as any).ar);
+                params.push(updates.ar);
             }
-            if ((updates as any).cs !== undefined) {
+            if (updates.cs !== undefined) {
                 setClause.push('cs = ?');
-                params.push((updates as any).cs);
+                params.push(updates.cs);
             }
-            if ((updates as any).od !== undefined) {
+            if (updates.od !== undefined) {
                 setClause.push('od = ?');
-                params.push((updates as any).od);
+                params.push(updates.od);
             }
-            if ((updates as any).hp !== undefined) {
+            if (updates.hp !== undefined) {
                 setClause.push('hp = ?');
-                params.push((updates as any).hp);
+                params.push(updates.hp);
             }
-            if ((updates as any).starRating !== undefined) {
+            if (updates.starRating !== undefined) {
                 setClause.push('starRating = ?');
-                params.push((updates as any).starRating);
+                params.push(updates.starRating);
             }
-            if ((updates as any).bpm !== undefined) {
+            if (updates.bpm !== undefined) {
                 setClause.push('bpm = ?');
-                params.push((updates as any).bpm);
+                params.push(updates.bpm);
             }
 
             if (setClause.length === 0) {

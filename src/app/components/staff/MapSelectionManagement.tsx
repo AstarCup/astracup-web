@@ -44,6 +44,7 @@ interface MapSelection {
     starRating: number;
     bpm: number;
     totalLength: number;
+    maxCombo: number;           // 新增：最大连击数
     ar: number;
     cs: number;
     od: number;
@@ -849,6 +850,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 hp: modStats.hp,
                 starRating: modStats.starRating,
                 bpm: modStats.bpm,
+                maxCombo: latestBeatmap.max_combo || 0,
                 // 计算DT时长
                 totalLength: selection.selectedMods === 'DT' && selection.customDTRate ?
                     Math.round(latestBeatmap.total_length / selection.customDTRate) :
@@ -877,6 +879,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             hp: modStats.hp,
                             starRating: modStats.starRating,
                             bpm: modStats.bpm,
+                            maxCombo: latestBeatmap.max_combo || 0,
                             totalLength: selection.selectedMods === 'DT' && selection.customDTRate ?
                                 Math.round(latestBeatmap.total_length / selection.customDTRate) :
                                 latestBeatmap.total_length
@@ -981,6 +984,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         bpm?: number;
         starRating?: number;
         totalLength?: number;
+        maxCombo?: number;
         selectedMods?: string;
         category?: string;
         comment?: string;
@@ -1870,15 +1874,17 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                                             {/* 属性信息 */}
                                             <div className="mb-3 text-xs text-gray-600">
-                                                <div className="grid grid-cols-4 gap-1">
+                                                <div className="grid grid-cols-5 gap-1">
                                                     <div className="text-center font-medium">CS</div>
                                                     <div className="text-center font-medium">AR</div>
                                                     <div className="text-center font-medium">OD</div>
                                                     <div className="text-center font-medium">HP</div>
+                                                    <div className="text-center font-medium">Combo</div>
                                                     <div className="text-center font-bold text-lg">{selection.cs.toFixed(1)}</div>
                                                     <div className="text-center font-bold text-lg">{selection.ar.toFixed(1)}</div>
                                                     <div className="text-center font-bold text-lg">{selection.od.toFixed(1)}</div>
                                                     <div className="text-center font-bold text-lg">{selection.hp.toFixed(1)}</div>
+                                                    <div className="text-center font-bold text-lg">{selection.maxCombo}</div>
                                                     <div className="text-center font-medium col-span-2">Length</div>
                                                     <div className="text-center font-medium">BPM</div>
                                                     <div className="text-center font-medium">★</div>
@@ -2328,6 +2334,20 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 </p>
                             </div>
 
+                            {/* 最大连击数 */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    最大连击数
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    defaultValue={editDialog.selection.maxCombo}
+                                    id="edit-maxCombo"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+
                             {/* MOD */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2451,6 +2471,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         bpm?: number;
                                         starRating?: number;
                                         totalLength?: number;
+                                        maxCombo?: number;
                                         selectedMods?: string;
                                         category?: string;
                                         comment?: string;
@@ -2466,6 +2487,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         bpm: parseFloat((document.getElementById('edit-bpm') as HTMLInputElement)?.value || '0'),
                                         starRating: parseFloat((document.getElementById('edit-starRating') as HTMLInputElement)?.value || '0'),
                                         totalLength: parseInt((document.getElementById('edit-totalLength') as HTMLInputElement)?.value || '0'),
+                                        maxCombo: parseInt((document.getElementById('edit-maxCombo') as HTMLInputElement)?.value || '0'),
                                         selectedMods: (document.getElementById('edit-selectedMods') as HTMLSelectElement)?.value,
                                         category: (document.getElementById('edit-category') as HTMLSelectElement)?.value,
                                         comment: (document.getElementById('edit-comment') as HTMLTextAreaElement)?.value

@@ -172,7 +172,8 @@ export async function POST(request: NextRequest) {
             od: beatmapInfo.od,
             hp: beatmapInfo.hp,
             star_rating: beatmapInfo.star_rating,
-            bpm: beatmapInfo.bpm
+            bpm: beatmapInfo.bpm,
+            max_combo: beatmapInfo.max_combo || 0
         };
 
         // 添加选图（允许重复添加）
@@ -186,6 +187,7 @@ export async function POST(request: NextRequest) {
             starRating: finalStats.star_rating,
             bpm: finalStats.bpm,
             totalLength: beatmapInfo.total_length,
+            maxCombo: finalStats.max_combo,
             ar: finalStats.ar,
             cs: finalStats.cs,
             od: finalStats.od,
@@ -301,7 +303,9 @@ export async function PUT(request: NextRequest) {
             cs,
             hp,
             bpm,
+            starRating,
             totalLength,
+            maxCombo,
             category,
             // 新增：LZ mod和DT自定义字段
             customModName,
@@ -331,6 +335,7 @@ export async function PUT(request: NextRequest) {
             title?: string;
             version?: string;
             totalLength?: number;
+            maxCombo?: number;
             category?: string;
             // 新增：LZ mod和DT自定义字段
             customModName?: string;
@@ -345,8 +350,10 @@ export async function PUT(request: NextRequest) {
         if (version !== undefined) updates.version = version;
         if (category !== undefined) updates.category = category;
         if (totalLength !== undefined) updates.totalLength = totalLength;
+        if (maxCombo !== undefined) updates.maxCombo = maxCombo;
         if (customModName !== undefined) updates.customModName = customModName;
         if (customDTRate !== undefined) updates.customDTRate = customDTRate;
+        if (starRating !== undefined) updates.starRating = starRating;
 
         // 更新mod加成后的属性
         if (moddedStats) {
@@ -356,6 +363,7 @@ export async function PUT(request: NextRequest) {
             if (moddedStats.hp !== undefined) updates.hp = moddedStats.hp;
             if (moddedStats.starRating !== undefined) updates.starRating = moddedStats.starRating;
             if (moddedStats.bpm !== undefined) updates.bpm = moddedStats.bpm;
+            if (moddedStats.maxCombo !== undefined) updates.maxCombo = moddedStats.maxCombo;
         } else {
             // 直接更新基础属性
             if (ar !== undefined) updates.ar = ar;

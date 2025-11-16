@@ -80,7 +80,7 @@ export default function MultiplayerScoresPage() {
     const loadMapSelections = async () => {
         setLoadingMapSelections(true);
         try {
-            const response = await fetch('/api/map-selections?approved=true');
+            const response = await fetch('/api/map-selections?approved=true&category=qualification');
             const data = await response.json();
 
             if (data.success) {
@@ -486,8 +486,8 @@ export default function MultiplayerScoresPage() {
                             onClick={saveScoresToDatabase}
                             disabled={savingScores || !selectedRoom || allScores.length === 0}
                             className={`px-4 py-2 rounded font-medium transition ${savingScores || !selectedRoom || allScores.length === 0
-                                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                    : 'bg-green-600 text-white hover:bg-green-700'
+                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                : 'bg-green-600 text-white hover:bg-green-700'
                                 }`}
                         >
                             {savingScores ? '保存中...' : '保存到数据库'}
@@ -497,8 +497,8 @@ export default function MultiplayerScoresPage() {
                             onClick={updateScoresInDatabase}
                             disabled={updatingScores || !selectedRoom || allScores.length === 0}
                             className={`px-4 py-2 rounded font-medium transition ${updatingScores || !selectedRoom || allScores.length === 0
-                                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                : 'bg-blue-600 text-white hover:bg-blue-700'
                                 }`}
                         >
                             {updatingScores ? '更新中...' : '更新数据库分数'}
