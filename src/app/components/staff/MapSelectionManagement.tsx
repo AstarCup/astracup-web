@@ -494,7 +494,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             { name: 'TR', description: 'Transform - ' },
             { name: 'WD', description: 'Wind Down - ' },
             { name: 'WG', description: 'Wiggle - ' },
-            { name: 'WU', description: 'Wind Up - 精确度挑战' }
+            { name: 'WU', description: 'Wind Up - 精确度挑战' },
+            { name: 'AD+BU:speedx6.0', description: 'AD+BU:speedx6.0' }
         ];
         setAvailableLazerMods(fallbackMods);
     };

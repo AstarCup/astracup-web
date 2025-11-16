@@ -38,6 +38,28 @@ export function useConfig() {
     return context;
 }
 
+// 检查用户是否为管理员的Hook
+export function useIsAdmin(): boolean {
+    const { tournamentSettings } = useConfig();
+
+    // 这里需要根据实际的用户认证系统来获取当前用户ID
+    // 暂时返回true用于测试，实际使用时需要替换为真实的用户ID获取逻辑
+    const getCurrentUserId = (): string | null => {
+        // TODO: 从session或cookie中获取当前用户ID
+        // 例如：从localStorage或sessionStorage中获取
+        // 暂时返回一个测试ID
+        return 'test_admin_id';
+    };
+
+    const currentUserId = getCurrentUserId();
+
+    if (!currentUserId || !tournamentSettings) {
+        return false;
+    }
+
+    return tournamentSettings.admin_group.includes(currentUserId);
+}
+
 interface ConfigProviderProps {
     children: ReactNode;
 }
