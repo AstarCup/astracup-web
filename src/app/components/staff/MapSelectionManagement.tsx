@@ -496,7 +496,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             { name: 'WG', description: 'Wiggle - ' },
             { name: 'WU', description: 'Wind Up - 精确度挑战' },
             // 后续添加的特殊mod组合
-            { name: 'AD+BU(RollSpeed:6.0)', description: 'AD+BU(RollSpeed:6.0)' }
+            { name: 'AD+BR(RollSpeed:6.0)', description: 'AD+BR(RollSpeed:6.0)' }
         ];
         setAvailableLazerMods(fallbackMods);
     };
