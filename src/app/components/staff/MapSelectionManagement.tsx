@@ -850,6 +850,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 hp: modStats.hp,
                 starRating: modStats.starRating,
                 bpm: modStats.bpm,
+                maxCombo: latestBeatmap.max_combo || 0,
                 // 计算DT时长
                 totalLength: selection.selectedMods === 'DT' && selection.customDTRate ?
                     Math.round(latestBeatmap.total_length / selection.customDTRate) :
@@ -878,6 +879,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             hp: modStats.hp,
                             starRating: modStats.starRating,
                             bpm: modStats.bpm,
+                            maxCombo: latestBeatmap.max_combo || 0,
                             totalLength: selection.selectedMods === 'DT' && selection.customDTRate ?
                                 Math.round(latestBeatmap.total_length / selection.customDTRate) :
                                 latestBeatmap.total_length
