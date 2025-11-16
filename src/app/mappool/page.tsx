@@ -275,7 +275,7 @@ export default function Mapool() {
                     minWidth="6rem"
                     darkMode={true}
                 />
-                <p className='text-white text-xl'>QUA图池已更新</p>
+                <p className='text-white text-xl'>Ro16图池已更新</p>
             </div>
 
             {mapPoolData.length === 0 ? (
