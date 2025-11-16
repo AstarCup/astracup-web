@@ -1503,7 +1503,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             <div className="text-center font-medium">AR</div>
                                             <div className="text-center font-medium">OD</div>
                                             <div className="text-center font-medium">HP</div>
-                                            <div className="text-center font-medium">Combo</div>
+
                                             <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.cs !== undefined ? (moddedStats.cs > beatmapPreview.cs + 0.01 ? 'text-red-500' : moddedStats.cs < beatmapPreview.cs - 0.01 ? 'text-green-500' : '') : ''}`}>
                                                 {(() => {
                                                     const val = moddedStats?.cs ?? beatmapPreview.cs;
@@ -1544,17 +1544,19 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                     return val.toFixed(1);
                                                 })()}
                                             </div>
-                                            <div className="text-center font-bold text-lg">
-                                                {beatmapPreview.max_combo || 0}
-                                            </div>
-                                            <div className="text-center font-medium col-span-2">Length</div>
+
+                                            <div className="text-center font-medium">Length</div>
+                                            <div className="text-center font-medium">MaxCombo</div>
                                             <div className="text-center font-medium">BPM</div>
                                             <div className="text-center font-medium">★</div>
-                                            <div className={`text-center font-bold text-base col-span-2 ${selectedMods === 'DT' && customDTRate !== '' ? 'text-red-500' : ''}`}>
+                                            <div className={`text-center font-bold text-base ${selectedMods === 'DT' && customDTRate !== '' ? 'text-red-500' : ''}`}>
                                                 {selectedMods === 'DT' && customDTRate !== '' ?
                                                     formatLength(Math.round(beatmapPreview.total_length / (customDTRate as number))) + ' ▼' :
                                                     formatLength(beatmapPreview.total_length)
                                                 }
+                                            </div>
+                                            <div className="text-center font-bold text-lg">
+                                                {beatmapPreview.max_combo || 0}
                                             </div>
                                             <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.bpm !== undefined ? (moddedStats.bpm > beatmapPreview.bpm + 0.01 ? 'text-red-500' : moddedStats.bpm < beatmapPreview.bpm - 0.01 ? 'text-green-500' : '') : ''}`}>
                                                 {(() => {
@@ -1888,16 +1890,16 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                     <div className="text-center font-medium">AR</div>
                                                     <div className="text-center font-medium">OD</div>
                                                     <div className="text-center font-medium">HP</div>
-                                                    <div className="text-center font-medium">Combo</div>
                                                     <div className="text-center font-bold text-lg">{selection.cs.toFixed(1)}</div>
                                                     <div className="text-center font-bold text-lg">{selection.ar.toFixed(1)}</div>
                                                     <div className="text-center font-bold text-lg">{selection.od.toFixed(1)}</div>
                                                     <div className="text-center font-bold text-lg">{selection.hp.toFixed(1)}</div>
-                                                    <div className="text-center font-bold text-lg">{selection.maxCombo}</div>
-                                                    <div className="text-center font-medium col-span-2">Length</div>
+                                                    <div className="text-center font-medium">Length</div>
+                                                    <div className="text-center font-medium">MaxCombo</div>
                                                     <div className="text-center font-medium">BPM</div>
                                                     <div className="text-center font-medium">★</div>
-                                                    <div className="text-center font-bold text-base col-span-2">{formatLength(selection.totalLength)}</div>
+                                                    <div className="text-center font-bold text-base">{formatLength(selection.totalLength)}</div>
+                                                    <div className="text-center font-bold text-lg">{selection.maxCombo}</div>
                                                     <div className="text-center font-bold text-base">{selection.bpm}</div>
                                                     <div className="text-center font-bold text-base">{selection.starRating.toFixed(2)}</div>
                                                 </div>

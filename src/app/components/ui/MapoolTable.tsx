@@ -483,7 +483,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                             <th className="text-left w-10 flex-1">AR</th>
                             <th className="text-left w-10 flex-1">OD</th>
                             <th className="text-left w-10 flex-1">BPM</th>
-                            <th className="text-left w-10 flex-1">maxCombo</th>
+                            <th className="text-left w-10 flex-2">maxCombo</th>
                             <th className="text-left w-10 flex-1">时长</th>
                             <th className="w-40 flex-none">备注</th>
                         </tr>
@@ -638,7 +638,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
             {/* 详细信息卡片 */}
             {detailCard?.visible && detailCard.row && (
                 <div
-                    className="fixed shadow-lg max-w-sm transition-all duration-200 z-999"
+                    className="fixed shadow-lg min-w-[300px] max-w-sm transition-all duration-200 z-999"
                     style={{
                         left: detailCard.position.x,
                         top: detailCard.position.y,
