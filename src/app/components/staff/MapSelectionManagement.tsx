@@ -889,7 +889,12 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         artist: latestBeatmap.artist,
                         version: latestBeatmap.version,
                         creator: latestBeatmap.creator,
-                        coverUrl: latestBeatmap.cover_url
+                        coverUrl: latestBeatmap.cover_url,
+                        // 直接传递maxCombo和totalLength字段
+                        maxCombo: latestBeatmap.max_combo || 0,
+                        totalLength: selection.selectedMods === 'DT' && selection.customDTRate ?
+                            Math.round(latestBeatmap.total_length / selection.customDTRate) :
+                            latestBeatmap.total_length
                     })
                 });
 
