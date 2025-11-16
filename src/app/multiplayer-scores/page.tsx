@@ -5,6 +5,7 @@ import MultiplayerScoresTable from "../components/ui/MultiplayerScoresTable";
 import TotalScoresByModTable from "../components/ui/TotalScoresByModTable";
 import { MultiplayerRoom, DisplayScore } from "@/lib/multiplayer-types";
 import { MapSelection } from "@/lib/map-selection";
+import { useIsAdmin } from "../components/ConfigProvider";
 
 export default function MultiplayerScoresPage() {
     const [roomUrl, setRoomUrl] = useState('');
@@ -24,6 +25,14 @@ export default function MultiplayerScoresPage() {
     const [loadingRegistrations, setLoadingRegistrations] = useState(false); // 加载已报名数据的状态
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'byPlaylist' | 'byTotal'>('byPlaylist');
+
+    // 管理员控制面板状态
+    const isAdmin = useIsAdmin();
+    const [savedRooms, setSavedRooms] = useState<any[]>([]);
+    const [savingScores, setSavingScores] = useState(false);
+    const [updatingScores, setUpdatingScores] = useState(false);
+    const [saveMessage, setSaveMessage] = useState<string | null>(null);
+    const [saveError, setSaveError] = useState<string | null>(null);
 
     // 从URL参数中提取房间链接并自动加载
     useEffect(() => {
@@ -357,6 +366,107 @@ export default function MultiplayerScoresPage() {
         return "分数查看";
     };
 
+    // 保存分数到数据库
+    const saveScoresToDatabase = async () => {
+        if (!selectedRoom || allScores.length === 0) {
+            setSaveError('没有可保存的分数数据');
+            return;
+        }
+
+        setSavingScores(true);
+        setSaveMessage(null);
+        setSaveError(null);
+
+        try {
+            const response = await fetch('/api/match-scores/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    room: selectedRoom,
+                    scores: allScores
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setSaveMessage(`成功保存 ${data.data.scores_count} 条分数记录`);
+                // 重新加载已保存的房间列表
+                loadSavedRooms();
+            } else {
+                setSaveError(data.error || '保存失败');
+            }
+        } catch (error) {
+            console.error('保存分数时发生错误:', error);
+            setSaveError('网络错误，无法保存分数');
+        } finally {
+            setSavingScores(false);
+        }
+    };
+
+    // 更新数据库中的分数
+    const updateScoresInDatabase = async () => {
+        if (!selectedRoom || allScores.length === 0) {
+            setSaveError('没有可更新的分数数据');
+            return;
+        }
+
+        setUpdatingScores(true);
+        setSaveMessage(null);
+        setSaveError(null);
+
+        try {
+            const response = await fetch('/api/match-scores/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    room: selectedRoom,
+                    scores: allScores
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setSaveMessage(`成功更新 ${data.data.scores_count} 条分数记录`);
+                // 重新加载已保存的房间列表
+                loadSavedRooms();
+            } else {
+                setSaveError(data.error || '更新失败');
+            }
+        } catch (error) {
+            console.error('更新分数时发生错误:', error);
+            setSaveError('网络错误，无法更新分数');
+        } finally {
+            setUpdatingScores(false);
+        }
+    };
+
+    // 加载已保存的房间列表
+    const loadSavedRooms = async () => {
+        try {
+            const response = await fetch('/api/match-scores/save');
+            const data = await response.json();
+
+            if (data.success) {
+                setSavedRooms(data.rooms || []);
+            }
+        } catch (error) {
+            console.error('加载已保存的房间列表时发生错误:', error);
+        }
+    };
+
+    // 页面加载时获取已保存的房间列表
+    useEffect(() => {
+        if (isAdmin) {
+            loadSavedRooms();
+        }
+    }, [isAdmin]);
+
     return (
         <div className="container mx-auto py-8 max-w-full">
             <div className="mb-8">
@@ -364,6 +474,88 @@ export default function MultiplayerScoresPage() {
                     osu! Multiplayer 分数查看
                 </h1>
             </div>
+
+            {/* 管理员控制面板 */}
+            {isAdmin && (
+                <div className="bg-[#2D2D2D] p-6 mb-6 border-l-4 border-[#E93B66]">
+                    <h2 className="text-xl font-bold text-white mb-4">管理员控制面板</h2>
+
+                    {/* 操作按钮 */}
+                    <div className="flex gap-4 mb-4">
+                        <button
+                            onClick={saveScoresToDatabase}
+                            disabled={savingScores || !selectedRoom || allScores.length === 0}
+                            className={`px-4 py-2 rounded font-medium transition ${savingScores || !selectedRoom || allScores.length === 0
+                                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                    : 'bg-green-600 text-white hover:bg-green-700'
+                                }`}
+                        >
+                            {savingScores ? '保存中...' : '保存到数据库'}
+                        </button>
+
+                        <button
+                            onClick={updateScoresInDatabase}
+                            disabled={updatingScores || !selectedRoom || allScores.length === 0}
+                            className={`px-4 py-2 rounded font-medium transition ${updatingScores || !selectedRoom || allScores.length === 0
+                                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                                }`}
+                        >
+                            {updatingScores ? '更新中...' : '更新数据库分数'}
+                        </button>
+
+                        <button
+                            onClick={loadSavedRooms}
+                            className="px-4 py-2 bg-gray-600 text-white rounded font-medium hover:bg-gray-700 transition"
+                        >
+                            刷新已保存列表
+                        </button>
+                    </div>
+
+                    {/* 操作状态信息 */}
+                    {saveMessage && (
+                        <div className="bg-green-500 text-white p-3 rounded mb-3">
+                            {saveMessage}
+                        </div>
+                    )}
+
+                    {saveError && (
+                        <div className="bg-red-500 text-white p-3 rounded mb-3">
+                            {saveError}
+                        </div>
+                    )}
+
+                    {/* 已保存的房间列表 */}
+                    {savedRooms.length > 0 && (
+                        <div className="mt-4">
+                            <h3 className="text-lg font-bold text-white mb-2">已保存的房间列表</h3>
+                            <div className="bg-[#3D3D3D] p-4 rounded">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {savedRooms.map(room => (
+                                        <div key={room.id} className="bg-[#4D4D4D] p-3 rounded">
+                                            <div className="text-white">
+                                                <p className="font-bold">{room.name}</p>
+                                                <p className="text-sm text-gray-300">ID: {room.id}</p>
+                                                <p className="text-sm text-gray-300">玩家数: {room.participant_count}</p>
+                                                <p className="text-sm text-gray-300">图池数: {room.playlist_count}</p>
+                                                <p className="text-xs text-gray-400">
+                                                    保存时间: {new Date(room.saved_at).toLocaleString('zh-CN')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {savedRooms.length === 0 && (
+                        <div className="text-gray-400 text-sm">
+                            暂无已保存的房间数据
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* 错误提示 */}
             {error && (
