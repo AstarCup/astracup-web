@@ -449,8 +449,28 @@ export default function TotalScoresByModTable({
         }
     };
 
-    const getScoreStyle = (): string => {
-        return 'text-black font-bold';
+    const getScoreStyle = (rank: number | null): string => {
+        switch (rank) {
+            case 1:
+                return 'text-yellow-500 font-bold'; // 金色
+            case 2:
+                return 'text-gray-400 font-bold'; // 暗银色
+            case 3:
+                return 'text-amber-700 font-bold'; // 铜色
+            default:
+                return 'text-black font-bold';
+        }
+    };
+
+    // 根据排名获取行背景样式
+    const getRowBackgroundStyle = (totalRank: number | null): string => {
+        if (!totalRank) return 'bg-gray-400'; // 无排名的默认背景
+
+        if (totalRank > 16) {
+            return 'bg-gray-300'; // 16名以后的灰色背景
+        }
+
+        return 'bg-white'; // 前16名的默认背景
     };
 
     if (loading) {
@@ -562,7 +582,7 @@ export default function TotalScoresByModTable({
                             {sortedPlayers.map((player, index) => (
                                 <tr
                                     key={player.userId}
-                                    className="border-b border-gray-700 hover:bg-gray-600 transition"
+                                    className={`border-b border-gray-700 hover:bg-gray-600 transition ${getRowBackgroundStyle(player.totalRank)}`}
                                 >
                                     <td className="px-2 py-3 text-center font-mono border-r border-gray-600 bg-[#2D2D2D]">
                                         {player.totalRank ? (
@@ -597,7 +617,7 @@ export default function TotalScoresByModTable({
                                                 className="px-4 py-3 text-center font-mono border-r border-gray-600 last:border-r-0"
                                             >
                                                 {score ? (
-                                                    <span className={getScoreStyle()}>
+                                                    <span className={getScoreStyle(rank)}>
                                                         {score.toLocaleString()}
                                                     </span>
                                                 ) : (
