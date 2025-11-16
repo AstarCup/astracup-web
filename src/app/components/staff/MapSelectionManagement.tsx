@@ -495,7 +495,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             { name: 'WD', description: 'Wind Down - ' },
             { name: 'WG', description: 'Wiggle - ' },
             { name: 'WU', description: 'Wind Up - 精确度挑战' },
-            { name: 'AD+BU:speedx6.0', description: 'AD+BU:speedx6.0' }
+            // 后续添加的特殊mod组合
+            { name: 'AD+BU(RollSpeed:6.0)', description: 'AD+BU(RollSpeed:6.0)' }
         ];
         setAvailableLazerMods(fallbackMods);
     };
@@ -2308,15 +2309,20 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         MOD 名称
                                     </label>
-                                    <input
-                                        type="text"
-                                        defaultValue={editDialog.selection.customModName || ''}
+                                    <select
                                         id="edit-customModName"
-                                        placeholder="输入 Lazer MOD 名称，如 DA、AD、AS 等"
+                                        defaultValue={editDialog.selection.customModName || ''}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    />
+                                    >
+                                        <option value="">选择 MOD...</option>
+                                        {availableLazerMods.map(mod => (
+                                            <option key={mod.name} value={mod.name}>
+                                                {mod.name} - {mod.description}
+                                            </option>
+                                        ))}
+                                    </select>
                                     <p className="text-xs text-gray-500 mt-1">
-                                        例如：DA (Difficulty Adjust)、AD (Approach Different)、AS (Adaptive Speed) 等
+                                        从可用的 Lazer 特有 MOD 中选择
                                     </p>
                                 </div>
                             </div>
