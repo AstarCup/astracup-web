@@ -17,6 +17,7 @@ interface MapSelection {
     starRating: number;
     bpm: number;
     totalLength: number;
+    maxCombo: number;
     ar: number;
     cs: number;
     od: number;
@@ -174,7 +175,9 @@ export default function Mapool() {
             selectedByUsername: map.selectedByUsername || map.selectedBy || '未知',
             selectedAt: map.selectedAt || new Date().toISOString(),
             starRating: map.starRating,
-            approved: map.approved || false
+            approved: map.approved || false,
+            // 添加maxCombo字段
+            maxCombo: map.maxCombo || 0
         }));
     };
 
