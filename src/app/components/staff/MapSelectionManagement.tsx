@@ -1498,11 +1498,12 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                                     {/* 属性信息 */}
                                     <div className="mb-3 text-xs text-gray-600">
-                                        <div className="grid grid-cols-4 gap-1">
+                                        <div className="grid grid-cols-5 gap-1">
                                             <div className="text-center font-medium">CS</div>
                                             <div className="text-center font-medium">AR</div>
                                             <div className="text-center font-medium">OD</div>
                                             <div className="text-center font-medium">HP</div>
+                                            <div className="text-center font-medium">Combo</div>
                                             <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.cs !== undefined ? (moddedStats.cs > beatmapPreview.cs + 0.01 ? 'text-red-500' : moddedStats.cs < beatmapPreview.cs - 0.01 ? 'text-green-500' : '') : ''}`}>
                                                 {(() => {
                                                     const val = moddedStats?.cs ?? beatmapPreview.cs;
@@ -1542,6 +1543,9 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                     }
                                                     return val.toFixed(1);
                                                 })()}
+                                            </div>
+                                            <div className="text-center font-bold text-lg">
+                                                {beatmapPreview.max_combo || 0}
                                             </div>
                                             <div className="text-center font-medium col-span-2">Length</div>
                                             <div className="text-center font-medium">BPM</div>
