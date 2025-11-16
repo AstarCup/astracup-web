@@ -969,6 +969,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         selectedMods?: string;
         category?: string;
         comment?: string;
+        customModName?: string;
+        customDTRate?: number;
     }) => {
         setEditDialog(prev => ({ ...prev, isSubmitting: true }));
 
@@ -2298,6 +2300,53 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             </div>
                         </div>
 
+                        {/* LZ mod 自定义字段 */}
+                        {editDialog.selection.selectedMods === 'LZ' && (
+                            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                <h4 className="font-medium text-blue-800 mb-2">Lazer MOD 设置</h4>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        MOD 名称
+                                    </label>
+                                    <input
+                                        type="text"
+                                        defaultValue={editDialog.selection.customModName || ''}
+                                        id="edit-customModName"
+                                        placeholder="输入 Lazer MOD 名称，如 DA、AD、AS 等"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        例如：DA (Difficulty Adjust)、AD (Approach Different)、AS (Adaptive Speed) 等
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* DT 自定义倍率字段 */}
+                        {editDialog.selection.selectedMods === 'DT' && (
+                            <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-md">
+                                <h4 className="font-medium text-purple-800 mb-2">DT 设置</h4>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        自定义倍率
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="1.0"
+                                        max="2.0"
+                                        defaultValue={editDialog.selection.customDTRate || 1.5}
+                                        id="edit-customDTRate"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        placeholder="1.50"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        默认 1.50 倍，可自定义 1.00-2.00 之间的倍率
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* 备注 */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2326,7 +2375,21 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 onClick={() => {
                                     if (!editDialog.selection) return;
 
-                                    const updates = {
+                                    const updates: {
+                                        title?: string;
+                                        version?: string;
+                                        ar?: number;
+                                        od?: number;
+                                        cs?: number;
+                                        hp?: number;
+                                        bpm?: number;
+                                        totalLength?: number;
+                                        selectedMods?: string;
+                                        category?: string;
+                                        comment?: string;
+                                        customModName?: string;
+                                        customDTRate?: number;
+                                    } = {
                                         title: (document.getElementById('edit-title') as HTMLInputElement)?.value,
                                         version: (document.getElementById('edit-version') as HTMLInputElement)?.value,
                                         ar: parseFloat((document.getElementById('edit-ar') as HTMLInputElement)?.value || '0'),
@@ -2339,6 +2402,22 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         category: (document.getElementById('edit-category') as HTMLSelectElement)?.value,
                                         comment: (document.getElementById('edit-comment') as HTMLTextAreaElement)?.value
                                     };
+
+                                    // 添加 LZ mod 自定义字段
+                                    if (editDialog.selection.selectedMods === 'LZ') {
+                                        const customModNameInput = document.getElementById('edit-customModName') as HTMLInputElement;
+                                        if (customModNameInput) {
+                                            updates.customModName = customModNameInput.value || undefined;
+                                        }
+                                    }
+
+                                    // 添加 DT 自定义倍率字段
+                                    if (editDialog.selection.selectedMods === 'DT') {
+                                        const customDTRateInput = document.getElementById('edit-customDTRate') as HTMLInputElement;
+                                        if (customDTRateInput && customDTRateInput.value) {
+                                            updates.customDTRate = parseFloat(customDTRateInput.value);
+                                        }
+                                    }
 
                                     updateSelectionAttributes(editDialog.selection.id, updates);
                                 }}

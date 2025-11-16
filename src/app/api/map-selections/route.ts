@@ -302,7 +302,10 @@ export async function PUT(request: NextRequest) {
             hp,
             bpm,
             totalLength,
-            category
+            category,
+            // 新增：LZ mod和DT自定义字段
+            customModName,
+            customDTRate
         } = await request.json();
 
         if (!id || !selectedBy) {
@@ -313,24 +316,27 @@ export async function PUT(request: NextRequest) {
         }
 
         // 准备更新数据
-        const updates: { 
-            selectedMods?: string; 
-            comment?: string; 
-            approved?: boolean; 
-            padding?: boolean; 
-            ar?: number; 
-            cs?: number; 
-            od?: number; 
-            hp?: number; 
-            starRating?: number; 
+        const updates: {
+            selectedMods?: string;
+            comment?: string;
+            approved?: boolean;
+            padding?: boolean;
+            ar?: number;
+            cs?: number;
+            od?: number;
+            hp?: number;
+            starRating?: number;
             bpm?: number;
             // 新增：基础属性
             title?: string;
             version?: string;
             totalLength?: number;
             category?: string;
+            // 新增：LZ mod和DT自定义字段
+            customModName?: string;
+            customDTRate?: number;
         } = {};
-        
+
         if (selectedMods !== undefined) updates.selectedMods = selectedMods;
         if (comment !== undefined) updates.comment = comment;
         if (approved !== undefined) updates.approved = approved;
@@ -339,7 +345,9 @@ export async function PUT(request: NextRequest) {
         if (version !== undefined) updates.version = version;
         if (category !== undefined) updates.category = category;
         if (totalLength !== undefined) updates.totalLength = totalLength;
-        
+        if (customModName !== undefined) updates.customModName = customModName;
+        if (customDTRate !== undefined) updates.customDTRate = customDTRate;
+
         // 更新mod加成后的属性
         if (moddedStats) {
             if (moddedStats.ar !== undefined) updates.ar = moddedStats.ar;
