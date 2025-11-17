@@ -378,9 +378,16 @@ export default function MultiplayerScoresPage() {
         setSaveError(null);
 
         try {
-            // 获取当前用户的osuId（这里需要根据实际的用户认证系统获取）
-            // 暂时使用一个默认的管理员ID用于测试
-            const currentUserOsuId = '2'; // 这里需要替换为实际的用户ID获取逻辑
+            // 从session获取当前用户的osuId
+            const sessionResponse = await fetch('/api/session/get');
+            const sessionData = await sessionResponse.json();
+
+            if (!sessionData.success || !sessionData.session?.osuId) {
+                setSaveError('用户未登录或会话无效');
+                return;
+            }
+
+            const currentUserOsuId = sessionData.session.osuId;
 
             const response = await fetch('/api/match-scores/save', {
                 method: 'POST',
@@ -423,9 +430,16 @@ export default function MultiplayerScoresPage() {
         setSaveError(null);
 
         try {
-            // 获取当前用户的osuId（这里需要根据实际的用户认证系统获取）
-            // 暂时使用一个默认的管理员ID用于测试
-            const currentUserOsuId = '2'; // 这里需要替换为实际的用户ID获取逻辑
+            // 从session获取当前用户的osuId
+            const sessionResponse = await fetch('/api/session/get');
+            const sessionData = await sessionResponse.json();
+
+            if (!sessionData.success || !sessionData.session?.osuId) {
+                setSaveError('用户未登录或会话无效');
+                return;
+            }
+
+            const currentUserOsuId = sessionData.session.osuId;
 
             const response = await fetch('/api/match-scores/update', {
                 method: 'POST',
