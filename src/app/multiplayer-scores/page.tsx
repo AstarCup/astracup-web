@@ -378,6 +378,10 @@ export default function MultiplayerScoresPage() {
         setSaveError(null);
 
         try {
+            // 获取当前用户的osuId（这里需要根据实际的用户认证系统获取）
+            // 暂时使用一个默认的管理员ID用于测试
+            const currentUserOsuId = '2'; // 这里需要替换为实际的用户ID获取逻辑
+
             const response = await fetch('/api/match-scores/save', {
                 method: 'POST',
                 headers: {
@@ -385,7 +389,8 @@ export default function MultiplayerScoresPage() {
                 },
                 body: JSON.stringify({
                     room: selectedRoom,
-                    scores: allScores
+                    scores: allScores,
+                    osuId: currentUserOsuId
                 }),
             });
 
@@ -418,6 +423,10 @@ export default function MultiplayerScoresPage() {
         setSaveError(null);
 
         try {
+            // 获取当前用户的osuId（这里需要根据实际的用户认证系统获取）
+            // 暂时使用一个默认的管理员ID用于测试
+            const currentUserOsuId = '2'; // 这里需要替换为实际的用户ID获取逻辑
+
             const response = await fetch('/api/match-scores/update', {
                 method: 'POST',
                 headers: {
@@ -425,7 +434,8 @@ export default function MultiplayerScoresPage() {
                 },
                 body: JSON.stringify({
                     room: selectedRoom,
-                    scores: allScores
+                    scores: allScores,
+                    osuId: currentUserOsuId
                 }),
             });
 
