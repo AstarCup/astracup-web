@@ -281,7 +281,7 @@ export const initDatabase = async (): Promise<void> => {
                 accuracy DECIMAL(5,2) DEFAULT 0 COMMENT '准确率',
                 max_combo INT DEFAULT 0 COMMENT '最大连击',
                 mods VARCHAR(255) COMMENT '使用的mods',
-                rank VARCHAR(10) COMMENT '排名',
+                \`rank\` VARCHAR(10) COMMENT '排名',
                 passed BOOLEAN DEFAULT TRUE COMMENT '是否通过',
                 statistics JSON COMMENT '统计数据',
                 pp DECIMAL(10,2) DEFAULT 0 COMMENT 'PP值',
@@ -1778,7 +1778,7 @@ const mysqlStorage = {
                         room_id, room_name, room_category, room_type, starts_at, ends_at,
                         participant_count, host_osuId, host_username, playlist_count,
                         user_id, username, playlist_id, beatmap_id, total_score, accuracy,
-                        max_combo, mods, rank, passed, statistics, pp, ended_at
+                        max_combo, mods, \`rank\`, passed, statistics, pp, ended_at
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `, [
                     room.id,
@@ -1864,7 +1864,7 @@ const mysqlStorage = {
                         room_id, room_name, room_category, room_type, starts_at, ends_at,
                         participant_count, host_osuId, host_username, playlist_count,
                         user_id, username, playlist_id, beatmap_id, total_score, accuracy,
-                        max_combo, mods, rank, passed, statistics, pp, ended_at
+                        max_combo, mods, \`rank\`, passed, statistics, pp, ended_at
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `, [
                     room.id,
