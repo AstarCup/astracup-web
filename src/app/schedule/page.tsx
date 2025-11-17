@@ -136,8 +136,7 @@ export default function Schedule() {
 
             <div>
                 <h2 className="text-2xl font-semibold mb-4 text-white">比赛对阵表</h2>
-
-                <iframe src="https://challonge.com/zh_CN/MWC4K2025/module" width="100%" height="800"></iframe>
+                <iframe src="https://challonge.com/zh_CN/af6qbeto/module" width="100%" height="800"></iframe>
             </div>
         </div>
     );

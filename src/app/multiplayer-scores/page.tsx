@@ -378,6 +378,17 @@ export default function MultiplayerScoresPage() {
         setSaveError(null);
 
         try {
+            // 从session获取当前用户的osuId
+            const sessionResponse = await fetch('/api/session/get');
+            const sessionData = await sessionResponse.json();
+
+            if (!sessionData.success || !sessionData.session?.osuId) {
+                setSaveError('用户未登录或会话无效');
+                return;
+            }
+
+            const currentUserOsuId = sessionData.session.osuId;
+
             const response = await fetch('/api/match-scores/save', {
                 method: 'POST',
                 headers: {
@@ -385,7 +396,8 @@ export default function MultiplayerScoresPage() {
                 },
                 body: JSON.stringify({
                     room: selectedRoom,
-                    scores: allScores
+                    scores: allScores,
+                    osuId: currentUserOsuId
                 }),
             });
 
@@ -418,6 +430,17 @@ export default function MultiplayerScoresPage() {
         setSaveError(null);
 
         try {
+            // 从session获取当前用户的osuId
+            const sessionResponse = await fetch('/api/session/get');
+            const sessionData = await sessionResponse.json();
+
+            if (!sessionData.success || !sessionData.session?.osuId) {
+                setSaveError('用户未登录或会话无效');
+                return;
+            }
+
+            const currentUserOsuId = sessionData.session.osuId;
+
             const response = await fetch('/api/match-scores/update', {
                 method: 'POST',
                 headers: {
@@ -425,7 +448,8 @@ export default function MultiplayerScoresPage() {
                 },
                 body: JSON.stringify({
                     room: selectedRoom,
-                    scores: allScores
+                    scores: allScores,
+                    osuId: currentUserOsuId
                 }),
             });
 

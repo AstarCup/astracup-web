@@ -62,6 +62,8 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
     const [userIdInput, setUserIdInput] = useState('');
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
     const [fetchingUser, setFetchingUser] = useState(false);
+    const [initializingDatabase, setInitializingDatabase] = useState(false);
+    const [databaseStatus, setDatabaseStatus] = useState<string>('');
 
     useEffect(() => {
         fetchSettings();
@@ -193,6 +195,41 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
         setCurrentGroupType(null);
         setUserIdInput('');
         setUserInfo(null);
+    };
+
+    const handleInitializeDatabase = async () => {
+        if (!isAdmin) {
+            showError('权限不足');
+            return;
+        }
+
+        try {
+            setInitializingDatabase(true);
+            setDatabaseStatus('正在初始化数据库...');
+
+            const response = await fetch('/api/admin/init-database', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setDatabaseStatus('数据库初始化成功！');
+                showSuccess('数据库初始化成功');
+            } else {
+                setDatabaseStatus(`初始化失败: ${data.error}`);
+                showError(data.error || '数据库初始化失败');
+            }
+        } catch (error) {
+            console.error('Error initializing database:', error);
+            setDatabaseStatus('初始化过程中发生错误');
+            showError('数据库初始化失败');
+        } finally {
+            setInitializingDatabase(false);
+        }
     };
 
     const getGroupName = (groupType: 'admin_group' | 'map_selection_group' | 'map_testing_group' | 'streamer_group' | 'referee_group' | 'commentator_group') => {
@@ -392,6 +429,45 @@ export default function SettingsManagement({ userOsuId, isAdmin }: SettingsManag
                         {renderUserList('streamer_group', formData.streamer_group)}
                         {renderUserList('referee_group', formData.referee_group)}
                         {renderUserList('commentator_group', formData.commentator_group)}
+                    </div>
+
+                    {/* 数据库初始化 */}
+                    <div className="border-t border-gray-600 pt-6">
+                        <h4 className="text-lg font-bold text-white mb-4 flex items-center">
+                            <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
+                            数据库管理
+                        </h4>
+                        <div className="bg-[#2a2a2a] p-4 rounded-md border border-gray-600">
+                            <div className="space-y-4">
+                                <div>
+                                    <p className="text-gray-300 text-sm mb-2">
+                                        初始化比赛分数数据库表。此操作将创建必要的数据库表结构，用于存储比赛分数数据。
+                                    </p>
+                                    <p className="text-yellow-400 text-xs mb-4">
+                                        注意：此操作只会创建表结构，不会删除或修改现有数据。
+                                    </p>
+                                </div>
+
+                                <div className="flex items-center space-x-4">
+                                    <button
+                                        onClick={handleInitializeDatabase}
+                                        disabled={initializingDatabase || !isAdmin}
+                                        className="px-6 py-2 bg-[#E93B66] text-white rounded-md hover:bg-[#d32f5a] disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                                    >
+                                        {initializingDatabase && (
+                                            <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
+                                        )}
+                                        {initializingDatabase ? '初始化中...' : '初始化数据库'}
+                                    </button>
+
+                                    {databaseStatus && (
+                                        <div className={`text-sm ${databaseStatus.includes('成功') ? 'text-green-400' : databaseStatus.includes('失败') ? 'text-red-400' : 'text-yellow-400'}`}>
+                                            {databaseStatus}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* 保存按钮 */}

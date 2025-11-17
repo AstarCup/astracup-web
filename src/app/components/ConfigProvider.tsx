@@ -41,23 +41,66 @@ export function useConfig() {
 // 检查用户是否为管理员的Hook
 export function useIsAdmin(): boolean {
     const { tournamentSettings } = useConfig();
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // 这里需要根据实际的用户认证系统来获取当前用户ID
-    // 暂时返回true用于测试，实际使用时需要替换为真实的用户ID获取逻辑
-    const getCurrentUserId = (): string | null => {
-        // TODO: 从session或cookie中获取当前用户ID
-        // 例如：从localStorage或sessionStorage中获取
-        // 暂时返回一个测试ID
-        return 'test_admin_id';
-    };
+    useEffect(() => {
+        const checkAdminStatus = async () => {
+            try {
+                setIsLoading(true);
 
-    const currentUserId = getCurrentUserId();
+                // 从session API获取当前用户信息
+                const sessionResponse = await fetch('/api/session/get');
+                const sessionData = await sessionResponse.json();
 
-    if (!currentUserId || !tournamentSettings) {
+                if (!sessionData.success || !sessionData.session?.osuId) {
+                    setIsAdmin(false);
+                    setIsLoading(false);
+                    return;
+                }
+
+                const currentUserId = sessionData.session.osuId;
+
+                // 如果已经有tournamentSettings，直接检查
+                if (tournamentSettings?.admin_group) {
+                    const isUserAdmin = tournamentSettings.admin_group.includes(currentUserId);
+                    setIsAdmin(isUserAdmin);
+                    setIsLoading(false);
+                    return;
+                }
+
+                // 如果没有tournamentSettings，通过admin-check API验证
+                const adminResponse = await fetch('/api/admin-check', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ osuId: currentUserId }),
+                });
+
+                if (adminResponse.ok) {
+                    const adminData = await adminResponse.json();
+                    setIsAdmin(adminData.isAdmin || false);
+                } else {
+                    setIsAdmin(false);
+                }
+            } catch (error) {
+                console.error('Error checking admin status:', error);
+                setIsAdmin(false);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        checkAdminStatus();
+    }, [tournamentSettings]);
+
+    // 在加载期间返回false，避免权限检查闪烁
+    if (isLoading) {
         return false;
     }
 
-    return tournamentSettings.admin_group.includes(currentUserId);
+    return isAdmin;
 }
 
 interface ConfigProviderProps {

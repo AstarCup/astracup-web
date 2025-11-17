@@ -88,13 +88,13 @@ body {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 1rem;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: white;
   /* border-radius: 0.5rem; */
   overflow: hidden;
 }
 
 .markdown-content th {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: #E93B66;
   color: white;
   font-weight: 600;
   padding: 0.75rem;
@@ -103,9 +103,13 @@ body {
 }
 
 .markdown-content td {
-  color: white;
+  color: black;
   padding: 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.markdown-content td strong {
+  color: #E93B66;
 }
 
 .markdown-content tr:hover {
@@ -284,7 +288,7 @@ body {
 }
 
 .prose th {
-  background-color: #374151;
+  background-color: #E93B66;
   color: white;
   padding: 0.75rem;
   text-align: left;
@@ -293,9 +297,13 @@ body {
 }
 
 .prose td {
-  color: white;
+  color: black;
   padding: 0.75rem;
   border: 1px solid #4b5563;
+}
+
+.prose td strong {
+  color: #E93B66;
 }
 
 .prose img {

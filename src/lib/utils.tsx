@@ -3,6 +3,7 @@ import path from 'path';
 import matter from 'gray-matter';
 import { remark } from 'remark';
 import html from 'remark-html';
+import remarkGfm from 'remark-gfm';
 
 const NEWS_DIR = path.join(process.cwd(), 'src', 'app', 'news', 'content');
 
@@ -28,13 +29,13 @@ export function createSafeSlug(filename: string, index: number): string {
 export function getFilenameFromSlug(slug: string, allFiles: string[]): string {
     // 解码 URL 编码的字符
     const decodedSlug = decodeURIComponent(slug);
-    
+
     // 首先尝试直接匹配
-    const directMatch = allFiles.find(file => 
+    const directMatch = allFiles.find(file =>
         file.replace('.md', '') === decodedSlug
     );
     if (directMatch) return directMatch;
-    
+
     // 如果是 news-X 格式，通过索引查找
     const indexMatch = decodedSlug.match(/^news-(\d+)$/);
     if (indexMatch) {
@@ -43,7 +44,7 @@ export function getFilenameFromSlug(slug: string, allFiles: string[]): string {
             return allFiles[index];
         }
     }
-    
+
     // 如果都找不到，抛出错误
     throw new Error(`无法找到对应的新闻文件: ${slug}`);
 }
@@ -72,9 +73,12 @@ export async function getNewsContent(slug: string) {
     const allFiles = getNewsSlugs();
     // 从 slug 获取正确的文件名
     const fileName = getFilenameFromSlug(slug, allFiles);
-    
+
     const post = getNewsBySlug(fileName);
-    const processedContent = await remark().use(html).process(post.content);
+    const processedContent = await remark()
+        .use(remarkGfm)      // 支持 GitHub Flavored Markdown (表格、删除线、任务列表等)
+        .use(html)
+        .process(post.content);
     const contentHtml = processedContent.toString();
 
     return {
