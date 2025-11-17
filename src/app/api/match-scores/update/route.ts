@@ -1,26 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateMatchScores, getRoomScores } from '@/lib/mysql-registrations';
+import { updateMatchScores, getRoomScores, getTournamentSettings } from '@/lib/mysql-registrations';
 
 export async function POST(request: NextRequest) {
     try {
-        // 验证管理员权限
-        const adminCheckResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/admin-check`);
-        const adminCheckData = await adminCheckResponse.json();
+        const body = await request.json();
+        const { room, scores, osuId } = body;
 
-        if (!adminCheckData.isAdmin) {
+        if (!room || !scores || !osuId) {
             return NextResponse.json(
-                { success: false, error: '权限不足，只有管理员可以执行此操作' },
-                { status: 403 }
+                { success: false, error: '缺少必要的参数：room、scores 或 osuId' },
+                { status: 400 }
             );
         }
 
-        const body = await request.json();
-        const { room, scores } = body;
+        // 直接验证管理员权限
+        let adminList: string[] = [];
 
-        if (!room || !scores) {
+        // 优先尝试从数据库获取管理员列表
+        try {
+            const tournamentSettings = await getTournamentSettings();
+            if (tournamentSettings?.admin_group && Array.isArray(tournamentSettings.admin_group)) {
+                adminList = tournamentSettings.admin_group.filter((id: any): id is string =>
+                    typeof id === 'string' && id.trim() !== ''
+                );
+            }
+        } catch (dbError) {
+            console.warn('Failed to fetch admin list from database:', dbError);
+        }
+
+        // 检查osu ID是否在管理员列表中
+        const userIdStr = osuId.toString();
+        const userIdNum = parseInt(osuId);
+
+        const isAdmin = adminList.some(adminId => {
+            const adminIdStr = adminId.toString();
+            const adminIdNum = parseInt(adminId);
+            return adminIdStr === userIdStr || adminIdNum === userIdNum;
+        });
+
+        if (!isAdmin) {
             return NextResponse.json(
-                { success: false, error: '缺少必要的参数：room 或 scores' },
-                { status: 400 }
+                { success: false, error: '权限不足，只有管理员可以执行此操作' },
+                { status: 403 }
             );
         }
 
