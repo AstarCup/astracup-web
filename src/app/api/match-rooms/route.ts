@@ -34,15 +34,6 @@ export async function GET(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // 检查用户权限（只有管理员可以查看比赛房间）
-        const permissions = await getUserPermissions(osuId);
-        if (!permissions.isAdmin) {
-            return NextResponse.json({
-                success: false,
-                error: '权限不足，只有管理员可以查看比赛房间'
-            }, { status: 403 });
-        }
-
         // 检查是否请求包含比赛预约信息的房间数据
         const { searchParams } = new URL(request.url);
         const withSchedules = searchParams.get('withSchedules') === 'true';
