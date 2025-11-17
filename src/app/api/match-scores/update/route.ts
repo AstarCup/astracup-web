@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MultiplayerRoom, DisplayScore } from '@/lib/multiplayer-types';
-
-// 使用与保存接口相同的模拟存储
-let savedRooms: any[] = [];
-let savedScores: any[] = [];
+import { updateMatchScores, getRoomScores } from '@/lib/mysql-registrations';
 
 export async function POST(request: NextRequest) {
     try {
@@ -28,62 +24,35 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 检查房间是否已经保存过
-        const existingRoomIndex = savedRooms.findIndex(r => r.id === room.id);
-        if (existingRoomIndex === -1) {
+        // 使用数据库更新分数
+        const result = await updateMatchScores(room, scores);
+
+        if (!result.success) {
             return NextResponse.json(
-                { success: false, error: '该房间尚未保存，请先保存房间' },
+                { success: false, error: result.error },
                 { status: 400 }
             );
         }
 
-        // 更新房间信息
-        const updatedRoomData = {
-            ...savedRooms[existingRoomIndex],
-            name: room.name,
-            category: room.category,
-            participant_count: room.participant_count,
-            host: room.host,
-            playlist_count: room.playlist.length,
-            updated_at: new Date().toISOString()
-        };
-
-        savedRooms[existingRoomIndex] = updatedRoomData;
-
-        // 删除该房间原有的分数数据
-        savedScores = savedScores.filter(score => score.room_id !== room.id);
-
-        // 保存新的分数数据
-        const scoreData = scores.map((score: DisplayScore & { playlistId?: number, beatmapId?: number }) => ({
-            room_id: room.id,
-            user_id: score.user_id,
-            username: score.username,
-            playlist_id: score.playlistId,
-            beatmap_id: score.beatmapId,
-            total_score: score.total_score,
-            accuracy: score.accuracy,
-            max_combo: score.max_combo,
-            mods: score.mods,
-            rank: score.rank,
-            passed: score.passed,
-            statistics: score.statistics,
-            pp: score.pp,
-            ended_at: score.ended_at,
-            saved_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-        }));
-
-        savedScores.push(...scoreData);
-
         console.log(`成功更新房间 ${room.name} 的分数数据`);
-        console.log(`更新了 ${scoreData.length} 条分数记录`);
+        console.log(`更新了 ${result.scores_count} 条分数记录`);
 
         return NextResponse.json({
             success: true,
             message: '分数更新成功',
             data: {
-                room: updatedRoomData,
-                scores_count: scoreData.length
+                room: {
+                    id: room.id,
+                    name: room.name,
+                    category: room.category,
+                    type: room.type,
+                    starts_at: room.starts_at,
+                    ends_at: room.ends_at,
+                    participant_count: room.participant_count,
+                    host: room.host,
+                    playlist_count: room.playlist?.length || 0
+                },
+                scores_count: result.scores_count
             }
         });
 
@@ -109,7 +78,8 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        const room = savedRooms.find(r => r.id === parseInt(roomId));
+        const { room, scores } = await getRoomScores(parseInt(roomId));
+
         if (!room) {
             return NextResponse.json(
                 { success: false, error: '未找到该房间的保存数据' },
@@ -117,13 +87,11 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        const roomScores = savedScores.filter(score => score.room_id === parseInt(roomId));
-
         return NextResponse.json({
             success: true,
             room,
-            scores: roomScores,
-            scores_count: roomScores.length
+            scores,
+            scores_count: scores.length
         });
 
     } catch (error) {

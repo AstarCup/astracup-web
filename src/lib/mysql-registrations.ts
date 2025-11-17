@@ -259,6 +259,45 @@ export const initDatabase = async (): Promise<void> => {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
 
+        // 创建比赛分数表（如果不存在）
+        await connection.execute(`
+            CREATE TABLE IF NOT EXISTS match_scores (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                room_id BIGINT NOT NULL COMMENT '房间ID',
+                room_name VARCHAR(255) NOT NULL COMMENT '房间名称',
+                room_category VARCHAR(50) COMMENT '房间类型',
+                room_type VARCHAR(50) COMMENT '房间模式',
+                starts_at DATETIME NULL COMMENT '房间开始时间',
+                ends_at DATETIME NULL COMMENT '房间结束时间',
+                participant_count INT DEFAULT 0 COMMENT '参与人数',
+                host_osuId VARCHAR(255) COMMENT '房主osuId',
+                host_username VARCHAR(255) COMMENT '房主用户名',
+                playlist_count INT DEFAULT 0 COMMENT '图池数量',
+                user_id BIGINT NOT NULL COMMENT '用户ID',
+                username VARCHAR(255) NOT NULL COMMENT '用户名',
+                playlist_id BIGINT COMMENT '图池ID',
+                beatmap_id BIGINT COMMENT '谱面ID',
+                total_score BIGINT DEFAULT 0 COMMENT '总分',
+                accuracy DECIMAL(5,2) DEFAULT 0 COMMENT '准确率',
+                max_combo INT DEFAULT 0 COMMENT '最大连击',
+                mods VARCHAR(255) COMMENT '使用的mods',
+                rank VARCHAR(10) COMMENT '排名',
+                passed BOOLEAN DEFAULT TRUE COMMENT '是否通过',
+                statistics JSON COMMENT '统计数据',
+                pp DECIMAL(10,2) DEFAULT 0 COMMENT 'PP值',
+                ended_at DATETIME NULL COMMENT '分数结束时间',
+                saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '保存时间',
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_score (room_id, user_id, playlist_id, beatmap_id),
+                INDEX idx_room_id (room_id),
+                INDEX idx_user_id (user_id),
+                INDEX idx_username (username),
+                INDEX idx_playlist_id (playlist_id),
+                INDEX idx_beatmap_id (beatmap_id),
+                INDEX idx_saved_at (saved_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
         // 检查tournament_settings表是否有数据，如果没有则插入默认数据
         const [settingsRows] = await connection.execute(
             `SELECT COUNT(*) as count FROM tournament_settings`
@@ -1707,6 +1746,277 @@ const mysqlStorage = {
             console.error('Error updating tournament settings:', error);
             return false;
         }
+    },
+
+    // 保存比赛分数到数据库
+    saveMatchScores: async (room: any, scores: any[]): Promise<{ success: boolean; scores_count: number; error?: string }> => {
+        const connection = await getPool().getConnection();
+
+        try {
+            await connection.beginTransaction();
+
+            // 检查房间是否已经保存过
+            const [existingScores] = await connection.execute(
+                'SELECT COUNT(*) as count FROM match_scores WHERE room_id = ?',
+                [room.id]
+            );
+
+            const existingCount = (existingScores as any[])[0]?.count || 0;
+            if (existingCount > 0) {
+                await connection.rollback();
+                return {
+                    success: false,
+                    scores_count: 0,
+                    error: '该房间已经保存过'
+                };
+            }
+
+            // 批量插入分数数据
+            const insertPromises = scores.map(score => {
+                return connection.execute(`
+                    INSERT INTO match_scores (
+                        room_id, room_name, room_category, room_type, starts_at, ends_at,
+                        participant_count, host_osuId, host_username, playlist_count,
+                        user_id, username, playlist_id, beatmap_id, total_score, accuracy,
+                        max_combo, mods, rank, passed, statistics, pp, ended_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `, [
+                    room.id,
+                    room.name,
+                    room.category,
+                    room.type,
+                    room.starts_at ? new Date(room.starts_at) : null,
+                    room.ends_at ? new Date(room.ends_at) : null,
+                    room.participant_count,
+                    room.host?.id,
+                    room.host?.username,
+                    room.playlist?.length || 0,
+                    score.user_id,
+                    score.username,
+                    score.playlistId,
+                    score.beatmapId,
+                    score.total_score,
+                    score.accuracy,
+                    score.max_combo,
+                    score.mods?.join(',') || '',
+                    score.rank,
+                    score.passed,
+                    JSON.stringify(score.statistics || {}),
+                    score.pp,
+                    score.ended_at ? new Date(score.ended_at) : null
+                ]);
+            });
+
+            await Promise.all(insertPromises);
+            await connection.commit();
+
+            return {
+                success: true,
+                scores_count: scores.length
+            };
+
+        } catch (error) {
+            await connection.rollback();
+            console.error('Error saving match scores to database:', error);
+            return {
+                success: false,
+                scores_count: 0,
+                error: '保存分数时发生数据库错误'
+            };
+        } finally {
+            connection.release();
+        }
+    },
+
+    // 更新比赛分数到数据库
+    updateMatchScores: async (room: any, scores: any[]): Promise<{ success: boolean; scores_count: number; error?: string }> => {
+        const connection = await getPool().getConnection();
+
+        try {
+            await connection.beginTransaction();
+
+            // 检查房间是否存在
+            const [existingScores] = await connection.execute(
+                'SELECT COUNT(*) as count FROM match_scores WHERE room_id = ?',
+                [room.id]
+            );
+
+            const existingCount = (existingScores as any[])[0]?.count || 0;
+            if (existingCount === 0) {
+                await connection.rollback();
+                return {
+                    success: false,
+                    scores_count: 0,
+                    error: '该房间尚未保存，请先保存房间'
+                };
+            }
+
+            // 删除该房间原有的分数数据
+            await connection.execute(
+                'DELETE FROM match_scores WHERE room_id = ?',
+                [room.id]
+            );
+
+            // 批量插入新的分数数据
+            const insertPromises = scores.map(score => {
+                return connection.execute(`
+                    INSERT INTO match_scores (
+                        room_id, room_name, room_category, room_type, starts_at, ends_at,
+                        participant_count, host_osuId, host_username, playlist_count,
+                        user_id, username, playlist_id, beatmap_id, total_score, accuracy,
+                        max_combo, mods, rank, passed, statistics, pp, ended_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `, [
+                    room.id,
+                    room.name,
+                    room.category,
+                    room.type,
+                    room.starts_at ? new Date(room.starts_at) : null,
+                    room.ends_at ? new Date(room.ends_at) : null,
+                    room.participant_count,
+                    room.host?.id,
+                    room.host?.username,
+                    room.playlist?.length || 0,
+                    score.user_id,
+                    score.username,
+                    score.playlistId,
+                    score.beatmapId,
+                    score.total_score,
+                    score.accuracy,
+                    score.max_combo,
+                    score.mods?.join(',') || '',
+                    score.rank,
+                    score.passed,
+                    JSON.stringify(score.statistics || {}),
+                    score.pp,
+                    score.ended_at ? new Date(score.ended_at) : null
+                ]);
+            });
+
+            await Promise.all(insertPromises);
+            await connection.commit();
+
+            return {
+                success: true,
+                scores_count: scores.length
+            };
+
+        } catch (error) {
+            await connection.rollback();
+            console.error('Error updating match scores in database:', error);
+            return {
+                success: false,
+                scores_count: 0,
+                error: '更新分数时发生数据库错误'
+            };
+        } finally {
+            connection.release();
+        }
+    },
+
+    // 获取已保存的房间列表
+    getSavedRooms: async (): Promise<any[]> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            const [rows] = await connection.execute(`
+                SELECT 
+                    room_id as id,
+                    room_name as name,
+                    room_category as category,
+                    room_type as type,
+                    starts_at,
+                    ends_at,
+                    participant_count,
+                    host_username,
+                    playlist_count,
+                    COUNT(*) as scores_count,
+                    MAX(saved_at) as saved_at
+                FROM match_scores 
+                GROUP BY room_id, room_name, room_category, room_type, starts_at, ends_at, participant_count, host_username, playlist_count
+                ORDER BY saved_at DESC
+            `);
+
+            connection.release();
+
+            return (rows as any[]).map(row => ({
+                id: row.id,
+                name: row.name,
+                category: row.category,
+                type: row.type,
+                starts_at: row.starts_at,
+                ends_at: row.ends_at,
+                participant_count: row.participant_count,
+                host: { username: row.host_username },
+                playlist_count: row.playlist_count,
+                scores_count: row.scores_count,
+                saved_at: row.saved_at
+            }));
+        } catch (error) {
+            console.error('Error getting saved rooms:', error);
+            return [];
+        }
+    },
+
+    // 获取特定房间的保存数据
+    getRoomScores: async (roomId: number): Promise<{ room: any; scores: any[] }> => {
+        try {
+            const connection = await getPool().getConnection();
+
+            // 获取房间信息
+            const [roomRows] = await connection.execute(`
+                SELECT 
+                    room_id as id,
+                    room_name as name,
+                    room_category as category,
+                    room_type as type,
+                    starts_at,
+                    ends_at,
+                    participant_count,
+                    host_osuId,
+                    host_username,
+                    playlist_count,
+                    MAX(saved_at) as saved_at
+                FROM match_scores 
+                WHERE room_id = ?
+                GROUP BY room_id, room_name, room_category, room_type, starts_at, ends_at, participant_count, host_osuId, host_username, playlist_count
+            `, [roomId]);
+
+            // 获取分数数据
+            const [scoreRows] = await connection.execute(`
+                SELECT 
+                    user_id, username, playlist_id, beatmap_id, total_score, accuracy,
+                    max_combo, mods, rank, passed, statistics, pp, ended_at, saved_at
+                FROM match_scores 
+                WHERE room_id = ?
+                ORDER BY playlist_id, total_score DESC
+            `, [roomId]);
+
+            connection.release();
+
+            const room = (roomRows as any[])[0] || null;
+            const scores = (scoreRows as any[]).map(row => ({
+                user_id: row.user_id,
+                username: row.username,
+                playlistId: row.playlist_id,
+                beatmapId: row.beatmap_id,
+                total_score: row.total_score,
+                accuracy: row.accuracy,
+                max_combo: row.max_combo,
+                mods: row.mods ? row.mods.split(',') : [],
+                rank: row.rank,
+                passed: row.passed,
+                statistics: row.statistics ? JSON.parse(row.statistics) : {},
+                pp: row.pp,
+                ended_at: row.ended_at,
+                saved_at: row.saved_at
+            }));
+
+            return { room, scores };
+        } catch (error) {
+            console.error('Error getting room scores:', error);
+            return { room: null, scores: [] };
+        }
     }
 };
 
@@ -1812,3 +2122,9 @@ export const getMatchRoomsWithSchedules = mysqlStorage.getMatchRoomsWithSchedule
 // 比赛设置相关函数
 export const getTournamentSettings = mysqlStorage.getTournamentSettings;
 export const updateTournamentSettings = mysqlStorage.updateTournamentSettings;
+
+// 比赛分数相关函数
+export const saveMatchScores = mysqlStorage.saveMatchScores;
+export const updateMatchScores = mysqlStorage.updateMatchScores;
+export const getSavedRooms = mysqlStorage.getSavedRooms;
+export const getRoomScores = mysqlStorage.getRoomScores;
