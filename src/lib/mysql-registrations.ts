@@ -1290,44 +1290,52 @@ const mysqlStorage = {
 
             connection.release();
 
-            return (rows as any[]).map(row => ({
-                id: row.id,
-                room_id: row.room_id,
-                player1_osuId: row.player1_osuId,
-                player1_username: row.player1_username,
-                player1_avatar_url: row.player1_avatar_url,
-                player2_osuId: row.player2_osuId,
-                player2_username: row.player2_username,
-                player2_avatar_url: row.player2_avatar_url,
-                red_player_osuId: row.red_player_osuId,
-                blue_player_osuId: row.blue_player_osuId,
-                red_score: row.red_score,
-                blue_score: row.blue_score,
-                status: row.status,
-                replay_link: row.replay_link,
-                match_link: row.match_link,
-                referee_osuId: row.referee_osuId,
-                referee_username: row.referee_username,
-                commentator_osuId: row.commentator_osuId,
-                commentator_username: row.commentator_username,
-                created_by: row.created_by,
-                created_at: row.created_at,
-                updated_at: row.updated_at,
-                room: {
-                    id: row.room_id,
-                    room_name: row.room_name,
-                    round_number: row.round_number,
-                    match_date: row.match_date,
-                    match_time: row.match_time,
-                    match_number: row.match_number,
-                    max_participants: row.max_participants,
-                    status: row.status,
-                    description: row.description,
+            const schedules = (rows as any[]).map(row => {
+                // 调试日志：检查status字段
+                console.log(`[DEBUG] Schedule ${row.id}: status = ${row.status}, type = ${typeof row.status}`);
+
+                return {
+                    id: row.id,
+                    room_id: row.room_id,
+                    player1_osuId: row.player1_osuId,
+                    player1_username: row.player1_username,
+                    player1_avatar_url: row.player1_avatar_url,
+                    player2_osuId: row.player2_osuId,
+                    player2_username: row.player2_username,
+                    player2_avatar_url: row.player2_avatar_url,
+                    red_player_osuId: row.red_player_osuId,
+                    blue_player_osuId: row.blue_player_osuId,
+                    red_score: row.red_score,
+                    blue_score: row.blue_score,
+                    status: row.status || 'pending', // 确保有默认值
+                    replay_link: row.replay_link,
+                    match_link: row.match_link,
+                    referee_osuId: row.referee_osuId,
+                    referee_username: row.referee_username,
+                    commentator_osuId: row.commentator_osuId,
+                    commentator_username: row.commentator_username,
                     created_by: row.created_by,
                     created_at: row.created_at,
-                    updated_at: row.updated_at
-                }
-            }));
+                    updated_at: row.updated_at,
+                    room: {
+                        id: row.room_id,
+                        room_name: row.room_name,
+                        round_number: row.round_number,
+                        match_date: row.match_date,
+                        match_time: row.match_time,
+                        match_number: row.match_number,
+                        max_participants: row.max_participants,
+                        status: row.status,
+                        description: row.description,
+                        created_by: row.created_by,
+                        created_at: row.created_at,
+                        updated_at: row.updated_at
+                    }
+                };
+            });
+
+            console.log(`[DEBUG] Total schedules returned: ${schedules.length}`);
+            return schedules;
         } catch (error) {
             console.error('Error getting all match schedules:', error);
             return [];

@@ -38,6 +38,14 @@ export async function GET(_request: NextRequest) {
             schedules = await getAllMatchSchedules();
         }
 
+        // 调试日志：检查返回的status字段
+        console.log('[DEBUG API] Returning schedules:', schedules);
+        if (schedules && schedules.length > 0) {
+            schedules.forEach((schedule: any, index: number) => {
+                console.log(`[DEBUG API] Schedule ${index}: id=${schedule.id}, status=${schedule.status}, type=${typeof schedule.status}`);
+            });
+        }
+
         return NextResponse.json({
             success: true,
             schedules

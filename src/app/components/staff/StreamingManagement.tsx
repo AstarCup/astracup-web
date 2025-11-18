@@ -73,8 +73,12 @@ export default function StreamingManagement({
 
     // 格式化日期和时间字符串 - 使用本地化时间显示
     const formatDateTimeFromStrings = (dateString: string | undefined, timeString: string | undefined) => {
+        // 调试日志：检查输入参数
+        console.log('[DEBUG] formatDateTimeFromStrings 输入:', { dateString, timeString });
+
         // 检查日期是否为空或无效
         if (!dateString || dateString === '0000-00-00' || dateString === 'Invalid Date' || dateString === 'null') {
+            console.log('[DEBUG] 日期为空或无效，返回"时间未定"');
             return '时间未定';
         }
 
@@ -84,7 +88,14 @@ export default function StreamingManagement({
             // 检查是否是ISO格式的日期时间字符串（包含T和Z）
             if (dateString.includes('T') && dateString.includes('Z')) {
                 // 直接使用ISO格式的日期时间，忽略timeString参数
+                console.log('[DEBUG] 检测到ISO格式日期，直接解析:', dateString);
                 date = new Date(dateString);
+
+                // 如果是UTC时间，转换为北京时间（UTC+8）
+                if (dateString.endsWith('Z')) {
+                    date = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+                    console.log('[DEBUG] UTC时间转换为北京时间:', date);
+                }
             } else {
                 // 处理MySQL格式：DATE + TIME
                 // 处理空时间的情况，MySQL TIME 类型可能返回 '00:00:00'
@@ -92,17 +103,18 @@ export default function StreamingManagement({
 
                 // 创建日期对象，MySQL DATE 格式为 'YYYY-MM-DD', TIME 格式为 'HH:MM:SS'
                 const dateTimeString = `${dateString}T${time}+08:00`;
+                console.log('[DEBUG] MySQL格式日期时间字符串:', dateTimeString);
                 date = new Date(dateTimeString);
             }
 
             // 检查日期是否有效
             if (isNaN(date.getTime())) {
-                console.warn('无效的日期时间:', dateString, timeString);
+                console.warn('[DEBUG] 无效的日期时间:', dateString, timeString);
                 return '时间未定';
             }
 
             // 格式化日期时间，显示为中文格式
-            return date.toLocaleString('zh-CN', {
+            const formattedDate = date.toLocaleString('zh-CN', {
                 timeZone: 'Asia/Shanghai',
                 year: 'numeric',
                 month: '2-digit',
@@ -111,8 +123,11 @@ export default function StreamingManagement({
                 minute: '2-digit',
                 hour12: false
             });
+
+            console.log('[DEBUG] 格式化后的日期时间:', formattedDate);
+            return formattedDate;
         } catch (error) {
-            console.error('日期格式化错误:', error, dateString, timeString);
+            console.error('[DEBUG] 日期格式化错误:', error, dateString, timeString);
             return '时间未定';
         }
     };

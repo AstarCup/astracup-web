@@ -347,9 +347,6 @@ export default function RoomManagement({ rooms, roomsLoading, deletingRoomId, on
                                                         </div>
                                                     </div>
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-xs text-gray-400">
-                                                            {schedule.scheduled_time ? formatDateTime(schedule.scheduled_time) : '时间未定'}
-                                                        </span>
                                                         <span className={`px-2 py-1 rounded text-xs ${schedule.status === 'scheduled' ? 'bg-blue-600 text-white' :
                                                             schedule.status === 'in_progress' ? 'bg-yellow-600 text-white' :
                                                                 'bg-green-600 text-white'

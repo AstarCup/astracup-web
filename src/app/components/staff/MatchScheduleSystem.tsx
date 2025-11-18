@@ -2,12 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import localFont from "next/font/local";
-
-const audiowide = localFont({
-    src: '../../font/Audiowide-Regular.ttf',
-    display: "auto",
-});
 
 interface MatchRoom {
     id: number;

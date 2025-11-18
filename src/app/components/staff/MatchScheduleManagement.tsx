@@ -80,6 +80,13 @@ export default function MatchScheduleManagement({ userOsuId, isAdmin }: MatchSch
             }
 
             if (schedulesData.success) {
+                // 调试日志：检查接收到的status字段
+                console.log('[DEBUG Frontend] Received schedules:', schedulesData.schedules);
+                if (schedulesData.schedules && schedulesData.schedules.length > 0) {
+                    schedulesData.schedules.forEach((schedule: any, index: number) => {
+                        console.log(`[DEBUG Frontend] Schedule ${index}: id=${schedule.id}, status=${schedule.status}, type=${typeof schedule.status}`);
+                    });
+                }
                 setMatchSchedules(schedulesData.schedules || []);
             }
         } catch (error) {
