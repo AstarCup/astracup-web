@@ -1397,7 +1397,7 @@ const mysqlStorage = {
                 FROM staff_room_assignments sra
                 JOIN match_rooms mr ON sra.room_id = mr.id
                 LEFT JOIN registrations r ON sra.staff_osuId = r.osuId COLLATE utf8mb4_unicode_ci
-                LEFT JOIN match_schedules ms ON sra.room_id = ms.room_id
+                LEFT JOIN match_schedules ms ON sra.room_id = ms.room_id AND ms.status IN ('pending', 'confirmed', 'completed')
                 WHERE sra.status = 'confirmed'
                 ORDER BY mr.room_name ASC, sra.staff_role ASC, sra.created_at DESC
             `);

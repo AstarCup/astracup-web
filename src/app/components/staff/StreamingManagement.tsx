@@ -79,12 +79,21 @@ export default function StreamingManagement({
         }
 
         try {
-            // 处理空时间的情况，MySQL TIME 类型可能返回 '00:00:00'
-            const time = timeString && timeString !== '00:00:00' && timeString !== 'Invalid Date' && timeString !== 'null' ? timeString : '00:00:00';
+            let date: Date;
 
-            // 创建日期对象，MySQL DATE 格式为 'YYYY-MM-DD', TIME 格式为 'HH:MM:SS'
-            const dateTimeString = `${dateString}T${time}+08:00`;
-            const date = new Date(dateTimeString);
+            // 检查是否是ISO格式的日期时间字符串（包含T和Z）
+            if (dateString.includes('T') && dateString.includes('Z')) {
+                // 直接使用ISO格式的日期时间
+                date = new Date(dateString);
+            } else {
+                // 处理MySQL格式：DATE + TIME
+                // 处理空时间的情况，MySQL TIME 类型可能返回 '00:00:00'
+                const time = timeString && timeString !== '00:00:00' && timeString !== 'Invalid Date' && timeString !== 'null' ? timeString : '00:00:00';
+
+                // 创建日期对象，MySQL DATE 格式为 'YYYY-MM-DD', TIME 格式为 'HH:MM:SS'
+                const dateTimeString = `${dateString}T${time}+08:00`;
+                date = new Date(dateTimeString);
+            }
 
             // 检查日期是否有效
             if (isNaN(date.getTime())) {
