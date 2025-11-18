@@ -1396,7 +1396,7 @@ const mysqlStorage = {
 
             connection.release();
 
-            return (rows as any[]).map(row => ({
+            const assignments = (rows as any[]).map(row => ({
                 id: row.id,
                 room_id: row.room_id,
                 staff_osuId: row.staff_osuId,
@@ -1423,6 +1423,27 @@ const mysqlStorage = {
                     player2_username: row.player2_username
                 }
             }));
+
+            // 为缺失头像的assignment添加fallback
+            const { getUserAvatarWithFallback } = await import('@/lib/osu-api');
+            const assignmentsWithFallback = await Promise.all(
+                assignments.map(async (assignment) => {
+                    if (!assignment.staff_avatar_url) {
+                        try {
+                            assignment.staff_avatar_url = await getUserAvatarWithFallback(
+                                assignment.staff_osuId,
+                                assignment.staff_username
+                            );
+                        } catch (error) {
+                            console.warn(`Failed to get fallback avatar for ${assignment.staff_username}:`, error);
+                            assignment.staff_avatar_url = '/unknow.svg';
+                        }
+                    }
+                    return assignment;
+                })
+            );
+
+            return assignmentsWithFallback;
         } catch (error) {
             console.error('Error getting staff room assignments:', error);
             return [];
@@ -1597,7 +1618,7 @@ const mysqlStorage = {
 
             connection.release();
 
-            return (rows as any[]).map(row => ({
+            const assignments = (rows as any[]).map(row => ({
                 id: row.id,
                 room_id: row.room_id,
                 staff_osuId: row.staff_osuId,
@@ -1617,6 +1638,27 @@ const mysqlStorage = {
                     scheduled_time: row.scheduled_time
                 }
             }));
+
+            // 为缺失头像的assignment添加fallback
+            const { getUserAvatarWithFallback } = await import('@/lib/osu-api');
+            const assignmentsWithFallback = await Promise.all(
+                assignments.map(async (assignment) => {
+                    if (!assignment.staff_avatar_url) {
+                        try {
+                            assignment.staff_avatar_url = await getUserAvatarWithFallback(
+                                assignment.staff_osuId,
+                                assignment.staff_username
+                            );
+                        } catch (error) {
+                            console.warn(`Failed to get fallback avatar for ${assignment.staff_username}:`, error);
+                            assignment.staff_avatar_url = '/unknow.svg';
+                        }
+                    }
+                    return assignment;
+                })
+            );
+
+            return assignmentsWithFallback;
         } catch (error) {
             console.error('Error getting room staff assignments:', error);
             return [];

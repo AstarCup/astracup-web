@@ -438,7 +438,7 @@ export default function PlayerInfoPage() {
                                                             </div>
                                                             <div className="flex justify-between">
                                                                 <span>日期:</span>
-                                                                <span className="text-white">{formatDate(room.match_date)}</span>
+                                                                <span className="text-white">{room.match_date}</span>
                                                             </div>
                                                             <div className="flex justify-between">
                                                                 <span>时间:</span>
@@ -447,10 +447,6 @@ export default function PlayerInfoPage() {
                                                             <div className="flex justify-between">
                                                                 <span>房间号:</span>
                                                                 <span className="text-white">{room.match_number}</span>
-                                                            </div>
-                                                            <div className="flex justify-between">
-                                                                <span>最多参与:</span>
-                                                                <span className="text-white">{room.max_participants}人</span>
                                                             </div>
                                                         </div>
 

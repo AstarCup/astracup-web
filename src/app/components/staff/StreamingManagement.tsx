@@ -41,22 +41,18 @@ export default function StreamingManagement({
     const formatDateTimeFromStrings = (dateString: string | undefined, timeString: string | undefined) => {
         if (!dateString) return '时间未定';
 
-        let dateTimeString: string;
-
-        // 检查dateString是否已经是完整的ISO字符串格式
-        if (dateString.includes('T') && dateString.includes('Z')) {
-            // 如果是完整的ISO字符串，直接使用
-            dateTimeString = dateString;
-        } else if (timeString) {
-            // 如果是分别的日期和时间字段，组合它们
-            dateTimeString = `${dateString}T${timeString}`;
-        } else {
-            // 如果只有日期字段，假设时间是00:00:00
-            dateTimeString = `${dateString}T00:00:00.000Z`;
-        }
-
         try {
-            return new Date(dateTimeString).toLocaleString('zh-CN');
+            // 组合日期和时间，并指定为UTC+8时区
+            const dateTimeString = `${dateString}T${timeString || '00:00:00'}+08:00`;
+            return new Date(dateTimeString).toLocaleString('zh-CN', {
+                timeZone: 'Asia/Shanghai',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
         } catch (error) {
             console.error('日期格式化错误:', error, dateString, timeString);
             return '时间格式错误';
@@ -309,9 +305,10 @@ export default function StreamingManagement({
                                                     })()}
                                                 </div>
 
-                                                {room.description && (
-                                                    <div className="text-xs text-gray-500 mb-4 line-clamp-2">
-                                                        {room.description}
+                                                {/* 显示比赛对阵信息 */}
+                                                {room.player1_username && room.player2_username && (
+                                                    <div className="text-xs text-gray-500 mb-4">
+                                                        {room.player1_username} vs {room.player2_username}
                                                     </div>
                                                 )}
 
@@ -505,9 +502,10 @@ export default function StreamingManagement({
                                                     })()}
                                                 </div>
 
-                                                {room.description && (
-                                                    <div className="text-xs text-gray-500 mb-4 line-clamp-2">
-                                                        {room.description}
+                                                {/* 显示比赛对阵信息 */}
+                                                {room.player1_username && room.player2_username && (
+                                                    <div className="text-xs text-gray-500 mb-4">
+                                                        {room.player1_username} vs {room.player2_username}
                                                     </div>
                                                 )}
 
