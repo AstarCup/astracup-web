@@ -81,10 +81,10 @@ export default function MatchScheduleManagement({ userOsuId, isAdmin }: MatchSch
 
             if (schedulesData.success) {
                 // 调试日志：检查接收到的status字段
-                console.log('[DEBUG Frontend] Received schedules:', schedulesData.schedules);
+                // console.log('[DEBUG Frontend] Received schedules:', schedulesData.schedules);
                 if (schedulesData.schedules && schedulesData.schedules.length > 0) {
                     schedulesData.schedules.forEach((schedule: any, index: number) => {
-                        console.log(`[DEBUG Frontend] Schedule ${index}: id=${schedule.id}, status=${schedule.status}, type=${typeof schedule.status}`);
+                        // console.log(`[DEBUG Frontend] Schedule ${index}: id=${schedule.id}, status=${schedule.status}, type=${typeof schedule.status}`);
                     });
                 }
                 setMatchSchedules(schedulesData.schedules || []);
@@ -233,11 +233,11 @@ export default function MatchScheduleManagement({ userOsuId, isAdmin }: MatchSch
 
     const formatDateTime = (dateString: string, timeString: string) => {
         // 调试日志：检查输入参数
-        console.log('[DEBUG MatchSchedule] formatDateTime 输入:', { dateString, timeString });
+        // console.log('[DEBUG MatchSchedule] formatDateTime 输入:', { dateString, timeString });
 
         // 检查日期是否为空或无效
         if (!dateString || dateString === '0000-00-00' || dateString === 'Invalid Date' || dateString === 'null') {
-            console.log('[DEBUG MatchSchedule] 日期为空或无效，返回"时间未定"');
+            // console.log('[DEBUG MatchSchedule] 日期为空或无效，返回"时间未定"');
             return '时间未定';
         }
 
@@ -247,7 +247,7 @@ export default function MatchScheduleManagement({ userOsuId, isAdmin }: MatchSch
             // 检查是否是ISO格式的日期时间字符串（包含T和Z）
             if (dateString.includes('T') && dateString.includes('Z')) {
                 // 解析ISO格式的日期，但使用timeString中的时间
-                console.log('[DEBUG MatchSchedule] 检测到ISO格式日期，解析日期部分:', dateString);
+                // console.log('[DEBUG MatchSchedule] 检测到ISO格式日期，解析日期部分:', dateString);
 
                 // 提取日期部分（YYYY-MM-DD）
                 const datePart = dateString.split('T')[0];
@@ -257,7 +257,7 @@ export default function MatchScheduleManagement({ userOsuId, isAdmin }: MatchSch
 
                 // 创建新的日期时间字符串，使用北京时间（UTC+8）
                 const dateTimeString = `${datePart}T${time}+08:00`;
-                console.log('[DEBUG MatchSchedule] 组合后的日期时间字符串:', dateTimeString);
+                // console.log('[DEBUG MatchSchedule] 组合后的日期时间字符串:', dateTimeString);
                 date = new Date(dateTimeString);
             } else {
                 // 处理MySQL格式：DATE + TIME
@@ -266,7 +266,7 @@ export default function MatchScheduleManagement({ userOsuId, isAdmin }: MatchSch
 
                 // 创建日期对象，MySQL DATE 格式为 'YYYY-MM-DD', TIME 格式为 'HH:MM:SS'
                 const dateTimeString = `${dateString}T${time}+08:00`;
-                console.log('[DEBUG MatchSchedule] MySQL格式日期时间字符串:', dateTimeString);
+                // console.log('[DEBUG MatchSchedule] MySQL格式日期时间字符串:', dateTimeString);
                 date = new Date(dateTimeString);
             }
 
@@ -287,7 +287,7 @@ export default function MatchScheduleManagement({ userOsuId, isAdmin }: MatchSch
                 hour12: false
             });
 
-            console.log('[DEBUG MatchSchedule] 格式化后的日期时间:', formattedDate);
+            // console.log('[DEBUG MatchSchedule] 格式化后的日期时间:', formattedDate);
             return formattedDate;
         } catch (error) {
             console.error('[DEBUG MatchSchedule] 日期格式化错误:', error, dateString, timeString);

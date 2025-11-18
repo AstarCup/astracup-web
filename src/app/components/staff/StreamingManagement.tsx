@@ -28,37 +28,37 @@ export default function StreamingManagement({
     onRevokeAssignment
 }: StreamingManagementProps) {
     // 调试日志 - 显示传入的数据
-    console.log('=== StreamingManagement 调试信息 ===');
-    console.log('staffAssignments:', staffAssignments);
-    console.log('availableRooms:', availableRooms);
+    // console.log('=== StreamingManagement 调试信息 ===');
+    // console.log('staffAssignments:', staffAssignments);
+    // console.log('availableRooms:', availableRooms);
 
     // 详细检查staffAssignments中的match_info
     if (staffAssignments.length > 0) {
-        console.log('=== staffAssignments 详细数据 ===');
+        // console.log('=== staffAssignments 详细数据 ===');
         staffAssignments.forEach((assignment, index) => {
-            console.log(`Assignment ${index}:`, {
-                id: assignment.id,
-                room_id: assignment.room_id,
-                staff_role: assignment.staff_role,
-                match_info: assignment.match_info,
-                room: assignment.room
-            });
+            // console.log(`Assignment ${index}:`, {
+            // id: assignment.id,
+            // room_id: assignment.room_id,
+            // staff_role: assignment.staff_role,
+            // match_info: assignment.match_info,
+            // room: assignment.room
+            // });
         });
     }
 
     // 详细检查availableRooms中的时间数据
     if (availableRooms.length > 0) {
-        console.log('=== availableRooms 详细数据 ===');
+        // console.log('=== availableRooms 详细数据 ===');
         availableRooms.forEach((room, index) => {
-            console.log(`Room ${index}:`, {
-                id: room.id,
-                room_name: room.room_name,
-                match_date: room.match_date,
-                match_time: room.match_time,
-                player1_username: room.player1_username,
-                player2_username: room.player2_username,
-                staff_counts: room.staff_counts
-            });
+            // console.log(`Room ${index}:`, {
+            // id: room.id,
+            // room_name: room.room_name,
+            // match_date: room.match_date,
+            // match_time: room.match_time,
+            // player1_username: room.player1_username,
+            // player2_username: room.player2_username,
+            // staff_counts: room.staff_counts
+            // });
         });
     }
     // 格式化日期时间函数 - 使用本地化时间显示
@@ -74,11 +74,11 @@ export default function StreamingManagement({
     // 格式化日期和时间字符串 - 使用本地化时间显示
     const formatDateTimeFromStrings = (dateString: string | undefined, timeString: string | undefined) => {
         // 调试日志：检查输入参数
-        console.log('[DEBUG] formatDateTimeFromStrings 输入:', { dateString, timeString });
+        // console.log('[DEBUG] formatDateTimeFromStrings 输入:', { dateString, timeString });
 
         // 检查日期是否为空或无效
         if (!dateString || dateString === '0000-00-00' || dateString === 'Invalid Date' || dateString === 'null') {
-            console.log('[DEBUG] 日期为空或无效，返回"时间未定"');
+            // console.log('[DEBUG] 日期为空或无效，返回"时间未定"');
             return '时间未定';
         }
 
@@ -88,7 +88,7 @@ export default function StreamingManagement({
             // 检查是否是ISO格式的日期时间字符串（包含T和Z）
             if (dateString.includes('T') && dateString.includes('Z')) {
                 // 解析ISO格式的日期，但使用timeString中的时间
-                console.log('[DEBUG] 检测到ISO格式日期，解析日期部分:', dateString);
+                // console.log('[DEBUG] 检测到ISO格式日期，解析日期部分:', dateString);
 
                 // 提取日期部分（YYYY-MM-DD）
                 const datePart = dateString.split('T')[0];
@@ -98,7 +98,7 @@ export default function StreamingManagement({
 
                 // 创建新的日期时间字符串，使用北京时间（UTC+8）
                 const dateTimeString = `${datePart}T${time}+08:00`;
-                console.log('[DEBUG] 组合后的日期时间字符串:', dateTimeString);
+                // console.log('[DEBUG] 组合后的日期时间字符串:', dateTimeString);
                 date = new Date(dateTimeString);
             } else {
                 // 处理MySQL格式：DATE + TIME
@@ -107,7 +107,7 @@ export default function StreamingManagement({
 
                 // 创建日期对象，MySQL DATE 格式为 'YYYY-MM-DD', TIME 格式为 'HH:MM:SS'
                 const dateTimeString = `${dateString}T${time}+08:00`;
-                console.log('[DEBUG] MySQL格式日期时间字符串:', dateTimeString);
+                // console.log('[DEBUG] MySQL格式日期时间字符串:', dateTimeString);
                 date = new Date(dateTimeString);
             }
 
@@ -128,7 +128,7 @@ export default function StreamingManagement({
                 hour12: false
             });
 
-            console.log('[DEBUG] 格式化后的日期时间:', formattedDate);
+            // console.log('[DEBUG] 格式化后的日期时间:', formattedDate);
             return formattedDate;
         } catch (error) {
             console.error('[DEBUG] 日期格式化错误:', error, dateString, timeString);
