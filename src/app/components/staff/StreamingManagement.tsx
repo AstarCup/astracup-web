@@ -39,12 +39,27 @@ export default function StreamingManagement({
 
     // 格式化日期和时间字符串 - 使用本地化时间显示
     const formatDateTimeFromStrings = (dateString: string | undefined, timeString: string | undefined) => {
-        if (!dateString) return '时间未定';
+        // 检查日期是否为空或无效
+        if (!dateString || dateString === '0000-00-00' || dateString === 'Invalid Date' || dateString === 'null') {
+            return '时间未定';
+        }
 
         try {
-            // 组合日期和时间，并指定为UTC+8时区
-            const dateTimeString = `${dateString}T${timeString || '00:00:00'}+08:00`;
-            return new Date(dateTimeString).toLocaleString('zh-CN', {
+            // 处理空时间的情况，MySQL TIME 类型可能返回 '00:00:00'
+            const time = timeString && timeString !== '00:00:00' && timeString !== 'Invalid Date' && timeString !== 'null' ? timeString : '00:00:00';
+
+            // 创建日期对象，MySQL DATE 格式为 'YYYY-MM-DD', TIME 格式为 'HH:MM:SS'
+            const dateTimeString = `${dateString}T${time}+08:00`;
+            const date = new Date(dateTimeString);
+
+            // 检查日期是否有效
+            if (isNaN(date.getTime())) {
+                console.warn('无效的日期时间:', dateString, timeString);
+                return '时间未定';
+            }
+
+            // 格式化日期时间，显示为中文格式
+            return date.toLocaleString('zh-CN', {
                 timeZone: 'Asia/Shanghai',
                 year: 'numeric',
                 month: '2-digit',
@@ -55,7 +70,7 @@ export default function StreamingManagement({
             });
         } catch (error) {
             console.error('日期格式化错误:', error, dateString, timeString);
-            return '时间格式错误';
+            return '时间未定';
         }
     };
 

@@ -1386,11 +1386,19 @@ const mysqlStorage = {
                     sra.updated_at,
                     mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number,
                     r.avatar_url as staff_avatar_url,
-                    ms.player1_username, ms.player2_username
+                    ms.id as match_id,
+                    ms.player1_username, 
+                    ms.player2_username,
+                    ms.red_score,
+                    ms.blue_score,
+                    ms.match_link,
+                    ms.replay_link,
+                    ms.status as match_status
                 FROM staff_room_assignments sra
                 JOIN match_rooms mr ON sra.room_id = mr.id
                 LEFT JOIN registrations r ON sra.staff_osuId = r.osuId COLLATE utf8mb4_unicode_ci
                 LEFT JOIN match_schedules ms ON sra.room_id = ms.room_id
+                WHERE sra.status = 'confirmed'
                 ORDER BY mr.room_name ASC, sra.staff_role ASC, sra.created_at DESC
             `);
 
@@ -1417,10 +1425,16 @@ const mysqlStorage = {
                     match_number: row.match_number
                 },
                 staff_avatar_url: row.staff_avatar_url,
-                // 添加比赛信息
+                // 添加完整的比赛信息
                 match_info: {
-                    player1_username: row.player1_username,
-                    player2_username: row.player2_username
+                    id: row.match_id,
+                    player1_username: row.player1_username || '待定',
+                    player2_username: row.player2_username || '待定',
+                    red_score: row.red_score,
+                    blue_score: row.blue_score,
+                    match_link: row.match_link,
+                    replay_link: row.replay_link,
+                    status: row.match_status || 'pending'
                 }
             }));
 
