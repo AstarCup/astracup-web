@@ -87,8 +87,12 @@ export default function StreamingManagement({
 
             // 检查是否是ISO格式的日期时间字符串（包含T和Z）
             if (dateString.includes('T') && dateString.includes('Z')) {
-                // 解析ISO格式的日期，但使用timeString中的时间
-                console.log('[DEBUG] 检测到ISO格式日期，解析日期部分:', dateString);
+                // 对于ISO格式的日期，我们直接解析它，但需要处理时区问题
+                console.log('[DEBUG] 检测到ISO格式日期:', dateString);
+
+                // 解析ISO格式的日期
+                const isoDate = new Date(dateString);
+                console.log('[DEBUG] 解析后的ISO日期对象:', isoDate);
 
                 // 提取日期部分（YYYY-MM-DD）
                 const datePart = dateString.split('T')[0];
@@ -105,6 +109,7 @@ export default function StreamingManagement({
                 console.log('[DEBUG] 解析后的日期对象:', date);
                 console.log('[DEBUG] 解析后的UTC时间:', date.toISOString());
                 console.log('[DEBUG] 解析后的本地时间:', date.toString());
+                console.log('[DEBUG] 解析后的本地时间戳:', date.getTime());
             } else {
                 // 处理MySQL格式：DATE + TIME
                 // 处理空时间的情况，MySQL TIME 类型可能返回 '00:00:00'

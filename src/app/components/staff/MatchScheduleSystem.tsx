@@ -484,10 +484,65 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                             if (!schedule.room?.match_date) return '时间未定';
                                             const dateStr = schedule.room.match_date;
                                             const timeStr = schedule.room?.match_time || '00:00:00';
-                                            const dateTimeStr = dateStr.includes('T') ? dateStr : `${dateStr}T${timeStr}`;
+
+                                            // 调试日志
+                                            console.log('[DEBUG MatchScheduleSystem] 时间格式化输入:', { dateStr, timeStr });
+
                                             try {
-                                                return new Date(dateTimeStr).toLocaleString('zh-CN');
-                                            } catch {
+                                                let date: Date;
+
+                                                // 检查是否是ISO格式的日期时间字符串（包含T和Z）
+                                                if (dateStr.includes('T') && dateStr.includes('Z')) {
+                                                    // 对于ISO格式的日期，我们直接解析它，但需要处理时区问题
+                                                    console.log('[DEBUG MatchScheduleSystem] 检测到ISO格式日期:', dateStr);
+
+                                                    // 提取日期部分（YYYY-MM-DD）
+                                                    const datePart = dateStr.split('T')[0];
+
+                                                    // 使用timeString中的时间，如果没有则使用默认时间
+                                                    const time = timeStr && timeStr !== '00:00:00' && timeStr !== 'Invalid Date' && timeStr !== 'null' ? timeStr : '00:00:00';
+
+                                                    // 创建新的日期时间字符串，使用北京时间（UTC+8）
+                                                    const dateTimeString = `${datePart}T${time}+08:00`;
+                                                    console.log('[DEBUG MatchScheduleSystem] 组合后的日期时间字符串:', dateTimeString);
+                                                    date = new Date(dateTimeString);
+
+                                                    // 调试：检查解析后的日期
+                                                    console.log('[DEBUG MatchScheduleSystem] 解析后的日期对象:', date);
+                                                    console.log('[DEBUG MatchScheduleSystem] 解析后的UTC时间:', date.toISOString());
+                                                    console.log('[DEBUG MatchScheduleSystem] 解析后的本地时间:', date.toString());
+                                                } else {
+                                                    // 处理MySQL格式：DATE + TIME
+                                                    // 处理空时间的情况，MySQL TIME 类型可能返回 '00:00:00'
+                                                    const time = timeStr && timeStr !== '00:00:00' && timeStr !== 'Invalid Date' && timeStr !== 'null' ? timeStr : '00:00:00';
+
+                                                    // 创建日期对象，MySQL DATE 格式为 'YYYY-MM-DD', TIME 格式为 'HH:MM:SS'
+                                                    const dateTimeString = `${dateStr}T${time}+08:00`;
+                                                    console.log('[DEBUG MatchScheduleSystem] MySQL格式日期时间字符串:', dateTimeString);
+                                                    date = new Date(dateTimeString);
+                                                }
+
+                                                // 检查日期是否有效
+                                                if (isNaN(date.getTime())) {
+                                                    console.warn('[DEBUG MatchScheduleSystem] 无效的日期时间:', dateStr, timeStr);
+                                                    return '时间未定';
+                                                }
+
+                                                // 格式化日期时间，显示为中文格式
+                                                const formattedDate = date.toLocaleString('zh-CN', {
+                                                    timeZone: 'Asia/Shanghai',
+                                                    year: 'numeric',
+                                                    month: '2-digit',
+                                                    day: '2-digit',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                    hour12: false
+                                                });
+
+                                                console.log('[DEBUG MatchScheduleSystem] 格式化后的日期时间:', formattedDate);
+                                                return formattedDate;
+                                            } catch (error) {
+                                                console.error('[DEBUG MatchScheduleSystem] 日期格式化错误:', error, dateStr, timeStr);
                                                 return '时间格式错误';
                                             }
                                         })()}
