@@ -19,6 +19,7 @@ import MatchManagement from '@/app/components/staff/MatchManagement';
 import SettingsManagement from '@/app/components/staff/SettingsManagement';
 import ReplayCollectionManagement from '@/app/components/staff/ReplayCollectionManagement';
 import MapSelectionManagement from '@/app/components/staff/MapSelectionManagement';
+import MatchScheduleManagement from '@/app/components/staff/MatchScheduleManagement';
 
 interface MatchRoom {
     id: number;
@@ -862,9 +863,9 @@ export default function AdminPage() {
                         />
                     )}
 
-                    {/* 比赛管理页面 */}
+                    {/* 比赛预约管理页面 */}
                     {activeTab === 'matches' && (
-                        <MatchManagement
+                        <MatchScheduleManagement
                             userOsuId={user.osuId}
                             isAdmin={permissions.isAdmin}
                         />

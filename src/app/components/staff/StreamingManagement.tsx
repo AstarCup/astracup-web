@@ -83,7 +83,7 @@ export default function StreamingManagement({
 
             // 检查是否是ISO格式的日期时间字符串（包含T和Z）
             if (dateString.includes('T') && dateString.includes('Z')) {
-                // 直接使用ISO格式的日期时间
+                // 直接使用ISO格式的日期时间，忽略timeString参数
                 date = new Date(dateString);
             } else {
                 // 处理MySQL格式：DATE + TIME

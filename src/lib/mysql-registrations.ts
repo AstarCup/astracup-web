@@ -192,11 +192,11 @@ export const initDatabase = async (): Promise<void> => {
                 );
 
                 if ((existingColumns as any[]).length === 0) {
-                    console.log(`Adding missing column: ${column.name}`);
+                    // console.log(`Adding missing column: ${column.name}`);
                     await connection.execute(
                         `ALTER TABLE registrations ADD COLUMN ${column.name} ${column.type}`
                     );
-                    console.log(`✅ Column ${column.name} added successfully`);
+                    // console.log(`✅ Column ${column.name} added successfully`);
                 }
             } catch (columnError) {
                 console.error(`Error checking/adding column ${column.name}:`, columnError);
@@ -212,23 +212,23 @@ export const initDatabase = async (): Promise<void> => {
             );
 
             if ((roomIdColumns as any[]).length > 0) {
-                console.log('Modifying room_id column in player_matchups table to allow NULL');
+                // console.log('Modifying room_id column in player_matchups table to allow NULL');
 
                 // 先删除外键约束（如果存在）
                 try {
                     await connection.execute(
                         `ALTER TABLE player_matchups DROP FOREIGN KEY player_matchups_ibfk_1`
                     );
-                    console.log('✅ Foreign key constraint removed');
+                    // console.log('✅ Foreign key constraint removed');
                 } catch (fkError) {
-                    console.log('Foreign key constraint might not exist or already removed, continuing...');
+                    // console.log('Foreign key constraint might not exist or already removed, continuing...');
                 }
 
                 // 修改字段为可为NULL
                 await connection.execute(
                     `ALTER TABLE player_matchups MODIFY COLUMN room_id INT NULL`
                 );
-                console.log('✅ Column room_id modified to allow NULL values');
+                // console.log('✅ Column room_id modified to allow NULL values');
             }
         } catch (columnError) {
             console.error('Error modifying room_id column in player_matchups:', columnError);
@@ -304,7 +304,7 @@ export const initDatabase = async (): Promise<void> => {
         );
 
         if ((settingsRows as any[])[0].count === 0) {
-            console.log('Inserting default tournament settings');
+            // console.log('Inserting default tournament settings');
             await connection.execute(`
                 INSERT INTO tournament_settings (
                     tournament_name,
@@ -336,11 +336,11 @@ export const initDatabase = async (): Promise<void> => {
                     FALSE
                 )
             `);
-            console.log('✅ Default tournament settings inserted');
+            // console.log('✅ Default tournament settings inserted');
         }
 
         connection.release();
-        console.log('Database initialized and upgraded successfully');
+        // console.log('Database initialized and upgraded successfully');
     } catch (error) {
         console.error('Error initializing database:', error);
         throw error;
@@ -570,7 +570,7 @@ const mysqlStorage = {
             }
 
             await connection.commit();
-            // console.log('Registration saved to database successfully');
+            // // console.log('Registration saved to database successfully');
 
         } catch (error) {
             await connection.rollback();
