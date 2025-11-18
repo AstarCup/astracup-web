@@ -27,6 +27,40 @@ export default function StreamingManagement({
     onApplyForRoom,
     onRevokeAssignment
 }: StreamingManagementProps) {
+    // 调试日志 - 显示传入的数据
+    console.log('=== StreamingManagement 调试信息 ===');
+    console.log('staffAssignments:', staffAssignments);
+    console.log('availableRooms:', availableRooms);
+
+    // 详细检查staffAssignments中的match_info
+    if (staffAssignments.length > 0) {
+        console.log('=== staffAssignments 详细数据 ===');
+        staffAssignments.forEach((assignment, index) => {
+            console.log(`Assignment ${index}:`, {
+                id: assignment.id,
+                room_id: assignment.room_id,
+                staff_role: assignment.staff_role,
+                match_info: assignment.match_info,
+                room: assignment.room
+            });
+        });
+    }
+
+    // 详细检查availableRooms中的时间数据
+    if (availableRooms.length > 0) {
+        console.log('=== availableRooms 详细数据 ===');
+        availableRooms.forEach((room, index) => {
+            console.log(`Room ${index}:`, {
+                id: room.id,
+                room_name: room.room_name,
+                match_date: room.match_date,
+                match_time: room.match_time,
+                player1_username: room.player1_username,
+                player2_username: room.player2_username,
+                staff_counts: room.staff_counts
+            });
+        });
+    }
     // 格式化日期时间函数 - 使用本地化时间显示
     const formatDateTime = (dateTimeString: string) => {
         try {
