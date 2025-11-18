@@ -343,6 +343,8 @@ export default function PlayerInfoPage() {
                                                         <p>轮次: 第{nextMatch.scheduledRoom.round_number}轮</p>
                                                         <p>时间: {formatDate(nextMatch.scheduledRoom.match_date)} {nextMatch.scheduledRoom.match_time}</p>
                                                         <p>房间号: {nextMatch.scheduledRoom.match_number}</p>
+                                                        {/* 调试日志 */}
+                                                        <p className="text-red-400 text-xs">[DEBUG] match_date: {nextMatch.scheduledRoom.match_date}, match_time: {nextMatch.scheduledRoom.match_time}</p>
                                                     </div>
                                                 </div>
                                             )}
@@ -447,6 +449,10 @@ export default function PlayerInfoPage() {
                                                             <div className="flex justify-between">
                                                                 <span>房间号:</span>
                                                                 <span className="text-white">{room.match_number}</span>
+                                                            </div>
+                                                            {/* 调试日志 */}
+                                                            <div className="text-red-400 text-xs">
+                                                                [DEBUG] match_date: {room.match_date}, match_time: {room.match_time}
                                                             </div>
                                                         </div>
 
