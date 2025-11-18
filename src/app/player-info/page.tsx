@@ -116,13 +116,126 @@ export default function PlayerInfoPage() {
         fetchUserData();
     }, [router]);
 
-    // 格式化日期函数
+    // 格式化日期函数 - 使用本地化时间显示
     const formatDate = (dateString: string) => {
+        // 调试日志：检查输入参数
+        // console.log('[DEBUG PlayerInfo] formatDate 输入:', dateString);
+
+        // 检查日期是否为空或无效
+        if (!dateString || dateString === '0000-00-00' || dateString === 'Invalid Date' || dateString === 'null') {
+            // console.log('[DEBUG PlayerInfo] 日期为空或无效，返回"时间未定"');
+            return '时间未定';
+        }
+
         try {
-            return new Date(dateString).toLocaleString('zh-CN');
+            let date: Date;
+
+            // 检查是否是ISO格式的日期时间字符串（包含T和Z）
+            if (dateString.includes('T') && dateString.includes('Z')) {
+                // 解析ISO格式的日期，但使用北京时间（UTC+8）
+                // console.log('[DEBUG PlayerInfo] 检测到ISO格式日期:', dateString);
+                date = new Date(dateString);
+            } else {
+                // 处理MySQL格式：DATE
+                const dateTimeString = `${dateString}T00:00:00+08:00`;
+                // console.log('[DEBUG PlayerInfo] MySQL格式日期字符串:', dateTimeString);
+                date = new Date(dateTimeString);
+            }
+
+            // 检查日期是否有效
+            if (isNaN(date.getTime())) {
+                console.warn('[DEBUG PlayerInfo] 无效的日期:', dateString);
+                return '时间未定';
+            }
+
+            // 格式化日期，显示为中文格式
+            const formattedDate = date.toLocaleString('zh-CN', {
+                timeZone: 'Asia/Shanghai',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+
+            // console.log('[DEBUG PlayerInfo] 格式化后的日期:', formattedDate);
+            return formattedDate;
         } catch (error) {
-            console.error('日期格式化错误:', error, dateString);
-            return '时间格式错误';
+            console.error('[DEBUG PlayerInfo] 日期格式化错误:', error, dateString);
+            return '时间未定';
+        }
+    };
+
+    // 格式化日期和时间字符串 - 使用本地化时间显示
+    const formatDateTimeFromStrings = (dateString: string, timeString: string) => {
+        // 调试日志：检查输入参数
+        console.log('[DEBUG PlayerInfo] formatDateTimeFromStrings 输入:', { dateString, timeString });
+
+        // 检查日期是否为空或无效
+        if (!dateString || dateString === '0000-00-00' || dateString === 'Invalid Date' || dateString === 'null') {
+            console.log('[DEBUG PlayerInfo] 日期为空或无效，返回"时间未定"');
+            return '时间未定';
+        }
+
+        try {
+            let date: Date;
+
+            // 检查是否是ISO格式的日期时间字符串（包含T和Z）
+            if (dateString.includes('T') && dateString.includes('Z')) {
+                // 对于ISO格式的日期，我们直接解析它，但需要处理时区问题
+                console.log('[DEBUG PlayerInfo] 检测到ISO格式日期:', dateString);
+
+                // 解析ISO格式的日期
+                const isoDate = new Date(dateString);
+                console.log('[DEBUG PlayerInfo] 解析后的ISO日期对象:', isoDate);
+
+                // 提取日期部分（YYYY-MM-DD）
+                const datePart = dateString.split('T')[0];
+
+                // 使用timeString中的时间，如果没有则使用默认时间
+                const time = timeString && timeString !== '00:00:00' && timeString !== 'Invalid Date' && timeString !== 'null' ? timeString : '00:00:00';
+
+                // 创建新的日期时间字符串，使用北京时间（UTC+8）
+                const dateTimeString = `${datePart}T${time}+08:00`;
+                console.log('[DEBUG PlayerInfo] 组合后的日期时间字符串:', dateTimeString);
+                date = new Date(dateTimeString);
+
+                // 调试：检查解析后的日期
+                console.log('[DEBUG PlayerInfo] 解析后的日期对象:', date);
+                console.log('[DEBUG PlayerInfo] 解析后的UTC时间:', date.toISOString());
+                console.log('[DEBUG PlayerInfo] 解析后的本地时间:', date.toString());
+                console.log('[DEBUG PlayerInfo] 解析后的本地时间戳:', date.getTime());
+            } else {
+                // 处理MySQL格式：DATE + TIME
+                // 处理空时间的情况，MySQL TIME 类型可能返回 '00:00:00'
+                const time = timeString && timeString !== '00:00:00' && timeString !== 'Invalid Date' && timeString !== 'null' ? timeString : '00:00:00';
+
+                // 创建日期对象，MySQL DATE 格式为 'YYYY-MM-DD', TIME 格式为 'HH:MM:SS'
+                const dateTimeString = `${dateString}T${time}+08:00`;
+                console.log('[DEBUG PlayerInfo] MySQL格式日期时间字符串:', dateTimeString);
+                date = new Date(dateTimeString);
+            }
+
+            // 检查日期是否有效
+            if (isNaN(date.getTime())) {
+                console.warn('[DEBUG PlayerInfo] 无效的日期时间:', dateString, timeString);
+                return '时间未定';
+            }
+
+            // 格式化日期时间，显示为中文格式
+            const formattedDate = date.toLocaleString('zh-CN', {
+                timeZone: 'Asia/Shanghai',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+
+            console.log('[DEBUG PlayerInfo] 格式化后的日期时间:', formattedDate);
+            return formattedDate;
+        } catch (error) {
+            console.error('[DEBUG PlayerInfo] 日期格式化错误:', error, dateString, timeString);
+            return '时间未定';
         }
     };
 
@@ -341,8 +454,10 @@ export default function PlayerInfoPage() {
                                                     <div className="text-xs text-gray-300 mt-1 space-y-1">
                                                         <p>房间: {nextMatch.scheduledRoom.room_name}</p>
                                                         <p>轮次: 第{nextMatch.scheduledRoom.round_number}轮</p>
-                                                        <p>时间: {formatDate(nextMatch.scheduledRoom.match_date)} {nextMatch.scheduledRoom.match_time}</p>
+                                                        <p>时间: {formatDateTimeFromStrings(nextMatch.scheduledRoom.match_date, nextMatch.scheduledRoom.match_time)}</p>
                                                         <p>房间号: {nextMatch.scheduledRoom.match_number}</p>
+                                                        {/* 调试日志 */}
+                                                        <p className="text-red-400 text-xs">[DEBUG] match_date: {nextMatch.scheduledRoom.match_date}, match_time: {nextMatch.scheduledRoom.match_time}</p>
                                                     </div>
                                                 </div>
                                             )}
@@ -442,15 +557,15 @@ export default function PlayerInfoPage() {
                                                             </div>
                                                             <div className="flex justify-between">
                                                                 <span>时间:</span>
-                                                                <span className="text-white">{room.match_time}</span>
+                                                                <span className="text-white">{formatDateTimeFromStrings(room.match_date, room.match_time)}</span>
                                                             </div>
                                                             <div className="flex justify-between">
                                                                 <span>房间号:</span>
                                                                 <span className="text-white">{room.match_number}</span>
                                                             </div>
-                                                            <div className="flex justify-between">
-                                                                <span>最多参与:</span>
-                                                                <span className="text-white">{room.max_participants}人</span>
+                                                            {/* 调试日志 */}
+                                                            <div className="text-red-400 text-xs">
+                                                                [DEBUG] match_date: {room.match_date}, match_time: {room.match_time}
                                                             </div>
                                                         </div>
 

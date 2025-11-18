@@ -192,11 +192,11 @@ export const initDatabase = async (): Promise<void> => {
                 );
 
                 if ((existingColumns as any[]).length === 0) {
-                    console.log(`Adding missing column: ${column.name}`);
+                    // console.log(`Adding missing column: ${column.name}`);
                     await connection.execute(
                         `ALTER TABLE registrations ADD COLUMN ${column.name} ${column.type}`
                     );
-                    console.log(`✅ Column ${column.name} added successfully`);
+                    // console.log(`✅ Column ${column.name} added successfully`);
                 }
             } catch (columnError) {
                 console.error(`Error checking/adding column ${column.name}:`, columnError);
@@ -212,23 +212,23 @@ export const initDatabase = async (): Promise<void> => {
             );
 
             if ((roomIdColumns as any[]).length > 0) {
-                console.log('Modifying room_id column in player_matchups table to allow NULL');
+                // console.log('Modifying room_id column in player_matchups table to allow NULL');
 
                 // 先删除外键约束（如果存在）
                 try {
                     await connection.execute(
                         `ALTER TABLE player_matchups DROP FOREIGN KEY player_matchups_ibfk_1`
                     );
-                    console.log('✅ Foreign key constraint removed');
+                    // console.log('✅ Foreign key constraint removed');
                 } catch (fkError) {
-                    console.log('Foreign key constraint might not exist or already removed, continuing...');
+                    // console.log('Foreign key constraint might not exist or already removed, continuing...');
                 }
 
                 // 修改字段为可为NULL
                 await connection.execute(
                     `ALTER TABLE player_matchups MODIFY COLUMN room_id INT NULL`
                 );
-                console.log('✅ Column room_id modified to allow NULL values');
+                // console.log('✅ Column room_id modified to allow NULL values');
             }
         } catch (columnError) {
             console.error('Error modifying room_id column in player_matchups:', columnError);
@@ -304,7 +304,7 @@ export const initDatabase = async (): Promise<void> => {
         );
 
         if ((settingsRows as any[])[0].count === 0) {
-            console.log('Inserting default tournament settings');
+            // console.log('Inserting default tournament settings');
             await connection.execute(`
                 INSERT INTO tournament_settings (
                     tournament_name,
@@ -336,11 +336,11 @@ export const initDatabase = async (): Promise<void> => {
                     FALSE
                 )
             `);
-            console.log('✅ Default tournament settings inserted');
+            // console.log('✅ Default tournament settings inserted');
         }
 
         connection.release();
-        console.log('Database initialized and upgraded successfully');
+        // console.log('Database initialized and upgraded successfully');
     } catch (error) {
         console.error('Error initializing database:', error);
         throw error;
@@ -570,7 +570,7 @@ const mysqlStorage = {
             }
 
             await connection.commit();
-            // console.log('Registration saved to database successfully');
+            // // console.log('Registration saved to database successfully');
 
         } catch (error) {
             await connection.rollback();
@@ -1290,44 +1290,52 @@ const mysqlStorage = {
 
             connection.release();
 
-            return (rows as any[]).map(row => ({
-                id: row.id,
-                room_id: row.room_id,
-                player1_osuId: row.player1_osuId,
-                player1_username: row.player1_username,
-                player1_avatar_url: row.player1_avatar_url,
-                player2_osuId: row.player2_osuId,
-                player2_username: row.player2_username,
-                player2_avatar_url: row.player2_avatar_url,
-                red_player_osuId: row.red_player_osuId,
-                blue_player_osuId: row.blue_player_osuId,
-                red_score: row.red_score,
-                blue_score: row.blue_score,
-                status: row.status,
-                replay_link: row.replay_link,
-                match_link: row.match_link,
-                referee_osuId: row.referee_osuId,
-                referee_username: row.referee_username,
-                commentator_osuId: row.commentator_osuId,
-                commentator_username: row.commentator_username,
-                created_by: row.created_by,
-                created_at: row.created_at,
-                updated_at: row.updated_at,
-                room: {
-                    id: row.room_id,
-                    room_name: row.room_name,
-                    round_number: row.round_number,
-                    match_date: row.match_date,
-                    match_time: row.match_time,
-                    match_number: row.match_number,
-                    max_participants: row.max_participants,
-                    status: row.status,
-                    description: row.description,
+            const schedules = (rows as any[]).map(row => {
+                // 调试日志：检查status字段
+                console.log(`[DEBUG] Schedule ${row.id}: status = ${row.status}, type = ${typeof row.status}`);
+
+                return {
+                    id: row.id,
+                    room_id: row.room_id,
+                    player1_osuId: row.player1_osuId,
+                    player1_username: row.player1_username,
+                    player1_avatar_url: row.player1_avatar_url,
+                    player2_osuId: row.player2_osuId,
+                    player2_username: row.player2_username,
+                    player2_avatar_url: row.player2_avatar_url,
+                    red_player_osuId: row.red_player_osuId,
+                    blue_player_osuId: row.blue_player_osuId,
+                    red_score: row.red_score,
+                    blue_score: row.blue_score,
+                    status: row.status || 'pending', // 确保有默认值
+                    replay_link: row.replay_link,
+                    match_link: row.match_link,
+                    referee_osuId: row.referee_osuId,
+                    referee_username: row.referee_username,
+                    commentator_osuId: row.commentator_osuId,
+                    commentator_username: row.commentator_username,
                     created_by: row.created_by,
                     created_at: row.created_at,
-                    updated_at: row.updated_at
-                }
-            }));
+                    updated_at: row.updated_at,
+                    room: {
+                        id: row.room_id,
+                        room_name: row.room_name,
+                        round_number: row.round_number,
+                        match_date: row.match_date,
+                        match_time: row.match_time,
+                        match_number: row.match_number,
+                        max_participants: row.max_participants,
+                        status: row.status,
+                        description: row.description,
+                        created_by: row.created_by,
+                        created_at: row.created_at,
+                        updated_at: row.updated_at
+                    }
+                };
+            });
+
+            console.log(`[DEBUG] Total schedules returned: ${schedules.length}`);
+            return schedules;
         } catch (error) {
             console.error('Error getting all match schedules:', error);
             return [];
@@ -1386,17 +1394,25 @@ const mysqlStorage = {
                     sra.updated_at,
                     mr.room_name, mr.round_number, mr.match_date, mr.match_time, mr.match_number,
                     r.avatar_url as staff_avatar_url,
-                    ms.player1_username, ms.player2_username
+                    ms.id as match_id,
+                    ms.player1_username, 
+                    ms.player2_username,
+                    ms.red_score,
+                    ms.blue_score,
+                    ms.match_link,
+                    ms.replay_link,
+                    ms.status as match_status
                 FROM staff_room_assignments sra
                 JOIN match_rooms mr ON sra.room_id = mr.id
                 LEFT JOIN registrations r ON sra.staff_osuId = r.osuId COLLATE utf8mb4_unicode_ci
-                LEFT JOIN match_schedules ms ON sra.room_id = ms.room_id
+                LEFT JOIN match_schedules ms ON sra.room_id = ms.room_id AND ms.status IN ('pending', 'confirmed', 'completed')
+                WHERE sra.status = 'confirmed'
                 ORDER BY mr.room_name ASC, sra.staff_role ASC, sra.created_at DESC
             `);
 
             connection.release();
 
-            return (rows as any[]).map(row => ({
+            const assignments = (rows as any[]).map(row => ({
                 id: row.id,
                 room_id: row.room_id,
                 staff_osuId: row.staff_osuId,
@@ -1417,12 +1433,39 @@ const mysqlStorage = {
                     match_number: row.match_number
                 },
                 staff_avatar_url: row.staff_avatar_url,
-                // 添加比赛信息
+                // 添加完整的比赛信息
                 match_info: {
-                    player1_username: row.player1_username,
-                    player2_username: row.player2_username
+                    id: row.match_id,
+                    player1_username: row.player1_username || '待定',
+                    player2_username: row.player2_username || '待定',
+                    red_score: row.red_score,
+                    blue_score: row.blue_score,
+                    match_link: row.match_link,
+                    replay_link: row.replay_link,
+                    status: row.match_status || 'pending'
                 }
             }));
+
+            // 为缺失头像的assignment添加fallback
+            const { getUserAvatarWithFallback } = await import('@/lib/osu-api');
+            const assignmentsWithFallback = await Promise.all(
+                assignments.map(async (assignment) => {
+                    if (!assignment.staff_avatar_url) {
+                        try {
+                            assignment.staff_avatar_url = await getUserAvatarWithFallback(
+                                assignment.staff_osuId,
+                                assignment.staff_username
+                            );
+                        } catch (error) {
+                            console.warn(`Failed to get fallback avatar for ${assignment.staff_username}:`, error);
+                            assignment.staff_avatar_url = '/unknow.svg';
+                        }
+                    }
+                    return assignment;
+                })
+            );
+
+            return assignmentsWithFallback;
         } catch (error) {
             console.error('Error getting staff room assignments:', error);
             return [];
@@ -1597,7 +1640,7 @@ const mysqlStorage = {
 
             connection.release();
 
-            return (rows as any[]).map(row => ({
+            const assignments = (rows as any[]).map(row => ({
                 id: row.id,
                 room_id: row.room_id,
                 staff_osuId: row.staff_osuId,
@@ -1617,6 +1660,27 @@ const mysqlStorage = {
                     scheduled_time: row.scheduled_time
                 }
             }));
+
+            // 为缺失头像的assignment添加fallback
+            const { getUserAvatarWithFallback } = await import('@/lib/osu-api');
+            const assignmentsWithFallback = await Promise.all(
+                assignments.map(async (assignment) => {
+                    if (!assignment.staff_avatar_url) {
+                        try {
+                            assignment.staff_avatar_url = await getUserAvatarWithFallback(
+                                assignment.staff_osuId,
+                                assignment.staff_username
+                            );
+                        } catch (error) {
+                            console.warn(`Failed to get fallback avatar for ${assignment.staff_username}:`, error);
+                            assignment.staff_avatar_url = '/unknow.svg';
+                        }
+                    }
+                    return assignment;
+                })
+            );
+
+            return assignmentsWithFallback;
         } catch (error) {
             console.error('Error getting room staff assignments:', error);
             return [];

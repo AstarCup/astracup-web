@@ -321,6 +321,35 @@ export async function getBeatmapInfo(beatmapId: number): Promise<BeatmapInfo | n
     }
 }
 
+// 获取用户头像（带fallback机制）
+export async function getUserAvatarWithFallback(osuId: string, username: string): Promise<string> {
+    try {
+        // 1. 首先尝试从数据库获取
+        const { getUserRegistration } = await import('@/lib/mysql-registrations');
+        const registration = await getUserRegistration(osuId);
+
+        if (registration?.avatar_url) {
+            return registration.avatar_url;
+        }
+
+        // 2. 如果数据库中没有，从osu! API获取
+        try {
+            const userData = await getUserById(parseInt(osuId));
+            if (userData?.avatar_url) {
+                return userData.avatar_url;
+            }
+        } catch (apiError) {
+            console.warn(`Failed to get avatar from osu! API for user ${username} (${osuId}):`, apiError);
+        }
+
+        // 3. 如果API也失败，返回默认头像
+        return '/unknow.svg';
+    } catch (error) {
+        console.error(`Error getting avatar for user ${username} (${osuId}):`, error);
+        return '/unknow.svg';
+    }
+}
+
 // 获取beatmapset中的所有beatmap
 export async function getBeatmapsetInfo(beatmapsetId: number): Promise<BeatmapInfo[]> {
     try {

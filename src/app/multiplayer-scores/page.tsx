@@ -14,12 +14,14 @@ export default function MultiplayerScoresPage() {
     const [scores, setScores] = useState<DisplayScore[]>([]);
     const [allScores, setAllScores] = useState<DisplayScore[]>([]); // 存储所有图池的分数
     const [filteredScores, setFilteredScores] = useState<DisplayScore[]>([]);
+    const [databaseScores, setDatabaseScores] = useState<DisplayScore[]>([]); // 从数据库获取的分数
     const [mapSelections, setMapSelections] = useState<MapSelection[]>([]);
     const [approvedPlayers, setApprovedPlayers] = useState<Set<string>>(new Set());
     const [registrations, setRegistrations] = useState<any[]>([]); // 存储已报名数据
     const [loading, setLoading] = useState(false);
     const [loadingScores, setLoadingScores] = useState(false);
     const [loadingAllScores, setLoadingAllScores] = useState(false); // 加载所有分数的状态
+    const [loadingDatabaseScores, setLoadingDatabaseScores] = useState(false); // 加载数据库分数的状态
     const [loadingMapSelections, setLoadingMapSelections] = useState(false);
     const [loadingPlayers, setLoadingPlayers] = useState(false);
     const [loadingRegistrations, setLoadingRegistrations] = useState(false); // 加载已报名数据的状态
@@ -53,10 +55,11 @@ export default function MultiplayerScoresPage() {
         }
     }, []);
 
-    // 页面加载时获取已过审的玩家数据和已报名数据
+    // 页面加载时获取已过审的玩家数据和已报名数据，以及从数据库加载分数
     useEffect(() => {
         loadApprovedPlayers();
         loadRegistrations();
+        loadScoresFromDatabase();
     }, []);
 
     // 当分数数据或已过审玩家数据变化时，过滤分数
@@ -145,6 +148,53 @@ export default function MultiplayerScoresPage() {
             setRegistrations([]);
         } finally {
             setLoadingRegistrations(false);
+        }
+    };
+
+    // 从数据库加载分数数据
+    const loadScoresFromDatabase = async () => {
+        setLoadingDatabaseScores(true);
+        setError(null);
+        try {
+            const response = await fetch('/api/match-scores/save');
+            const data = await response.json();
+
+            if (data.success && data.rooms && data.rooms.length > 0) {
+                // 获取所有已保存房间的分数
+                const allDatabaseScores: DisplayScore[] = [];
+
+                // 遍历所有已保存的房间，获取每个房间的分数
+                for (const room of data.rooms) {
+                    try {
+                        const scoresResponse = await fetch(`/api/match-scores/save?roomId=${room.id}`);
+                        const scoresData = await scoresResponse.json();
+
+                        if (scoresData.success && scoresData.scores) {
+                            // 为每个分数添加房间信息
+                            const scoresWithRoomInfo = scoresData.scores.map((score: DisplayScore) => ({
+                                ...score,
+                                roomId: room.id,
+                                roomName: room.name
+                            }));
+                            allDatabaseScores.push(...scoresWithRoomInfo);
+                        }
+                    } catch (err) {
+                        console.error(`Error loading scores for room ${room.id}:`, err);
+                    }
+                }
+
+                setDatabaseScores(allDatabaseScores);
+                // console.log(`Loaded ${allDatabaseScores.length} scores from database`);
+            } else {
+                setDatabaseScores([]);
+                // console.log('No saved rooms found in database');
+            }
+        } catch (err) {
+            setError('网络错误，无法从数据库加载分数数据');
+            console.error('Error loading scores from database:', err);
+            setDatabaseScores([]);
+        } finally {
+            setLoadingDatabaseScores(false);
         }
     };
 
@@ -730,11 +780,11 @@ export default function MultiplayerScoresPage() {
 
                     {activeTab === 'byTotal' && (
                         <TotalScoresByModTable
-                            scores={allScores}
+                            scores={databaseScores.length > 0 ? databaseScores : allScores}
                             mapSelections={mapSelections}
                             approvedPlayers={approvedPlayers}
                             currentBeatmapId={undefined} // 按总分不需要当前图池ID
-                            loading={loadingAllScores || loadingPlayers || loadingMapSelections}
+                            loading={loadingDatabaseScores || loadingAllScores || loadingPlayers || loadingMapSelections}
                             selectedRoom={selectedRoom} // 传递房间信息用于匹配
                             registrations={registrations} // 传递已报名数据用于获取玩家信息
                         />

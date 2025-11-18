@@ -21,7 +21,7 @@ export default function UserManagement({
     onDeleteRegistration
 }: UserManagementProps) {
     return (
-        <div className="space-y-6">
+        <div className="">
             {/* 用户注册审核管理 */}
             <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
                 <h3 className="text-xl font-bold text-white mb-4 flex items-center">
@@ -29,20 +29,6 @@ export default function UserManagement({
                     用户注册审核管理
                 </h3>
                 <div className="bg-[#3D3D3D80] p-4 border border-gray-600">
-                    <div className="mb-4">
-                        <button
-                            onClick={onFetchRegistrations}
-                            disabled={registrationsLoading}
-                            className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                        >
-                            {registrationsLoading ? (
-                                <div className="flex items-center">
-                                    <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
-                                    <span className="ml-2 text-gray-400">加载中...</span>
-                                </div>
-                            ) : '获取待审核用户列表'}
-                        </button>
-                    </div>
 
                     {registrationsLoading && (
                         <div className="text-center py-8">

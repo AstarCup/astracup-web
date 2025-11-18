@@ -256,11 +256,11 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
             const response = await fetch('/api/season-config');
             if (response.ok) {
                 const data = await response.json();
-                console.log('Season config loaded:', data);
+                // console.log('Season config loaded:', data);
                 if (data.success) {
                     setAvailableSeasons(data.availableSeasons);
                     setSelectedSeason(data.defaultSeason);
-                    console.log('Set selectedSeason to:', data.defaultSeason);
+                    // console.log('Set selectedSeason to:', data.defaultSeason);
                 }
             } else {
                 console.error('Failed to load season config, status:', response.status);
@@ -276,10 +276,10 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         const checkAccessAndLoadData = async () => {
             if (!user) return;
 
-            console.log('Checking access for user:', user);
+            // console.log('Checking access for user:', user);
 
             const hasAccess = permissions.isReplayTester || permissions.isAdmin || permissions.isReferee || permissions.isStreamer || permissions.isCommentator;
-            console.log('User access check result:', hasAccess);
+            // console.log('User access check result:', hasAccess);
 
             if (!hasAccess) {
                 showError('无权限访问回放收集系统');
@@ -302,19 +302,19 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         const loadMapData = async () => {
             if (!user) return;
 
-            console.log('Loading map data for:', { selectedSeason, selectedCategory, userId: userForState.id });
+            // console.log('Loading map data for:', { selectedSeason, selectedCategory, userId: userForState.id });
 
             // 获取padding状态的图池
             try {
                 const url = `/api/map-selections?season=${selectedSeason}&category=${selectedCategory}&padding=true&osuId=${userForState.id}`;
-                console.log('Fetching from URL:', url);
+                // console.log('Fetching from URL:', url);
 
                 const response = await fetch(url);
-                console.log('Response status:', response.status);
+                // console.log('Response status:', response.status);
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('Received data:', data);
+                    // console.log('Received data:', data);
 
                     // 转换数据格式以完全匹配MapoolTable期望的格式
                     const formattedData = (data.selections || []).map((map: any) => ({

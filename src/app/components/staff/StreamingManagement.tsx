@@ -27,6 +27,40 @@ export default function StreamingManagement({
     onApplyForRoom,
     onRevokeAssignment
 }: StreamingManagementProps) {
+    // 调试日志 - 显示传入的数据
+    // console.log('=== StreamingManagement 调试信息 ===');
+    // console.log('staffAssignments:', staffAssignments);
+    // console.log('availableRooms:', availableRooms);
+
+    // 详细检查staffAssignments中的match_info
+    if (staffAssignments.length > 0) {
+        // console.log('=== staffAssignments 详细数据 ===');
+        staffAssignments.forEach((assignment, index) => {
+            // console.log(`Assignment ${index}:`, {
+            // id: assignment.id,
+            // room_id: assignment.room_id,
+            // staff_role: assignment.staff_role,
+            // match_info: assignment.match_info,
+            // room: assignment.room
+            // });
+        });
+    }
+
+    // 详细检查availableRooms中的时间数据
+    if (availableRooms.length > 0) {
+        // console.log('=== availableRooms 详细数据 ===');
+        availableRooms.forEach((room, index) => {
+            // console.log(`Room ${index}:`, {
+            // id: room.id,
+            // room_name: room.room_name,
+            // match_date: room.match_date,
+            // match_time: room.match_time,
+            // player1_username: room.player1_username,
+            // player2_username: room.player2_username,
+            // staff_counts: room.staff_counts
+            // });
+        });
+    }
     // 格式化日期时间函数 - 使用本地化时间显示
     const formatDateTime = (dateTimeString: string) => {
         try {
@@ -39,27 +73,76 @@ export default function StreamingManagement({
 
     // 格式化日期和时间字符串 - 使用本地化时间显示
     const formatDateTimeFromStrings = (dateString: string | undefined, timeString: string | undefined) => {
-        if (!dateString) return '时间未定';
+        // 调试日志：检查输入参数
+        console.log('[DEBUG] formatDateTimeFromStrings 输入:', { dateString, timeString });
 
-        let dateTimeString: string;
-
-        // 检查dateString是否已经是完整的ISO字符串格式
-        if (dateString.includes('T') && dateString.includes('Z')) {
-            // 如果是完整的ISO字符串，直接使用
-            dateTimeString = dateString;
-        } else if (timeString) {
-            // 如果是分别的日期和时间字段，组合它们
-            dateTimeString = `${dateString}T${timeString}`;
-        } else {
-            // 如果只有日期字段，假设时间是00:00:00
-            dateTimeString = `${dateString}T00:00:00.000Z`;
+        // 检查日期是否为空或无效
+        if (!dateString || dateString === '0000-00-00' || dateString === 'Invalid Date' || dateString === 'null') {
+            console.log('[DEBUG] 日期为空或无效，返回"时间未定"');
+            return '时间未定';
         }
 
         try {
-            return new Date(dateTimeString).toLocaleString('zh-CN');
+            let date: Date;
+
+            // 检查是否是ISO格式的日期时间字符串（包含T和Z）
+            if (dateString.includes('T') && dateString.includes('Z')) {
+                // 对于ISO格式的日期，我们直接解析它，但需要处理时区问题
+                console.log('[DEBUG] 检测到ISO格式日期:', dateString);
+
+                // 解析ISO格式的日期
+                const isoDate = new Date(dateString);
+                console.log('[DEBUG] 解析后的ISO日期对象:', isoDate);
+
+                // 提取日期部分（YYYY-MM-DD）
+                const datePart = dateString.split('T')[0];
+
+                // 使用timeString中的时间，如果没有则使用默认时间
+                const time = timeString && timeString !== '00:00:00' && timeString !== 'Invalid Date' && timeString !== 'null' ? timeString : '00:00:00';
+
+                // 创建新的日期时间字符串，使用北京时间（UTC+8）
+                const dateTimeString = `${datePart}T${time}+08:00`;
+                console.log('[DEBUG] 组合后的日期时间字符串:', dateTimeString);
+                date = new Date(dateTimeString);
+
+                // 调试：检查解析后的日期
+                console.log('[DEBUG] 解析后的日期对象:', date);
+                console.log('[DEBUG] 解析后的UTC时间:', date.toISOString());
+                console.log('[DEBUG] 解析后的本地时间:', date.toString());
+                console.log('[DEBUG] 解析后的本地时间戳:', date.getTime());
+            } else {
+                // 处理MySQL格式：DATE + TIME
+                // 处理空时间的情况，MySQL TIME 类型可能返回 '00:00:00'
+                const time = timeString && timeString !== '00:00:00' && timeString !== 'Invalid Date' && timeString !== 'null' ? timeString : '00:00:00';
+
+                // 创建日期对象，MySQL DATE 格式为 'YYYY-MM-DD', TIME 格式为 'HH:MM:SS'
+                const dateTimeString = `${dateString}T${time}+08:00`;
+                console.log('[DEBUG] MySQL格式日期时间字符串:', dateTimeString);
+                date = new Date(dateTimeString);
+            }
+
+            // 检查日期是否有效
+            if (isNaN(date.getTime())) {
+                console.warn('[DEBUG] 无效的日期时间:', dateString, timeString);
+                return '时间未定';
+            }
+
+            // 格式化日期时间，显示为中文格式
+            const formattedDate = date.toLocaleString('zh-CN', {
+                timeZone: 'Asia/Shanghai',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+
+            console.log('[DEBUG] 格式化后的日期时间:', formattedDate);
+            return formattedDate;
         } catch (error) {
-            console.error('日期格式化错误:', error, dateString, timeString);
-            return '时间格式错误';
+            console.error('[DEBUG] 日期格式化错误:', error, dateString, timeString);
+            return '时间未定';
         }
     };
 
@@ -134,7 +217,7 @@ export default function StreamingManagement({
                                                         {assignment.match_info.player1_username} vs {assignment.match_info.player2_username}
                                                     </span>
                                                     <span className="ml-4 text-xs">
-                                                        {assignment.match_info.scheduled_time ? formatDateTime(assignment.match_info.scheduled_time) : '时间未定'}
+                                                        {assignment.room?.match_date && assignment.room?.match_time ? formatDateTimeFromStrings(assignment.room.match_date, assignment.room.match_time) : '时间未定'}
                                                     </span>
                                                 </div>
 
@@ -309,9 +392,10 @@ export default function StreamingManagement({
                                                     })()}
                                                 </div>
 
-                                                {room.description && (
-                                                    <div className="text-xs text-gray-500 mb-4 line-clamp-2">
-                                                        {room.description}
+                                                {/* 显示比赛对阵信息 */}
+                                                {room.player1_username && room.player2_username && (
+                                                    <div className="text-xs text-gray-500 mb-4">
+                                                        {room.player1_username} vs {room.player2_username}
                                                     </div>
                                                 )}
 
@@ -505,9 +589,10 @@ export default function StreamingManagement({
                                                     })()}
                                                 </div>
 
-                                                {room.description && (
-                                                    <div className="text-xs text-gray-500 mb-4 line-clamp-2">
-                                                        {room.description}
+                                                {/* 显示比赛对阵信息 */}
+                                                {room.player1_username && room.player2_username && (
+                                                    <div className="text-xs text-gray-500 mb-4">
+                                                        {room.player1_username} vs {room.player2_username}
                                                     </div>
                                                 )}
 

@@ -528,7 +528,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 if (data.success) {
                     setAvailableSeasons(data.availableSeasons);
                     setSeason(data.defaultSeason);
-                    // // console.log('Season config loaded:', data);
+                    // // // console.log('Season config loaded:', data);
                 }
             }
         } catch (error) {
