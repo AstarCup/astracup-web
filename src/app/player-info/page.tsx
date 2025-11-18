@@ -167,11 +167,11 @@ export default function PlayerInfoPage() {
     // 格式化日期和时间字符串 - 使用本地化时间显示
     const formatDateTimeFromStrings = (dateString: string, timeString: string) => {
         // 调试日志：检查输入参数
-        // console.log('[DEBUG PlayerInfo] formatDateTimeFromStrings 输入:', { dateString, timeString });
+        console.log('[DEBUG PlayerInfo] formatDateTimeFromStrings 输入:', { dateString, timeString });
 
         // 检查日期是否为空或无效
         if (!dateString || dateString === '0000-00-00' || dateString === 'Invalid Date' || dateString === 'null') {
-            // console.log('[DEBUG PlayerInfo] 日期为空或无效，返回"时间未定"');
+            console.log('[DEBUG PlayerInfo] 日期为空或无效，返回"时间未定"');
             return '时间未定';
         }
 
@@ -181,7 +181,7 @@ export default function PlayerInfoPage() {
             // 检查是否是ISO格式的日期时间字符串（包含T和Z）
             if (dateString.includes('T') && dateString.includes('Z')) {
                 // 解析ISO格式的日期，但使用timeString中的时间
-                // console.log('[DEBUG PlayerInfo] 检测到ISO格式日期，解析日期部分:', dateString);
+                console.log('[DEBUG PlayerInfo] 检测到ISO格式日期，解析日期部分:', dateString);
 
                 // 提取日期部分（YYYY-MM-DD）
                 const datePart = dateString.split('T')[0];
@@ -191,8 +191,13 @@ export default function PlayerInfoPage() {
 
                 // 创建新的日期时间字符串，使用北京时间（UTC+8）
                 const dateTimeString = `${datePart}T${time}+08:00`;
-                // console.log('[DEBUG PlayerInfo] 组合后的日期时间字符串:', dateTimeString);
+                console.log('[DEBUG PlayerInfo] 组合后的日期时间字符串:', dateTimeString);
                 date = new Date(dateTimeString);
+
+                // 调试：检查解析后的日期
+                console.log('[DEBUG PlayerInfo] 解析后的日期对象:', date);
+                console.log('[DEBUG PlayerInfo] 解析后的UTC时间:', date.toISOString());
+                console.log('[DEBUG PlayerInfo] 解析后的本地时间:', date.toString());
             } else {
                 // 处理MySQL格式：DATE + TIME
                 // 处理空时间的情况，MySQL TIME 类型可能返回 '00:00:00'
@@ -200,7 +205,7 @@ export default function PlayerInfoPage() {
 
                 // 创建日期对象，MySQL DATE 格式为 'YYYY-MM-DD', TIME 格式为 'HH:MM:SS'
                 const dateTimeString = `${dateString}T${time}+08:00`;
-                // console.log('[DEBUG PlayerInfo] MySQL格式日期时间字符串:', dateTimeString);
+                console.log('[DEBUG PlayerInfo] MySQL格式日期时间字符串:', dateTimeString);
                 date = new Date(dateTimeString);
             }
 
@@ -221,7 +226,7 @@ export default function PlayerInfoPage() {
                 hour12: false
             });
 
-            // console.log('[DEBUG PlayerInfo] 格式化后的日期时间:', formattedDate);
+            console.log('[DEBUG PlayerInfo] 格式化后的日期时间:', formattedDate);
             return formattedDate;
         } catch (error) {
             console.error('[DEBUG PlayerInfo] 日期格式化错误:', error, dateString, timeString);
