@@ -87,15 +87,19 @@ export default function StreamingManagement({
 
             // 检查是否是ISO格式的日期时间字符串（包含T和Z）
             if (dateString.includes('T') && dateString.includes('Z')) {
-                // 直接使用ISO格式的日期时间，忽略timeString参数
-                console.log('[DEBUG] 检测到ISO格式日期，直接解析:', dateString);
-                date = new Date(dateString);
+                // 解析ISO格式的日期，但使用timeString中的时间
+                console.log('[DEBUG] 检测到ISO格式日期，解析日期部分:', dateString);
 
-                // 如果是UTC时间，转换为北京时间（UTC+8）
-                if (dateString.endsWith('Z')) {
-                    date = new Date(date.getTime() + 8 * 60 * 60 * 1000);
-                    console.log('[DEBUG] UTC时间转换为北京时间:', date);
-                }
+                // 提取日期部分（YYYY-MM-DD）
+                const datePart = dateString.split('T')[0];
+
+                // 使用timeString中的时间，如果没有则使用默认时间
+                const time = timeString && timeString !== '00:00:00' && timeString !== 'Invalid Date' && timeString !== 'null' ? timeString : '00:00:00';
+
+                // 创建新的日期时间字符串，使用北京时间（UTC+8）
+                const dateTimeString = `${datePart}T${time}+08:00`;
+                console.log('[DEBUG] 组合后的日期时间字符串:', dateTimeString);
+                date = new Date(dateTimeString);
             } else {
                 // 处理MySQL格式：DATE + TIME
                 // 处理空时间的情况，MySQL TIME 类型可能返回 '00:00:00'
@@ -203,7 +207,7 @@ export default function StreamingManagement({
                                                         {assignment.match_info.player1_username} vs {assignment.match_info.player2_username}
                                                     </span>
                                                     <span className="ml-4 text-xs">
-                                                        {assignment.match_info.scheduled_time ? formatDateTime(assignment.match_info.scheduled_time) : '时间未定'}
+                                                        {assignment.room?.match_date && assignment.room?.match_time ? formatDateTimeFromStrings(assignment.room.match_date, assignment.room.match_time) : '时间未定'}
                                                     </span>
                                                 </div>
 
