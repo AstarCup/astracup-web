@@ -320,7 +320,7 @@ export default function MatchSettings({
             remainingTime: seconds,
             isRunning: true
         });
-        
+
         // 设置事件名称
         if (onTimerEventNameChange && eventName) {
             onTimerEventNameChange(eventName);
@@ -339,13 +339,11 @@ export default function MatchSettings({
             remainingTime: 0,
             isRunning: false
         });
+        if (onTimerEventNameChange) {
+            onTimerEventNameChange("");
+        }
     };
 
-    // 清除阶段名称（当点击清除按钮时）
-    const handleClearTimer = () => {
-        clearTimer();
-        // 这里可以添加清除阶段名称的逻辑，但需要从父组件传递
-    };
 
     // Roll点控制函数
     const startRoll = () => {
@@ -858,7 +856,10 @@ export default function MatchSettings({
 
                     <div className="grid grid-cols-2 gap-4">
                         <button
-                            onClick={() => startTimer(120, "选择图池")}
+                            onClick={() => {
+                                startTimer(120, "选择图池");
+                                onMapPoolSettingsChange({ ...mapPoolSettings, visible: true });
+                            }}
                             className="px-6 py-4 bg-green-600 hover:bg-green-700 text-white rounded text-5xl transition-colors font-bold"
                         >
                             选择图池 120秒

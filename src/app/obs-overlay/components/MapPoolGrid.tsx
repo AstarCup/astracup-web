@@ -7,6 +7,7 @@ interface MapPoolGridProps {
     beatmaps: BeatmapCardType[];
     onBeatmapLeftClick: (beatmap: BeatmapCardType) => void;
     onBeatmapRightClick: (beatmap: BeatmapCardType) => void;
+    onTimerStart?: (seconds: number, eventName: string) => void;
     banPickHistory: Array<{
         team: 'red' | 'blue';
         action: 'ban' | 'pick';
@@ -17,7 +18,7 @@ interface MapPoolGridProps {
 
 const MOD_ORDER = ['NM', 'HD', 'HR', 'DT', 'FM', 'LZ', 'TB'];
 
-export default function MapPoolGrid({ beatmaps, onBeatmapLeftClick, onBeatmapRightClick, banPickHistory }: MapPoolGridProps) {
+export default function MapPoolGrid({ beatmaps, onBeatmapLeftClick, onBeatmapRightClick, onTimerStart, banPickHistory }: MapPoolGridProps) {
     // 按MOD分类分组
     const groupedByMod = MOD_ORDER.reduce((acc, mod) => {
         acc[mod] = beatmaps
@@ -69,6 +70,7 @@ export default function MapPoolGrid({ beatmaps, onBeatmapLeftClick, onBeatmapRig
                                     beatmap={beatmap}
                                     onLeftClick={onBeatmapLeftClick}
                                     onRightClick={onBeatmapRightClick}
+                                    onTimerStart={onTimerStart}
                                     banPickHistory={banPickHistory}
                                 />
                             ))}

@@ -486,7 +486,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                             const timeStr = schedule.room?.match_time || '00:00:00';
 
                                             // 调试日志
-                                            console.log('[DEBUG MatchScheduleSystem] 时间格式化输入:', { dateStr, timeStr });
+                                            // console.log('[DEBUG MatchScheduleSystem] 时间格式化输入:', { dateStr, timeStr });
 
                                             try {
                                                 let date: Date;
@@ -494,7 +494,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                                 // 检查是否是ISO格式的日期时间字符串（包含T和Z）
                                                 if (dateStr.includes('T') && dateStr.includes('Z')) {
                                                     // 对于ISO格式的日期，我们直接解析它，但需要处理时区问题
-                                                    console.log('[DEBUG MatchScheduleSystem] 检测到ISO格式日期:', dateStr);
+                                                    // console.log('[DEBUG MatchScheduleSystem] 检测到ISO格式日期:', dateStr);
 
                                                     // 提取日期部分（YYYY-MM-DD）
                                                     const datePart = dateStr.split('T')[0];
@@ -504,13 +504,13 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
 
                                                     // 创建新的日期时间字符串，使用北京时间（UTC+8）
                                                     const dateTimeString = `${datePart}T${time}+08:00`;
-                                                    console.log('[DEBUG MatchScheduleSystem] 组合后的日期时间字符串:', dateTimeString);
+                                                    // console.log('[DEBUG MatchScheduleSystem] 组合后的日期时间字符串:', dateTimeString);
                                                     date = new Date(dateTimeString);
 
                                                     // 调试：检查解析后的日期
-                                                    console.log('[DEBUG MatchScheduleSystem] 解析后的日期对象:', date);
-                                                    console.log('[DEBUG MatchScheduleSystem] 解析后的UTC时间:', date.toISOString());
-                                                    console.log('[DEBUG MatchScheduleSystem] 解析后的本地时间:', date.toString());
+                                                    // console.log('[DEBUG MatchScheduleSystem] 解析后的日期对象:', date);
+                                                    // console.log('[DEBUG MatchScheduleSystem] 解析后的UTC时间:', date.toISOString());
+                                                    // console.log('[DEBUG MatchScheduleSystem] 解析后的本地时间:', date.toString());
                                                 } else {
                                                     // 处理MySQL格式：DATE + TIME
                                                     // 处理空时间的情况，MySQL TIME 类型可能返回 '00:00:00'
@@ -518,7 +518,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
 
                                                     // 创建日期对象，MySQL DATE 格式为 'YYYY-MM-DD', TIME 格式为 'HH:MM:SS'
                                                     const dateTimeString = `${dateStr}T${time}+08:00`;
-                                                    console.log('[DEBUG MatchScheduleSystem] MySQL格式日期时间字符串:', dateTimeString);
+                                                    // console.log('[DEBUG MatchScheduleSystem] MySQL格式日期时间字符串:', dateTimeString);
                                                     date = new Date(dateTimeString);
                                                 }
 
@@ -539,7 +539,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                                     hour12: false
                                                 });
 
-                                                console.log('[DEBUG MatchScheduleSystem] 格式化后的日期时间:', formattedDate);
+                                                // console.log('[DEBUG MatchScheduleSystem] 格式化后的日期时间:', formattedDate);
                                                 return formattedDate;
                                             } catch (error) {
                                                 console.error('[DEBUG MatchScheduleSystem] 日期格式化错误:', error, dateStr, timeStr);

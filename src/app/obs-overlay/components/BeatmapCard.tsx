@@ -8,6 +8,7 @@ interface BeatmapCardProps {
     beatmap: BeatmapCardType;
     onLeftClick: (beatmap: BeatmapCardType) => void;
     onRightClick: (beatmap: BeatmapCardType) => void;
+    onTimerStart?: (seconds: number, eventName: string) => void;
     banPickHistory: Array<{
         team: 'red' | 'blue';
         action: 'ban' | 'pick';
@@ -16,7 +17,7 @@ interface BeatmapCardProps {
     }>;
 }
 
-export default function BeatmapCard({ beatmap, onLeftClick, onRightClick, banPickHistory }: BeatmapCardProps) {
+export default function BeatmapCard({ beatmap, onLeftClick, onRightClick, onTimerStart, banPickHistory }: BeatmapCardProps) {
     const [isAnimating, setIsAnimating] = useState(false);
     const [animationType, setAnimationType] = useState<'pick' | 'ban' | null>(null);
 
@@ -33,7 +34,7 @@ export default function BeatmapCard({ beatmap, onLeftClick, onRightClick, banPic
 
     const handleClick = (e: React.MouseEvent) => {
         e.preventDefault();
-        
+
         // 触发动画
         setIsAnimating(true);
         if (e.button === 0) { // 左键 - pick
@@ -43,14 +44,19 @@ export default function BeatmapCard({ beatmap, onLeftClick, onRightClick, banPic
             setAnimationType('ban');
             onRightClick(beatmap);
         }
+
+        // 启动120秒计时器，事件名为"准备时间"
+        if (onTimerStart) {
+            onTimerStart(120, "准备时间");
+        }
     };
 
     const getCardClass = () => {
         const baseClass = "w-full h-24 flex rounded-lg overflow-hidden cursor-pointer transition-all duration-300 relative";
-        
+
         // 添加 hover 放大效果
         const hoverClass = "hover:scale-110 hover:z-10 hover:shadow-2xl";
-        
+
         // 添加闪光动画
         const flashClass = isAnimating ? "animate-flash" : "";
 
