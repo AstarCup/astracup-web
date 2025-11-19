@@ -47,7 +47,7 @@ export default function MapPoolGrid({ beatmaps, onBeatmapLeftClick, onBeatmapRig
             {validMods.map(mod => (
                 <div key={mod} className="mb-6">
                     {/* MOD分类标题 */}
-                    <div className="flex justify-center mb-3">
+                    {/* <div className="flex justify-center mb-3">
                         <div className={`px-4 py-2 rounded-full text-white font-bold text-lg ${mod === 'NM' ? 'bg-gray-500' :
                             mod === 'HD' ? 'bg-yellow-500' :
                                 mod === 'HR' ? 'bg-red-500' :
@@ -58,7 +58,7 @@ export default function MapPoolGrid({ beatmaps, onBeatmapLeftClick, onBeatmapRig
                             }`}>
                             {getModLabel(mod)}
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* 谱面网格 */}
                     <div className="">

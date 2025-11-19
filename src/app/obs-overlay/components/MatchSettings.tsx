@@ -568,7 +568,7 @@ export default function MatchSettings({
     const blueTeam = teams.find(t => t.id === 'blue');
 
     return (
-        <div className="bg-[#3D3D3D] p-6 rounded-lg border-b-4 border-[#E93B66] mb-6 w-[50%]">
+        <div className="">
             {/* Tab切换 */}
             <div className="flex mb-6 border-b border-gray-600">
                 <button

@@ -61,9 +61,9 @@ export default function RollDisplay({ rollState }: RollDisplayProps) {
         <div style={{
             position: 'absolute',
             top: '300px',
-            left: '50%',
+            left: '14%',
             width: '1200px',
-            transform: 'translateX(-50%)',
+            transform: 'translateX(-0%)',
             zIndex: 1000,
             display: 'flex',
             flexDirection: 'column',

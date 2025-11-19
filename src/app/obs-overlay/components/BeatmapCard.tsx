@@ -58,15 +58,6 @@ export default function BeatmapCard({ beatmap, onLeftClick, onRightClick, banPic
         return team === 'red' ? 'text-red-500' : 'text-blue-500';
     };
 
-    const getStatusWithCount = () => {
-        if (beatmap.status === 'banned') {
-            return `BANNED${beatmap.bannedBy === 'red' ? `${getTeamColor('red')}红方` : `${getTeamColor('blue')}蓝方`}`;
-        } else if (beatmap.status === 'picked') {
-            return `PICKED${beatmap.pickedBy === 'red' ? `${getTeamColor('red')}红方` : `${getTeamColor('blue')}蓝方`}`;
-        }
-        return '';
-    };
-
     const getModColor = () => {
         const mod = beatmap.selectedMods;
         switch (mod) {
@@ -75,13 +66,13 @@ export default function BeatmapCard({ beatmap, onLeftClick, onRightClick, banPic
             case 'HD':
                 return 'bg-yellow-300 text-black'; // 黄色
             case 'HR':
-                return 'bg-red-500'; // 红色
+                return 'bg-red-500 text-white'; // 红色
             case 'DT':
-                return 'bg-purple-500';
+                return 'bg-purple-500 text-white';
             case 'LZ':
-                return 'bg-pink-500';
+                return 'bg-pink-500 text-white';
             case 'TB':
-                return 'bg-black';
+                return 'bg-black text-white';
             default:
                 return 'bg-white'; // 默认白色
         }
