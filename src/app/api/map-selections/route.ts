@@ -176,8 +176,8 @@ export async function POST(request: NextRequest) {
             max_combo: beatmapInfo.max_combo || 0
         };
 
-        // 添加选图（允许重复添加）
-        const success = await addMapSelection({
+        // 确保所有参数都有有效值，将 undefined 转换为 null 或默认值
+        const selectionData = {
             beatmapId: beatmapInfo.id,
             beatmapsetId: beatmapInfo.beatmapset_id,
             title: beatmapInfo.title,
@@ -187,25 +187,30 @@ export async function POST(request: NextRequest) {
             starRating: finalStats.star_rating,
             bpm: finalStats.bpm,
             totalLength: beatmapInfo.total_length,
-            maxCombo: finalStats.max_combo,
+            maxCombo: finalStats.max_combo || 0,
             ar: finalStats.ar,
             cs: finalStats.cs,
             od: finalStats.od,
             hp: finalStats.hp,
             selectedMods: selectedMods || 'NM',
             modPosition: modPosition || 1,
-            customDTRate: customDTRate || undefined,
-            customModName: customModName || undefined,
+            customDTRate: customDTRate !== undefined ? customDTRate : null,
+            customModName: customModName !== undefined ? customModName : null,
             comment: comment || '',
             selectedBy,
-            selectedByUsername: selectedByUsername, // 传递用户名
-            selectedByAvatar: selectedByAvatar,     // 传递头像
+            selectedByUsername: selectedByUsername !== undefined ? selectedByUsername : null,
+            selectedByAvatar: selectedByAvatar !== undefined ? selectedByAvatar : null,
             season,
             category,
             url: beatmapInfo.url,
             coverUrl: beatmapInfo.cover_url || '',
             approved: approved || false
-        });
+        };
+
+        console.log('Adding map selection with data:', selectionData);
+
+        // 添加选图（允许重复添加）
+        const success = await addMapSelection(selectionData);
 
         if (!success) {
             return NextResponse.json(

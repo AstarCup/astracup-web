@@ -670,7 +670,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         setIsSubmitting(true);
         try {
             const customSettings = {
-                customModName: selectedMods === 'LZ' ? customModName : undefined,
+                customModName: selectedMods === 'LZ' ? customModName : null,
                 customDASettings: customModName === 'DA' && selectedMods === 'LZ' ? {
                     cs: customCS !== '' ? customCS : null,
                     ar: customAR !== '' ? customAR : null,
@@ -715,8 +715,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     selectedBy: userForState.id.toString(),
                     selectedByUsername: userForState.username,
                     selectedByAvatar: userForState.avatar_url,
-                    customModName: selectedMods === 'LZ' ? customModName : undefined,
-                    customDTRate: selectedMods === 'DT' && customDTRate !== '' ? customDTRate : undefined,
+                    customModName: selectedMods === 'LZ' ? customModName : null,
+                    customDTRate: selectedMods === 'DT' && customDTRate !== '' ? customDTRate : null,
                     customSettings
                     ,
                     // send computed modded stats for backend

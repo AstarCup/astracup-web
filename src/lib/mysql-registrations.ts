@@ -649,19 +649,23 @@ const mysqlStorage = {
 
     // 检查用户是否已注册
     isUserRegistered: async (osuId: string): Promise<boolean> => {
+        let connection: mysql.PoolConnection | null = null;
         try {
-            const connection = await getPool().getConnection();
+            connection = await getPool().getConnection();
 
             const [rows] = await connection.execute(
                 'SELECT 1 FROM registrations WHERE osuId = ?',
                 [osuId]
             );
 
-            connection.release();
             return (rows as any[]).length > 0;
         } catch (error) {
             console.error('Error checking registration status:', error);
             return false;
+        } finally {
+            if (connection) {
+                connection.release();
+            }
         }
     },
 

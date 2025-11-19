@@ -20,7 +20,8 @@ export const getPool = (): mysql.Pool => {
     if (!pool) {
         pool = mysql.createPool({
             ...dbConfig,
-            connectionLimit: 10,
+            connectionLimit: 20, // 增加连接限制
+            queueLimit: 0, // 无限制队列
         });
     }
     return pool;
@@ -361,13 +362,8 @@ export const mapSelectionStorage = {
         try {
             const connection = await getPool().getConnection();
 
-            const [result] = await connection.execute(`
-                INSERT INTO map_selections (
-                    beatmapId, beatmapsetId, title, artist, version, creator,
-                    starRating, bpm, totalLength, maxCombo, ar, cs, od, hp, selectedMods, modPosition, customDTRate, customModName, comment,
-                    selectedBy, selectedByUsername, selectedByAvatar, selectedAt, season, category, url, coverUrl, approved
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)
-            `, [
+            // 确保所有参数都有有效值，将 undefined 转换为 null
+            const params = [
                 selection.beatmapId,
                 selection.beatmapsetId,
                 selection.title,
@@ -377,25 +373,36 @@ export const mapSelectionStorage = {
                 selection.starRating,
                 selection.bpm,
                 selection.totalLength,
-                selection.maxCombo,
+                selection.maxCombo || 0,
                 selection.ar,
                 selection.cs,
                 selection.od,
                 selection.hp,
                 selection.selectedMods,
                 selection.modPosition,
-                selection.customDTRate || null,
-                selection.customModName || null,
+                selection.customDTRate !== undefined ? selection.customDTRate : null,
+                selection.customModName !== undefined ? selection.customModName : null,
                 selection.comment,
                 selection.selectedBy,
-                selection.selectedByUsername || null, // 存储用户名
-                selection.selectedByAvatar || null,   // 存储头像
+                selection.selectedByUsername !== undefined ? selection.selectedByUsername : null,
+                selection.selectedByAvatar !== undefined ? selection.selectedByAvatar : null,
                 selection.season,
                 selection.category,
                 selection.url,
                 selection.coverUrl,
                 selection.approved
-            ]);
+            ];
+
+            // 调试日志
+            console.log('Inserting map selection with params:', params);
+
+            const [result] = await connection.execute(`
+                INSERT INTO map_selections (
+                    beatmapId, beatmapsetId, title, artist, version, creator,
+                    starRating, bpm, totalLength, maxCombo, ar, cs, od, hp, selectedMods, modPosition, customDTRate, customModName, comment,
+                    selectedBy, selectedByUsername, selectedByAvatar, selectedAt, season, category, url, coverUrl, approved
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)
+            `, params);
 
             connection.release();
             const insertResult = result as mysql.ResultSetHeader;
