@@ -24,6 +24,7 @@ interface MatchSettingsProps {
     onScoreChange: (teamId: 'red' | 'blue', newScore: number) => void;
     victoryState: VictoryState;
     onVictoryStateChange: (victoryState: VictoryState) => void;
+    onTimerEventNameChange?: (eventName: string) => void;
 }
 
 type TabType = 'match' | 'timer' | 'banpick' | 'roll' | 'referee' | 'victory';
@@ -45,7 +46,8 @@ export default function MatchSettings({
     teams,
     onScoreChange,
     victoryState,
-    onVictoryStateChange
+    onVictoryStateChange,
+    onTimerEventNameChange
 }: MatchSettingsProps) {
     const [players, setPlayers] = useState<Player[]>([]);
     const [loading, setLoading] = useState(true);
@@ -313,11 +315,16 @@ export default function MatchSettings({
     };
 
     // 计时器控制函数
-    const startTimer = (seconds: number) => {
+    const startTimer = (seconds: number, eventName?: string) => {
         onTimerStateChange({
             remainingTime: seconds,
             isRunning: true
         });
+
+        // 设置事件名称
+        if (onTimerEventNameChange && eventName) {
+            onTimerEventNameChange(eventName);
+        }
     };
 
     const toggleTimer = () => {
@@ -332,13 +339,11 @@ export default function MatchSettings({
             remainingTime: 0,
             isRunning: false
         });
+        if (onTimerEventNameChange) {
+            onTimerEventNameChange("");
+        }
     };
 
-    // 清除阶段名称（当点击清除按钮时）
-    const handleClearTimer = () => {
-        clearTimer();
-        // 这里可以添加清除阶段名称的逻辑，但需要从父组件传递
-    };
 
     // Roll点控制函数
     const startRoll = () => {
@@ -836,13 +841,13 @@ export default function MatchSettings({
 
                     <div className="grid grid-cols-2 gap-4">
                         <button
-                            onClick={() => startTimer(300)}
+                            onClick={() => startTimer(300, "准备阶段")}
                             className="px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded text-5xl transition-colors font-bold"
                         >
                             准备阶段 5分钟
                         </button>
                         <button
-                            onClick={() => startTimer(600)}
+                            onClick={() => startTimer(600, "玩家入场")}
                             className="px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-5xl transition-colors font-bold"
                         >
                             玩家入场 10分钟
@@ -851,13 +856,16 @@ export default function MatchSettings({
 
                     <div className="grid grid-cols-2 gap-4">
                         <button
-                            onClick={() => startTimer(120)}
+                            onClick={() => {
+                                startTimer(120, "选择图池");
+                                onMapPoolSettingsChange({ ...mapPoolSettings, visible: true });
+                            }}
                             className="px-6 py-4 bg-green-600 hover:bg-green-700 text-white rounded text-5xl transition-colors font-bold"
                         >
                             选择图池 120秒
                         </button>
                         <button
-                            onClick={() => startTimer(180)}
+                            onClick={() => startTimer(180, "申请延时")}
                             className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded text-5xl transition-colors font-bold"
                         >
                             申请延时 3分钟

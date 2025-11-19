@@ -82,6 +82,9 @@ export default function ObsOverlay() {
         };
     });
 
+    // 计时器事件名称
+    const [timerEventName, setTimerEventName] = useState<string>("");
+
     // Ban/Pick状态
     const [banPickState, setBanPickState] = useState<BanPickState>(() => {
         try {
@@ -358,6 +361,15 @@ export default function ObsOverlay() {
 
     const handleCategoryChange = (category: string) => {
         setMapPoolSettings(prev => ({ ...prev, category }));
+    };
+
+    // 计时器启动函数
+    const handleTimerStart = (seconds: number, eventName: string) => {
+        setTimerState({
+            remainingTime: seconds,
+            isRunning: true
+        });
+        setTimerEventName(eventName);
     };
 
     const handleBeatmapLeftClick = (beatmap: BeatmapCard) => {
@@ -657,16 +669,10 @@ export default function ObsOverlay() {
     }, [beatmaps, banPickState.history, refereeState.availableMaps]);
 
     return (
-        <div className="flex flex-row w-[4360px]"
+        <div className="flex flex-row w-[4360px] "
         >
             {/* 左侧：OBS Overlay 显示区域 */}
-            <div style={{
-                flex: '1',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'left',
-                padding: '20px'
-            }}>
+            <div>
                 {/* 固定2K分辨率容器 */}
                 <div
                     style={{
@@ -746,10 +752,10 @@ export default function ObsOverlay() {
                                         onScoreChange={handleScoreChange}
                                         winScore={winScore}
                                     />
-            </div>
-        </div>
+                                </div>
+                            </div>
                             {/* 计时器显示 */}
-                            <TimerDisplay timerState={timerState} mapPoolVisible={mapPoolSettings.visible} />
+                            <TimerDisplay timerState={timerState} eventName={timerEventName} mapPoolVisible={mapPoolSettings.visible} />
 
                             {/* 图池显示区域 */}
                             {mapPoolSettings.visible && (
@@ -766,6 +772,7 @@ export default function ObsOverlay() {
                                             beatmaps={beatmaps}
                                             onBeatmapLeftClick={handleBeatmapLeftClick}
                                             onBeatmapRightClick={handleBeatmapRightClick}
+                                            onTimerStart={handleTimerStart}
                                             banPickHistory={banPickState.history}
                                         />
                                     )}
@@ -778,13 +785,13 @@ export default function ObsOverlay() {
                 {/* Roll点显示 */}
                 <RollDisplay rollState={rollState} />
             </div>
-            
+
             {/* 右侧：设置面板 */}
             <div style={{
                 backgroundColor: '#1a1a1a',
                 padding: '20px',
                 maxHeight: '100vh',
-                width:'1600px'
+                width: '1600px'
             }}>
                 <MatchSettings
                     settings={settings}
@@ -804,6 +811,8 @@ export default function ObsOverlay() {
                     onScoreChange={handleScoreChange}
                     victoryState={victoryState}
                     onVictoryStateChange={setVictoryState}
+                    onTimerEventNameChange={setTimerEventName}
                 />
             </div>
-</div>)}
+        </div>)
+}
