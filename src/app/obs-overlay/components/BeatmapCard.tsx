@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { BeatmapCard as BeatmapCardType } from "../types/banpick";
 import Image from "next/image";
 
@@ -16,29 +17,54 @@ interface BeatmapCardProps {
 }
 
 export default function BeatmapCard({ beatmap, onLeftClick, onRightClick, banPickHistory }: BeatmapCardProps) {
+    const [isAnimating, setIsAnimating] = useState(false);
+    const [animationType, setAnimationType] = useState<'pick' | 'ban' | null>(null);
+
+    // 处理点击动画
+    useEffect(() => {
+        if (isAnimating) {
+            const timer = setTimeout(() => {
+                setIsAnimating(false);
+                setAnimationType(null);
+            }, 2000); // 动画持续2秒
+            return () => clearTimeout(timer);
+        }
+    }, [isAnimating]);
+
     const handleClick = (e: React.MouseEvent) => {
         e.preventDefault();
-        if (e.button === 0) { // 左键
+        
+        // 触发动画
+        setIsAnimating(true);
+        if (e.button === 0) { // 左键 - pick
+            setAnimationType('pick');
             onLeftClick(beatmap);
-        } else if (e.button === 2) { // 右键
+        } else if (e.button === 2) { // 右键 - ban
+            setAnimationType('ban');
             onRightClick(beatmap);
         }
     };
 
     const getCardClass = () => {
         const baseClass = "w-full h-24 flex rounded-lg overflow-hidden cursor-pointer transition-all duration-300 relative";
+        
+        // 添加 hover 放大效果
+        const hoverClass = "hover:scale-110 hover:z-10 hover:shadow-2xl";
+        
+        // 添加闪光动画
+        const flashClass = isAnimating ? "animate-flash" : "";
 
         if (beatmap.status === 'available') {
-            return `${baseClass} bg-gray-800/80 hover:bg-gray-700/80`;
+            return `${baseClass} ${hoverClass} ${flashClass} bg-gray-800/80 hover:bg-gray-700/80`;
         } else if (beatmap.status === 'banned') {
             const teamColor = beatmap.bannedBy === 'red' ? 'border-gray-500' : 'border-gray-500';
-            return `${baseClass} ${teamColor} border-8`;
+            return `${baseClass} ${hoverClass} ${flashClass} ${teamColor} border-8`;
         } else if (beatmap.status === 'picked') {
             const teamColor = beatmap.pickedBy === 'red' ? 'border-red-500' : 'border-blue-500';
-            return `${baseClass} ${teamColor} border-8`;
+            return `${baseClass} ${hoverClass} ${flashClass} ${teamColor} border-8`;
         }
 
-        return baseClass;
+        return `${baseClass} ${hoverClass} ${flashClass}`;
     };
 
     const getOverlayClass = () => {
@@ -58,15 +84,6 @@ export default function BeatmapCard({ beatmap, onLeftClick, onRightClick, banPic
         return team === 'red' ? 'text-red-500' : 'text-blue-500';
     };
 
-    const getStatusWithCount = () => {
-        if (beatmap.status === 'banned') {
-            return `BANNED${beatmap.bannedBy === 'red' ? `${getTeamColor('red')}红方` : `${getTeamColor('blue')}蓝方`}`;
-        } else if (beatmap.status === 'picked') {
-            return `PICKED${beatmap.pickedBy === 'red' ? `${getTeamColor('red')}红方` : `${getTeamColor('blue')}蓝方`}`;
-        }
-        return '';
-    };
-
     const getModColor = () => {
         const mod = beatmap.selectedMods;
         switch (mod) {
@@ -75,13 +92,13 @@ export default function BeatmapCard({ beatmap, onLeftClick, onRightClick, banPic
             case 'HD':
                 return 'bg-yellow-300 text-black'; // 黄色
             case 'HR':
-                return 'bg-red-500'; // 红色
+                return 'bg-red-500 text-white'; // 红色
             case 'DT':
-                return 'bg-purple-500';
+                return 'bg-purple-500 text-white';
             case 'LZ':
-                return 'bg-pink-500';
+                return 'bg-pink-500 text-white';
             case 'TB':
-                return 'bg-black';
+                return 'bg-black text-white';
             default:
                 return 'bg-white'; // 默认白色
         }

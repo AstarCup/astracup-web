@@ -657,168 +657,153 @@ export default function ObsOverlay() {
     }, [beatmaps, banPickState.history, refereeState.availableMaps]);
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            color: 'white',
-            overflow: 'hidden',
-            margin: 0,
-            padding: 0
-        }}>
-            {/* 固定2K分辨率容器 */}
-            <div
-                style={{
-                    width: '2560px',
-                    height: '1440px',
-                    backgroundColor: 'transparent', // 支持OBS透明背景
-                    overflow: 'hidden',
-                    margin: '0 auto',
-                    position: 'relative'
-                }}
-            >
-                {/* 胜利页面显示 */}
-                {victoryState.isVisible && victoryState.winner && (
-                    <VictoryDisplay
-                        team={teams.find(t => t.id === victoryState.winner!)!}
-                    />
-                )}
+        <div className="flex flex-row w-[4360px]"
+        >
+            {/* 左侧：OBS Overlay 显示区域 */}
+            <div style={{
+                flex: '1',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'left',
+                padding: '20px'
+            }}>
+                {/* 固定2K分辨率容器 */}
+                <div
+                    style={{
+                        width: '2560px',
+                        height: '1440px',
+                        backgroundColor: 'transparent', // 支持OBS透明背景
+                        overflow: 'hidden',
+                        margin: '0 auto',
+                        position: 'relative'
+                    }}
+                >
+                    {/* 胜利页面显示 */}
+                    {victoryState.isVisible && victoryState.winner && (
+                        <VictoryDisplay
+                            team={teams.find(t => t.id === victoryState.winner!)!}
+                        />
+                    )}
 
-                {/* 正常比赛界面 - 当不显示胜利页面或需要显示比分面板时 */}
-                {(!victoryState.isVisible || !victoryState.hideScorePanel) && (
-                    <>
-                        {/* 队伍显示区域 */}
-                        <div style={{
-                            display: 'flex',
-                            marginTop: '20px' // mt-40 对应 160px
-                        }}>
-                            {/* 红队 */}
+                    {/* 正常比赛界面 - 当不显示胜利页面或需要显示比分面板时 */}
+                    {(!victoryState.isVisible || !victoryState.hideScorePanel) && (
+                        <>
+                            {/* 队伍显示区域 */}
                             <div style={{
-                                flex: '2',
                                 display: 'flex',
-                                justifyContent: 'flex-start'
+                                marginTop: '20px' // mt-40 对应 160px
                             }}>
-                                <TeamDisplay
-                                    team={teams.find(t => t.id === 'red')!}
-                                    onScoreChange={handleScoreChange}
-                                    winScore={winScore}
-                                />
-                            </div>
-
-                            {/* 比分分隔线 */}
-                            <div style={{
-                                position: 'relative',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                flex: '1'
-                            }}>
+                                {/* 红队 */}
                                 <div style={{
-                                    fontSize: '2.25rem',
-                                    fontWeight: 'bold',
-                                    color: '#9ca3af',
-                                    marginBottom: '1rem'
+                                    flex: '2',
+                                    display: 'flex',
+                                    justifyContent: 'flex-start'
                                 }}>
-                                    <Image src='AstarCup.svg' alt="AstarCup" width={400} height={200} />
-                                </div>
-                                <div style={{
-                                    fontSize: '1.5rem',
-                                    color: 'black',
-                                    backgroundColor: 'white',
-                                    padding: '0.25rem 0.5rem',
-                                    fontWeight: 'bold',
-                                }}>
-                                    {settings.matchInfo} BO{settings.boFormat.slice(2)} (抢{winScore}分)
-                                </div>
-
-                            </div>
-
-                            {/* 蓝队 */}
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'flex-end',
-                                flex: '2'
-                            }}>
-                                <TeamDisplay
-                                    team={teams.find(t => t.id === 'blue')!}
-                                    onScoreChange={handleScoreChange}
-                                    winScore={winScore}
-                                />
-                            </div>
-                        </div>
-
-                        {/* 计时器显示 */}
-                        <TimerDisplay timerState={timerState} mapPoolVisible={mapPoolSettings.visible} />
-
-                        {/* 图池显示区域 */}
-                        {mapPoolSettings.visible && (
-                            <div style={{
-                                marginTop: '40px',
-                                padding: '0 40px'
-                            }}>
-                                {isLoading ? (
-                                    <div className="text-center text-white text-lg py-8">
-                                        正在加载图池数据...
-                                    </div>
-                                ) : (
-                                    <MapPoolGrid
-                                        beatmaps={beatmaps}
-                                        onBeatmapLeftClick={handleBeatmapLeftClick}
-                                        onBeatmapRightClick={handleBeatmapRightClick}
-                                        banPickHistory={banPickState.history}
+                                    <TeamDisplay
+                                        team={teams.find(t => t.id === 'red')!}
+                                        onScoreChange={handleScoreChange}
+                                        winScore={winScore}
                                     />
-                                )}
-                            </div>
-                        )}
-                    </>
-                )}
+                                </div>
 
-            </div>
-            {/* Roll点显示 */}
-            <RollDisplay rollState={rollState} />
+                                {/* 比分分隔线 */}
+                                <div style={{
+                                    position: 'relative',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flex: '1'
+                                }}>
+                                    <div style={{
+                                        fontSize: '2.25rem',
+                                        fontWeight: 'bold',
+                                        color: '#9ca3af',
+                                        marginBottom: '1rem'
+                                    }}>
+                                        <Image src='AstarCup.svg' alt="AstarCup" width={400} height={200} />
+                                    </div>
+                                    <div style={{
+                                        fontSize: '1.5rem',
+                                        color: 'black',
+                                        backgroundColor: 'white',
+                                        padding: '0.25rem 0.5rem',
+                                        fontWeight: 'bold',
+                                    }}>
+                                        {settings.matchInfo} BO{settings.boFormat.slice(2)} (抢{winScore}分)
+                                    </div>
 
-            {/* 设置面板 */}
-            <div style={{ marginTop: '160px' }}>
-                <div className="flex gap-4">
-                    <MatchSettings
-                        settings={settings}
-                        onSettingsChange={setSettings}
-                        timerState={timerState}
-                        onTimerStateChange={setTimerState}
-                        banPickState={banPickState}
-                        onBanPickStateChange={setBanPickState}
-                        mapPoolSettings={mapPoolSettings}
-                        onMapPoolSettingsChange={setMapPoolSettings}
-                        onResetBanPick={resetBanPickState}
-                        rollState={rollState}
-                        onRollStateChange={setRollState}
-                        refereeState={refereeState}
-                        onRefereeStateChange={setRefereeState}
-                        teams={teams}
-                        onScoreChange={handleScoreChange}
-                        victoryState={victoryState}
-                        onVictoryStateChange={setVictoryState}
-                    /><MatchSettings
-                        settings={settings}
-                        onSettingsChange={setSettings}
-                        timerState={timerState}
-                        onTimerStateChange={setTimerState}
-                        banPickState={banPickState}
-                        onBanPickStateChange={setBanPickState}
-                        mapPoolSettings={mapPoolSettings}
-                        onMapPoolSettingsChange={setMapPoolSettings}
-                        onResetBanPick={resetBanPickState}
-                        rollState={rollState}
-                        onRollStateChange={setRollState}
-                        refereeState={refereeState}
-                        onRefereeStateChange={setRefereeState}
-                        teams={teams}
-                        onScoreChange={handleScoreChange}
-                        victoryState={victoryState}
-                        onVictoryStateChange={setVictoryState}
-                    />
-                </div>
+                                </div>
 
+                                {/* 蓝队 */}
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'flex-end',
+                                    flex: '2'
+                                }}>
+                                    <TeamDisplay
+                                        team={teams.find(t => t.id === 'blue')!}
+                                        onScoreChange={handleScoreChange}
+                                        winScore={winScore}
+                                    />
             </div>
         </div>
-    );
-}
+                            {/* 计时器显示 */}
+                            <TimerDisplay timerState={timerState} mapPoolVisible={mapPoolSettings.visible} />
+
+                            {/* 图池显示区域 */}
+                            {mapPoolSettings.visible && (
+                                <div style={{
+                                    marginTop: '40px',
+                                    padding: '0 40px'
+                                }}>
+                                    {isLoading ? (
+                                        <div className="text-center text-white text-lg py-8">
+                                            正在加载图池数据...
+                                        </div>
+                                    ) : (
+                                        <MapPoolGrid
+                                            beatmaps={beatmaps}
+                                            onBeatmapLeftClick={handleBeatmapLeftClick}
+                                            onBeatmapRightClick={handleBeatmapRightClick}
+                                            banPickHistory={banPickState.history}
+                                        />
+                                    )}
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                </div>
+                {/* Roll点显示 */}
+                <RollDisplay rollState={rollState} />
+            </div>
+            
+            {/* 右侧：设置面板 */}
+            <div style={{
+                backgroundColor: '#1a1a1a',
+                padding: '20px',
+                maxHeight: '100vh',
+                width:'1600px'
+            }}>
+                <MatchSettings
+                    settings={settings}
+                    onSettingsChange={setSettings}
+                    timerState={timerState}
+                    onTimerStateChange={setTimerState}
+                    banPickState={banPickState}
+                    onBanPickStateChange={setBanPickState}
+                    mapPoolSettings={mapPoolSettings}
+                    onMapPoolSettingsChange={setMapPoolSettings}
+                    onResetBanPick={resetBanPickState}
+                    rollState={rollState}
+                    onRollStateChange={setRollState}
+                    refereeState={refereeState}
+                    onRefereeStateChange={setRefereeState}
+                    teams={teams}
+                    onScoreChange={handleScoreChange}
+                    victoryState={victoryState}
+                    onVictoryStateChange={setVictoryState}
+                />
+            </div>
+</div>)}
