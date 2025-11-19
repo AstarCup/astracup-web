@@ -171,9 +171,10 @@ export const mapRatingsStorage = {
         comment: string,
         avatar_url: string = ''
     ): Promise<boolean> {
+        let connection: mysql.PoolConnection | null = null;
         try {
             console.log('Adding/updating rating:', { mapSelectionId, userId, username, rating, comment, avatar_url });
-            const connection = await getPool().getConnection();
+            connection = await getPool().getConnection();
             console.log('Database connection established');
 
             let success = true;
@@ -229,38 +230,46 @@ export const mapRatingsStorage = {
                 }
             }
 
-            connection.release();
             return success;
         } catch (error) {
             console.error('Error adding/updating rating:', error);
             console.error('Error details:', JSON.stringify(error, null, 2));
             return false;
+        } finally {
+            if (connection) {
+                connection.release();
+            }
         }
     },
 
     // 删除评分
     async deleteRating(mapSelectionId: number, userId: string): Promise<boolean> {
+        let connection: mysql.PoolConnection | null = null;
         try {
-            const connection = await getPool().getConnection();
+            connection = await getPool().getConnection();
 
             const [result] = await connection.execute(
                 'DELETE FROM map_ratings WHERE mapSelectionId = ? AND userId = ?',
                 [mapSelectionId, userId]
             );
 
-            connection.release();
             const deleteResult = result as mysql.ResultSetHeader;
             return deleteResult.affectedRows > 0;
         } catch (error) {
             console.error('Error deleting rating:', error);
             return false;
+        } finally {
+            if (connection) {
+                connection.release();
+            }
         }
     },
 
     // 按记录ID删除评分（需要用户权限验证）
     async deleteRatingById(id: number, userId?: string): Promise<boolean> {
+        let connection: mysql.PoolConnection | null = null;
         try {
-            const connection = await getPool().getConnection();
+            connection = await getPool().getConnection();
 
             // 如果提供了userId，则检查这条记录是否属于当前用户
             if (userId) {
@@ -271,12 +280,10 @@ export const mapRatingsStorage = {
 
                 const checkRows = checkResult as any[];
                 if (checkRows.length === 0) {
-                    connection.release();
                     return false; // 记录不存在
                 }
 
                 if (checkRows[0].userId !== userId) {
-                    connection.release();
                     return false; // 没有权限删除别人的评论
                 }
             }
@@ -287,12 +294,15 @@ export const mapRatingsStorage = {
                 [id]
             );
 
-            connection.release();
             const deleteResult = result as mysql.ResultSetHeader;
             return deleteResult.affectedRows > 0;
         } catch (error) {
             console.error('Error deleting rating by id:', error);
             return false;
+        } finally {
+            if (connection) {
+                connection.release();
+            }
         }
     },
 
