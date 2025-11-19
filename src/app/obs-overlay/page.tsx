@@ -712,35 +712,6 @@ export default function ObsOverlay() {
                                     />
                                 </div>
 
-                                {/* 比分分隔线 */}
-                                <div style={{
-                                    position: 'relative',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    flex: '1'
-                                }}>
-                                    <div style={{
-                                        fontSize: '2.25rem',
-                                        fontWeight: 'bold',
-                                        color: '#9ca3af',
-                                        marginBottom: '1rem'
-                                    }}>
-                                        <Image src='AstarCup.svg' alt="AstarCup" width={400} height={200} />
-                                    </div>
-                                    <div style={{
-                                        fontSize: '1.5rem',
-                                        color: 'black',
-                                        backgroundColor: 'white',
-                                        padding: '0.25rem 0.5rem',
-                                        fontWeight: 'bold',
-                                    }}>
-                                        {settings.matchInfo} BO{settings.boFormat.slice(2)} (抢{winScore}分)
-                                    </div>
-
-                                </div>
-
                                 {/* 蓝队 */}
                                 <div style={{
                                     display: 'flex',
@@ -752,6 +723,35 @@ export default function ObsOverlay() {
                                         onScoreChange={handleScoreChange}
                                         winScore={winScore}
                                     />
+                                </div>
+                            </div>
+
+                            {/* 比分线 - 左下角 */}
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '20px',
+                                left: '20px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'flex-start',
+                                zIndex: 10
+                            }}>
+                                <div style={{
+                                    fontSize: '1.5rem',
+                                    color: 'black',
+                                    backgroundColor: 'white',
+                                    padding: '0.25rem 0.5rem',
+                                    fontWeight: 'bold',
+                                    marginBottom: '0.5rem'
+                                }}>
+                                    {settings.matchInfo} BO{settings.boFormat.slice(2)} (抢{winScore}分)
+                                </div>
+                                <div style={{
+                                    fontSize: '1.25rem',
+                                    fontWeight: 'bold',
+                                    color: '#9ca3af'
+                                }}>
+                                    <Image src='AstarCup.svg' alt="AstarCup" width={300} height={200} />
                                 </div>
                             </div>
                             {/* 计时器显示 */}
