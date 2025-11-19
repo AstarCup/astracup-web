@@ -284,7 +284,7 @@ export default function MatchSettings({
     };
 
     const getTeamColor = (team: 'red' | 'blue') => {
-        return team === 'red' ? '#E93B66' : '#3BE9D8';
+        return team === 'red' ? '#E93B66' : '#3b5be9ff';
     };
 
     const handleClearStorage = () => {
@@ -1402,8 +1402,6 @@ export default function MatchSettings({
                             <label className="text-4xl text-gray-200 mb-2 font-medium">类别</label>
                             <Dropdown
                                 options={[
-                                    { value: 'qualification', label: 'QUA' },
-                                    { value: 'ro32', label: 'RO32' },
                                     { value: 'ro16', label: 'RO16' },
                                     { value: 'quarterfinals', label: 'QF' },
                                     { value: 'semifinals', label: 'SF' },
@@ -1414,6 +1412,7 @@ export default function MatchSettings({
                                 onChange={(value) => onMapPoolSettingsChange({ ...mapPoolSettings, category: value })}
                                 darkMode={true}
                                 minWidth="25rem"
+                                maxHeight="60rem"
                                 fontSize={"text-4xl"}
                             />
                         </div>

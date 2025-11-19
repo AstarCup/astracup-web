@@ -784,7 +784,7 @@ export default function ObsOverlay() {
                 backgroundColor: '#1a1a1a',
                 padding: '20px',
                 maxHeight: '100vh',
-                width:'1800px'
+                width:'1600px'
             }}>
                 <MatchSettings
                     settings={settings}
