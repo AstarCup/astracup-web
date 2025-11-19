@@ -82,6 +82,9 @@ export default function ObsOverlay() {
         };
     });
 
+    // 计时器事件名称
+    const [timerEventName, setTimerEventName] = useState<string>("");
+
     // Ban/Pick状态
     const [banPickState, setBanPickState] = useState<BanPickState>(() => {
         try {
@@ -749,7 +752,7 @@ export default function ObsOverlay() {
             </div>
         </div>
                             {/* 计时器显示 */}
-                            <TimerDisplay timerState={timerState} mapPoolVisible={mapPoolSettings.visible} />
+                            <TimerDisplay timerState={timerState} eventName={timerEventName} mapPoolVisible={mapPoolSettings.visible} />
 
                             {/* 图池显示区域 */}
                             {mapPoolSettings.visible && (
@@ -804,6 +807,7 @@ export default function ObsOverlay() {
                     onScoreChange={handleScoreChange}
                     victoryState={victoryState}
                     onVictoryStateChange={setVictoryState}
+                    onTimerEventNameChange={setTimerEventName}
                 />
             </div>
 </div>)}

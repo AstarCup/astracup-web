@@ -5,30 +5,14 @@ import { TimerState } from "../types/match";
 
 interface TimerDisplayProps {
     timerState: TimerState;
+    eventName?: string;
     mapPoolVisible?: boolean;
 }
 
-export default function TimerDisplay({ timerState, mapPoolVisible = false }: TimerDisplayProps) {
+export default function TimerDisplay({ timerState, eventName = "", mapPoolVisible = false }: TimerDisplayProps) {
     const { remainingTime, isRunning } = timerState;
     const [displayText, setDisplayText] = useState<number | string>("");
-    const [stageName, setStageName] = useState<string>("");
     const [isFirstLoad, setIsFirstLoad] = useState(true);
-
-    // 根据剩余时间设置阶段名称（只在计时开始时设置，计时过程中保持不变）
-    useEffect(() => {
-        if (remainingTime > 0 && isRunning) {
-            // 只在计时开始时设置阶段名称
-            if (remainingTime === 300) setStageName("准备阶段");
-            else if (remainingTime === 600) setStageName("玩家入场");
-            else if (remainingTime === 120) setStageName("选择图池");
-            else if (remainingTime === 180) setStageName("申请延时");
-            // 其他预设时间不设置阶段名称
-        } else if (remainingTime === 0 && !isRunning) {
-            // 计时结束时清空阶段名称
-            setStageName("");
-        }
-        // 计时被打断（暂停或清除）时不清空阶段名称
-    }, [remainingTime, isRunning]);
 
     // 处理计时结束逻辑
     useEffect(() => {
@@ -87,8 +71,8 @@ export default function TimerDisplay({ timerState, mapPoolVisible = false }: Tim
             zIndex: 1000,
             pointerEvents: 'none' // 确保不会干扰其他交互
         }}>
-            {/* 阶段名称显示 */}
-            {stageName && (
+            {/* 事件名称显示 */}
+            {eventName && (
                 <div style={{
                     fontSize: '40px',
                     fontWeight: 'bold',
@@ -96,7 +80,7 @@ export default function TimerDisplay({ timerState, mapPoolVisible = false }: Tim
                     textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
                     marginBottom: '0px'
                 }}>
-                    {stageName}
+                    {eventName}
                 </div>
             )}
 
