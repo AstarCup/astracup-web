@@ -90,7 +90,7 @@ export default function Schedule() {
     const getStatusText = (status: string): string => {
         switch (status) {
             case 'pending':
-                return '未开始';
+                return '未确认';
             case 'confirmed':
                 return '已确认';
             case 'completed':
