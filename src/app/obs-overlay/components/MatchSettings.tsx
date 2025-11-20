@@ -54,6 +54,7 @@ export default function MatchSettings({
     const [activeTab, setActiveTab] = useState<TabType>('match');
     const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
     const [manualNextTeam, setManualNextTeam] = useState<'red' | 'blue' | null>(null);
+    const [matchNumber, setMatchNumber] = useState<string>('1');
     const [obsState, setObsState] = useState({
         isConnected: false,
         scenes: [] as string[],
@@ -576,6 +577,26 @@ export default function MatchSettings({
         });
     };
 
+    // 生成比赛信息文本
+    const generateMatchInfo = () => {
+        const redPlayerName = settings.redPlayer?.inGameName || '红队玩家';
+        const bluePlayerName = settings.bluePlayer?.inGameName || '蓝队玩家';
+        const category = mapPoolSettings.category ? mapPoolSettings.category.toUpperCase() : 'RO16';
+
+        return `星域杯S1 | ${category} #${matchNumber} | ${redPlayerName} vs ${bluePlayerName}`;
+    };
+
+    // 处理比赛编号变化
+    const handleMatchNumberChange = (number: string) => {
+        setMatchNumber(number);
+        // 自动更新比赛信息
+        const newMatchInfo = generateMatchInfo();
+        onSettingsChange({
+            ...settings,
+            matchInfo: newMatchInfo
+        });
+    };
+
     // 生成胜利祝贺话语
     const generateVictoryText = () => {
         const redTeam = teams.find(t => t.id === 'red');
@@ -659,15 +680,53 @@ export default function MatchSettings({
             {activeTab === 'match' ? (
                 <>
                     {/* 比赛信息 */}
-                    <div className="mb-6 text-4xl">
-                        <label className="text-gray-200 mb-2 font-medium">比赛信息</label>
-                        <input
-                            type="text"
-                            value={settings.matchInfo || ''}
-                            onChange={(e) => handleMatchInfoChange(e.target.value)}
-                            className="w-full bg-[#2D2D2D] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-[#E93B66] transition-colors"
-                            placeholder="输入比赛信息，如：Ro16 #1"
-                        />
+                    <div className="mb-6">
+                        <div className="flex justify-between items-center mb-3">
+                            <label className="text-4xl text-gray-200 font-medium">比赛信息</label>
+                            <button
+                                onClick={() => copyResultText(generateMatchInfo(), 'match-info')}
+                                className={`px-4 py-2 text-white rounded text-2xl transition-colors ${copiedStates['match-info']
+                                    ? 'bg-green-600 hover:bg-green-700'
+                                    : 'bg-blue-600 hover:bg-blue-700'
+                                    }`}
+                            >
+                                {copiedStates['match-info'] ? '复制成功' : '复制比赛信息'}
+                            </button>
+                        </div>
+                        <div className="bg-gray-700/50 p-4 rounded">
+                            <div className="text-white text-4xl break-words mb-4">
+                                {generateMatchInfo()}
+                            </div>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div className="flex flex-col">
+                                    <label className="text-2xl text-gray-200 mb-2 font-medium">比赛编号</label>
+                                    <input
+                                        type="text"
+                                        value={matchNumber}
+                                        onChange={(e) => handleMatchNumberChange(e.target.value)}
+                                        className="w-full bg-[#2D2D2D] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-[#E93B66] transition-colors text-2xl"
+                                        placeholder="输入比赛编号，如：1"
+                                    />
+                                </div>
+                                <div className="flex flex-col">
+                                    <label className="text-2xl text-gray-200 mb-2 font-medium">图池类别</label>
+                                    <Dropdown
+                                        options={[
+                                            { value: 'ro16', label: 'RO16' },
+                                            { value: 'quarterfinals', label: 'QF' },
+                                            { value: 'semifinals', label: 'SF' },
+                                            { value: 'finals', label: 'F' },
+                                            { value: 'grandfinals', label: 'GF' }
+                                        ]}
+                                        value={mapPoolSettings.category}
+                                        onChange={(value) => onMapPoolSettingsChange({ ...mapPoolSettings, category: value })}
+                                        darkMode={true}
+                                        minWidth="15rem"
+                                        fontSize={"text-4xl"}
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
