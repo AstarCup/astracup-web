@@ -53,6 +53,7 @@ export default function MatchSettings({
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<TabType>('match');
     const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
+    const [manualNextTeam, setManualNextTeam] = useState<'red' | 'blue' | null>(null);
     const [obsState, setObsState] = useState({
         isConnected: false,
         scenes: [] as string[],
@@ -513,6 +514,14 @@ export default function MatchSettings({
 
     // 计算NextPick/NextBan逻辑
     const calculateNextAction = () => {
+        // 优先使用手动设置的队伍
+        if (manualNextTeam) {
+            return {
+                nextAction: refereeState.nextAction || 'ban',
+                nextTeam: manualNextTeam
+            };
+        }
+
         // 如果没有历史操作，检查roll点
         if (banPickState.history.length === 0) {
             if (rollState.history.length > 0) {
@@ -565,6 +574,20 @@ export default function MatchSettings({
             const indexB = order.findIndex(item => b.includes(item));
             return indexA - indexB;
         });
+    };
+
+    // 生成胜利祝贺话语
+    const generateVictoryText = () => {
+        const redTeam = teams.find(t => t.id === 'red');
+        const blueTeam = teams.find(t => t.id === 'blue');
+
+        if (victoryState.winner === 'red') {
+            return `恭喜${redTeam?.playerName || '红队玩家'}获得本场比赛的胜利`;
+        } else if (victoryState.winner === 'blue') {
+            return `恭喜${blueTeam?.playerName || '蓝队玩家'}获得本场比赛的胜利`;
+        } else {
+            return '请先选择获胜队伍';
+        }
     };
 
     const { nextAction, nextTeam } = calculateNextAction();
@@ -1146,7 +1169,7 @@ export default function MatchSettings({
 
 
                     {/* NextPick/NextBan显示 */}
-                    <div className="mb-6">
+                    {/* <div className="mb-6">
                         <label className="text-4xl text-gray-200 mb-3 font-medium">下一步操作</label>
                         <div className="bg-gray-700/50 p-4 rounded">
                             <div className="text-white text-4xl">
@@ -1169,7 +1192,41 @@ export default function MatchSettings({
                                 )}
                             </div>
                         </div>
+                    </div> */}
+                    {/* NextTeam切换控制 */}
+                    <div className="mb-6">
+                        <label className="text-2xl text-gray-200 mb-3 font-medium">下一步操作队伍</label>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setManualNextTeam('red')}
+                                className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${manualNextTeam === 'red'
+                                    ? 'bg-red-600 text-white'
+                                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                    }`}
+                            >
+                                红队
+                            </button>
+                            <button
+                                onClick={() => setManualNextTeam('blue')}
+                                className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${manualNextTeam === 'blue'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                    }`}
+                            >
+                                蓝队
+                            </button>
+                            <button
+                                onClick={() => setManualNextTeam(null)}
+                                className={`flex-1 px-4 py-3 rounded-lg text-2xl font-bold transition-colors ${!manualNextTeam
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                    }`}
+                            >
+                                自动
+                            </button>
+                        </div>
                     </div>
+
                     {/* NextPick/NextBan控制 */}
                     <div className="mb-6">
                         <label className="text-2xl text-gray-200 mb-3 font-medium">下一步操作类型</label>
@@ -1368,6 +1425,27 @@ export default function MatchSettings({
                         >
                             蓝队胜利
                         </button>
+                    </div>
+
+                    {/* 裁判祝贺话语 */}
+                    <div className="mb-6">
+                        <div className="flex justify-between items-center mb-3">
+                            <label className="text-4xl text-gray-200 font-medium">裁判祝贺话语</label>
+                            <button
+                                onClick={() => copyResultText(generateVictoryText(), 'victory-text')}
+                                className={`px-4 py-2 text-white rounded text-4xl transition-colors ${copiedStates['victory-text']
+                                    ? 'bg-green-600 hover:bg-green-700'
+                                    : 'bg-blue-600 hover:bg-blue-700'
+                                    }`}
+                            >
+                                {copiedStates['victory-text'] ? '复制成功' : '复制祝贺话语'}
+                            </button>
+                        </div>
+                        <div className="bg-gray-700/50 p-4 rounded">
+                            <div className="text-white text-6xl break-words">
+                                {generateVictoryText()}
+                            </div>
+                        </div>
                     </div>
 
                     {/* 重置按钮 */}
