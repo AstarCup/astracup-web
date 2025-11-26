@@ -302,7 +302,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         const newRatings = { ...prev };
                         Object.entries(data.stats).forEach(([id, ratings]: [string, any]) => {
                             const selectionId = parseInt(id);
-                            newRatings[selectionId] = ratings || [];
+                            // 确保 ratings 是数组
+                            newRatings[selectionId] = Array.isArray(ratings) ? ratings : [];
                         });
                         return newRatings;
                     });
@@ -312,7 +313,9 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         const newUserRatings = { ...prev };
                         Object.entries(data.stats).forEach(([id, ratings]: [string, any]) => {
                             const selectionId = parseInt(id);
-                            const userRating = (ratings || []).find((rating: MapRating) => rating.userId === userForState.id.toString());
+                            // 确保 ratings 是数组后再调用 find
+                            const ratingsArray = Array.isArray(ratings) ? ratings : [];
+                            const userRating = ratingsArray.find((rating: MapRating) => rating.userId === userForState.id.toString());
                             if (userRating) {
                                 newUserRatings[selectionId] = userRating.rating;
                             }
@@ -831,7 +834,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             // 获取最新的beatmap信息
             const latestBeatmap = beatmapData.data.type === 'single'
                 ? beatmapData.data.beatmap
-                : beatmapData.data.beatmaps?.find((b: BeatmapInfo) => b.id === selection.beatmapId);
+                : (Array.isArray(beatmapData.data.beatmaps) ? beatmapData.data.beatmaps.find((b: BeatmapInfo) => b.id === selection.beatmapId) : null);
 
             if (!latestBeatmap) {
                 showError('未找到对应的beatmap数据');
@@ -1269,8 +1272,12 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         .sort((a, b) => {
             // 按评分排序
             if (sortByRating) {
-                const aRating = mapRatings[a.id]?.reduce((sum, rating) => sum + rating.rating, 0) / (mapRatings[a.id]?.length || 1) || 0;
-                const bRating = mapRatings[b.id]?.reduce((sum, rating) => sum + rating.rating, 0) / (mapRatings[b.id]?.length || 1) || 0;
+                // 确保 mapRatings[a.id] 和 mapRatings[b.id] 是数组
+                const aRatings = Array.isArray(mapRatings[a.id]) ? mapRatings[a.id] : [];
+                const bRatings = Array.isArray(mapRatings[b.id]) ? mapRatings[b.id] : [];
+
+                const aRating = aRatings.reduce((sum, rating) => sum + rating.rating, 0) / (aRatings.length || 1) || 0;
+                const bRating = bRatings.reduce((sum, rating) => sum + rating.rating, 0) / (bRatings.length || 1) || 0;
                 return bRating - aRating;
             }
 
@@ -1932,32 +1939,32 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         )}
                                                     </div>
 
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
-                                                            {selection.selectedMods === 'LZ' ?
-                                                                (selection.customModName && selection.customModName.trim() !== '' ?
-                                                                    `LZ${selection.modPosition}-${selection.customModName}` :
-                                                                    `LZ${selection.modPosition}`) :
-                                                                selection.selectedMods === 'DT' ?
-                                                                    ((selection.customDTRate && selection.customDTRate !== 1.50) ?
-                                                                        `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}倍` :
-                                                                        `DT${selection.modPosition}`) :
-                                                                    `${selection.selectedMods}${selection.modPosition}`
-                                                            }
-                                                        </span>
-                                                        {selection.padding && (
-                                                            <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded">
-                                                                提交测图中
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
+                                                                {selection.selectedMods === 'LZ' ?
+                                                                    (selection.customModName && selection.customModName.trim() !== '' ?
+                                                                        `LZ${selection.modPosition}-${selection.customModName}` :
+                                                                        `LZ${selection.modPosition}`) :
+                                                                    selection.selectedMods === 'DT' ?
+                                                                        ((selection.customDTRate && selection.customDTRate !== 1.50) ?
+                                                                            `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}倍` :
+                                                                            `DT${selection.modPosition}`) :
+                                                                        `${selection.selectedMods}${selection.modPosition}`
+                                                                }
                                                             </span>
-                                                        )}
-                                                        {/* 当选择"全部"时显示阶段信息 */}
-                                                        {category === 'all' && (
-                                                            <span className="px-2 py-1 bg-gray-600 text-white text-xs rounded">
-                                                                {CATEGORY_OPTIONS.find(cat => cat.value === selection.category)?.label || selection.category}
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                            {selection.padding && (
+                                                                <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded">
+                                                                    提交测图中
+                                                                </span>
+                                                            )}
+                                                            {/* 当选择"全部"时显示阶段信息 */}
+                                                            {category === 'all' && (
+                                                                <span className="px-2 py-1 bg-gray-600 text-white text-xs rounded">
+                                                                    {CATEGORY_OPTIONS.find(cat => cat.value === selection.category)?.label || selection.category}
+                                                                </span>
+                                                            )}
+                                                        </div>
 
                                                         <h3 className="font-bold text-sm truncate" title={selection.title}>
                                                             {selection.title}
