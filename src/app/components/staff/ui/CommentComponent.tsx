@@ -138,12 +138,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                                             </button>
                                         )}
                                     </div>
-                                    <button
-                                        onClick={() => setShowCommentBox(!showCommentBox)}
-                                        className="text-blue-500 hover:text-blue-600 text-sm font-medium"
-                                    >
-                                        {showCommentBox ? '收起' : '+ 添加评论'}
-                                    </button>
+
                                     {/* Hover弹窗 */}
                                     <div className="absolute top-full left-0 mt-1 bg-gray-900 text-white text-xs rounded shadow-lg p-2 z-20 min-w-[150px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                         <div className="font-semibold mb-1">{c.username}</div>
@@ -152,6 +147,12 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                                     </div>
                                 </div>
                             ))}
+                            <button
+                                onClick={() => setShowCommentBox(!showCommentBox)}
+                                className="text-blue-500 hover:text-blue-600 text-sm font-medium"
+                            >
+                                {showCommentBox ? '收起' : '+ 添加评论'}
+                            </button>
                         </div>
                     )}
                     {/* 评论框 */}
