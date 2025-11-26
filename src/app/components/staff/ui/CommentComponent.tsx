@@ -95,12 +95,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                 // 紧凑模式：横向显示评论
                 <div>
                     <div className="flex items-center justify-between mb-2">
-                        <button
-                            onClick={() => setShowCommentBox(!showCommentBox)}
-                            className="text-blue-500 hover:text-blue-600 text-sm font-medium"
-                        >
-                            {showCommentBox ? '收起' : '+ 添加评论'}
-                        </button>
+
                     </div>
                     {comments.length === 0 ? (
                         <div className="text-gray-400 text-sm">暂无评论</div>
@@ -143,6 +138,12 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                                             </button>
                                         )}
                                     </div>
+                                    <button
+                                        onClick={() => setShowCommentBox(!showCommentBox)}
+                                        className="text-blue-500 hover:text-blue-600 text-sm font-medium"
+                                    >
+                                        {showCommentBox ? '收起' : '+ 添加评论'}
+                                    </button>
                                     {/* Hover弹窗 */}
                                     <div className="absolute top-full left-0 mt-1 bg-gray-900 text-white text-xs rounded shadow-lg p-2 z-20 min-w-[150px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                         <div className="font-semibold mb-1">{c.username}</div>
