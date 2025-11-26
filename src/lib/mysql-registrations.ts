@@ -17,10 +17,55 @@ const getPool = (): mysql.Pool => {
     if (!pool) {
         pool = mysql.createPool({
             ...dbConfig,
-            connectionLimit: 10,
+            connectionLimit: 30, // 增加连接限制到30个
+            queueLimit: 0, // 无限制队列
+        });
+
+        // 添加连接池事件监听器
+        pool.on('acquire', (connection) => {
+            console.log(`[DB] Connection acquired: ${connection.threadId}`);
+        });
+
+        pool.on('release', (connection) => {
+            console.log(`[DB] Connection released: ${connection.threadId}`);
+        });
+
+        pool.on('enqueue', () => {
+            console.log('[DB] Waiting for available connection slot...');
+        });
+
+        pool.on('connection', (err) => {
+            if (err) {
+                console.error('[DB] Pool connection error:', err);
+            }
         });
     }
     return pool;
+};
+
+// 获取连接池状态
+export const getPoolStatus = (): any => {
+    if (!pool) {
+        return { status: 'not_initialized' };
+    }
+    
+    return {
+        status: 'active',
+        connectionLimit: pool.config.connectionLimit,
+        // 注意：mysql2 不直接暴露内部连接状态，这里返回基本信息
+        poolInfo: 'MySQL connection pool is active'
+    };
+};
+
+// 安全获取连接函数
+export const getConnection = async (): Promise<mysql.PoolConnection> => {
+    try {
+        const connection = await getPool().getConnection();
+        return connection;
+    } catch (error) {
+        console.error('[DB] Failed to get connection:', error);
+        throw error;
+    }
 };
 
 // 初始化数据库表
@@ -479,8 +524,9 @@ export interface TournamentRegistration {
 const mysqlStorage = {
     // 读取所有注册信息
     getRegistrations: async (): Promise<Registration[]> => {
+        let connection: mysql.PoolConnection | null = null;
         try {
-            const connection = await getPool().getConnection();
+            connection = await getPool().getConnection();
 
             const [rows] = await connection.execute(`
                                 SELECT 
@@ -490,8 +536,6 @@ const mysqlStorage = {
                                 FROM registrations 
                                 ORDER BY registeredAt DESC
                         `);
-
-            connection.release();
 
             return (rows as any[]).map(row => ({
                 osuId: row.osuId,
@@ -511,6 +555,10 @@ const mysqlStorage = {
         } catch (error) {
             console.error('Error reading from database:', error);
             return [];
+        } finally {
+            if (connection) {
+                connection.release();
+            }
         }
     },
 
@@ -671,8 +719,9 @@ const mysqlStorage = {
 
     // 获取用户注册信息
     getUserRegistration: async (osuId: string): Promise<Registration | null> => {
+        let connection: mysql.PoolConnection | null = null;
         try {
-            const connection = await getPool().getConnection();
+            connection = await getPool().getConnection();
 
             const [rows] = await connection.execute(`
                                 SELECT 
@@ -681,8 +730,6 @@ const mysqlStorage = {
                                     approved, approvedAt
                                 FROM registrations WHERE osuId = ?
                         `, [osuId]);
-
-            connection.release();
 
             const row = (rows as any[])[0];
             if (!row) return null;
@@ -705,63 +752,77 @@ const mysqlStorage = {
         } catch (error) {
             console.error('Error getting user registration:', error);
             return null;
+        } finally {
+            if (connection) {
+                connection.release();
+            }
         }
     },
 
     // 获取所有注册用户数量
     getRegistrationCount: async (): Promise<number> => {
+        let connection: mysql.PoolConnection | null = null;
         try {
-            const connection = await getPool().getConnection();
+            connection = await getPool().getConnection();
 
             const [rows] = await connection.execute(
                 'SELECT COUNT(*) as count FROM registrations'
             );
 
-            connection.release();
             return (rows as any[])[0]?.count || 0;
         } catch (error) {
             console.error('Error getting registration count:', error);
             return 0;
+        } finally {
+            if (connection) {
+                connection.release();
+            }
         }
     },
 
     // 删除用户注册信息
     deleteRegistration: async (osuId: string): Promise<boolean> => {
+        let connection: mysql.PoolConnection | null = null;
         try {
-            const connection = await getPool().getConnection();
+            connection = await getPool().getConnection();
 
             const [result] = await connection.execute(
                 'DELETE FROM registrations WHERE osuId = ?',
                 [osuId]
             );
 
-            connection.release();
-
             const affectedRows = (result as any).affectedRows;
             return affectedRows > 0;
         } catch (error) {
             console.error('Error deleting registration:', error);
             return false;
+        } finally {
+            if (connection) {
+                connection.release();
+            }
         }
     },
 
     // 审核通过用户注册
     approveRegistration: async (osuId: string): Promise<boolean> => {
+        let connection: mysql.PoolConnection | null = null;
         try {
-            const connection = await getPool().getConnection();
+            connection = await getPool().getConnection();
 
             const [result] = await connection.execute(
                 'UPDATE registrations SET approved = TRUE, approvedAt = NOW() WHERE osuId = ?',
                 [osuId]
             );
 
-            connection.release();
-
             const affectedRows = (result as any).affectedRows;
             return affectedRows > 0;
         } catch (error) {
             console.error('Error approving registration:', error);
             return false;
+        } finally {
+            if (connection) {
+                connection.release();
+            }
         }
     },
 

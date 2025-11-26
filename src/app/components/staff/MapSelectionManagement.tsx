@@ -90,6 +90,7 @@ const MOD_OPTIONS = [
 ];
 
 const CATEGORY_OPTIONS = [
+    { value: 'all', label: '全部' },
     { value: 'qualification', label: 'QUA' },
     { value: 'ro16', label: 'RO16' },
     { value: 'quarterfinals', label: 'QF' },
@@ -1919,26 +1920,32 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         )}
                                                     </div>
 
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
-                                                                {selection.selectedMods === 'LZ' ?
-                                                                    (selection.customModName && selection.customModName.trim() !== '' ?
-                                                                        `LZ${selection.modPosition}-${selection.customModName}` :
-                                                                        `LZ${selection.modPosition}`) :
-                                                                    selection.selectedMods === 'DT' ?
-                                                                        ((selection.customDTRate && selection.customDTRate !== 1.50) ?
-                                                                            `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}倍` :
-                                                                            `DT${selection.modPosition}`) :
-                                                                        `${selection.selectedMods}${selection.modPosition}`
-                                                                }
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
+                                                            {selection.selectedMods === 'LZ' ?
+                                                                (selection.customModName && selection.customModName.trim() !== '' ?
+                                                                    `LZ${selection.modPosition}-${selection.customModName}` :
+                                                                    `LZ${selection.modPosition}`) :
+                                                                selection.selectedMods === 'DT' ?
+                                                                    ((selection.customDTRate && selection.customDTRate !== 1.50) ?
+                                                                        `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}倍` :
+                                                                        `DT${selection.modPosition}`) :
+                                                                    `${selection.selectedMods}${selection.modPosition}`
+                                                            }
+                                                        </span>
+                                                        {selection.padding && (
+                                                            <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded">
+                                                                提交测图中
                                                             </span>
-                                                            {selection.padding && (
-                                                                <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded">
-                                                                    提交测图中
-                                                                </span>
-                                                            )}
-                                                        </div>
+                                                        )}
+                                                        {/* 当选择"全部"时显示阶段信息 */}
+                                                        {category === 'all' && (
+                                                            <span className="px-2 py-1 bg-gray-600 text-white text-xs rounded">
+                                                                {CATEGORY_OPTIONS.find(cat => cat.value === selection.category)?.label || selection.category}
+                                                            </span>
+                                                        )}
+                                                    </div>
 
                                                         <h3 className="font-bold text-sm truncate" title={selection.title}>
                                                             {selection.title}

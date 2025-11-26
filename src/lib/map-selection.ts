@@ -304,7 +304,8 @@ export const mapSelectionStorage = {
             let query = 'SELECT * FROM map_selections WHERE season = ?';
             const params: (string | boolean | undefined)[] = [season];
 
-            if (category) {
+            // 如果category是"all"或undefined，则不添加category过滤条件
+            if (category && category !== 'all') {
                 query += ' AND category = ?';
                 params.push(category);
             }

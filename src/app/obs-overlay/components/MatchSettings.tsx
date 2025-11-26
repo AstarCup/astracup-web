@@ -299,7 +299,7 @@ export default function MatchSettings({
             // 重置为默认设置
             onSettingsChange({
                 matchInfo: '',
-                boFormat: 'BO3',
+                boFormat: 'BO9',
                 redTeamName: '',
                 blueTeamName: '',
                 redPlayer: undefined,
@@ -589,8 +589,8 @@ export default function MatchSettings({
     // 处理比赛编号变化
     const handleMatchNumberChange = (number: string) => {
         setMatchNumber(number);
-        // 自动更新比赛信息
-        const newMatchInfo = generateMatchInfo();
+        // 自动更新比赛信息 - 使用新的编号值直接生成
+        const newMatchInfo = `星域杯S1 | ${mapPoolSettings.category ? mapPoolSettings.category.toUpperCase() : 'RO16'} #${number} | ${settings.redPlayer?.inGameName || '红队玩家'} vs ${settings.bluePlayer?.inGameName || '蓝队玩家'}`;
         onSettingsChange({
             ...settings,
             matchInfo: newMatchInfo
