@@ -107,7 +107,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                     ) : (
                         <div className="flex flex-wrap gap-2">
                             {comments.map((c) => (
-                                <div key={c.id} className="rounded-full relative group inline-flex items-center gap-2 pr-4 bg-pink-100  max-w-xs hover:bg-pink-200 transition-colors">
+                                <div key={c.id} className="rounded-full relative group inline-flex items-center gap-2 pr-4 bg-[#E93B66]  max-w-xs hover:bg-[#E93B66]/90 transition-colors">
                                     {/* 头像 */}
                                     <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-300 flex-shrink-0 relative">
                                         <Image
