@@ -1914,7 +1914,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         className="px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors"
                                                         title="复制Beatmap ID"
                                                     >
-                                                        复制BID
+                                                        BID:{selection.beatmapId}
                                                     </button>
 
                                                     {/* 批量选择复选框 - 仅管理员可见 */}
