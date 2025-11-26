@@ -5,7 +5,8 @@ import {
     addRating,
     deleteRating,
     deleteRatingById,
-    getRatingStats
+    getRatingStats,
+    getBatchRatingStats
 } from '@/lib/map-ratings';
 import { verifyAdminAuth } from '@/lib/permissions';
 

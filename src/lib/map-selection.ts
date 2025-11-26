@@ -20,7 +20,7 @@ export const getPool = (): mysql.Pool => {
     if (!pool) {
         pool = mysql.createPool({
             ...dbConfig,
-            connectionLimit: 20, // 增加连接限制
+            connectionLimit: 30, // 增加连接限制
             queueLimit: 0, // 无限制队列
         });
     }

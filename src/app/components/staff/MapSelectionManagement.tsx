@@ -287,34 +287,47 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
     }, [user, permissions]); // 当用户或权限改变时执行
 
-    // 获取地图评分
-    const fetchMapRatings = useCallback(async (selectionId: number) => {
+    // 批量获取地图评分统计 - 获取完整的rating数据
+    const fetchBatchMapRatings = useCallback(async (selectionIds: number[]) => {
+        if (selectionIds.length === 0) return;
+
         try {
-            const response = await fetch(`/api/map-ratings?mapSelectionId=${selectionId}`);
+            const idsParam = selectionIds.join(',');
+            const response = await fetch(`/api/map-ratings/batch?mapSelectionIds=${idsParam}`);
             if (response.ok) {
                 const data = await response.json();
-                if (data.success) {
-                    setMapRatings(prev => ({
-                        ...prev,
-                        [selectionId]: data.ratings
-                    }));
+                if (data.success && data.stats) {
+                    // 更新完整的rating数据，包括评论
+                    setMapRatings(prev => {
+                        const newRatings = { ...prev };
+                        Object.entries(data.stats).forEach(([id, ratings]: [string, any]) => {
+                            const selectionId = parseInt(id);
+                            newRatings[selectionId] = ratings || [];
+                        });
+                        return newRatings;
+                    });
 
-                    // 设置当前用户的评分
-                    const userRating = data.ratings.find((rating: MapRating) => rating.userId === userForState.id.toString());
-                    if (userRating) {
-                        setUserRatings(prev => ({
-                            ...prev,
-                            [selectionId]: userRating.rating
-                        }));
-                    }
+                    // 同时更新用户评分
+                    setUserRatings(prev => {
+                        const newUserRatings = { ...prev };
+                        Object.entries(data.stats).forEach(([id, ratings]: [string, any]) => {
+                            const selectionId = parseInt(id);
+                            const userRating = (ratings || []).find((rating: MapRating) => rating.userId === userForState.id.toString());
+                            if (userRating) {
+                                newUserRatings[selectionId] = userRating.rating;
+                            }
+                        });
+                        return newUserRatings;
+                    });
                 }
             } else {
-                console.error('Failed to fetch map ratings');
+                console.error('Failed to fetch batch map ratings');
             }
         } catch (error) {
-            console.error('Error fetching map ratings:', error);
+            console.error('Error fetching batch map ratings:', error);
         }
     }, [userForState.id]);
+
 
     const fetchSelections = useCallback(async () => {
         if (!userForState?.id) {
@@ -328,11 +341,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 const data = await response.json();
                 setSelections(data.selections || []);
 
-                // 获取所有选图的评分数据
+                // 使用批量API获取所有选图的评分统计
                 if (data.selections && data.selections.length > 0) {
-                    for (const selection of data.selections) {
-                        fetchMapRatings(selection.id);
-                    }
+                    const selectionIds = data.selections.map((selection: MapSelection) => selection.id);
+                    await fetchBatchMapRatings(selectionIds);
                 }
             } else {
                 const errorData = await response.json();
@@ -342,7 +354,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             console.error('Failed to fetch selections:', error);
             showError('获取选图列表时出错');
         }
-    }, [season, category, userForState?.id, fetchMapRatings]);
+    }, [season, category, userForState?.id, fetchBatchMapRatings]);
 
     // 计算mod后的属性
     interface CustomSettings {
@@ -642,8 +654,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     [selectionId]: rating
                 }));
 
-                // 重新获取评分数据
-                await fetchMapRatings(selectionId);
+                // 重新获取评分数据 - 使用批量API
+                await fetchBatchMapRatings([selectionId]);
 
                 showSuccess('评分提交成功');
             } else {
@@ -732,7 +744,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             totalLength: selectedMods === 'DT' && customDTRate !== '' ?
                                 Math.round(beatmapPreview.total_length / (customDTRate as number)) :
                                 beatmapPreview.total_length,
-                            maxCombo: beatmapPreview.max_combo || 0
+                            max_combo: beatmapPreview.max_combo || 0
                         }
                         : undefined
                 })
@@ -2053,6 +2065,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         userId={userForState.id.toString()}
                                                         onCommentUpdate={fetchSelections}
                                                         compactMode={true}
+                                                        ratings={mapRatings[selection.id] || []}
                                                     />
                                                 </div>
                                             </div>
