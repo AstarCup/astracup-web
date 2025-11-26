@@ -1832,56 +1832,61 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-2 mb-1">
-                                                            <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
-                                                                {selection.selectedMods === 'LZ' ?
-                                                                    (selection.customModName && selection.customModName.trim() !== '' ?
-                                                                        `LZ${selection.modPosition}-${selection.customModName}` :
-                                                                        `LZ${selection.modPosition}`) :
-                                                                    selection.selectedMods === 'DT' ?
-                                                                        ((selection.customDTRate && selection.customDTRate !== 1.50) ?
-                                                                            `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}倍` :
-                                                                            `DT${selection.modPosition}`) :
-                                                                        `${selection.selectedMods}${selection.modPosition}`
-                                                                }
-                                                            </span>
-                                                            {selection.padding && (
-                                                                <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded">
-                                                                    提交测图中
+                                                            <div className="flex items-center gap-2 flex-1">
+                                                                <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
+                                                                    {selection.selectedMods === 'LZ' ?
+                                                                        (selection.customModName && selection.customModName.trim() !== '' ?
+                                                                            `LZ${selection.modPosition}-${selection.customModName}` :
+                                                                            `LZ${selection.modPosition}`) :
+                                                                        selection.selectedMods === 'DT' ?
+                                                                            ((selection.customDTRate && selection.customDTRate !== 1.50) ?
+                                                                                `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}倍` :
+                                                                                `DT${selection.modPosition}`) :
+                                                                            `${selection.selectedMods}${selection.modPosition}`
+                                                                    }
                                                                 </span>
-                                                            )}
-                                                            {/* 当选择"全部"时显示阶段信息 */}
-                                                            {category === 'all' && (
-                                                                <span className="px-2 py-1 bg-gray-600 text-white text-xs rounded">
-                                                                    {CATEGORY_OPTIONS.find(cat => cat.value === selection.category)?.label || selection.category}
-                                                                </span>
-                                                            )}
-                                                            {/* 复制BID按钮 */}
-                                                            <button
-                                                                onClick={() => copyBeatmapId(selection.beatmapId)}
-                                                                className="px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors"
-                                                                title="复制Beatmap ID"
-                                                            >
-                                                                BID {selection.beatmapId}
-                                                            </button>
-                                                            {/* 批量选择复选框 - 仅管理员可见 */}
-                                                            {permissions.isAdmin && !selection.approved && (
-                                                                <label className="flex items-center">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={tempApprovedSelections.has(selection.id)}
-                                                                        onChange={(e) => {
-                                                                            const newSelections = new Set(tempApprovedSelections);
-                                                                            if (e.target.checked) {
-                                                                                newSelections.add(selection.id);
-                                                                            } else {
-                                                                                newSelections.delete(selection.id);
-                                                                            }
-                                                                            setTempApprovedSelections(newSelections);
-                                                                        }}
-                                                                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                                                                    />
-                                                                </label>
-                                                            )}
+                                                                {selection.padding && (
+                                                                    <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded">
+                                                                        提交测图中
+                                                                    </span>
+                                                                )}
+                                                                {/* 当选择"全部"时显示阶段信息 */}
+                                                                {category === 'all' && (
+                                                                    <span className="px-2 py-1 bg-gray-600 text-white text-xs rounded">
+                                                                        {CATEGORY_OPTIONS.find(cat => cat.value === selection.category)?.label || selection.category}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {/* 右侧按钮区域 */}
+                                                            <div className="flex items-center gap-2 justify-end">
+                                                                {/* 复制BID按钮 */}
+                                                                <button
+                                                                    onClick={() => copyBeatmapId(selection.beatmapId)}
+                                                                    className="px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors"
+                                                                    title="复制Beatmap ID"
+                                                                >
+                                                                    BID {selection.beatmapId}
+                                                                </button>
+                                                                {/* 批量选择复选框 - 仅管理员可见 */}
+                                                                {permissions.isAdmin && !selection.approved && (
+                                                                    <label className="flex items-center">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={tempApprovedSelections.has(selection.id)}
+                                                                            onChange={(e) => {
+                                                                                const newSelections = new Set(tempApprovedSelections);
+                                                                                if (e.target.checked) {
+                                                                                    newSelections.add(selection.id);
+                                                                                } else {
+                                                                                    newSelections.delete(selection.id);
+                                                                                }
+                                                                                setTempApprovedSelections(newSelections);
+                                                                            }}
+                                                                            className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                                                        />
+                                                                    </label>
+                                                                )}
+                                                            </div>
                                                         </div>
 
                                                         <h3 className="font-bold text-sm truncate" title={selection.title}>
