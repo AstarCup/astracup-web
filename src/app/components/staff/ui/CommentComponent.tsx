@@ -108,14 +108,14 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                     ) : (
                         <div className="flex flex-wrap gap-2">
                             {comments.map((c) => (
-                                <div key={c.id} className="rounded-full relative group inline-flex items-center gap-2 p-2 bg-gray-50  max-w-xs hover:bg-gray-100 transition-colors">
+                                <div key={c.id} className="rounded-full relative group inline-flex items-center gap-2 p-4 bg-gray-50  max-w-xs hover:bg-gray-100 transition-colors">
                                     {/* 头像 */}
-                                    <div className="w-5 h-5 rounded-full overflow-hidden border border-gray-300 flex-shrink-0 relative">
+                                    <div className="w-20 h-20 rounded-full overflow-hidden border border-gray-300 flex-shrink-0 relative">
                                         <Image
-                                            src={c.avatar_url || '/default-avatar.png'}
+                                            src={c.avatar_url}
                                             alt={c.username}
-                                            width={20}
-                                            height={20}
+                                            width={80}
+                                            height={80}
                                             className="w-full h-full object-cover"
                                             onError={(e) => {
                                                 // 隐藏Image，显示fallback
@@ -132,10 +132,10 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                                     </div>
                                     {/* 评论内容 */}
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-gray-800 break-words line-clamp-2">{c.comment}</p>
+                                        <p className="text-2xl text-gray-800 break-words line-clamp-2">{c.comment}</p>
                                         {userId === c.userId && (
                                             <button
-                                                className="absolute top-1 right-1 text-red-500 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                                                className="absolute top-1 right-1 text-red-500 hover:text-red-600 text-xl opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
                                                 title={deletingCommentId === c.id ? "删除中..." : "删除评论"}
                                                 onClick={() => handleDeleteComment(c.id)}
                                                 disabled={deletingCommentId === c.id}
