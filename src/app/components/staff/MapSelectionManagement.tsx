@@ -4,9 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { showSuccess, showError, showInfo } from '../ui/Notification';
 import Dropdown from '../ui/Dropdown';
-import RatingDisplay from './ui/RatingDisplay';
 import CommentComponent from './ui/CommentComponent';
-import CurrentRating from './ui/CurrentRating';
 import MapoolTable from '../ui/MapoolTable';
 import { UserSession } from '@/lib/permissions';
 
@@ -141,6 +139,9 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     // Map selection data
     const [selections, setSelections] = useState<MapSelection[]>([]);
 
+    // Comments data by mapSelectionId
+    const [commentsByMapSelectionId, setCommentsByMapSelectionId] = useState<{ [key: number]: any[] }>({});
+
     // 从本地存储加载初始值
     const [season, setSeason] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -168,21 +169,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     });
 
     const [searchQuery, setSearchQuery] = useState<string>(''); // 新增：搜索查询状态
-    const [sortByRating, setSortByRating] = useState<boolean>(false); // 新增：按评分排序状态
-
-    // Rating states
-    const [userRatings, setUserRatings] = useState<{ [key: number]: number }>({});
-    interface MapRating {
-        id: number;
-        mapSelectionId: number;
-        userId: string;
-        username: string;
-        avatar_url: string;
-        rating: number;
-        comment: string;
-        createdAt: string;
-        updatedAt: string;
-    }
 
     interface ExistingSelection {
         selectedMods: string;
@@ -190,9 +176,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         category: string;
         selectedByUsername: string;
     }
-
-    const [mapRatings, setMapRatings] = useState<{ [key: number]: MapRating[] }>({});
-    const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
 
     // Add selection form
     const [showAddForm, setShowAddForm] = useState(false);
@@ -287,51 +270,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
     }, [user, permissions]); // 当用户或权限改变时执行
 
-    // 批量获取地图评分统计 - 获取完整的rating数据
-    const fetchBatchMapRatings = useCallback(async (selectionIds: number[]) => {
-        if (selectionIds.length === 0) return;
-
-        try {
-            const idsParam = selectionIds.join(',');
-            const response = await fetch(`/api/map-ratings/batch?mapSelectionIds=${idsParam}`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.stats) {
-                    // 更新完整的rating数据，包括评论
-                    setMapRatings(prev => {
-                        const newRatings = { ...prev };
-                        Object.entries(data.stats).forEach(([id, ratings]: [string, any]) => {
-                            const selectionId = parseInt(id);
-                            // 确保 ratings 是数组
-                            newRatings[selectionId] = Array.isArray(ratings) ? ratings : [];
-                        });
-                        return newRatings;
-                    });
-
-                    // 同时更新用户评分
-                    setUserRatings(prev => {
-                        const newUserRatings = { ...prev };
-                        Object.entries(data.stats).forEach(([id, ratings]: [string, any]) => {
-                            const selectionId = parseInt(id);
-                            // 确保 ratings 是数组后再调用 find
-                            const ratingsArray = Array.isArray(ratings) ? ratings : [];
-                            const userRating = ratingsArray.find((rating: MapRating) => rating.userId === userForState.id.toString());
-                            if (userRating) {
-                                newUserRatings[selectionId] = userRating.rating;
-                            }
-                        });
-                        return newUserRatings;
-                    });
-                }
-            } else {
-                console.error('Failed to fetch batch map ratings');
-            }
-        } catch (error) {
-            console.error('Error fetching batch map ratings:', error);
-        }
-    }, [userForState.id]);
-
-
     const fetchSelections = useCallback(async () => {
         if (!userForState?.id) {
             console.warn('fetchSelections called without user ID');
@@ -343,12 +281,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             if (response.ok) {
                 const data = await response.json();
                 setSelections(data.selections || []);
-
-                // 使用批量API获取所有选图的评分统计
-                if (data.selections && data.selections.length > 0) {
-                    const selectionIds = data.selections.map((selection: MapSelection) => selection.id);
-                    await fetchBatchMapRatings(selectionIds);
-                }
             } else {
                 const errorData = await response.json();
                 showError(errorData.error || '获取选图列表失败');
@@ -357,7 +289,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             console.error('Failed to fetch selections:', error);
             showError('获取选图列表时出错');
         }
-    }, [season, category, userForState?.id, fetchBatchMapRatings]);
+    }, [season, category, userForState?.id]);
 
     // 计算mod后的属性
     interface CustomSettings {
@@ -398,12 +330,40 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
     }, []);
 
+    // 批量获取评论数据
+    const fetchBatchComments = useCallback(async (mapSelectionIds: number[]) => {
+        if (mapSelectionIds.length === 0) return;
+
+        try {
+            const response = await fetch(`/api/map-ratings/batch-comments?mapSelectionIds=${mapSelectionIds.join(',')}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    setCommentsByMapSelectionId(data.comments);
+                    console.log('Batch comments loaded for', Object.keys(data.comments).length, 'map selections');
+                }
+            } else {
+                console.error('Failed to fetch batch comments');
+            }
+        } catch (error) {
+            console.error('Error fetching batch comments:', error);
+        }
+    }, []);
+
     // Get selection list
     useEffect(() => {
         if (isAuthorized && user) {
             fetchSelections();
         }
     }, [isAuthorized, user, fetchSelections]);
+
+    // 当选图列表更新时，批量获取评论数据
+    useEffect(() => {
+        if (selections.length > 0) {
+            const mapSelectionIds = selections.map(selection => selection.id);
+            fetchBatchComments(mapSelectionIds);
+        }
+    }, [selections, fetchBatchComments]);
 
     // Calculate modded stats when beatmap or mods change
     useEffect(() => {
@@ -623,54 +583,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
     };
 
-    // 提交评分
-    const submitRating = async (selectionId: number, rating: number) => {
-        if (!userForState?.id || isNaN(userForState.id)) {
-            showError('用户数据无效，请重新登录');
-            return;
-        }
-
-        if (!selectionId || isNaN(selectionId)) {
-            showError('无效的选图ID');
-            return;
-        }
-
-        setIsRatingSubmitting(true);
-        try {
-            const response = await fetch('/api/map-ratings', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    mapSelectionId: selectionId,
-                    userId: userForState.id.toString(),
-                    rating
-                })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                // 更新本地状态
-                setUserRatings(prev => ({
-                    ...prev,
-                    [selectionId]: rating
-                }));
-
-                // 重新获取评分数据 - 使用批量API
-                await fetchBatchMapRatings([selectionId]);
-
-                showSuccess('评分提交成功');
-            } else {
-                showError(data.error || '评分提交失败');
-            }
-        } catch (error) {
-            console.error('Rating submission error:', error);
-            showError('评分提交时出错');
-        } finally {
-            setIsRatingSubmitting(false);
-        }
-    };
 
     // 添加选图
     const addSelection = async () => {
@@ -1270,17 +1182,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             return true;
         })
         .sort((a, b) => {
-            // 按评分排序
-            if (sortByRating) {
-                // 确保 mapRatings[a.id] 和 mapRatings[b.id] 是数组
-                const aRatings = Array.isArray(mapRatings[a.id]) ? mapRatings[a.id] : [];
-                const bRatings = Array.isArray(mapRatings[b.id]) ? mapRatings[b.id] : [];
-
-                const aRating = aRatings.reduce((sum, rating) => sum + rating.rating, 0) / (aRatings.length || 1) || 0;
-                const bRating = bRatings.reduce((sum, rating) => sum + rating.rating, 0) / (bRatings.length || 1) || 0;
-                return bRating - aRating;
-            }
-
             // 默认按创建时间排序（最新的在前）
             return new Date(b.selectedAt).getTime() - new Date(a.selectedAt).getTime();
         });
@@ -1468,16 +1369,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             />
                         </div>
 
-                        {/* 排序切换 */}
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={sortByRating}
-                                onChange={(e) => setSortByRating(e.target.checked)}
-                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-white">按评分排序</span>
-                        </label>
 
                         {/* 添加选图按钮 */}
                         {(permissions.isMapSelector || permissions.isAdmin) && (
@@ -1941,29 +1832,61 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-2 mb-1">
-                                                            <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
-                                                                {selection.selectedMods === 'LZ' ?
-                                                                    (selection.customModName && selection.customModName.trim() !== '' ?
-                                                                        `LZ${selection.modPosition}-${selection.customModName}` :
-                                                                        `LZ${selection.modPosition}`) :
-                                                                    selection.selectedMods === 'DT' ?
-                                                                        ((selection.customDTRate && selection.customDTRate !== 1.50) ?
-                                                                            `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}倍` :
-                                                                            `DT${selection.modPosition}`) :
-                                                                        `${selection.selectedMods}${selection.modPosition}`
-                                                                }
-                                                            </span>
-                                                            {selection.padding && (
-                                                                <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded">
-                                                                    提交测图中
+                                                            <div className="flex items-center gap-2 flex-1">
+                                                                <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
+                                                                    {selection.selectedMods === 'LZ' ?
+                                                                        (selection.customModName && selection.customModName.trim() !== '' ?
+                                                                            `LZ${selection.modPosition}-${selection.customModName}` :
+                                                                            `LZ${selection.modPosition}`) :
+                                                                        selection.selectedMods === 'DT' ?
+                                                                            ((selection.customDTRate && selection.customDTRate !== 1.50) ?
+                                                                                `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}倍` :
+                                                                                `DT${selection.modPosition}`) :
+                                                                            `${selection.selectedMods}${selection.modPosition}`
+                                                                    }
                                                                 </span>
-                                                            )}
-                                                            {/* 当选择"全部"时显示阶段信息 */}
-                                                            {category === 'all' && (
-                                                                <span className="px-2 py-1 bg-gray-600 text-white text-xs rounded">
-                                                                    {CATEGORY_OPTIONS.find(cat => cat.value === selection.category)?.label || selection.category}
-                                                                </span>
-                                                            )}
+                                                                {selection.padding && (
+                                                                    <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded">
+                                                                        提交测图中
+                                                                    </span>
+                                                                )}
+                                                                {/* 当选择"全部"时显示阶段信息 */}
+                                                                {category === 'all' && (
+                                                                    <span className="px-2 py-1 bg-gray-600 text-white text-xs rounded">
+                                                                        {CATEGORY_OPTIONS.find(cat => cat.value === selection.category)?.label || selection.category}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {/* 右侧按钮区域 */}
+                                                            <div className="flex items-center gap-2 justify-end">
+                                                                {/* 复制BID按钮 */}
+                                                                <button
+                                                                    onClick={() => copyBeatmapId(selection.beatmapId)}
+                                                                    className="px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors"
+                                                                    title="复制Beatmap ID"
+                                                                >
+                                                                    BID {selection.beatmapId}
+                                                                </button>
+                                                                {/* 批量选择复选框 - 仅管理员可见 */}
+                                                                {permissions.isAdmin && !selection.approved && (
+                                                                    <label className="flex items-center">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={tempApprovedSelections.has(selection.id)}
+                                                                            onChange={(e) => {
+                                                                                const newSelections = new Set(tempApprovedSelections);
+                                                                                if (e.target.checked) {
+                                                                                    newSelections.add(selection.id);
+                                                                                } else {
+                                                                                    newSelections.delete(selection.id);
+                                                                                }
+                                                                                setTempApprovedSelections(newSelections);
+                                                                            }}
+                                                                            className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                                                        />
+                                                                    </label>
+                                                                )}
+                                                            </div>
                                                         </div>
 
                                                         <h3 className="font-bold text-sm truncate" title={selection.title}>
@@ -1973,15 +1896,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                             {selection.artist}
                                                         </p>
                                                         <p className="font-bold text-xs text-gray-600">[{selection.version}] by {selection.creator}</p>
-                                                    </div>
-                                                    <div className="ml-auto">
-                                                        <RatingDisplay
-                                                            ratings={mapRatings[selection.id] || []}
-                                                            selectedBy={selection.selectedBy}
-                                                            currentUserId={userForState.id.toString()}
-                                                            compact={true}
-                                                            isAdmin={permissions.isAdmin || permissions.isMapSelector}
-                                                        />
                                                     </div>
                                                 </div>
 
@@ -2023,48 +1937,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                     </div>
                                                 )}
 
-                                                {/* 评分组件 */}
-                                                <div className="mb-3">
-                                                    <CurrentRating
-                                                        rating={userRatings[selection.id] || 0}
-                                                        onRatingChange={(rating) => submitRating(selection.id, rating)}
-                                                        isSubmitting={isRatingSubmitting}
-                                                        userId={userForState.id.toString()}
-                                                    />
-                                                </div>
-
-                                                {/* 操作按钮 */}
-                                                <div className="flex gap-2 items-center justify-end">
-                                                    {/* 复制BID按钮 */}
-                                                    <button
-                                                        onClick={() => copyBeatmapId(selection.beatmapId)}
-                                                        className="px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors"
-                                                        title="复制Beatmap ID"
-                                                    >
-                                                        复制BID
-                                                    </button>
-
-                                                    {/* 批量选择复选框 - 仅管理员可见 */}
-                                                    {permissions.isAdmin && !selection.approved && (
-                                                        <label className="flex items-center">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={tempApprovedSelections.has(selection.id)}
-                                                                onChange={(e) => {
-                                                                    const newSelections = new Set(tempApprovedSelections);
-                                                                    if (e.target.checked) {
-                                                                        newSelections.add(selection.id);
-                                                                    } else {
-                                                                        newSelections.delete(selection.id);
-                                                                    }
-                                                                    setTempApprovedSelections(newSelections);
-                                                                }}
-                                                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                                                            />
-                                                        </label>
-                                                    )}
-                                                </div>
-
                                                 {/* 评论区 */}
                                                 <div className="mt-4 pt-3 border-t border-gray-300">
                                                     <CommentComponent
@@ -2072,7 +1944,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         userId={userForState.id.toString()}
                                                         onCommentUpdate={fetchSelections}
                                                         compactMode={true}
-                                                        ratings={mapRatings[selection.id] || []}
+                                                        ratings={commentsByMapSelectionId[selection.id] || []}
                                                     />
                                                 </div>
                                             </div>

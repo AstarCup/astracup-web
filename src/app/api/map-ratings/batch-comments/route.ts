@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getBatchRatingStats } from '@/lib/map-ratings';
+import { getBatchComments } from '@/lib/map-ratings';
 
-// GET - 批量获取评分统计
+// GET - 批量获取评论数据
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const mapSelectionIdsParam = searchParams.get('mapSelectionIds');
 
-        console.log('Batch map ratings API called with mapSelectionIds:', mapSelectionIdsParam);
+        console.log('Batch comments API called with mapSelectionIds:', mapSelectionIdsParam);
 
         if (!mapSelectionIdsParam) {
             console.log('Missing mapSelectionIds parameter');
@@ -33,35 +33,28 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // 限制批量请求的数量，防止过大的查询
-        const MAX_BATCH_SIZE = 100;
-        if (mapSelectionIds.length > MAX_BATCH_SIZE) {
-            console.log(`Batch size exceeded: ${mapSelectionIds.length} > ${MAX_BATCH_SIZE}`);
-            return NextResponse.json(
-                { error: `批量请求数量超过限制，最多支持 ${MAX_BATCH_SIZE} 个选图` },
-                { status: 400 }
-            );
-        }
+        // 不限制批量请求的数量，支持获取所有评论
+        console.log(`Processing batch request for ${mapSelectionIds.length} map selections`);
 
-        // 批量获取评分统计
-        console.log('Calling getBatchRatingStats with IDs:', mapSelectionIds);
-        const batchStats = await getBatchRatingStats(mapSelectionIds);
-        console.log('Batch stats result:', JSON.stringify(batchStats, null, 2));
+        // 批量获取评论数据
+        console.log('Calling getBatchComments with IDs:', mapSelectionIds);
+        const batchComments = await getBatchComments(mapSelectionIds);
+        console.log('Batch comments result count:', Object.keys(batchComments).length);
 
         const response = {
             success: true,
-            stats: batchStats,
-            count: Object.keys(batchStats).length
+            comments: batchComments,
+            count: Object.keys(batchComments).length
         };
 
-        console.log('Returning response:', JSON.stringify(response, null, 2));
+        console.log('Returning response with comments for', Object.keys(batchComments).length, 'map selections');
         return NextResponse.json(response);
 
     } catch (error) {
-        console.error('Error getting batch map ratings:', error);
+        console.error('Error getting batch comments:', error);
         console.error('Error details:', JSON.stringify(error, null, 2));
         return NextResponse.json(
-            { error: '批量获取评分信息失败' },
+            { error: '批量获取评论信息失败' },
             { status: 500 }
         );
     }

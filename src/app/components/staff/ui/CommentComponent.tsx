@@ -10,7 +10,7 @@ interface CommentComponentProps {
     userId: string | null;
     onCommentUpdate?: () => void;
     compactMode?: boolean; // 新增：紧凑模式，用于横向显示
-    ratings?: Array<{ id: number; userId: string; username: string; avatar_url: string; comment: string; createdAt: string }>; // 新增：从父组件传递的评分数据
+    ratings?: Array<{ id: number; userId: string; username: string; avatar_url: string; comment: string; createdAt: string }>; // 新增：从父组件传递的评论数据
 }
 
 export default function CommentComponent({ mapSelectionId, userId, onCommentUpdate, compactMode = false, ratings = [] }: CommentComponentProps) {
@@ -95,27 +95,27 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                 // 紧凑模式：横向显示评论
                 <div>
                     <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold text-gray-800 text-sm">评论区</h4>
-                        <button
-                            onClick={() => setShowCommentBox(!showCommentBox)}
-                            className="text-blue-500 hover:text-blue-600 text-sm font-medium"
-                        >
-                            {showCommentBox ? '收起' : '+ 添加评论'}
-                        </button>
                     </div>
                     {comments.length === 0 ? (
-                        <div className="text-gray-400 text-sm">暂无评论</div>
+                        <div className="">
+                            <button
+                                onClick={() => setShowCommentBox(!showCommentBox)}
+                                className="text-blue-500 hover:text-blue-600 text-sm font-medium"
+                            >
+                                {showCommentBox ? '收起' : '+ 添加评论'}
+                            </button>
+                        </div>
                     ) : (
                         <div className="flex flex-wrap gap-2">
                             {comments.map((c) => (
-                                <div key={c.id} className="rounded-full relative group inline-flex items-center gap-2 p-2 bg-gray-50  max-w-xs hover:bg-gray-100 transition-colors">
+                                <div key={c.id} className="rounded-full relative group inline-flex items-center gap-2 pr-4 bg-[#E93B66]  max-w-xs hover:bg-[#E93B66]/90 transition-colors">
                                     {/* 头像 */}
-                                    <div className="w-5 h-5 rounded-full overflow-hidden border border-gray-300 flex-shrink-0 relative">
+                                    <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-300 flex-shrink-0 relative">
                                         <Image
-                                            src={c.avatar_url || '/default-avatar.png'}
+                                            src={c.avatar_url}
                                             alt={c.username}
-                                            width={20}
-                                            height={20}
+                                            width={80}
+                                            height={80}
                                             className="w-full h-full object-cover"
                                             onError={(e) => {
                                                 // 隐藏Image，显示fallback
@@ -132,10 +132,10 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                                     </div>
                                     {/* 评论内容 */}
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-gray-800 break-words line-clamp-2">{c.comment}</p>
+                                        <p className="text-xs text-white break-words line-clamp-2">{c.comment}</p>
                                         {userId === c.userId && (
                                             <button
-                                                className="absolute top-1 right-1 text-red-500 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                                                className="absolute top-1 right-1 text-red-500 hover:text-red-600 text-xl opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
                                                 title={deletingCommentId === c.id ? "删除中..." : "删除评论"}
                                                 onClick={() => handleDeleteComment(c.id)}
                                                 disabled={deletingCommentId === c.id}
@@ -144,6 +144,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                                             </button>
                                         )}
                                     </div>
+
                                     {/* Hover弹窗 */}
                                     <div className="absolute top-full left-0 mt-1 bg-gray-900 text-white text-xs rounded shadow-lg p-2 z-20 min-w-[150px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                         <div className="font-semibold mb-1">{c.username}</div>
@@ -152,6 +153,12 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                                     </div>
                                 </div>
                             ))}
+                            <button
+                                onClick={() => setShowCommentBox(!showCommentBox)}
+                                className="text-blue-500 hover:text-blue-600 text-sm font-medium"
+                            >
+                                {showCommentBox ? '收起' : '+ 添加评论'}
+                            </button>
                         </div>
                     )}
                     {/* 评论框 */}
