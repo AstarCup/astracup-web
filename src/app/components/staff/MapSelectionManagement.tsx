@@ -318,8 +318,13 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
     }, []);
 
-    // 获取单个地图的详细评分（用于评论显示）
+    // 按需获取单个地图的详细评分（用于评论显示）
     const fetchMapRatings = useCallback(async (selectionId: number) => {
+        // 如果已经有详细数据，直接返回
+        if (mapRatings[selectionId] && mapRatings[selectionId].length > 0) {
+            return;
+        }
+
         try {
             const response = await fetch(`/api/map-ratings?mapSelectionId=${selectionId}`);
             if (response.ok) {
@@ -345,7 +350,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         } catch (error) {
             console.error('Error fetching map ratings:', error);
         }
-    }, [userForState.id]);
+    }, [userForState.id, mapRatings]);
 
     const fetchSelections = useCallback(async () => {
         if (!userForState?.id) {

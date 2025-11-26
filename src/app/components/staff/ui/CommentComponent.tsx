@@ -21,34 +21,45 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
     const [showCommentBox, setShowCommentBox] = useState(false); // 新增：控制评论框显示
     const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null); // 新增：正在删除的评论ID
 
-    // 获取评论列表
-    useEffect(() => {
-        const fetchComments = async () => {
-            if (!mapSelectionId) return; // 防止在mapSelectionId未定义时发送请求
+    // 获取评论列表 - 按需加载
+    const fetchComments = async () => {
+        if (!mapSelectionId || comments.length > 0) return; // 防止重复请求
 
-            setIsLoading(true);
-            try {
-                const res = await fetch(`/api/map-ratings?mapSelectionId=${mapSelectionId}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    // 只保留评论部分
-                    setComments((data.ratings || []).map((r: any) => ({
-                        id: r.id,
-                        userId: r.userId,
-                        username: r.username,
-                        avatar_url: r.avatar_url,
-                        comment: r.comment,
-                        createdAt: r.createdAt
-                    })).filter((r: any) => r.comment));
-                }
-            } catch (_e) {
-                setComments([]);
-            } finally {
-                setIsLoading(false);
+        setIsLoading(true);
+        try {
+            const res = await fetch(`/api/map-ratings?mapSelectionId=${mapSelectionId}`);
+            if (res.ok) {
+                const data = await res.json();
+                // 只保留评论部分
+                setComments((data.ratings || []).map((r: any) => ({
+                    id: r.id,
+                    userId: r.userId,
+                    username: r.username,
+                    avatar_url: r.avatar_url,
+                    comment: r.comment,
+                    createdAt: r.createdAt
+                })).filter((r: any) => r.comment));
             }
-        };
-        fetchComments();
-    }, [mapSelectionId, isSubmitting]); // 移除userId依赖，因为GET请求不需要它
+        } catch (_e) {
+            setComments([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // 当显示评论框时加载评论
+    useEffect(() => {
+        if (showCommentBox && comments.length === 0) {
+            fetchComments();
+        }
+    }, [showCommentBox, comments.length, mapSelectionId]);
+
+    // 在紧凑模式下，当组件挂载时加载评论
+    useEffect(() => {
+        if (compactMode && comments.length === 0) {
+            fetchComments();
+        }
+    }, [compactMode, comments.length, mapSelectionId]);
 
     // 添加评论
     const handleCommentSubmit = async () => {
