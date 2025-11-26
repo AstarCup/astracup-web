@@ -95,7 +95,6 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                 // 紧凑模式：横向显示评论
                 <div>
                     <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold text-gray-800 text-sm">评论区</h4>
                         <button
                             onClick={() => setShowCommentBox(!showCommentBox)}
                             className="text-blue-500 hover:text-blue-600 text-sm font-medium"
@@ -108,7 +107,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                     ) : (
                         <div className="flex flex-wrap gap-2">
                             {comments.map((c) => (
-                                <div key={c.id} className="rounded-full relative group inline-flex items-center gap-2 pr-4 bg-gray-50  max-w-xs hover:bg-gray-100 transition-colors">
+                                <div key={c.id} className="rounded-full relative group inline-flex items-center gap-2 pr-4 bg-pink-100  max-w-xs hover:bg-pink-200 transition-colors">
                                     {/* 头像 */}
                                     <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-300 flex-shrink-0 relative">
                                         <Image
@@ -132,7 +131,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                                     </div>
                                     {/* 评论内容 */}
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xl text-gray-800 break-words line-clamp-2">{c.comment}</p>
+                                        <p className="text-xs text-white break-words line-clamp-2">{c.comment}</p>
                                         {userId === c.userId && (
                                             <button
                                                 className="absolute top-1 right-1 text-red-500 hover:text-red-600 text-xl opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
