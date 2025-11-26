@@ -287,7 +287,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
     }, [user, permissions]); // 当用户或权限改变时执行
 
-    // 批量获取地图评分统计
+    // 批量获取地图评分统计 - 获取完整的rating数据
     const fetchBatchMapRatings = useCallback(async (selectionIds: number[]) => {
         if (selectionIds.length === 0) return;
 
@@ -297,17 +297,27 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.stats) {
-                    // 更新评分统计
+                    // 更新完整的rating数据，包括评论
                     setMapRatings(prev => {
                         const newRatings = { ...prev };
-                        Object.entries(data.stats).forEach(([id, stats]: [string, any]) => {
+                        Object.entries(data.stats).forEach(([id, ratings]: [string, any]) => {
                             const selectionId = parseInt(id);
-                            // 这里我们只更新统计信息，不覆盖详细的评分数据
-                            if (!newRatings[selectionId]) {
-                                newRatings[selectionId] = [];
-                            }
+                            newRatings[selectionId] = ratings || [];
                         });
                         return newRatings;
+                    });
+
+                    // 同时更新用户评分
+                    setUserRatings(prev => {
+                        const newUserRatings = { ...prev };
+                        Object.entries(data.stats).forEach(([id, ratings]: [string, any]) => {
+                            const selectionId = parseInt(id);
+                            const userRating = (ratings || []).find((rating: MapRating) => rating.userId === userForState.id.toString());
+                            if (userRating) {
+                                newUserRatings[selectionId] = userRating.rating;
+                            }
+                        });
+                        return newUserRatings;
                     });
                 }
             } else {
@@ -316,41 +326,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         } catch (error) {
             console.error('Error fetching batch map ratings:', error);
         }
-    }, []);
+    }, [userForState.id]);
 
-    // 按需获取单个地图的详细评分（用于评论显示）
-    const fetchMapRatings = useCallback(async (selectionId: number) => {
-        // 如果已经有详细数据，直接返回
-        if (mapRatings[selectionId] && mapRatings[selectionId].length > 0) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/map-ratings?mapSelectionId=${selectionId}`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    setMapRatings(prev => ({
-                        ...prev,
-                        [selectionId]: data.ratings
-                    }));
-
-                    // 设置当前用户的评分
-                    const userRating = data.ratings.find((rating: MapRating) => rating.userId === userForState.id.toString());
-                    if (userRating) {
-                        setUserRatings(prev => ({
-                            ...prev,
-                            [selectionId]: userRating.rating
-                        }));
-                    }
-                }
-            } else {
-                console.error('Failed to fetch map ratings');
-            }
-        } catch (error) {
-            console.error('Error fetching map ratings:', error);
-        }
-    }, [userForState.id, mapRatings]);
 
     const fetchSelections = useCallback(async () => {
         if (!userForState?.id) {
@@ -677,8 +654,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     [selectionId]: rating
                 }));
 
-                // 重新获取评分数据
-                await fetchMapRatings(selectionId);
+                // 重新获取评分数据 - 使用批量API
+                await fetchBatchMapRatings([selectionId]);
 
                 showSuccess('评分提交成功');
             } else {
@@ -2088,6 +2065,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         userId={userForState.id.toString()}
                                                         onCommentUpdate={fetchSelections}
                                                         compactMode={true}
+                                                        ratings={mapRatings[selection.id] || []}
                                                     />
                                                 </div>
                                             </div>

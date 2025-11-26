@@ -10,56 +10,25 @@ interface CommentComponentProps {
     userId: string | null;
     onCommentUpdate?: () => void;
     compactMode?: boolean; // 新增：紧凑模式，用于横向显示
+    ratings?: Array<{ id: number; userId: string; username: string; avatar_url: string; comment: string; createdAt: string }>; // 新增：从父组件传递的评分数据
 }
 
-export default function CommentComponent({ mapSelectionId, userId, onCommentUpdate, compactMode = false }: CommentComponentProps) {
+export default function CommentComponent({ mapSelectionId, userId, onCommentUpdate, compactMode = false, ratings = [] }: CommentComponentProps) {
 
-    const [comments, setComments] = useState<Array<{ id: number; userId: string; username: string; avatar_url: string; comment: string; createdAt: string }>>([]);
     const [commentInput, setCommentInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
     const [showCommentBox, setShowCommentBox] = useState(false); // 新增：控制评论框显示
     const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null); // 新增：正在删除的评论ID
 
-    // 获取评论列表 - 按需加载
-    const fetchComments = async () => {
-        if (!mapSelectionId || comments.length > 0) return; // 防止重复请求
-
-        setIsLoading(true);
-        try {
-            const res = await fetch(`/api/map-ratings?mapSelectionId=${mapSelectionId}`);
-            if (res.ok) {
-                const data = await res.json();
-                // 只保留评论部分
-                setComments((data.ratings || []).map((r: any) => ({
-                    id: r.id,
-                    userId: r.userId,
-                    username: r.username,
-                    avatar_url: r.avatar_url,
-                    comment: r.comment,
-                    createdAt: r.createdAt
-                })).filter((r: any) => r.comment));
-            }
-        } catch (_e) {
-            setComments([]);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // 当显示评论框时加载评论
-    useEffect(() => {
-        if (showCommentBox && comments.length === 0) {
-            fetchComments();
-        }
-    }, [showCommentBox, comments.length, mapSelectionId]);
-
-    // 在紧凑模式下，当组件挂载时加载评论
-    useEffect(() => {
-        if (compactMode && comments.length === 0) {
-            fetchComments();
-        }
-    }, [compactMode, comments.length, mapSelectionId]);
+    // 从ratings中提取评论数据
+    const comments = (ratings || []).map((r: any) => ({
+        id: r.id,
+        userId: r.userId,
+        username: r.username,
+        avatar_url: r.avatar_url,
+        comment: r.comment,
+        createdAt: r.createdAt
+    })).filter((r: any) => r.comment && r.comment.trim() !== '');
 
     // 添加评论
     const handleCommentSubmit = async () => {
@@ -134,9 +103,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                             {showCommentBox ? '收起' : '+ 添加评论'}
                         </button>
                     </div>
-                    {isLoading ? (
-                        <div className="text-gray-400 text-sm">加载中...</div>
-                    ) : comments.length === 0 ? (
+                    {comments.length === 0 ? (
                         <div className="text-gray-400 text-sm">暂无评论</div>
                     ) : (
                         <div className="flex flex-wrap gap-2">
@@ -221,9 +188,7 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                     {/* 评论列表 - 显示为头像网格 */}
                     <div>
                         <h4 className="font-semibold text-gray-800 mb-2 text-sm">评论</h4>
-                        {isLoading ? (
-                            <div className="text-gray-400 text-sm">加载中...</div>
-                        ) : comments.length === 0 ? (
+                        {comments.length === 0 ? (
                             <div className="text-gray-400 text-sm">暂无评论</div>
                         ) : (
                             <div className="flex flex-wrap gap-2">
