@@ -355,6 +355,85 @@ export const mapRatingsStorage = {
         }
     },
 
+    // 批量获取评分统计
+    async getBatchRatingStats(mapSelectionIds: number[]): Promise<{ [key: number]: RatingStats }> {
+        if (mapSelectionIds.length === 0) {
+            return {};
+        }
+
+        try {
+            const connection = await getPool().getConnection();
+
+            // 创建占位符
+            const placeholders = mapSelectionIds.map(() => '?').join(',');
+            
+            // 批量获取平均评分和总数量
+            const [statsRows] = await connection.execute(
+                `SELECT mapSelectionId, AVG(rating) as averageRating, COUNT(*) as totalRatings 
+                 FROM map_ratings 
+                 WHERE mapSelectionId IN (${placeholders}) 
+                 GROUP BY mapSelectionId`,
+                mapSelectionIds
+            );
+
+            // 批量获取评分分布
+            const [distributionRows] = await connection.execute(
+                `SELECT mapSelectionId, rating, COUNT(*) as count 
+                 FROM map_ratings 
+                 WHERE mapSelectionId IN (${placeholders}) 
+                 GROUP BY mapSelectionId, rating 
+                 ORDER BY mapSelectionId, rating`,
+                mapSelectionIds
+            );
+
+            connection.release();
+
+            const statsResult = statsRows as any[];
+            const distributionResult = distributionRows as any[];
+
+            // 初始化结果对象
+            const result: { [key: number]: RatingStats } = {};
+            mapSelectionIds.forEach(id => {
+                result[id] = {
+                    averageRating: 0,
+                    totalRatings: 0,
+                    ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+                };
+            });
+
+            // 填充统计信息
+            statsResult.forEach(row => {
+                const id = row.mapSelectionId;
+                if (result[id]) {
+                    result[id].averageRating = row.averageRating ? parseFloat(row.averageRating) : 0;
+                    result[id].totalRatings = row.totalRatings || 0;
+                }
+            });
+
+            // 填充评分分布
+            distributionResult.forEach(row => {
+                const id = row.mapSelectionId;
+                if (result[id] && row.rating) {
+                    result[id].ratingDistribution[row.rating] = row.count;
+                }
+            });
+
+            return result;
+        } catch (error) {
+            console.error('Error getting batch rating stats:', error);
+            // 返回空的统计信息
+            const result: { [key: number]: RatingStats } = {};
+            mapSelectionIds.forEach(id => {
+                result[id] = {
+                    averageRating: 0,
+                    totalRatings: 0,
+                    ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+                };
+            });
+            return result;
+        }
+    },
+
     // 获取用户的所有评分
     async getUserRatings(userId: string): Promise<MapRating[]> {
         try {
@@ -392,6 +471,6 @@ export const addRating = mapRatingsStorage.addRating;
 export const deleteRating = mapRatingsStorage.deleteRating;
 export const deleteRatingById = mapRatingsStorage.deleteRatingById;
 export const getRatingStats = mapRatingsStorage.getRatingStats;
-export const getUserRatings = mapRatingsStorage.getUserRatings;
+export const getBatchRatingStats = mapRatingsStorage.getBatchRatingStats;
 
 export default initMapRatingsDatabase;
