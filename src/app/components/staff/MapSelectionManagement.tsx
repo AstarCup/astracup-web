@@ -1855,6 +1855,33 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                                     {CATEGORY_OPTIONS.find(cat => cat.value === selection.category)?.label || selection.category}
                                                                 </span>
                                                             )}
+                                                            {/* 复制BID按钮 */}
+                                                            <button
+                                                                onClick={() => copyBeatmapId(selection.beatmapId)}
+                                                                className="px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors"
+                                                                title="复制Beatmap ID"
+                                                            >
+                                                                BID {selection.beatmapId}
+                                                            </button>
+                                                            {/* 批量选择复选框 - 仅管理员可见 */}
+                                                            {permissions.isAdmin && !selection.approved && (
+                                                                <label className="flex items-center">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={tempApprovedSelections.has(selection.id)}
+                                                                        onChange={(e) => {
+                                                                            const newSelections = new Set(tempApprovedSelections);
+                                                                            if (e.target.checked) {
+                                                                                newSelections.add(selection.id);
+                                                                            } else {
+                                                                                newSelections.delete(selection.id);
+                                                                            }
+                                                                            setTempApprovedSelections(newSelections);
+                                                                        }}
+                                                                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                                                    />
+                                                                </label>
+                                                            )}
                                                         </div>
 
                                                         <h3 className="font-bold text-sm truncate" title={selection.title}>
@@ -1904,39 +1931,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         {selection.comment}
                                                     </div>
                                                 )}
-
-
-                                                {/* 操作按钮 */}
-                                                <div className="flex gap-2 items-center justify-end">
-                                                    {/* 复制BID按钮 */}
-                                                    <button
-                                                        onClick={() => copyBeatmapId(selection.beatmapId)}
-                                                        className="px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors"
-                                                        title="复制Beatmap ID"
-                                                    >
-                                                        BID:{selection.beatmapId}
-                                                    </button>
-
-                                                    {/* 批量选择复选框 - 仅管理员可见 */}
-                                                    {permissions.isAdmin && !selection.approved && (
-                                                        <label className="flex items-center">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={tempApprovedSelections.has(selection.id)}
-                                                                onChange={(e) => {
-                                                                    const newSelections = new Set(tempApprovedSelections);
-                                                                    if (e.target.checked) {
-                                                                        newSelections.add(selection.id);
-                                                                    } else {
-                                                                        newSelections.delete(selection.id);
-                                                                    }
-                                                                    setTempApprovedSelections(newSelections);
-                                                                }}
-                                                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                                                            />
-                                                        </label>
-                                                    )}
-                                                </div>
 
                                                 {/* 评论区 */}
                                                 <div className="mt-4 pt-3 border-t border-gray-300">
