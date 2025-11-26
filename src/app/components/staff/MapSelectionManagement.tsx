@@ -4,9 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { showSuccess, showError, showInfo } from '../ui/Notification';
 import Dropdown from '../ui/Dropdown';
-import RatingDisplay from './ui/RatingDisplay';
 import CommentComponent from './ui/CommentComponent';
-import CurrentRating from './ui/CurrentRating';
 import MapoolTable from '../ui/MapoolTable';
 import { UserSession } from '@/lib/permissions';
 
@@ -168,21 +166,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     });
 
     const [searchQuery, setSearchQuery] = useState<string>(''); // 新增：搜索查询状态
-    const [sortByRating, setSortByRating] = useState<boolean>(false); // 新增：按评分排序状态
-
-    // Rating states
-    const [userRatings, setUserRatings] = useState<{ [key: number]: number }>({});
-    interface MapRating {
-        id: number;
-        mapSelectionId: number;
-        userId: string;
-        username: string;
-        avatar_url: string;
-        rating: number;
-        comment: string;
-        createdAt: string;
-        updatedAt: string;
-    }
 
     interface ExistingSelection {
         selectedMods: string;
@@ -190,9 +173,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         category: string;
         selectedByUsername: string;
     }
-
-    const [mapRatings, setMapRatings] = useState<{ [key: number]: MapRating[] }>({});
-    const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
 
     // Add selection form
     const [showAddForm, setShowAddForm] = useState(false);
@@ -287,51 +267,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
     }, [user, permissions]); // 当用户或权限改变时执行
 
-    // 批量获取地图评分统计 - 获取完整的rating数据
-    const fetchBatchMapRatings = useCallback(async (selectionIds: number[]) => {
-        if (selectionIds.length === 0) return;
-
-        try {
-            const idsParam = selectionIds.join(',');
-            const response = await fetch(`/api/map-ratings/batch?mapSelectionIds=${idsParam}`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.stats) {
-                    // 更新完整的rating数据，包括评论
-                    setMapRatings(prev => {
-                        const newRatings = { ...prev };
-                        Object.entries(data.stats).forEach(([id, ratings]: [string, any]) => {
-                            const selectionId = parseInt(id);
-                            // 确保 ratings 是数组
-                            newRatings[selectionId] = Array.isArray(ratings) ? ratings : [];
-                        });
-                        return newRatings;
-                    });
-
-                    // 同时更新用户评分
-                    setUserRatings(prev => {
-                        const newUserRatings = { ...prev };
-                        Object.entries(data.stats).forEach(([id, ratings]: [string, any]) => {
-                            const selectionId = parseInt(id);
-                            // 确保 ratings 是数组后再调用 find
-                            const ratingsArray = Array.isArray(ratings) ? ratings : [];
-                            const userRating = ratingsArray.find((rating: MapRating) => rating.userId === userForState.id.toString());
-                            if (userRating) {
-                                newUserRatings[selectionId] = userRating.rating;
-                            }
-                        });
-                        return newUserRatings;
-                    });
-                }
-            } else {
-                console.error('Failed to fetch batch map ratings');
-            }
-        } catch (error) {
-            console.error('Error fetching batch map ratings:', error);
-        }
-    }, [userForState.id]);
-
-
     const fetchSelections = useCallback(async () => {
         if (!userForState?.id) {
             console.warn('fetchSelections called without user ID');
@@ -343,12 +278,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             if (response.ok) {
                 const data = await response.json();
                 setSelections(data.selections || []);
-
-                // 使用批量API获取所有选图的评分统计
-                if (data.selections && data.selections.length > 0) {
-                    const selectionIds = data.selections.map((selection: MapSelection) => selection.id);
-                    await fetchBatchMapRatings(selectionIds);
-                }
             } else {
                 const errorData = await response.json();
                 showError(errorData.error || '获取选图列表失败');
@@ -357,7 +286,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             console.error('Failed to fetch selections:', error);
             showError('获取选图列表时出错');
         }
-    }, [season, category, userForState?.id, fetchBatchMapRatings]);
+    }, [season, category, userForState?.id]);
 
     // 计算mod后的属性
     interface CustomSettings {
@@ -623,54 +552,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
     };
 
-    // 提交评分
-    const submitRating = async (selectionId: number, rating: number) => {
-        if (!userForState?.id || isNaN(userForState.id)) {
-            showError('用户数据无效，请重新登录');
-            return;
-        }
-
-        if (!selectionId || isNaN(selectionId)) {
-            showError('无效的选图ID');
-            return;
-        }
-
-        setIsRatingSubmitting(true);
-        try {
-            const response = await fetch('/api/map-ratings', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    mapSelectionId: selectionId,
-                    userId: userForState.id.toString(),
-                    rating
-                })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                // 更新本地状态
-                setUserRatings(prev => ({
-                    ...prev,
-                    [selectionId]: rating
-                }));
-
-                // 重新获取评分数据 - 使用批量API
-                await fetchBatchMapRatings([selectionId]);
-
-                showSuccess('评分提交成功');
-            } else {
-                showError(data.error || '评分提交失败');
-            }
-        } catch (error) {
-            console.error('Rating submission error:', error);
-            showError('评分提交时出错');
-        } finally {
-            setIsRatingSubmitting(false);
-        }
-    };
 
     // 添加选图
     const addSelection = async () => {
@@ -1270,17 +1151,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             return true;
         })
         .sort((a, b) => {
-            // 按评分排序
-            if (sortByRating) {
-                // 确保 mapRatings[a.id] 和 mapRatings[b.id] 是数组
-                const aRatings = Array.isArray(mapRatings[a.id]) ? mapRatings[a.id] : [];
-                const bRatings = Array.isArray(mapRatings[b.id]) ? mapRatings[b.id] : [];
-
-                const aRating = aRatings.reduce((sum, rating) => sum + rating.rating, 0) / (aRatings.length || 1) || 0;
-                const bRating = bRatings.reduce((sum, rating) => sum + rating.rating, 0) / (bRatings.length || 1) || 0;
-                return bRating - aRating;
-            }
-
             // 默认按创建时间排序（最新的在前）
             return new Date(b.selectedAt).getTime() - new Date(a.selectedAt).getTime();
         });
@@ -1468,16 +1338,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             />
                         </div>
 
-                        {/* 排序切换 */}
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={sortByRating}
-                                onChange={(e) => setSortByRating(e.target.checked)}
-                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-white">按评分排序</span>
-                        </label>
 
                         {/* 添加选图按钮 */}
                         {(permissions.isMapSelector || permissions.isAdmin) && (
@@ -1974,15 +1834,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         </p>
                                                         <p className="font-bold text-xs text-gray-600">[{selection.version}] by {selection.creator}</p>
                                                     </div>
-                                                    <div className="ml-auto">
-                                                        <RatingDisplay
-                                                            ratings={mapRatings[selection.id] || []}
-                                                            selectedBy={selection.selectedBy}
-                                                            currentUserId={userForState.id.toString()}
-                                                            compact={true}
-                                                            isAdmin={permissions.isAdmin || permissions.isMapSelector}
-                                                        />
-                                                    </div>
                                                 </div>
 
                                                 {/* 属性信息 */}
@@ -2023,15 +1874,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                     </div>
                                                 )}
 
-                                                {/* 评分组件 */}
-                                                <div className="mb-3">
-                                                    <CurrentRating
-                                                        rating={userRatings[selection.id] || 0}
-                                                        onRatingChange={(rating) => submitRating(selection.id, rating)}
-                                                        isSubmitting={isRatingSubmitting}
-                                                        userId={userForState.id.toString()}
-                                                    />
-                                                </div>
 
                                                 {/* 操作按钮 */}
                                                 <div className="flex gap-2 items-center justify-end">
@@ -2072,7 +1914,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         userId={userForState.id.toString()}
                                                         onCommentUpdate={fetchSelections}
                                                         compactMode={true}
-                                                        ratings={mapRatings[selection.id] || []}
                                                     />
                                                 </div>
                                             </div>
