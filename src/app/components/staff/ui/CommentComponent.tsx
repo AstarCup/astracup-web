@@ -10,7 +10,7 @@ interface CommentComponentProps {
     userId: string | null;
     onCommentUpdate?: () => void;
     compactMode?: boolean; // 新增：紧凑模式，用于横向显示
-    ratings?: Array<{ id: number; userId: string; username: string; avatar_url: string; comment: string; createdAt: string }>; // 新增：从父组件传递的评分数据
+    ratings?: Array<{ id: number; userId: string; username: string; avatar_url: string; comment: string; createdAt: string }>; // 新增：从父组件传递的评论数据
 }
 
 export default function CommentComponent({ mapSelectionId, userId, onCommentUpdate, compactMode = false, ratings = [] }: CommentComponentProps) {

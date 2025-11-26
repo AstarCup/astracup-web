@@ -366,7 +366,7 @@ export const mapRatingsStorage = {
 
             // 创建占位符
             const placeholders = mapSelectionIds.map(() => '?').join(',');
-            
+
             // 批量获取平均评分和总数量
             const [statsRows] = await connection.execute(
                 `SELECT mapSelectionId, AVG(rating) as averageRating, COUNT(*) as totalRatings 
@@ -461,6 +461,65 @@ export const mapRatingsStorage = {
             console.error('Error getting user ratings:', error);
             return [];
         }
+    },
+
+    // 批量获取评论数据
+    async getBatchComments(mapSelectionIds: number[]): Promise<{ [key: number]: MapRating[] }> {
+        if (mapSelectionIds.length === 0) {
+            return {};
+        }
+
+        try {
+            const connection = await getPool().getConnection();
+
+            // 创建占位符
+            const placeholders = mapSelectionIds.map(() => '?').join(',');
+
+            // 批量获取所有评论数据
+            const [rows] = await connection.execute(
+                `SELECT * FROM map_ratings 
+                 WHERE mapSelectionId IN (${placeholders}) 
+                 ORDER BY mapSelectionId, createdAt DESC`,
+                mapSelectionIds
+            );
+
+            connection.release();
+
+            const result: { [key: number]: MapRating[] } = {};
+
+            // 初始化每个mapSelectionId的空数组
+            mapSelectionIds.forEach(id => {
+                result[id] = [];
+            });
+
+            // 按mapSelectionId分组评论数据
+            (rows as any[]).forEach(row => {
+                const mapSelectionId = row.mapSelectionId;
+                if (result[mapSelectionId]) {
+                    result[mapSelectionId].push({
+                        id: row.id,
+                        mapSelectionId: row.mapSelectionId,
+                        userId: row.userId,
+                        username: row.username,
+                        avatar_url: row.avatar_url || '',
+                        rating: row.rating,
+                        comment: row.comment || '',
+                        createdAt: row.createdAt,
+                        updatedAt: row.updatedAt
+                    });
+                }
+            });
+
+            return result;
+        } catch (error) {
+            console.error('Error getting batch comments:', error);
+            // 返回空的结果
+            const result: { [key: number]: MapRating[] } = {};
+            mapSelectionIds.forEach(id => {
+                result[id] = [];
+            });
+            return result;
+        }
     }
 };
 
@@ -472,5 +531,6 @@ export const deleteRating = mapRatingsStorage.deleteRating;
 export const deleteRatingById = mapRatingsStorage.deleteRatingById;
 export const getRatingStats = mapRatingsStorage.getRatingStats;
 export const getBatchRatingStats = mapRatingsStorage.getBatchRatingStats;
+export const getBatchComments = mapRatingsStorage.getBatchComments;
 
 export default initMapRatingsDatabase;

@@ -139,6 +139,9 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     // Map selection data
     const [selections, setSelections] = useState<MapSelection[]>([]);
 
+    // Comments data by mapSelectionId
+    const [commentsByMapSelectionId, setCommentsByMapSelectionId] = useState<{ [key: number]: any[] }>({});
+
     // 从本地存储加载初始值
     const [season, setSeason] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -327,12 +330,40 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
     }, []);
 
+    // 批量获取评论数据
+    const fetchBatchComments = useCallback(async (mapSelectionIds: number[]) => {
+        if (mapSelectionIds.length === 0) return;
+
+        try {
+            const response = await fetch(`/api/map-ratings/batch-comments?mapSelectionIds=${mapSelectionIds.join(',')}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    setCommentsByMapSelectionId(data.comments);
+                    console.log('Batch comments loaded for', Object.keys(data.comments).length, 'map selections');
+                }
+            } else {
+                console.error('Failed to fetch batch comments');
+            }
+        } catch (error) {
+            console.error('Error fetching batch comments:', error);
+        }
+    }, []);
+
     // Get selection list
     useEffect(() => {
         if (isAuthorized && user) {
             fetchSelections();
         }
     }, [isAuthorized, user, fetchSelections]);
+
+    // 当选图列表更新时，批量获取评论数据
+    useEffect(() => {
+        if (selections.length > 0) {
+            const mapSelectionIds = selections.map(selection => selection.id);
+            fetchBatchComments(mapSelectionIds);
+        }
+    }, [selections, fetchBatchComments]);
 
     // Calculate modded stats when beatmap or mods change
     useEffect(() => {
@@ -1914,6 +1945,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         userId={userForState.id.toString()}
                                                         onCommentUpdate={fetchSelections}
                                                         compactMode={true}
+                                                        ratings={commentsByMapSelectionId[selection.id] || []}
                                                     />
                                                 </div>
                                             </div>
