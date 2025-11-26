@@ -90,6 +90,7 @@ const MOD_OPTIONS = [
 ];
 
 const CATEGORY_OPTIONS = [
+    { value: 'all', label: '全部' },
     { value: 'qualification', label: 'QUA' },
     { value: 'ro16', label: 'RO16' },
     { value: 'quarterfinals', label: 'QF' },
