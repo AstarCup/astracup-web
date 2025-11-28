@@ -143,8 +143,8 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
-                    console.log('Loaded uploaded users:', data.uploadedUsers);
-                    console.log('Current user username:', user.username);
+                    // console.log('Loaded uploaded users:', data.uploadedUsers);
+                    // console.log('Current user username:', user.username);
                     setUploadedUsers(data.uploadedUsers);
                 }
             } else {
@@ -263,11 +263,11 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
             const response = await fetch('/api/season-config');
             if (response.ok) {
                 const data = await response.json();
-                // console.log('Season config loaded:', data);
+                // // console.log('Season config loaded:', data);
                 if (data.success) {
                     setAvailableSeasons(data.availableSeasons);
                     setSelectedSeason(data.defaultSeason);
-                    // console.log('Set selectedSeason to:', data.defaultSeason);
+                    // // console.log('Set selectedSeason to:', data.defaultSeason);
                 }
             } else {
                 console.error('Failed to load season config, status:', response.status);
@@ -283,10 +283,10 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         const checkAccessAndLoadData = async () => {
             if (!user) return;
 
-            // console.log('Checking access for user:', user);
+            // // console.log('Checking access for user:', user);
 
             const hasAccess = permissions.isReplayTester || permissions.isAdmin || permissions.isReferee || permissions.isStreamer || permissions.isCommentator;
-            // console.log('User access check result:', hasAccess);
+            // // console.log('User access check result:', hasAccess);
 
             if (!hasAccess) {
                 showError('无权限访问回放收集系统');
@@ -309,19 +309,19 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         const loadMapData = async () => {
             if (!user) return;
 
-            // console.log('Loading map data for:', { selectedSeason, selectedCategory, userId: userForState.id });
+            // // console.log('Loading map data for:', { selectedSeason, selectedCategory, userId: userForState.id });
 
             // 获取padding状态的图池
             try {
                 const url = `/api/map-selections?season=${selectedSeason}&category=${selectedCategory}&padding=true&osuId=${userForState.id}`;
-                // console.log('Fetching from URL:', url);
+                // // console.log('Fetching from URL:', url);
 
                 const response = await fetch(url);
-                // console.log('Response status:', response.status);
+                // // console.log('Response status:', response.status);
 
                 if (response.ok) {
                     const data = await response.json();
-                    // console.log('Received data:', data);
+                    // // console.log('Received data:', data);
 
                     // 转换数据格式以完全匹配MapoolTable期望的格式
                     const formattedData = (data.selections || []).map((map: any) => ({
@@ -571,14 +571,14 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                             {getFilteredMaps().map(map => (
                                 <div
                                     key={map.id}
-                                    className={`border rounded-md p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''} ${!isLoadingUploadedUsers && user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) ? 'border-green-500' : 'border-gray-300'
+                                    className={`border rounded-md p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''} ${!isLoadingUploadedUsers && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.length > 0 ? 'border-green-500' : 'border-gray-300'
                                         }`}
                                     style={{
                                         backgroundImage: `url(https://assets.ppy.sh/beatmaps/${map.SID}/covers/cover.jpg)`,
                                         backgroundSize: 'cover',
                                         backgroundPosition: 'center',
                                         backgroundRepeat: 'no-repeat',
-                                        opacity: !isLoadingUploadedUsers && user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) ? 0.76 : 1,
+                                        opacity: !isLoadingUploadedUsers && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.length > 0 ? 0.76 : 1,
                                         transition: 'opacity 0.2s ease-in-out'
                                     }}
 
@@ -634,7 +634,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                     )}
 
                                     {/* 渐变覆盖层 - 已上传时显示绿色，未上传时显示白色 */}
-                                    <div className={`absolute inset-0 ${!isLoadingUploadedUsers && user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) ? 'bg-gradient-to-tr from-green-100 via-green-50/80 to-transparent' : 'bg-gradient-to-tr from-white via-white/80 to-transparent'}`}></div>
+                                    <div className={`absolute inset-0 ${!isLoadingUploadedUsers && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.length > 0 ? 'bg-gradient-to-tr from-green-100 via-green-50/80 to-transparent' : 'bg-gradient-to-tr from-white via-white/80 to-transparent'}`}></div>
 
                                     {/* 内容层 */}
                                     <div className="relative z-10">
@@ -678,9 +678,9 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                                 <div className="text-xl text-bold text-green-600 font-medium mt-1 px-2 py-1">✓ 你已上传</div>
                                             )}
                                             {/* 调试信息 */}
-                                            <div className="text-xs text-gray-500 mt-1 px-2 py-1">
+                                            {/* <div className="text-xs text-gray-500 mt-1 px-2 py-1">
                                                 调试: mapKey={selectedSeason}/{selectedCategory}/{map.BID}, 已上传用户: {JSON.stringify(uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`] || [])}, 当前用户: {user.username}, 已上传: {!isLoadingUploadedUsers && user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) ? '是' : '否'}
-                                            </div>
+                                            </div> */}
                                         </div>
 
                                         {/* 底部提示 */}
