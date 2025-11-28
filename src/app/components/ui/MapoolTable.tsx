@@ -494,6 +494,9 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                             let slotClass = "";
                             let slotText = row.Slot || "";
 
+                            // 检查是否有上传 - 移到前面，因为NM条件需要使用
+                            const hasUploads = season && category && uploadedUsers[`${season}/${category}/${row.BID}`]?.length > 0;
+
                             // 处理自定义mod名称和DT倍率
                             if (row.customModName && row.Slot?.startsWith("LZ")) {
                                 slotText = `LZ${row.Slot.match(/\d+/)?.[0] || ''}`;
@@ -504,7 +507,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                             }
 
                             if (row.Slot?.includes("NM")) {
-                                bgClass = "bg-white";
+                                bgClass = hasUploads ? "" : "bg-white"; // 有上传记录时不使用白色背景，让绿色背景生效
                                 slotClass = "bg-gray-200 p-2 text-center font-bold";
                             } else if (row.Slot?.includes("HD")) {
                                 bgClass = "text-yellow-500";
@@ -525,8 +528,6 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                 bgClass = "text-grey-500";
                                 slotClass = "bg-black p-2 text-white text-center font-bold";
                             }
-                            // 检查是否有上传
-                            const hasUploads = season && category && uploadedUsers[`${season}/${category}/${row.BID}`]?.length > 0;
 
                             return (
                                 <tr
