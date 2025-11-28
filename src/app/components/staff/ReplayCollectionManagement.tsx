@@ -98,7 +98,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         return 'all';
     });
 
-    const [uploading, setUploading] = useState(false);
+    const [uploading, setUploading] = useState<number | null>(null);
     const [uploadedUsers, setUploadedUsers] = useState<{ [key: string]: string[] }>({}); // { mapId: [username, ...] }
     const [highlightedMapId, setHighlightedMapId] = useState<number | null>(null);
     const [hoveredMapId, setHoveredMapId] = useState<number | null>(null);
@@ -393,7 +393,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
             showError('请上传.osr格式的回放文件');
             return;
         }
-        setUploading(true);
+        setUploading(map.id);
         try {
             // 构造文件名 - 格式: modPosition_bid_userId_username.osr
             const safeUsername = user.username.replace(/[^a-zA-Z0-9_-]/g, '_'); // 替换特殊字符
@@ -424,7 +424,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         } catch {
             showError('上传失败');
         } finally {
-            setUploading(false);
+            setUploading(null);
         }
     };
 
@@ -577,7 +577,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                     onMouseEnter={() => setHoveredMapId(map.id)}
                                     onMouseLeave={() => setHoveredMapId(null)}
                                     onClick={() => {
-                                        if (!uploading && user) {
+                                        if (uploading === null && user) {
                                             const input = document.createElement('input');
                                             input.type = 'file';
                                             input.accept = '.osr';
@@ -592,7 +592,9 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                     }}
                                     onDragOver={(e) => {
                                         e.preventDefault();
-                                        e.currentTarget.classList.add('bg-blue-50', 'border-blue-300');
+                                        if (uploading === null) {
+                                            e.currentTarget.classList.add('bg-blue-50', 'border-blue-300');
+                                        }
                                     }}
                                     onDragLeave={(e) => {
                                         e.preventDefault();
@@ -601,7 +603,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                     onDrop={(e) => {
                                         e.preventDefault();
                                         e.currentTarget.classList.remove('bg-blue-50', 'border-blue-300');
-                                        if (!uploading && user) {
+                                        if (uploading === null && user) {
                                             const files = e.dataTransfer.files;
                                             if (files.length > 0 && files[0].name.endsWith('.osr')) {
                                                 handleReplayUpload(map, files[0]);
@@ -674,13 +676,13 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                         {/* 底部提示 */}
                                         <div className="text-center">
                                             <div className="text-xs text-gray-600 px-2 py-1 inline-block">
-                                                {uploading ? '上传中...' : '点击上传或拖拽.osr文件'}
+                                                {uploading === map.id ? '上传中...' : (uploading === null ? '点击上传或拖拽.osr文件' : '其他文件上传中...')}
                                             </div>
                                         </div>
 
-                                        {/* 上传中遮罩 */}
-                                        {uploading && (
-                                            <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center  z-30">
+                                        {/* 上传中遮罩 - 只在当前卡片上传时显示，去掉白色背景 */}
+                                        {uploading === map.id && (
+                                            <div className="absolute inset-0 flex items-center justify-center z-30">
                                                 <div className="text-sm text-blue-600 bg-white px-3 py-2 rounded shadow-lg">上传中...</div>
                                             </div>
                                         )}
