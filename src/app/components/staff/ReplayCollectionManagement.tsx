@@ -98,10 +98,10 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         return 'all';
     });
 
-    const [uploading, setUploading] = useState(false);
+    const [uploading, setUploading] = useState<number | null>(null);
     const [uploadedUsers, setUploadedUsers] = useState<{ [key: string]: string[] }>({}); // { mapId: [username, ...] }
+    const [isLoadingUploadedUsers, setIsLoadingUploadedUsers] = useState(true); // 跟踪已上传用户数据加载状态
     const [highlightedMapId, setHighlightedMapId] = useState<number | null>(null);
-    const [hoveredMapId, setHoveredMapId] = useState<number | null>(null);
     const [downloadingAll, setDownloadingAll] = useState(false);
     const [availableSeasons, setAvailableSeasons] = useState([
         { value: 's1', label: '第一赛季' }
@@ -137,22 +137,29 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
 
     // 加载已上传用户状态
     const loadUploadedUsers = async () => {
+        setIsLoadingUploadedUsers(true); // 开始加载
         try {
             const response = await fetch(`/api/uploaded-users?season=${selectedSeason}&category=${selectedCategory}`);
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
+                    // console.log('Loaded uploaded users:', data.uploadedUsers);
+                    // console.log('Current user username:', user.username);
                     setUploadedUsers(data.uploadedUsers);
                 }
+            } else {
+                console.error('Failed to load uploaded users, response not ok:', response.status);
             }
         } catch (error) {
             console.error('Failed to load uploaded users:', error);
+        } finally {
+            setIsLoadingUploadedUsers(false); // 加载完成，无论成功失败
         }
     };
 
     // 获取用户名列表 - 直接返回用户名 (用于卡片展示)
     const getUsernamesList = (usernames: string[]): string => {
-        if (usernames.length === 0) return '暂无';
+        if (usernames.length === 0) return '还没人上传';
         return usernames.join(', ');
     };
 
@@ -256,11 +263,11 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
             const response = await fetch('/api/season-config');
             if (response.ok) {
                 const data = await response.json();
-                // console.log('Season config loaded:', data);
+                // // console.log('Season config loaded:', data);
                 if (data.success) {
                     setAvailableSeasons(data.availableSeasons);
                     setSelectedSeason(data.defaultSeason);
-                    // console.log('Set selectedSeason to:', data.defaultSeason);
+                    // // console.log('Set selectedSeason to:', data.defaultSeason);
                 }
             } else {
                 console.error('Failed to load season config, status:', response.status);
@@ -276,10 +283,10 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         const checkAccessAndLoadData = async () => {
             if (!user) return;
 
-            // console.log('Checking access for user:', user);
+            // // console.log('Checking access for user:', user);
 
             const hasAccess = permissions.isReplayTester || permissions.isAdmin || permissions.isReferee || permissions.isStreamer || permissions.isCommentator;
-            // console.log('User access check result:', hasAccess);
+            // // console.log('User access check result:', hasAccess);
 
             if (!hasAccess) {
                 showError('无权限访问回放收集系统');
@@ -302,19 +309,19 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         const loadMapData = async () => {
             if (!user) return;
 
-            // console.log('Loading map data for:', { selectedSeason, selectedCategory, userId: userForState.id });
+            // // console.log('Loading map data for:', { selectedSeason, selectedCategory, userId: userForState.id });
 
             // 获取padding状态的图池
             try {
                 const url = `/api/map-selections?season=${selectedSeason}&category=${selectedCategory}&padding=true&osuId=${userForState.id}`;
-                // console.log('Fetching from URL:', url);
+                // // console.log('Fetching from URL:', url);
 
                 const response = await fetch(url);
-                // console.log('Response status:', response.status);
+                // // console.log('Response status:', response.status);
 
                 if (response.ok) {
                     const data = await response.json();
-                    // console.log('Received data:', data);
+                    // // console.log('Received data:', data);
 
                     // 转换数据格式以完全匹配MapoolTable期望的格式
                     const formattedData = (data.selections || []).map((map: any) => ({
@@ -393,7 +400,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
             showError('请上传.osr格式的回放文件');
             return;
         }
-        setUploading(true);
+        setUploading(map.id);
         try {
             // 构造文件名 - 格式: modPosition_bid_userId_username.osr
             const safeUsername = user.username.replace(/[^a-zA-Z0-9_-]/g, '_'); // 替换特殊字符
@@ -424,7 +431,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         } catch {
             showError('上传失败');
         } finally {
-            setUploading(false);
+            setUploading(null);
         }
     };
 
@@ -553,31 +560,30 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                     />
                     <div className="mt-6" id="upload-section">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold">回放文件上传</h3>
+                            <h3 className="text-xl text-white font-bold">回放文件上传</h3>
                             {selectedModFilter !== 'all' && (
                                 <div className="text-sm text-gray-600">
                                     已筛选: {getFilteredMaps().length} 张地图 ({selectedModFilter})
                                 </div>
                             )}
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4" onMouseLeave={() => setHoveredMapId(null)}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                             {getFilteredMaps().map(map => (
                                 <div
                                     key={map.id}
-                                    className={`border  p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''
+                                    className={`border rounded-md p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''} ${!isLoadingUploadedUsers && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.length > 0 ? 'border-green-500' : 'border-gray-300'
                                         }`}
                                     style={{
                                         backgroundImage: `url(https://assets.ppy.sh/beatmaps/${map.SID}/covers/cover.jpg)`,
                                         backgroundSize: 'cover',
                                         backgroundPosition: 'center',
                                         backgroundRepeat: 'no-repeat',
-                                        opacity: hoveredMapId && hoveredMapId !== map.id ? 0.76 : 1,
+                                        opacity: !isLoadingUploadedUsers && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.length > 0 ? 0.76 : 1,
                                         transition: 'opacity 0.2s ease-in-out'
                                     }}
-                                    onMouseEnter={() => setHoveredMapId(map.id)}
-                                    onMouseLeave={() => setHoveredMapId(null)}
+
                                     onClick={() => {
-                                        if (!uploading && user) {
+                                        if (uploading === null && user) {
                                             const input = document.createElement('input');
                                             input.type = 'file';
                                             input.accept = '.osr';
@@ -592,7 +598,9 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                     }}
                                     onDragOver={(e) => {
                                         e.preventDefault();
-                                        e.currentTarget.classList.add('bg-blue-50', 'border-blue-300');
+                                        if (uploading === null) {
+                                            e.currentTarget.classList.add('bg-blue-50', 'border-blue-300');
+                                        }
                                     }}
                                     onDragLeave={(e) => {
                                         e.preventDefault();
@@ -601,7 +609,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                     onDrop={(e) => {
                                         e.preventDefault();
                                         e.currentTarget.classList.remove('bg-blue-50', 'border-blue-300');
-                                        if (!uploading && user) {
+                                        if (uploading === null && user) {
                                             const files = e.dataTransfer.files;
                                             if (files.length > 0 && files[0].name.endsWith('.osr')) {
                                                 handleReplayUpload(map, files[0]);
@@ -612,7 +620,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                     }}
                                 >
                                     {/* 删除按钮 - 只有已上传时显示 */}
-                                    {user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) && (
+                                    {!isLoadingUploadedUsers && user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) && (
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation(); // 阻止事件冒泡
@@ -625,8 +633,8 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                         </button>
                                     )}
 
-                                    {/* 白色渐变覆盖层 - 增加可读性 */}
-                                    <div className="absolute inset-0 bg-gradient-to-tr from-white via-white/80 to-transparent"></div>
+                                    {/* 渐变覆盖层 - 已上传时显示绿色，未上传时显示白色 */}
+                                    <div className={`absolute inset-0 ${!isLoadingUploadedUsers && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.length > 0 ? 'bg-gradient-to-tr from-green-100 via-green-50/80 to-transparent' : 'bg-gradient-to-tr from-white via-white/80 to-transparent'}`}></div>
 
                                     {/* 内容层 */}
                                     <div className="relative z-10">
@@ -662,25 +670,29 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                         </div>
 
                                         {/* 底部区域：上传状态 */}
-                                        <div className="mb-3">
-                                            <div className="text-xs text-gray-700 px-2 py-1">
-                                                已上传用户: {getUsernamesList(uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`] || [])}
+                                        <div className="mb-3 bg-white rounded-md px-2">
+                                            <div className="text-xl text-bold text-gray-700 px-2 py-1">
+                                                {isLoadingUploadedUsers ? '加载中...' : getUsernamesList(uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`] || [])}
                                             </div>
-                                            {user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) && (
-                                                <div className="text-xs text-green-600 font-medium mt-1 px-2 py-1">✓ 你已上传</div>
+                                            {!isLoadingUploadedUsers && user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) && (
+                                                <div className="text-xl text-bold text-green-600 font-medium mt-1 px-2 py-1">✓ 你已上传</div>
                                             )}
+                                            {/* 调试信息 */}
+                                            {/* <div className="text-xs text-gray-500 mt-1 px-2 py-1">
+                                                调试: mapKey={selectedSeason}/{selectedCategory}/{map.BID}, 已上传用户: {JSON.stringify(uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`] || [])}, 当前用户: {user.username}, 已上传: {!isLoadingUploadedUsers && user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) ? '是' : '否'}
+                                            </div> */}
                                         </div>
 
                                         {/* 底部提示 */}
                                         <div className="text-center">
                                             <div className="text-xs text-gray-600 px-2 py-1 inline-block">
-                                                {uploading ? '上传中...' : '点击上传或拖拽.osr文件'}
+                                                {uploading === map.id ? '上传中...' : (uploading === null ? '点击上传或拖拽.osr文件' : '其他文件上传中...')}
                                             </div>
                                         </div>
 
-                                        {/* 上传中遮罩 */}
-                                        {uploading && (
-                                            <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center  z-30">
+                                        {/* 上传中遮罩 - 只在当前卡片上传时显示，去掉白色背景 */}
+                                        {uploading === map.id && (
+                                            <div className="absolute inset-0 flex items-center justify-center z-30">
                                                 <div className="text-sm text-blue-600 bg-white px-3 py-2 rounded shadow-lg">上传中...</div>
                                             </div>
                                         )}
@@ -714,9 +726,12 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                 )}
                             </button>
                         </div>
-                        <p className="text-sm text-gray-600">
-                            下载当前赛季和类别的所有已上传回放文件，文件将按mod位分类整理。
-                        </p>
+                        <div className='p-6'>
+                            <p className="text-sm text-white">
+                                下载当前页面所有已上传回放文件，文件将按mod位分类整理。
+                            </p>
+
+                        </div>
                     </div>
                 </>
             )}
