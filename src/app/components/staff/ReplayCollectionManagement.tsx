@@ -564,7 +564,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                             {getFilteredMaps().map(map => (
                                 <div
                                     key={map.id}
-                                    className={`border  p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''
+                                    className={`border p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''} ${user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) ? 'border-green-500' : 'border-gray-300'
                                         }`}
                                     style={{
                                         backgroundImage: `url(https://assets.ppy.sh/beatmaps/${map.SID}/covers/cover.jpg)`,
