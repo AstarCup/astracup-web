@@ -667,11 +667,11 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
 
                                         {/* 底部区域：上传状态 */}
                                         <div className="mb-3 bg-white rounded-md px-2">
-                                            <div className="text-2xl text-bold text-gray-700 px-2 py-1">
+                                            <div className="text-xl text-bold text-gray-700 px-2 py-1">
                                                 已上传用户: {isLoadingUploadedUsers ? '加载中...' : getUsernamesList(uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`] || [])}
                                             </div>
                                             {!isLoadingUploadedUsers && user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) && (
-                                                <div className="text-2xl text-bold text-green-600 font-medium mt-1 px-2 py-1">✓ 你已上传</div>
+                                                <div className="text-xl text-bold text-green-600 font-medium mt-1 px-2 py-1">✓ 你已上传</div>
                                             )}
                                         </div>
 
