@@ -143,8 +143,11 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
+                    console.log('Loaded uploaded users:', data.uploadedUsers);
                     setUploadedUsers(data.uploadedUsers);
                 }
+            } else {
+                console.error('Failed to load uploaded users, response not ok:', response.status);
             }
         } catch (error) {
             console.error('Failed to load uploaded users:', error);
@@ -673,6 +676,10 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                             {!isLoadingUploadedUsers && user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) && (
                                                 <div className="text-xl text-bold text-green-600 font-medium mt-1 px-2 py-1">✓ 你已上传</div>
                                             )}
+                                            {/* 调试信息 */}
+                                            <div className="text-xs text-gray-500 mt-1 px-2 py-1">
+                                                调试: mapKey={selectedSeason}/{selectedCategory}/{map.BID}, 已上传: {!isLoadingUploadedUsers && user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) ? '是' : '否'}
+                                            </div>
                                         </div>
 
                                         {/* 底部提示 */}
