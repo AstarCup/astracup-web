@@ -102,7 +102,6 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
     const [uploadedUsers, setUploadedUsers] = useState<{ [key: string]: string[] }>({}); // { mapId: [username, ...] }
     const [isLoadingUploadedUsers, setIsLoadingUploadedUsers] = useState(true); // 跟踪已上传用户数据加载状态
     const [highlightedMapId, setHighlightedMapId] = useState<number | null>(null);
-    const [hoveredMapId, setHoveredMapId] = useState<number | null>(null);
     const [downloadingAll, setDownloadingAll] = useState(false);
     const [availableSeasons, setAvailableSeasons] = useState([
         { value: 's1', label: '第一赛季' }
@@ -564,7 +563,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                 </div>
                             )}
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4" onMouseLeave={() => setHoveredMapId(null)}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                             {getFilteredMaps().map(map => (
                                 <div
                                     key={map.id}
@@ -575,11 +574,10 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                         backgroundSize: 'cover',
                                         backgroundPosition: 'center',
                                         backgroundRepeat: 'no-repeat',
-                                        opacity: hoveredMapId && hoveredMapId !== map.id ? 0.76 : 1,
+                                        opacity: !isLoadingUploadedUsers && user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) ? 0.76 : 1,
                                         transition: 'opacity 0.2s ease-in-out'
                                     }}
-                                    onMouseEnter={() => setHoveredMapId(map.id)}
-                                    onMouseLeave={() => setHoveredMapId(null)}
+
                                     onClick={() => {
                                         if (uploading === null && user) {
                                             const input = document.createElement('input');
