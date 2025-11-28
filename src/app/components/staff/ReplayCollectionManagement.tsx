@@ -553,7 +553,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                     />
                     <div className="mt-6" id="upload-section">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold">回放文件上传</h3>
+                            <h3 className="text-xl text-white font-bold">回放文件上传</h3>
                             {selectedModFilter !== 'all' && (
                                 <div className="text-sm text-gray-600">
                                     已筛选: {getFilteredMaps().length} 张地图 ({selectedModFilter})
@@ -627,8 +627,8 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                         </button>
                                     )}
 
-                                    {/* 白色渐变覆盖层 - 增加可读性 */}
-                                    <div className="absolute inset-0 bg-gradient-to-tr from-white via-white/80 to-transparent"></div>
+                                    {/* 渐变覆盖层 - 已上传时显示绿色，未上传时显示白色 */}
+                                    <div className={`absolute inset-0 ${user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) ? 'bg-gradient-to-tr from-green-100 via-green-50/80 to-transparent' : 'bg-gradient-to-tr from-white via-white/80 to-transparent'}`}></div>
 
                                     {/* 内容层 */}
                                     <div className="relative z-10">
@@ -715,10 +715,10 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                     </>
                                 )}
                             </button>
+                            <p className="text-sm text-gray-600">
+                                下载当前赛季和类别的所有已上传回放文件，文件将按mod位分类整理。
+                            </p>
                         </div>
-                        <p className="text-sm text-gray-600">
-                            下载当前赛季和类别的所有已上传回放文件，文件将按mod位分类整理。
-                        </p>
                     </div>
                 </>
             )}
