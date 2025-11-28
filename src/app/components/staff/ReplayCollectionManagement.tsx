@@ -564,7 +564,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                             {getFilteredMaps().map(map => (
                                 <div
                                     key={map.id}
-                                    className={`border p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''} ${user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) ? 'border-green-500' : 'border-gray-300'
+                                    className={`border rounded-md p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''} ${user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) ? 'border-green-500' : 'border-gray-300'
                                         }`}
                                     style={{
                                         backgroundImage: `url(https://assets.ppy.sh/beatmaps/${map.SID}/covers/cover.jpg)`,
@@ -628,7 +628,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                     )}
 
                                     {/* 渐变覆盖层 - 已上传时显示绿色，未上传时显示白色 */}
-                                    <div className={`absolute inset-0 ${user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) ? 'bg-gradient-to-tr from-green-100 via-green-50/80 to-transparent' : 'bg-gradient-to-tr from-white via-white/80 to-transparent'}`}></div>
+                                    <div className={`absolute inset-0 ${user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) ? 'bg-gradient-to-tr from-pink via-green-50/80 to-transparent' : 'bg-gradient-to-tr from-white via-white/80 to-transparent'}`}></div>
 
                                     {/* 内容层 */}
                                     <div className="relative z-10">
@@ -664,12 +664,12 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                         </div>
 
                                         {/* 底部区域：上传状态 */}
-                                        <div className="mb-3">
-                                            <div className="text-xs text-gray-700 px-2 py-1">
+                                        <div className="mb-3 bg-white">
+                                            <div className="text-2xl text-bold text-gray-700 px-2 py-1">
                                                 已上传用户: {getUsernamesList(uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`] || [])}
                                             </div>
                                             {user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) && (
-                                                <div className="text-xs text-green-600 font-medium mt-1 px-2 py-1">✓ 你已上传</div>
+                                                <div className="text-2xl text-bold text-green-600 font-medium mt-1 px-2 py-1">✓ 你已上传</div>
                                             )}
                                         </div>
 
@@ -715,9 +715,12 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                     </>
                                 )}
                             </button>
-                            <p className="text-sm text-gray-600">
-                                下载当前赛季和类别的所有已上传回放文件，文件将按mod位分类整理。
+                        </div>
+                        <div className='p-6'>
+                            <p className="text-sm text-white">
+                                下载当前页面所有已上传回放文件，文件将按mod位分类整理。
                             </p>
+
                         </div>
                     </div>
                 </>
