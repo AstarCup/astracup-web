@@ -157,12 +157,15 @@ export default function TotalScoresByModTable({
             // 通过playlistId或beatmapId找到对应的map selection
             const playlistId = (score as any).playlistId;
             const beatmapId = (score as any).beatmapId;
+            const scoreBeatmapId = (score as any).beatmap?.id || beatmapId;
 
-            // console.log(`处理玩家 ${score.username} 的分数:`, {
-            // playlistId,
-            // beatmapId,
-            // totalScore: score.total_score
-            // });
+            console.log(`处理玩家 ${score.username} 的分数:`, {
+                userId: score.user_id,
+                playlistId,
+                beatmapId,
+                scoreBeatmapId,
+                totalScore: score.total_score
+            });
 
             let mapSelection = null;
 
@@ -175,15 +178,18 @@ export default function TotalScoresByModTable({
                         selection.beatmapId === playlistItem.beatmap.id
                     );
                 }
-            } else if (beatmapId) {
+            } else if (scoreBeatmapId) {
                 // 如果没有selectedRoom但有beatmapId，直接通过beatmapId找到对应的map selection
+                console.log(`Looking for map selection with beatmapId: ${scoreBeatmapId}`);
                 mapSelection = mapSelections.find(selection =>
-                    selection.beatmapId === beatmapId
+                    selection.beatmapId === scoreBeatmapId
                 );
+                console.log(`Found map selection:`, mapSelection);
             }
 
             if (mapSelection) {
                 const modPosition = `${mapSelection.selectedMods}${mapSelection.modPosition}`;
+                console.log(`Found mod position: ${modPosition} for beatmapId: ${scoreBeatmapId}`);
 
                 // 如果这个mod位已经有分数了，取最高分
                 const existingScore = player.scores[modPosition];
@@ -195,8 +201,16 @@ export default function TotalScoresByModTable({
                         player.totalScore += score.total_score;
                     }
                     player.scores[modPosition] = score.total_score;
-                    // console.log(`为玩家 ${score.username} 设置 ${modPosition} 分数: ${score.total_score}`);
+                    console.log(`为玩家 ${score.username} 设置 ${modPosition} 分数: ${score.total_score}`);
                 }
+            } else {
+                console.log(`No map selection found for score:`, {
+                    userId: score.user_id,
+                    username: score.username,
+                    playlistId,
+                    beatmapId,
+                    scoreBeatmapId
+                });
             }
         });
 
