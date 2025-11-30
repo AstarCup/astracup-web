@@ -293,6 +293,13 @@ export default function TotalScoresByModTable({
 
         // 计算总分排名
         const playersWithTotalScores = result.filter(player => player.totalScore > 0);
+        console.log(`Players with total scores: ${playersWithTotalScores.length} out of ${result.length}`);
+
+        // 打印每个玩家的总分和已玩图池数量
+        result.forEach(player => {
+            console.log(`${player.username} (${player.userId}): totalScore=${player.totalScore}, playedMaps=${player.playedMaps}`);
+        });
+
         playersWithTotalScores.sort((a, b) => b.totalScore - a.totalScore);
 
         // 分配总分排名（处理并列情况）
@@ -307,7 +314,7 @@ export default function TotalScoresByModTable({
             player.totalRank = currentTotalRank;
         });
 
-        // console.log('处理完成，玩家分数结果:', result);
+        console.log('处理完成，玩家分数结果:', result);
         return result;
     };
 
