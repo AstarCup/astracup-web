@@ -393,7 +393,8 @@ export default function MultiplayerScoresPage() {
                     }
                 });
                 setApprovedPlayers(approvedSet);
-                // // console.log(`Loaded ${approvedSet.size} approved players`);
+                console.log(`Loaded ${approvedSet.size} approved players`);
+                console.log('Approved player IDs:', Array.from(approvedSet));
             } else {
                 console.error('Failed to load approved players:', data.error);
                 setApprovedPlayers(new Set());

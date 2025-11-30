@@ -74,6 +74,10 @@ export default function TotalScoresByModTable({
 
         const playerMap = new Map<string, PlayerModScores>();
 
+        console.log(`Total scores received: ${scores.length}`);
+        console.log(`Number of approved players: ${approvedPlayers.size}`);
+        console.log(`Number of registrations: ${registrations.length}`);
+
         // 初始化所有已过审玩家
         approvedPlayers.forEach(osuId => {
             // 从分数数据中查找玩家信息（使用第一个找到的分数来获取玩家信息）
@@ -99,7 +103,7 @@ export default function TotalScoresByModTable({
                 // 如果玩家没有分数数据，从已报名数据中查找玩家信息
                 const registration = registrations.find(reg => reg.osuId === osuId);
                 if (registration) {
-                    // console.log(`玩家 ${osuId} 没有分数数据，但从已报名数据中获取信息`);
+                    console.log(`玩家 ${osuId} 没有分数数据，但从已报名数据中获取信息`);
                     playerMap.set(osuId, {
                         userId: osuId,
                         username: registration.username,
@@ -118,7 +122,7 @@ export default function TotalScoresByModTable({
                     });
                 } else {
                     // 如果连已报名数据中也没有，使用默认信息
-                    // console.log(`玩家 ${osuId} 没有分数数据，也没有已报名数据，使用默认信息`);
+                    console.log(`玩家 ${osuId} 没有分数数据，也没有已报名数据，使用默认信息`);
                     playerMap.set(osuId, {
                         userId: osuId,
                         username: `玩家 ${osuId}`,
@@ -138,6 +142,8 @@ export default function TotalScoresByModTable({
                 }
             }
         });
+
+        console.log(`Initialized ${playerMap.size} players`);
 
         // console.log('初始化的玩家数量:', playerMap.size);
 
