@@ -37,10 +37,6 @@ const getPool = (): mysql.Pool => {
         pool.on('connection', (connection) => {
             console.log(`[DB] New connection created: ${connection.threadId}`);
         });
-
-        pool.on('error', (err) => {
-            console.error('[DB] Pool connection error:', err);
-        });
     }
     return pool;
 };
