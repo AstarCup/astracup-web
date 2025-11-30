@@ -53,32 +53,31 @@ export async function GET(request: NextRequest) {
         let rooms: MultiplayerRoom[] = [];
 
         if (roomId) {
-            // 单个房间查询 - 直接处理返回的房间对象
-            if (!data.has_password) {
-                rooms = [{
-                    id: data.id,
-                    name: data.name,
-                    category: data.category,
-                    type: data.type,
-                    starts_at: data.starts_at,
-                    ends_at: data.ends_at,
-                    max_attempts: data.max_attempts,
-                    participant_count: data.participant_count,
-                    channel_id: data.channel_id,
-                    active: data.active,
-                    has_password: data.has_password,
-                    queue_mode: data.queue_mode,
-                    auto_skip: data.auto_skip,
-                    current_playlist_item: data.current_playlist_item,
-                    current_user_score: data.current_user_score,
-                    host: {
-                        id: data.host.id,
-                        username: data.host.username,
-                        avatar_url: data.host.avatar_url,
-                    },
-                    playlist: data.playlist || [],
-                }];
-            }
+            // 单个房间查询 - 直接处理返回的房间对象，包括有密码的房间
+            // 因为我们使用客户端令牌访问，应该有权限访问这些房间
+            rooms = [{
+                id: data.id,
+                name: data.name,
+                category: data.category,
+                type: data.type,
+                starts_at: data.starts_at,
+                ends_at: data.ends_at,
+                max_attempts: data.max_attempts,
+                participant_count: data.participant_count,
+                channel_id: data.channel_id,
+                active: data.active,
+                has_password: data.has_password,
+                queue_mode: data.queue_mode,
+                auto_skip: data.auto_skip,
+                current_playlist_item: data.current_playlist_item,
+                current_user_score: data.current_user_score,
+                host: {
+                    id: data.host.id,
+                    username: data.host.username,
+                    avatar_url: data.host.avatar_url,
+                },
+                playlist: data.playlist || [],
+            }];
         } else {
             // 房间列表查询 - 过滤掉有密码的房间
             rooms = data.rooms
