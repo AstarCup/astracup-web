@@ -82,7 +82,8 @@ export default function TotalScoresByModTable({
                 playerMap.set(osuId, {
                     userId: osuId,
                     username: playerScore.username,
-                    avatarUrl: playerScore.avatar_url,
+                    // 使用osu api获取头像，如果没有则使用fallback
+                    avatarUrl: playerScore.avatar_url || `https://a.ppy.sh/${osuId}`,
                     countryCode: playerScore.country_code,
                     scores: {},
                     ranks: {},
@@ -102,7 +103,8 @@ export default function TotalScoresByModTable({
                     playerMap.set(osuId, {
                         userId: osuId,
                         username: registration.username,
-                        avatarUrl: registration.avatar_url || '',
+                        // 使用osu api获取头像，如果没有则使用fallback
+                        avatarUrl: registration.avatar_url || `https://a.ppy.sh/${osuId}`,
                         countryCode: registration.country || '',
                         scores: {},
                         ranks: {},
@@ -120,7 +122,8 @@ export default function TotalScoresByModTable({
                     playerMap.set(osuId, {
                         userId: osuId,
                         username: `玩家 ${osuId}`,
-                        avatarUrl: '',
+                        // 使用osu api获取头像
+                        avatarUrl: `https://a.ppy.sh/${osuId}`,
                         countryCode: '',
                         scores: {},
                         ranks: {},
