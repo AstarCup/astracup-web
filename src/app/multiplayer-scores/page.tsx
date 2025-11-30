@@ -676,9 +676,9 @@ export default function MultiplayerScoresPage() {
     const getMapSelectionForPlaylistItem = (playlistItem: any): MapSelection | null => {
         if (!mapSelections.length) return null;
 
-        // 通过beatmap ID匹配
+        // 通过beatmapset ID匹配（playlistItem.beatmap.id对应map-selections中的beatmapsetId）
         const matchedSelection = mapSelections.find(
-            selection => selection.beatmapId === playlistItem.beatmap.id
+            selection => selection.beatmapsetId === playlistItem.beatmap.id
         );
 
         return matchedSelection || null;
