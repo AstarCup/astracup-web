@@ -6,6 +6,7 @@ import { MatchSchedule, StaffRoomAssignment } from '@/lib/mysql-registrations';
 
 interface ScheduleItem {
     round: string;
+    round_number: number;
     date: string;
     time: string;
     match: string;
@@ -15,6 +16,7 @@ interface ScheduleItem {
     status: string;
     liveUrl?: string;
     roomUrl?: string;
+    roomId?: string | null;
     referee?: string;  // 裁判员
     streamer?: string; // 直播员
     commentator?: string; // 解说员
@@ -57,6 +59,18 @@ export default function Schedule() {
         }
     };
 
+    // 从match_link中提取房间号
+    const extractRoomIdFromMatchLink = (matchLink: string | undefined): string | null => {
+        if (!matchLink) return null;
+        try {
+            // 匹配 https://osu.ppy.sh/multiplayer/rooms/1774254 格式
+            const match = matchLink.match(/multiplayer\/rooms\/(\d+)/);
+            return match ? match[1] : null;
+        } catch {
+            return null;
+        }
+    };
+
     const convertMatchSchedulesToScheduleItems = (schedules: MatchSchedule[], staffAssignments: StaffRoomAssignment[]): ScheduleItem[] => {
         return schedules.map(schedule => {
             // 获取该房间的staff分配
@@ -67,8 +81,12 @@ export default function Schedule() {
             const streamers = roomStaff.filter(s => s.staff_role === 'streamer').map(s => s.staff_username);
             const commentators = roomStaff.filter(s => s.staff_role === 'commentator').map(s => s.staff_username);
 
+            // 从match_link中提取房间号
+            const roomId = extractRoomIdFromMatchLink(schedule.match_link);
+
             return {
                 round: schedule.room ? `第${schedule.room.round_number}轮` : '未知轮次',
+                round_number: schedule.room ? schedule.room.round_number : 0,
                 date: schedule.room ? schedule.room.match_date : '',
                 time: schedule.room ? schedule.room.match_time : '',
                 match: schedule.room ? `${schedule.room.room_name} 第${schedule.room.match_number}场` : '未知比赛',
@@ -80,6 +98,7 @@ export default function Schedule() {
                 status: getStatusText(schedule.status),
                 liveUrl: schedule.replay_link || undefined,
                 roomUrl: schedule.match_link || undefined,
+                roomId: roomId,
                 referee: referees.length > 0 ? referees.join(', ') : undefined,
                 streamer: streamers.length > 0 ? streamers.join(', ') : undefined,
                 commentator: commentators.length > 0 ? commentators.join(', ') : undefined,

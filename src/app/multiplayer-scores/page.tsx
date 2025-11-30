@@ -41,6 +41,7 @@ export default function MultiplayerScoresPage() {
         const urlParams = new URLSearchParams(window.location.search);
         const urlParam = urlParams.get('url');
         const roomIdParam = urlParams.get('room');
+        const roundNumberParam = urlParams.get('round_number');
 
         if (urlParam) {
             setRoomUrl(urlParam);
@@ -53,7 +54,126 @@ export default function MultiplayerScoresPage() {
         if (roomIdParam) {
             loadRoomById(roomIdParam);
         }
+
+        if (roundNumberParam) {
+            handleRoundNumberParam(roundNumberParam);
+        }
     }, []);
+
+    // 处理round_number参数
+    const handleRoundNumberParam = async (roundNumber: string) => {
+        // 将round_number转换为对应的category
+        const category = roundNumberToCategory(roundNumber);
+        // 根据category获取对应的图池数据
+        await loadMapSelectionsByCategory(category);
+        // 加载该轮次所有房间的分数数据
+        await loadScoresByRoundNumber(roundNumber);
+    };
+
+    // 将round_number转换为对应的category
+    const roundNumberToCategory = (roundNumber: string): string => {
+        const roundNum = parseInt(roundNumber);
+        switch (roundNum) {
+            case 1:
+                return 'ro16';
+            case 2:
+                return 'quarterfinals';
+            case 3:
+                return 'semifinals';
+            case 4:
+                return 'finals';
+            case 5:
+                return 'grandfinals';
+            default:
+                return 'qualification';
+        }
+    };
+
+    // 根据category获取对应的图池数据
+    const loadMapSelectionsByCategory = async (category: string) => {
+        setLoadingMapSelections(true);
+        try {
+            const response = await fetch(`/api/map-selections?approved=true&category=${category}`);
+            const data = await response.json();
+
+            if (data.success) {
+                setMapSelections(data.selections);
+            } else {
+                console.error('Failed to load map selections:', data.error);
+                setMapSelections([]);
+            }
+        } catch (err) {
+            console.error('Error loading map selections:', err);
+            setMapSelections([]);
+        } finally {
+            setLoadingMapSelections(false);
+        }
+    };
+
+    // 加载该轮次所有房间的分数数据
+    const loadScoresByRoundNumber = async (roundNumber: string) => {
+        setLoadingDatabaseScores(true);
+        setError(null);
+        try {
+            // 获取该轮次的所有match_link数据
+            const matchSchedulesResponse = await fetch('/api/match-schedules');
+            const matchSchedulesData = await matchSchedulesResponse.json();
+
+            if (matchSchedulesData.success) {
+                // 过滤出该轮次的比赛
+                const roundSchedules = matchSchedulesData.schedules.filter((schedule: any) =>
+                    schedule.room && schedule.room.round_number === parseInt(roundNumber)
+                );
+
+                // 从match_link中提取房间号
+                const roomIds = roundSchedules
+                    .map((schedule: any) => extractRoomIdFromUrl(schedule.match_link))
+                    .filter((roomId: string | null): roomId is string => roomId !== null);
+
+                // 去重
+                const uniqueRoomIds = [...new Set(roomIds)];
+
+                // 加载这些房间的分数数据，首先从数据库中获取
+                const allDatabaseScores: DisplayScore[] = [];
+
+                for (const roomId of uniqueRoomIds) {
+                    try {
+                        const scoresResponse = await fetch(`/api/match-scores/save?roomId=${roomId}`);
+                        const scoresData = await scoresResponse.json();
+
+                        if (scoresData.success && scoresData.scores) {
+                            // 为每个分数添加房间信息
+                            const scoresWithRoomInfo = scoresData.scores.map((score: DisplayScore) => ({
+                                ...score,
+                                roomId: roomId,
+                                roomName: scoresData.room?.name || `Room ${roomId}`
+                            }));
+                            allDatabaseScores.push(...scoresWithRoomInfo);
+                        }
+                    } catch (err) {
+                        console.error(`Error loading scores for room ${roomId}:`, err);
+                    }
+                }
+
+                setDatabaseScores(allDatabaseScores);
+                // console.log(`Loaded ${allDatabaseScores.length} scores from database for round ${roundNumber}`);
+
+                // 如果数据库中没有数据，提示管理员保存数据
+                if (allDatabaseScores.length === 0 && uniqueRoomIds.length > 0) {
+                    setError(`数据库中没有该轮次的分数数据，请管理员保存数据后再查看。`);
+                }
+            } else {
+                setDatabaseScores([]);
+                setError(matchSchedulesData.error || '获取赛程数据失败');
+            }
+        } catch (err) {
+            setError('网络错误，无法从数据库加载分数数据');
+            console.error('Error loading scores from database:', err);
+            setDatabaseScores([]);
+        } finally {
+            setLoadingDatabaseScores(false);
+        }
+    };
 
     // 页面加载时获取已过审的玩家数据和已报名数据，以及从数据库加载分数
     useEffect(() => {

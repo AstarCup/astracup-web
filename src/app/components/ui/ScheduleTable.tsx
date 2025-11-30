@@ -3,6 +3,7 @@ import React from 'react';
 
 interface ScheduleItem {
     round: string;
+    round_number: number;
     date: string;
     time: string;
     match: string;
@@ -14,6 +15,7 @@ interface ScheduleItem {
     status: string;
     liveUrl?: string;  // 直播间地址
     roomUrl?: string;  // 比赛房间地址
+    roomId?: string | null;
     referee?: string;  // 裁判员
     streamer?: string; // 直播员
     commentator?: string; // 解说员
@@ -130,7 +132,15 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
                             {/* 轮次标题 */}
                             <tr className="bg-gray-100 font-bold">
                                 <td className="px-6 py-4 text-lg font-bold text-gray-800" colSpan={10}>
-                                    {round}
+                                    <div className="flex items-center justify-between">
+                                        <span>{round}</span>
+                                        <button 
+                                            onClick={() => window.location.href = `/multiplayer-scores?round_number=${groupedSchedule[round][0].round_number}`} 
+                                            className='bg-[#E93B66] text-white px-4 py-2 rounded font-semibold hover:bg-opacity-90 transition-colors'
+                                        >
+                                            查看分数
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             {/* 该轮次的所有比赛 */}
