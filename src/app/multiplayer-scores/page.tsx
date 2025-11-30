@@ -745,11 +745,12 @@ export default function MultiplayerScoresPage() {
                     <h2 className="text-xl font-bold text-white mb-4">管理员控制面板</h2>
 
                     {/* 操作按钮 */}
-                    <div className="flex gap-4 mb-4">
+                    <div className="flex gap-4 mb-4 flex-wrap">
+                        {/* 保存当前房间分数按钮 */}
                         <button
                             onClick={saveScoresToDatabase}
-                            disabled={savingScores || !selectedRoom || allScores.length === 0}
-                            className={`px-4 py-2 rounded font-medium transition ${savingScores || !selectedRoom || allScores.length === 0
+                            disabled={savingScores || !selectedRoom}
+                            className={`px-4 py-2 rounded font-medium transition ${savingScores || !selectedRoom
                                 ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
                                 : 'bg-green-600 text-white hover:bg-green-700'
                                 }`}
@@ -757,6 +758,7 @@ export default function MultiplayerScoresPage() {
                             {savingScores ? '保存中...' : '保存到数据库'}
                         </button>
 
+                        {/* 更新当前房间分数按钮 */}
                         <button
                             onClick={updateScoresInDatabase}
                             disabled={updatingScores || !selectedRoom || allScores.length === 0}
@@ -767,6 +769,20 @@ export default function MultiplayerScoresPage() {
                         >
                             {updatingScores ? '更新中...' : '更新数据库分数'}
                         </button>
+
+                        {/* 添加所有房间分数到数据库按钮（仅当有round_number参数时显示） */}
+                        {new URLSearchParams(window.location.search).get('round_number') && (
+                            <button
+                                onClick={saveScoresToDatabase}
+                                disabled={savingScores}
+                                className={`px-4 py-2 rounded font-medium transition ${savingScores
+                                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                    : 'bg-purple-600 text-white hover:bg-purple-700'
+                                    }`}
+                            >
+                                {savingScores ? '保存中...' : '添加所有房间分数到数据库'}
+                            </button>
+                        )}
 
                         <button
                             onClick={loadSavedRooms}
