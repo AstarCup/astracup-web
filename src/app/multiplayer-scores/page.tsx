@@ -197,6 +197,9 @@ export default function MultiplayerScoresPage() {
                         console.error('Error getting session data:', err);
                     }
 
+                    // 存储需要保存的房间和分数
+                    let roomsToSave: { room: any; scores: DisplayScore[] }[] = [];
+
                     for (const roomId of uniqueRoomIds) {
                         try {
                             // 加载房间信息
@@ -215,24 +218,9 @@ export default function MultiplayerScoresPage() {
                                 }));
                                 allApiScores = [...allApiScores, ...scoresWithRoomInfo];
 
-                                // 自动保存到数据库
+                                // 将房间和分数添加到保存列表，不立即保存
                                 if (currentUserOsuId && roomScores.length > 0) {
-                                    const saveResponse = await fetch('/api/match-scores/save', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                        },
-                                        body: JSON.stringify({
-                                            room: room,
-                                            scores: roomScores,
-                                            osuId: currentUserOsuId
-                                        }),
-                                    });
-
-                                    const saveData = await saveResponse.json();
-                                    if (saveData.success) {
-                                        console.log(`Successfully saved scores for room ${roomId}`);
-                                    }
+                                    roomsToSave.push({ room, scores: roomScores });
                                 }
 
                                 successfullyLoadedRooms++;
@@ -243,6 +231,32 @@ export default function MultiplayerScoresPage() {
                         } catch (err) {
                             console.error(`Error loading scores from API for room ${roomId}:`, err);
                             failedRooms++;
+                        }
+                    }
+
+                    // 全部加载完后，一次性保存所有房间的分数
+                    if (currentUserOsuId && roomsToSave.length > 0) {
+                        try {
+                            for (const { room, scores } of roomsToSave) {
+                                const saveResponse = await fetch('/api/match-scores/save', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        room: room,
+                                        scores: scores,
+                                        osuId: currentUserOsuId
+                                    }),
+                                });
+
+                                const saveData = await saveResponse.json();
+                                if (saveData.success) {
+                                    console.log(`Successfully saved scores for room ${room.id}`);
+                                }
+                            }
+                        } catch (err) {
+                            console.error('Error saving scores to database:', err);
                         }
                     }
 
@@ -1088,10 +1102,10 @@ export default function MultiplayerScoresPage() {
             )}
 
             {/* Tab切换和分数表格 */}
-            {selectedRoom && (
+            {(selectedRoom || databaseScores.length > 0) && (
                 <div className="bg-[#3D3D3D] p-6">
                     {/* 表格内容 */}
-                    {activeTab === 'byPlaylist' && (
+                    {activeTab === 'byPlaylist' && selectedRoom && (
                         <>
                             {/* 按图池需要选择具体图池 */}
                             {selectedPlaylist ? (
