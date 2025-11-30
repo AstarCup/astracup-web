@@ -1143,7 +1143,7 @@ export default function MultiplayerScoresPage() {
                                     scores={databaseScores.length > 0 ? databaseScores.filter(score => {
                                         const scoreBeatmapId = (score as any).beatmapId || (score as any).beatmap?.id;
                                         const playlistInfo = getSelectedPlaylistInfo();
-                                        return playlistInfo && scoreBeatmapId === playlistInfo.beatmapId;
+                                        return playlistInfo && scoreBeatmapId === playlistInfo.beatmap_id;
                                     }) : filteredScores}
                                     title={getPageTitle()}
                                     loading={loadingScores || loadingPlayers || loadingDatabaseScores}

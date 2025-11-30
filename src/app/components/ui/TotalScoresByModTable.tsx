@@ -80,15 +80,33 @@ export default function TotalScoresByModTable({
 
         // 初始化所有已过审玩家
         approvedPlayers.forEach(osuId => {
-            // 从分数数据中查找玩家信息（使用第一个找到的分数来获取玩家信息）
-            const playerScore = scores.find(score => score.user_id.toString() === osuId);
-            if (playerScore) {
-                playerMap.set(osuId, {
+            // 初始化玩家对象
+            let playerInfo = {
+                userId: osuId,
+                username: `玩家 ${osuId}`,
+                avatarUrl: `https://a.ppy.sh/${osuId}`,
+                countryCode: '',
+                scores: {},
+                ranks: {},
+                totalScore: 0,
+                totalRank: null,
+                zScores: {},
+                zSum: 0,
+                rating: 0,
+                averageScore: 0,
+                playedMaps: 0
+            };
+
+            // 从所有分数数据中查找该玩家的信息
+            const playerScores = scores.filter(score => score.user_id.toString() === osuId);
+            if (playerScores.length > 0) {
+                // 使用第一个分数的玩家信息
+                const firstScore = playerScores[0];
+                playerInfo = {
                     userId: osuId,
-                    username: playerScore.username,
-                    // 使用osu api获取头像，如果没有则使用fallback
-                    avatarUrl: playerScore.avatar_url || `https://a.ppy.sh/${osuId}`,
-                    countryCode: playerScore.country_code,
+                    username: firstScore.username,
+                    avatarUrl: firstScore.avatar_url || `https://a.ppy.sh/${osuId}`,
+                    countryCode: firstScore.country_code,
                     scores: {},
                     ranks: {},
                     totalScore: 0,
@@ -98,16 +116,15 @@ export default function TotalScoresByModTable({
                     rating: 0,
                     averageScore: 0,
                     playedMaps: 0
-                });
+                };
             } else {
                 // 如果玩家没有分数数据，从已报名数据中查找玩家信息
                 const registration = registrations.find(reg => reg.osuId === osuId);
                 if (registration) {
                     console.log(`玩家 ${osuId} 没有分数数据，但从已报名数据中获取信息`);
-                    playerMap.set(osuId, {
+                    playerInfo = {
                         userId: osuId,
                         username: registration.username,
-                        // 使用osu api获取头像，如果没有则使用fallback
                         avatarUrl: registration.avatar_url || `https://a.ppy.sh/${osuId}`,
                         countryCode: registration.country || '',
                         scores: {},
@@ -119,29 +136,14 @@ export default function TotalScoresByModTable({
                         rating: 0,
                         averageScore: 0,
                         playedMaps: 0
-                    });
-                } else {
-                    // 如果连已报名数据中也没有，使用默认信息
-                    console.log(`玩家 ${osuId} 没有分数数据，也没有已报名数据，使用默认信息`);
-                    playerMap.set(osuId, {
-                        userId: osuId,
-                        username: `玩家 ${osuId}`,
-                        // 使用osu api获取头像
-                        avatarUrl: `https://a.ppy.sh/${osuId}`,
-                        countryCode: '',
-                        scores: {},
-                        ranks: {},
-                        totalScore: 0,
-                        totalRank: null,
-                        zScores: {},
-                        zSum: 0,
-                        rating: 0,
-                        averageScore: 0,
-                        playedMaps: 0
-                    });
+                    };
                 }
             }
+
+            playerMap.set(osuId, playerInfo);
         });
+
+        console.log(`Initialized ${playerMap.size} players from approvedPlayers`);
 
         console.log(`Initialized ${playerMap.size} players`);
 
@@ -202,8 +204,6 @@ export default function TotalScoresByModTable({
                     userId: score.user_id,
                     username: score.username,
                     roomId: scoreRoomId,
-                    playlistId,
-                    beatmapId,
                     scoreBeatmapId
                 });
             }
