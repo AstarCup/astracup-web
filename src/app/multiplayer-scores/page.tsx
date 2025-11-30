@@ -120,18 +120,58 @@ export default function MultiplayerScoresPage() {
             const matchSchedulesData = await matchSchedulesResponse.json();
 
             if (matchSchedulesData.success) {
+                // 调试日志：查看所有schedule对象的结构
+                console.log('All schedules:', matchSchedulesData.schedules);
+                
                 // 过滤出该轮次的比赛
-                const roundSchedules = matchSchedulesData.schedules.filter((schedule: any) =>
-                    schedule.room && schedule.room.round_number === parseInt(roundNumber)
-                );
+                const roundSchedules = matchSchedulesData.schedules.filter((schedule: any) => {
+                    // 确保schedule.room存在且包含round_number字段
+                    if (!schedule.room || schedule.room.round_number === undefined) {
+                        return false;
+                    }
+                    
+                    // 将两边都转换为数字进行比较，确保类型一致
+                    const scheduleRoundNumber = Number(schedule.room.round_number);
+                    const targetRoundNumber = Number(roundNumber);
+                    
+                    const matchesRound = scheduleRoundNumber === targetRoundNumber;
+                    
+                    console.log('Schedule check:', {
+                        id: schedule.id,
+                        scheduleRoundNumber,
+                        targetRoundNumber,
+                        matchesRound
+                    });
+                    
+                    return matchesRound;
+                });
+
+                console.log(`Round ${roundNumber} schedules:`, roundSchedules);
 
                 // 从match_link中提取房间号
                 const roomIds = roundSchedules
-                    .map((schedule: any) => extractRoomIdFromUrl(schedule.match_link))
+                    .map((schedule: any) => {
+                        console.log('Schedule match_link:', schedule.match_link);
+                        const roomId = extractRoomIdFromUrl(schedule.match_link);
+                        console.log('Extracted roomId:', roomId);
+                        return roomId;
+                    })
                     .filter((roomId: string | null): roomId is string => roomId !== null);
+
+                console.log('Extracted roomIds:', roomIds);
 
                 // 去重
                 const uniqueRoomIds = [...new Set(roomIds)];
+
+                console.log('Unique roomIds:', uniqueRoomIds);
+
+                // 如果没有找到房间号，显示提示信息
+                if (uniqueRoomIds.length === 0) {
+                    setError(`该轮次没有找到有效的房间链接，请检查赛程数据。`);
+                    setDatabaseScores([]);
+                    setLoadingDatabaseScores(false);
+                    return;
+                }
 
                 // 首先尝试从数据库中获取分数
                 const allDatabaseScores: DisplayScore[] = [];
@@ -179,6 +219,8 @@ export default function MultiplayerScoresPage() {
                                     roomName: room.name
                                 }));
                                 allApiScores = [...allApiScores, ...scoresWithRoomInfo];
+                            } else {
+                                console.error(`Failed to load room ${roomId}:`, roomData.error || 'Room not found');
                             }
                         } catch (err) {
                             console.error(`Error loading scores from API for room ${roomId}:`, err);
@@ -190,7 +232,7 @@ export default function MultiplayerScoresPage() {
                     
                     // 如果API也没有获取到数据，显示提示信息
                     if (allApiScores.length === 0) {
-                        setError(`无法获取该轮次的分数数据，请检查网络连接或稍后重试。`);
+                        setError(`无法从API获取该轮次的分数数据，请检查网络连接或稍后重试。`);
                     }
                 }
             } else {
