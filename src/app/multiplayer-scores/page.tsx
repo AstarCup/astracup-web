@@ -137,13 +137,26 @@ export default function MultiplayerScoresPage() {
                 // 从match_link中提取房间号
                 const roomIds = roundSchedules
                     .map((schedule: any) => {
+                        if (!schedule.match_link) {
+                            console.error(`Schedule ${schedule.id} has no match_link`);
+                            return null;
+                        }
                         const roomId = extractRoomIdFromUrl(schedule.match_link);
+                        if (!roomId) {
+                            console.error(`Failed to extract roomId from match_link: ${schedule.match_link}`);
+                        }
                         return roomId;
                     })
                     .filter((roomId: string | null): roomId is string => roomId !== null);
 
                 // 去重
                 const uniqueRoomIds = [...new Set(roomIds)];
+
+                console.log(`Round ${roundNumber} - Total schedules: ${matchSchedulesData.schedules.length}`);
+                console.log(`Round ${roundNumber} - Filtered schedules: ${roundSchedules.length}`);
+                console.log(`Round ${roundNumber} - Extracted roomIds: ${roomIds.length}`);
+                console.log(`Round ${roundNumber} - Unique roomIds: ${uniqueRoomIds.length}`);
+                console.log(`Round ${roundNumber} - RoomIds:`, uniqueRoomIds);
 
                 // 如果没有找到房间号，显示提示信息
                 if (uniqueRoomIds.length === 0) {
@@ -159,8 +172,11 @@ export default function MultiplayerScoresPage() {
                 // 从数据库获取分数
                 for (const roomId of uniqueRoomIds) {
                     try {
+                        console.log(`Loading scores from database for room ${roomId}`);
                         const scoresResponse = await fetch(`/api/match-scores/save?roomId=${roomId}`);
                         const scoresData = await scoresResponse.json();
+
+                        console.log(`Database response for room ${roomId}:`, scoresData.success ? `${scoresData.scores?.length || 0} scores` : 'Failed');
 
                         if (scoresData.success && scoresData.scores) {
                             // 为每个分数添加房间信息
@@ -170,11 +186,14 @@ export default function MultiplayerScoresPage() {
                                 roomName: scoresData.room?.name || `Room ${roomId}`
                             }));
                             allDatabaseScores.push(...scoresWithRoomInfo);
+                            console.log(`Added ${scoresWithRoomInfo.length} scores from room ${roomId}`);
                         }
                     } catch (err) {
                         console.error(`Error loading scores from database for room ${roomId}:`, err);
                     }
                 }
+
+                console.log(`Total scores loaded from database: ${allDatabaseScores.length}`);
 
                 // 如果数据库中有数据，直接使用
                 if (allDatabaseScores.length > 0) {
