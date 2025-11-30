@@ -332,11 +332,21 @@ export default function MultiplayerScoresPage() {
         }
     };
 
-    // 页面加载时获取已过审的玩家数据和已报名数据，以及从数据库加载分数
+    // 页面加载时获取已过审的玩家数据和已报名数据
     useEffect(() => {
         loadApprovedPlayers();
         loadRegistrations();
-        loadScoresFromDatabase();
+    }, []);
+
+    // 当round_number参数变化时，从数据库加载指定轮次的分数
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const roundNumberParam = urlParams.get('round_number');
+
+        if (!roundNumberParam) {
+            // 只有在没有round_number参数时，才加载所有已保存房间的分数
+            loadScoresFromDatabase();
+        }
     }, []);
 
     // 当分数数据或已过审玩家数据变化时，过滤分数
