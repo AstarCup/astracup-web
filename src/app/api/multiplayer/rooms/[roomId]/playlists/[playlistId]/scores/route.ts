@@ -99,8 +99,10 @@ export async function GET(
             playlistItemBeatmapId = playlistItemData.beatmap_id;
             playlistItemBeatmapsetId = playlistItemData.beatmap?.beatmapset_id;
             console.log(`Playlist item beatmapId: ${playlistItemBeatmapId}, beatmapsetId: ${playlistItemBeatmapsetId}`);
+            console.log('Full playlist item data:', JSON.stringify(playlistItemData, null, 2));
         } else {
             console.log('Failed to fetch playlist item:', playlistItemResponse.status, playlistItemResponse.statusText);
+            console.log('Playlist item URL:', `https://osu.ppy.sh/api/v2/rooms/${roomId}/playlist/${playlistId}`);
         }
 
         // 转换数据格式用于前端展示

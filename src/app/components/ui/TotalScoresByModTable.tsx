@@ -156,7 +156,7 @@ export default function TotalScoresByModTable({
             const player = playerMap.get(score.user_id.toString());
             if (!player) return;
 
-            // 使用新的beatmap_id和beatmapset_id字段进行匹配
+            // 使用beatmap_id字段进行匹配（数据库返回的是beatmap_id字段）
             const scoreBeatmapId = score.beatmap_id;
             const scoreBeatmapsetId = score.beatmapset_id;
             const scoreRoomId = (score as any).roomId;
@@ -353,7 +353,7 @@ export default function TotalScoresByModTable({
         scores.forEach(score => {
             if (!approvedPlayers.has(score.user_id.toString())) return;
 
-            // 使用新的beatmap_id和beatmapset_id字段进行匹配
+            // 使用beatmap_id字段进行匹配（数据库返回的是beatmap_id字段）
             const scoreBeatmapId = score.beatmap_id;
             const scoreBeatmapsetId = score.beatmapset_id;
 
