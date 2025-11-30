@@ -34,10 +34,12 @@ const getPool = (): mysql.Pool => {
             console.log('[DB] Waiting for available connection slot...');
         });
 
-        pool.on('connection', (err) => {
-            if (err) {
-                console.error('[DB] Pool connection error:', err);
-            }
+        pool.on('connection', (connection) => {
+            console.log(`[DB] New connection created: ${connection.threadId}`);
+        });
+
+        pool.on('error', (err) => {
+            console.error('[DB] Pool connection error:', err);
         });
     }
     return pool;
