@@ -154,37 +154,31 @@ export default function TotalScoresByModTable({
             const player = playerMap.get(score.user_id.toString());
             if (!player) return;
 
-            // 通过playlistId或beatmapId找到对应的map selection
-            const playlistId = (score as any).playlistId;
-            const beatmapId = (score as any).beatmapId;
-            const scoreBeatmapId = (score as any).beatmap?.id || beatmapId;
+            // 只使用beatmap_id去匹配map_selections的beatmapId图池数据
+            const scoreBeatmapId = (score as any).beatmap_id || (score as any).beatmapId || (score as any).beatmap?.id;
+            const scoreRoomId = (score as any).roomId;
 
             console.log(`处理玩家 ${score.username} 的分数:`, {
                 userId: score.user_id,
-                playlistId,
-                beatmapId,
-                scoreBeatmapId,
+                roomId: scoreRoomId,
+                beatmapId: scoreBeatmapId,
                 totalScore: score.total_score
             });
 
             let mapSelection = null;
 
-            if (playlistId && selectedRoom) {
-                // 找到对应的playlist item
-                const playlistItem = selectedRoom.playlist.find((item: any) => item.id === playlistId);
-                if (playlistItem) {
-                    // 找到这个playlist对应的map selection
-                    mapSelection = mapSelections.find(selection =>
-                        selection.beatmapId === playlistItem.beatmap.id
-                    );
-                }
-            } else if (scoreBeatmapId) {
-                // 如果没有selectedRoom但有beatmapId，直接通过beatmapId找到对应的map selection
-                console.log(`Looking for map selection with beatmapId: ${scoreBeatmapId}`);
+            // 直接通过beatmapId找到对应的map selection
+            if (scoreBeatmapId) {
+                // 尝试通过beatmapId匹配
                 mapSelection = mapSelections.find(selection =>
-                    selection.beatmapId === scoreBeatmapId
+                    selection.beatmapId.toString() === scoreBeatmapId.toString()
                 );
-                console.log(`Found map selection:`, mapSelection);
+
+                if (mapSelection) {
+                    console.log(`Found map selection for beatmapId: ${scoreBeatmapId}`, mapSelection);
+                } else {
+                    console.log(`No map selection found for beatmapId: ${scoreBeatmapId}`);
+                }
             }
 
             if (mapSelection) {
@@ -207,6 +201,7 @@ export default function TotalScoresByModTable({
                 console.log(`No map selection found for score:`, {
                     userId: score.user_id,
                     username: score.username,
+                    roomId: scoreRoomId,
                     playlistId,
                     beatmapId,
                     scoreBeatmapId
@@ -337,25 +332,15 @@ export default function TotalScoresByModTable({
         scores.forEach(score => {
             if (!approvedPlayers.has(score.user_id.toString())) return;
 
-            // 通过playlistId或beatmapId找到对应的map selection
-            const playlistId = (score as any).playlistId;
-            const beatmapId = (score as any).beatmapId;
+            // 只使用beatmap_id去匹配map_selections的beatmapId图池数据
+            const scoreBeatmapId = (score as any).beatmap_id || (score as any).beatmapId || (score as any).beatmap?.id;
 
             let mapSelection = null;
 
-            if (playlistId && selectedRoom) {
-                // 找到对应的playlist item
-                const playlistItem = selectedRoom.playlist.find((item: any) => item.id === playlistId);
-                if (playlistItem) {
-                    // 找到这个playlist对应的map selection
-                    mapSelection = mapSelections.find(selection =>
-                        selection.beatmapId === playlistItem.beatmap.id
-                    );
-                }
-            } else if (beatmapId) {
-                // 如果没有selectedRoom但有beatmapId，直接通过beatmapId找到对应的map selection
+            // 直接通过beatmapId找到对应的map selection
+            if (scoreBeatmapId) {
                 mapSelection = mapSelections.find(selection =>
-                    selection.beatmapId === beatmapId
+                    selection.beatmapId.toString() === scoreBeatmapId.toString()
                 );
             }
 
