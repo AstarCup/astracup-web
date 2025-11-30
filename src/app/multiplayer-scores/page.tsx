@@ -120,50 +120,30 @@ export default function MultiplayerScoresPage() {
             const matchSchedulesData = await matchSchedulesResponse.json();
 
             if (matchSchedulesData.success) {
-                // 调试日志：查看所有schedule对象的结构
-                console.log('All schedules:', matchSchedulesData.schedules);
-                
                 // 过滤出该轮次的比赛
                 const roundSchedules = matchSchedulesData.schedules.filter((schedule: any) => {
                     // 确保schedule.room存在且包含round_number字段
                     if (!schedule.room || schedule.room.round_number === undefined) {
                         return false;
                     }
-                    
+
                     // 将两边都转换为数字进行比较，确保类型一致
                     const scheduleRoundNumber = Number(schedule.room.round_number);
                     const targetRoundNumber = Number(roundNumber);
-                    
-                    const matchesRound = scheduleRoundNumber === targetRoundNumber;
-                    
-                    console.log('Schedule check:', {
-                        id: schedule.id,
-                        scheduleRoundNumber,
-                        targetRoundNumber,
-                        matchesRound
-                    });
-                    
-                    return matchesRound;
-                });
 
-                console.log(`Round ${roundNumber} schedules:`, roundSchedules);
+                    return scheduleRoundNumber === targetRoundNumber;
+                });
 
                 // 从match_link中提取房间号
                 const roomIds = roundSchedules
                     .map((schedule: any) => {
-                        console.log('Schedule match_link:', schedule.match_link);
                         const roomId = extractRoomIdFromUrl(schedule.match_link);
-                        console.log('Extracted roomId:', roomId);
                         return roomId;
                     })
                     .filter((roomId: string | null): roomId is string => roomId !== null);
 
-                console.log('Extracted roomIds:', roomIds);
-
                 // 去重
                 const uniqueRoomIds = [...new Set(roomIds)];
-
-                console.log('Unique roomIds:', uniqueRoomIds);
 
                 // 如果没有找到房间号，显示提示信息
                 if (uniqueRoomIds.length === 0) {
@@ -174,8 +154,7 @@ export default function MultiplayerScoresPage() {
                 }
 
                 // 首先尝试从数据库中获取分数
-                const allDatabaseScores: DisplayScore[] = [];
-                let allApiScores: DisplayScore[] = [];
+                let allDatabaseScores: DisplayScore[] = [];
 
                 // 从数据库获取分数
                 for (const roomId of uniqueRoomIds) {
@@ -204,7 +183,20 @@ export default function MultiplayerScoresPage() {
                     // 数据库中没有数据，从API获取所有房间的分数
                     let successfullyLoadedRooms = 0;
                     let failedRooms = 0;
-                    
+                    let allApiScores: DisplayScore[] = [];
+
+                    // 从session获取当前用户的osuId，用于保存分数
+                    let currentUserOsuId = '';
+                    try {
+                        const sessionResponse = await fetch('/api/session/get');
+                        const sessionData = await sessionResponse.json();
+                        if (sessionData.success && sessionData.session?.osuId) {
+                            currentUserOsuId = sessionData.session.osuId;
+                        }
+                    } catch (err) {
+                        console.error('Error getting session data:', err);
+                    }
+
                     for (const roomId of uniqueRoomIds) {
                         try {
                             // 加载房间信息
@@ -213,7 +205,7 @@ export default function MultiplayerScoresPage() {
 
                             if (roomData.success && roomData.rooms.length > 0) {
                                 const room = roomData.rooms[0];
-                                // 加载该房间的所有图池分数，使用返回的Promise结果
+                                // 加载该房间的所有图池分数
                                 const roomScores = await loadAllScoresWithRoom(room);
                                 // 为分数添加房间信息并添加到allApiScores
                                 const scoresWithRoomInfo = roomScores.map((score: DisplayScore) => ({
@@ -222,6 +214,27 @@ export default function MultiplayerScoresPage() {
                                     roomName: room.name
                                 }));
                                 allApiScores = [...allApiScores, ...scoresWithRoomInfo];
+
+                                // 自动保存到数据库
+                                if (currentUserOsuId && roomScores.length > 0) {
+                                    const saveResponse = await fetch('/api/match-scores/save', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify({
+                                            room: room,
+                                            scores: roomScores,
+                                            osuId: currentUserOsuId
+                                        }),
+                                    });
+
+                                    const saveData = await saveResponse.json();
+                                    if (saveData.success) {
+                                        console.log(`Successfully saved scores for room ${roomId}`);
+                                    }
+                                }
+
                                 successfullyLoadedRooms++;
                             } else {
                                 console.error(`Failed to load room ${roomId}:`, roomData.error || 'Room not found');
@@ -233,21 +246,40 @@ export default function MultiplayerScoresPage() {
                         }
                     }
 
-                    // 设置API获取的分数到databaseScores，用于显示
-                    setDatabaseScores(allApiScores);
-                    
+                    // 重新从数据库获取分数，确保数据最新
+                    let refreshedDatabaseScores: DisplayScore[] = [];
+                    for (const roomId of uniqueRoomIds) {
+                        try {
+                            const scoresResponse = await fetch(`/api/match-scores/save?roomId=${roomId}`);
+                            const scoresData = await scoresResponse.json();
+
+                            if (scoresData.success && scoresData.scores) {
+                                // 为每个分数添加房间信息
+                                const scoresWithRoomInfo = scoresData.scores.map((score: DisplayScore) => ({
+                                    ...score,
+                                    roomId: roomId,
+                                    roomName: scoresData.room?.name || `Room ${roomId}`
+                                }));
+                                refreshedDatabaseScores.push(...scoresWithRoomInfo);
+                            }
+                        } catch (err) {
+                            console.error(`Error refreshing scores from database for room ${roomId}:`, err);
+                        }
+                    }
+
+                    // 设置分数到databaseScores，用于显示
+                    if (refreshedDatabaseScores.length > 0) {
+                        setDatabaseScores(refreshedDatabaseScores);
+                    } else {
+                        setDatabaseScores(allApiScores);
+                    }
+
                     // 显示加载结果
-                    console.log(`Room loading results:`, {
-                        totalRooms: uniqueRoomIds.length,
-                        successfullyLoadedRooms,
-                        failedRooms,
-                        totalScores: allApiScores.length
-                    });
-                    
-                    // 如果有至少一个房间成功加载，就显示这些房间的分数
                     if (successfullyLoadedRooms > 0) {
                         if (failedRooms > 0) {
-                            setError(`成功加载了 ${successfullyLoadedRooms} 个房间的分数数据，但有 ${failedRooms} 个房间无法加载。`);
+                            setError(`成功加载了 ${successfullyLoadedRooms} 个房间的分数数据，并自动保存到数据库，但有 ${failedRooms} 个房间无法加载。`);
+                        } else {
+                            setError(`成功加载了 ${successfullyLoadedRooms} 个房间的分数数据，并自动保存到数据库。`);
                         }
                     } else {
                         // 如果所有房间都无法加载，才显示错误信息
