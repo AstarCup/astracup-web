@@ -172,6 +172,14 @@ export default function TotalScoresByModTable({
             // 直接通过beatmapId找到对应的map selection
             if (scoreBeatmapId) {
                 // 尝试通过beatmapId匹配（分数数据中的beatmap_id对应map-selections中的beatmapId）
+                console.log(`正在查找beatmapId: ${scoreBeatmapId} 的map selection`);
+                console.log(`可用的map selections数量: ${mapSelections.length}`);
+
+                // 打印所有map selections的beatmapId用于调试
+                mapSelections.forEach((selection, index) => {
+                    console.log(`Map selection ${index}: beatmapId=${selection.beatmapId}, beatmapsetId=${selection.beatmapsetId}, mods=${selection.selectedMods}${selection.modPosition}`);
+                });
+
                 mapSelection = mapSelections.find(selection =>
                     selection.beatmapId.toString() === scoreBeatmapId.toString()
                 );
@@ -180,6 +188,7 @@ export default function TotalScoresByModTable({
                     console.log(`Found map selection for beatmapId: ${scoreBeatmapId}`, mapSelection);
                 } else {
                     console.log(`No map selection found for beatmapId: ${scoreBeatmapId}`);
+                    console.log(`所有可用的beatmapIds: ${mapSelections.map(s => s.beatmapId).join(', ')}`);
                 }
             }
 
