@@ -80,6 +80,29 @@ export async function GET(
             }
         }
 
+        // 首先获取playlist item信息来获取beatmap数据
+        const playlistItemResponse = await fetch(
+            `https://osu.ppy.sh/api/v2/rooms/${roomId}/playlist/${playlistId}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+
+        let playlistItemBeatmapId: number | null = null;
+        let playlistItemBeatmapsetId: number | null = null;
+
+        if (playlistItemResponse.ok) {
+            const playlistItemData = await playlistItemResponse.json();
+            playlistItemBeatmapId = playlistItemData.beatmap_id;
+            playlistItemBeatmapsetId = playlistItemData.beatmap?.beatmapset_id;
+            console.log(`Playlist item beatmapId: ${playlistItemBeatmapId}, beatmapsetId: ${playlistItemBeatmapsetId}`);
+        } else {
+            console.log('Failed to fetch playlist item:', playlistItemResponse.status, playlistItemResponse.statusText);
+        }
+
         // 转换数据格式用于前端展示
         const displayScores: DisplayScore[] = data.scores
             .map((score, index) => ({
@@ -102,6 +125,9 @@ export async function GET(
                 pp: score.pp,
                 ended_at: score.ended_at,
                 position: index + 1,
+                // 添加beatmap信息用于匹配map selections
+                beatmap_id: playlistItemBeatmapId, // 使用playlist item的beatmapId
+                beatmapset_id: playlistItemBeatmapsetId, // 使用playlist item的beatmapsetId
             }))
             .sort((a, b) => b.total_score - a.total_score) // 按分数降序排序
             .map((score, index) => ({

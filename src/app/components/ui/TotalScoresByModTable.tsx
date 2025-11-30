@@ -156,23 +156,24 @@ export default function TotalScoresByModTable({
             const player = playerMap.get(score.user_id.toString());
             if (!player) return;
 
-            // 只使用beatmap_id去匹配map_selections的beatmapId图池数据
-            const scoreBeatmapId = (score as any).beatmap_id || (score as any).beatmapId || (score as any).beatmap?.id;
+            // 使用新的beatmap_id和beatmapset_id字段进行匹配
+            const scoreBeatmapId = score.beatmap_id;
+            const scoreBeatmapsetId = score.beatmapset_id;
             const scoreRoomId = (score as any).roomId;
 
             console.log(`处理玩家 ${score.username} 的分数:`, {
                 userId: score.user_id,
                 roomId: scoreRoomId,
                 beatmapId: scoreBeatmapId,
+                beatmapsetId: scoreBeatmapsetId,
                 totalScore: score.total_score
             });
 
             let mapSelection = null;
 
-            // 直接通过beatmapId找到对应的map selection
-            if (scoreBeatmapId) {
-                // 尝试通过beatmapId匹配（分数数据中的beatmap_id对应map-selections中的beatmapId）
-                console.log(`正在查找beatmapId: ${scoreBeatmapId} 的map selection`);
+            // 尝试通过beatmapId或beatmapsetId找到对应的map selection
+            if (scoreBeatmapId || scoreBeatmapsetId) {
+                console.log(`正在查找beatmapId: ${scoreBeatmapId} 或 beatmapsetId: ${scoreBeatmapsetId} 的map selection`);
                 console.log(`可用的map selections数量: ${mapSelections.length}`);
 
                 // 打印所有map selections的beatmapId用于调试
@@ -180,15 +181,26 @@ export default function TotalScoresByModTable({
                     console.log(`Map selection ${index}: beatmapId=${selection.beatmapId}, beatmapsetId=${selection.beatmapsetId}, mods=${selection.selectedMods}${selection.modPosition}`);
                 });
 
-                mapSelection = mapSelections.find(selection =>
-                    selection.beatmapId.toString() === scoreBeatmapId.toString()
-                );
+                // 先尝试用beatmapId匹配
+                if (scoreBeatmapId) {
+                    mapSelection = mapSelections.find(selection =>
+                        selection.beatmapId.toString() === scoreBeatmapId.toString()
+                    );
+                }
+
+                // 如果beatmapId匹配失败，尝试用beatmapsetId匹配
+                if (!mapSelection && scoreBeatmapsetId) {
+                    mapSelection = mapSelections.find(selection =>
+                        selection.beatmapsetId.toString() === scoreBeatmapsetId.toString()
+                    );
+                }
 
                 if (mapSelection) {
-                    console.log(`Found map selection for beatmapId: ${scoreBeatmapId}`, mapSelection);
+                    console.log(`Found map selection:`, mapSelection);
                 } else {
-                    console.log(`No map selection found for beatmapId: ${scoreBeatmapId}`);
+                    console.log(`No map selection found for beatmapId: ${scoreBeatmapId} or beatmapsetId: ${scoreBeatmapsetId}`);
                     console.log(`所有可用的beatmapIds: ${mapSelections.map(s => s.beatmapId).join(', ')}`);
+                    console.log(`所有可用的beatmapsetIds: ${mapSelections.map(s => s.beatmapsetId).join(', ')}`);
                 }
             }
 
@@ -341,16 +353,27 @@ export default function TotalScoresByModTable({
         scores.forEach(score => {
             if (!approvedPlayers.has(score.user_id.toString())) return;
 
-            // 只使用beatmap_id去匹配map_selections的beatmapId图池数据
-            const scoreBeatmapId = (score as any).beatmap_id || (score as any).beatmapId || (score as any).beatmap?.id;
+            // 使用新的beatmap_id和beatmapset_id字段进行匹配
+            const scoreBeatmapId = score.beatmap_id;
+            const scoreBeatmapsetId = score.beatmapset_id;
 
             let mapSelection = null;
 
-            // 直接通过beatmapId找到对应的map selection
-            if (scoreBeatmapId) {
-                mapSelection = mapSelections.find(selection =>
-                    selection.beatmapId.toString() === scoreBeatmapId.toString()
-                );
+            // 尝试通过beatmapId或beatmapsetId找到对应的map selection
+            if (scoreBeatmapId || scoreBeatmapsetId) {
+                // 先尝试用beatmapId匹配
+                if (scoreBeatmapId) {
+                    mapSelection = mapSelections.find(selection =>
+                        selection.beatmapId.toString() === scoreBeatmapId.toString()
+                    );
+                }
+
+                // 如果beatmapId匹配失败，尝试用beatmapsetId匹配
+                if (!mapSelection && scoreBeatmapsetId) {
+                    mapSelection = mapSelections.find(selection =>
+                        selection.beatmapsetId.toString() === scoreBeatmapsetId.toString()
+                    );
+                }
             }
 
             if (mapSelection) {

@@ -176,4 +176,7 @@ export interface DisplayScore {
     pp: number | null;
     ended_at: string | null;
     position: number;
+    // 添加beatmap信息用于匹配map selections
+    beatmap_id?: number | null;
+    beatmapset_id?: number | null;
 }
