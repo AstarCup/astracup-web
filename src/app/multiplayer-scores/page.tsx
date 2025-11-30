@@ -202,6 +202,9 @@ export default function MultiplayerScoresPage() {
                     setDatabaseScores(allDatabaseScores);
                 } else {
                     // 数据库中没有数据，从API获取所有房间的分数
+                    let successfullyLoadedRooms = 0;
+                    let failedRooms = 0;
+                    
                     for (const roomId of uniqueRoomIds) {
                         try {
                             // 加载房间信息
@@ -219,20 +222,36 @@ export default function MultiplayerScoresPage() {
                                     roomName: room.name
                                 }));
                                 allApiScores = [...allApiScores, ...scoresWithRoomInfo];
+                                successfullyLoadedRooms++;
                             } else {
                                 console.error(`Failed to load room ${roomId}:`, roomData.error || 'Room not found');
+                                failedRooms++;
                             }
                         } catch (err) {
                             console.error(`Error loading scores from API for room ${roomId}:`, err);
+                            failedRooms++;
                         }
                     }
 
                     // 设置API获取的分数到databaseScores，用于显示
                     setDatabaseScores(allApiScores);
                     
-                    // 如果API也没有获取到数据，显示提示信息
-                    if (allApiScores.length === 0) {
-                        setError(`无法从API获取该轮次的分数数据，请检查网络连接或稍后重试。`);
+                    // 显示加载结果
+                    console.log(`Room loading results:`, {
+                        totalRooms: uniqueRoomIds.length,
+                        successfullyLoadedRooms,
+                        failedRooms,
+                        totalScores: allApiScores.length
+                    });
+                    
+                    // 如果有至少一个房间成功加载，就显示这些房间的分数
+                    if (successfullyLoadedRooms > 0) {
+                        if (failedRooms > 0) {
+                            setError(`成功加载了 ${successfullyLoadedRooms} 个房间的分数数据，但有 ${failedRooms} 个房间无法加载。`);
+                        }
+                    } else {
+                        // 如果所有房间都无法加载，才显示错误信息
+                        setError(`无法从API获取该轮次的任何分数数据，所有 ${uniqueRoomIds.length} 个房间都无法加载。`);
                     }
                 }
             } else {
@@ -264,8 +283,8 @@ export default function MultiplayerScoresPage() {
     // 从URL中提取房间ID
     const extractRoomIdFromUrl = (url: string): string | null => {
         try {
-            // 匹配 https://osu.ppy.sh/multiplayer/rooms/1774254 格式
-            const match = url.match(/multiplayer\/rooms\/(\d+)/);
+            // 匹配 https://osu.ppy.sh/multiplayer/rooms/1774254 或 https://osu.ppy.sh/multiplayer/rooms/1774254/events 格式
+            const match = url.match(/multiplayer\/rooms\/(\d+)(?:\/events)?/);
             return match ? match[1] : null;
         } catch {
             return null;

@@ -35,6 +35,13 @@ export async function GET(request: NextRequest) {
 
         if (!response.ok) {
             console.error('Failed to fetch multiplayer rooms:', response.status, response.statusText);
+            // 如果是单个房间查询且返回404，返回空房间列表而不是错误
+            if (roomId && response.status === 404) {
+                return NextResponse.json(
+                    { success: true, rooms: [], total: 0 },
+                    { status: 200 }
+                );
+            }
             return NextResponse.json(
                 { success: false, error: '获取multiplayer房间失败' },
                 { status: response.status }

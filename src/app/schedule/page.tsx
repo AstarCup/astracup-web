@@ -63,8 +63,8 @@ export default function Schedule() {
     const extractRoomIdFromMatchLink = (matchLink: string | undefined): string | null => {
         if (!matchLink) return null;
         try {
-            // 匹配 https://osu.ppy.sh/multiplayer/rooms/1774254 格式
-            const match = matchLink.match(/multiplayer\/rooms\/(\d+)/);
+            // 匹配 https://osu.ppy.sh/multiplayer/rooms/1774254 或 https://osu.ppy.sh/multiplayer/rooms/1774254/events 格式
+            const match = matchLink.match(/multiplayer\/rooms\/(\d+)(?:\/events)?/);
             return match ? match[1] : null;
         } catch {
             return null;
