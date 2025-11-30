@@ -538,10 +538,8 @@ export default function MultiplayerScoresPage() {
 
     // 保存分数到数据库
     const saveScoresToDatabase = async () => {
-        if (!selectedRoom || allScores.length === 0) {
-            setSaveError('没有可保存的分数数据');
-            return;
-        }
+        const urlParams = new URLSearchParams(window.location.search);
+        const roundNumberParam = urlParams.get('round_number');
 
         setSavingScores(true);
         setSaveMessage(null);
@@ -559,26 +557,98 @@ export default function MultiplayerScoresPage() {
 
             const currentUserOsuId = sessionData.session.osuId;
 
-            const response = await fetch('/api/match-scores/save', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    room: selectedRoom,
-                    scores: allScores,
-                    osuId: currentUserOsuId
-                }),
-            });
+            let totalSavedScores = 0;
 
-            const data = await response.json();
+            if (roundNumberParam) {
+                // 如果有round_number参数，保存该轮次所有房间的分数数据
+                // 获取该轮次的所有match_link数据
+                const matchSchedulesResponse = await fetch('/api/match-schedules');
+                const matchSchedulesData = await matchSchedulesResponse.json();
 
-            if (data.success) {
-                setSaveMessage(`成功保存 ${data.data.scores_count} 条分数记录`);
+                if (matchSchedulesData.success) {
+                    // 过滤出该轮次的比赛
+                    const roundSchedules = matchSchedulesData.schedules.filter((schedule: any) =>
+                        schedule.room && schedule.room.round_number === parseInt(roundNumberParam)
+                    );
+
+                    // 从match_link中提取房间号
+                    const roomIds = roundSchedules
+                        .map((schedule: any) => extractRoomIdFromUrl(schedule.match_link))
+                        .filter((roomId: string | null): roomId is string => roomId !== null);
+
+                    // 去重
+                    const uniqueRoomIds = [...new Set(roomIds)];
+
+                    // 遍历所有房间，保存每个房间的分数数据
+                    for (const roomId of uniqueRoomIds) {
+                        try {
+                            // 加载房间信息
+                            const roomResponse = await fetch(`/api/multiplayer/rooms?roomId=${roomId}`);
+                            const roomData = await roomResponse.json();
+
+                            if (roomData.success && roomData.rooms.length > 0) {
+                                const room = roomData.rooms[0];
+                                // 加载该房间的所有分数数据
+                                await loadRoomById(String(roomId));
+                                // 保存该房间的分数数据
+                                const scoresResponse = await fetch('/api/match-scores/save', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        room: room,
+                                        scores: allScores,
+                                        osuId: currentUserOsuId
+                                    }),
+                                });
+
+                                const scoresData = await scoresResponse.json();
+                                if (scoresData.success) {
+                                    totalSavedScores += scoresData.data.scores_count;
+                                }
+                            }
+                        } catch (err) {
+                            console.error(`保存房间 ${roomId} 的分数数据时发生错误:`, err);
+                        }
+                    }
+                }
+            } else if (selectedRoom) {
+                // 否则保存当前选中房间的分数数据
+                const response = await fetch('/api/match-scores/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        room: selectedRoom,
+                        scores: allScores,
+                        osuId: currentUserOsuId
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    totalSavedScores = data.data.scores_count;
+                } else {
+                    setSaveError(data.error || '保存失败');
+                }
+            } else {
+                setSaveError('没有可保存的分数数据');
+                return;
+            }
+
+            if (totalSavedScores > 0) {
+                setSaveMessage(`成功保存 ${totalSavedScores} 条分数记录`);
                 // 重新加载已保存的房间列表
                 loadSavedRooms();
+                // 如果有round_number参数，重新加载该轮次的分数数据
+                if (roundNumberParam) {
+                    await loadScoresByRoundNumber(roundNumberParam);
+                }
             } else {
-                setSaveError(data.error || '保存失败');
+                setSaveMessage('没有可保存的分数数据');
             }
         } catch (error) {
             console.error('保存分数时发生错误:', error);
