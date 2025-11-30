@@ -133,9 +133,11 @@ export default function MultiplayerScoresPage() {
                 // 去重
                 const uniqueRoomIds = [...new Set(roomIds)];
 
-                // 加载这些房间的分数数据，首先从数据库中获取
+                // 首先尝试从数据库中获取分数
                 const allDatabaseScores: DisplayScore[] = [];
+                let allApiScores: DisplayScore[] = [];
 
+                // 从数据库获取分数
                 for (const roomId of uniqueRoomIds) {
                     try {
                         const scoresResponse = await fetch(`/api/match-scores/save?roomId=${roomId}`);
@@ -151,24 +153,53 @@ export default function MultiplayerScoresPage() {
                             allDatabaseScores.push(...scoresWithRoomInfo);
                         }
                     } catch (err) {
-                        console.error(`Error loading scores for room ${roomId}:`, err);
+                        console.error(`Error loading scores from database for room ${roomId}:`, err);
                     }
                 }
 
-                setDatabaseScores(allDatabaseScores);
-                // console.log(`Loaded ${allDatabaseScores.length} scores from database for round ${roundNumber}`);
+                // 如果数据库中有数据，直接使用
+                if (allDatabaseScores.length > 0) {
+                    setDatabaseScores(allDatabaseScores);
+                } else {
+                    // 数据库中没有数据，从API获取所有房间的分数
+                    for (const roomId of uniqueRoomIds) {
+                        try {
+                            // 加载房间信息
+                            const roomResponse = await fetch(`/api/multiplayer/rooms?roomId=${roomId}`);
+                            const roomData = await roomResponse.json();
 
-                // 如果数据库中没有数据，提示管理员保存数据
-                if (allDatabaseScores.length === 0 && uniqueRoomIds.length > 0) {
-                    setError(`数据库中没有该轮次的分数数据，请管理员保存数据后再查看。`);
+                            if (roomData.success && roomData.rooms.length > 0) {
+                                const room = roomData.rooms[0];
+                                // 加载该房间的所有图池分数，使用返回的Promise结果
+                                const roomScores = await loadAllScoresWithRoom(room);
+                                // 为分数添加房间信息并添加到allApiScores
+                                const scoresWithRoomInfo = roomScores.map((score: DisplayScore) => ({
+                                    ...score,
+                                    roomId: roomId,
+                                    roomName: room.name
+                                }));
+                                allApiScores = [...allApiScores, ...scoresWithRoomInfo];
+                            }
+                        } catch (err) {
+                            console.error(`Error loading scores from API for room ${roomId}:`, err);
+                        }
+                    }
+
+                    // 设置API获取的分数到databaseScores，用于显示
+                    setDatabaseScores(allApiScores);
+                    
+                    // 如果API也没有获取到数据，显示提示信息
+                    if (allApiScores.length === 0) {
+                        setError(`无法获取该轮次的分数数据，请检查网络连接或稍后重试。`);
+                    }
                 }
             } else {
                 setDatabaseScores([]);
                 setError(matchSchedulesData.error || '获取赛程数据失败');
             }
         } catch (err) {
-            setError('网络错误，无法从数据库加载分数数据');
-            console.error('Error loading scores from database:', err);
+            setError('网络错误，无法加载分数数据');
+            console.error('Error loading scores:', err);
             setDatabaseScores([]);
         } finally {
             setLoadingDatabaseScores(false);
@@ -340,8 +371,8 @@ export default function MultiplayerScoresPage() {
         return sortedAndRanked;
     };
 
-    // 加载所有图池的分数数据（不依赖状态）
-    const loadAllScoresWithRoom = async (room: MultiplayerRoom) => {
+    // 加载所有图池的分数数据（返回Promise，不依赖状态）
+    const loadAllScoresWithRoom = async (room: MultiplayerRoom): Promise<DisplayScore[]> => {
         // console.log('loadAllScoresWithRoom函数开始执行');
         // console.log('传入的房间对象:', room);
 
@@ -387,10 +418,12 @@ export default function MultiplayerScoresPage() {
             // console.log('所有图池分数数据加载完成，总分数数量:', flattenedScores.length);
             // console.log('分数数据示例:', flattenedScores.slice(0, 3));
             setAllScores(flattenedScores);
+            return flattenedScores;
         } catch (err) {
             setError('网络错误，无法加载所有分数数据');
             console.error('Error loading all scores:', err);
             setAllScores([]);
+            return [];
         } finally {
             setLoadingAllScores(false);
         }
