@@ -1135,14 +1135,18 @@ export default function MultiplayerScoresPage() {
             {(selectedRoom || databaseScores.length > 0) && (
                 <div className="bg-[#3D3D3D] p-6">
                     {/* 表格内容 */}
-                    {activeTab === 'byPlaylist' && selectedRoom && (
+                    {activeTab === 'byPlaylist' && (
                         <>
                             {/* 按图池需要选择具体图池 */}
                             {selectedPlaylist ? (
                                 <MultiplayerScoresTable
-                                    scores={filteredScores}
+                                    scores={databaseScores.length > 0 ? databaseScores.filter(score => {
+                                        const scoreBeatmapId = (score as any).beatmapId || (score as any).beatmap?.id;
+                                        const playlistInfo = getSelectedPlaylistInfo();
+                                        return playlistInfo && scoreBeatmapId === playlistInfo.beatmapId;
+                                    }) : filteredScores}
                                     title={getPageTitle()}
-                                    loading={loadingScores || loadingPlayers}
+                                    loading={loadingScores || loadingPlayers || loadingDatabaseScores}
                                     onRefresh={loadScores}
                                 />
                             ) : (
