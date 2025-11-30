@@ -2088,34 +2088,17 @@ const mysqlStorage = {
     },
 
     // 获取特定房间的保存数据
-    getRoomScores: async (roomId: number): Promise<{ room: any; scores: any[] }> => {
+    getRoomScores: async (roomId: string | number): Promise<{ room: any; scores: any[] }> => {
         try {
             const connection = await getPool().getConnection();
 
-            // 获取房间信息
-            const [roomRows] = await connection.execute(`
-                SELECT 
-                    room_id as id,
-                    room_name as name,
-                    room_category as category,
-                    room_type as type,
-                    starts_at,
-                    ends_at,
-                    participant_count,
-                    host_osuId,
-                    host_username,
-                    playlist_count,
-                    MAX(saved_at) as saved_at
-                FROM match_scores 
-                WHERE room_id = ?
-                GROUP BY room_id, room_name, room_category, room_type, starts_at, ends_at, participant_count, host_osuId, host_username, playlist_count
-            `, [roomId]);
-
-            // 获取分数数据
+            // 直接使用原始的roomId作为查询参数，获取该房间的详细分数
             const [scoreRows] = await connection.execute(`
                 SELECT 
+                    room_id, room_name, room_category, room_type, starts_at, ends_at,
+                    participant_count, host_username, playlist_count,
                     user_id, username, playlist_id, beatmap_id, total_score, accuracy,
-                    max_combo, mods, rank, passed, statistics, pp, ended_at, saved_at
+                    max_combo, mods, \`rank\`, passed, statistics, pp, ended_at, saved_at
                 FROM match_scores 
                 WHERE room_id = ?
                 ORDER BY playlist_id, total_score DESC
@@ -2123,7 +2106,26 @@ const mysqlStorage = {
 
             connection.release();
 
-            const room = (roomRows as any[])[0] || null;
+            if ((scoreRows as any[]).length === 0) {
+                return { room: null, scores: [] };
+            }
+
+            // 提取房间信息
+            const firstScore = (scoreRows as any[])[0];
+            const room = {
+                id: firstScore.room_id,
+                name: firstScore.room_name,
+                category: firstScore.room_category,
+                type: firstScore.room_type,
+                starts_at: firstScore.starts_at,
+                ends_at: firstScore.ends_at,
+                participant_count: firstScore.participant_count,
+                host: { username: firstScore.host_username },
+                playlist_count: firstScore.playlist_count,
+                saved_at: firstScore.saved_at
+            };
+
+            // 转换分数数据
             const scores = (scoreRows as any[]).map(row => ({
                 user_id: row.user_id,
                 username: row.username,
@@ -2135,7 +2137,8 @@ const mysqlStorage = {
                 mods: row.mods ? row.mods.split(',') : [],
                 rank: row.rank,
                 passed: row.passed,
-                statistics: row.statistics ? JSON.parse(row.statistics) : {},
+                // 检查statistics的类型，如果已经是对象就直接使用，否则尝试解析
+                statistics: typeof row.statistics === 'object' ? row.statistics : (row.statistics ? JSON.parse(row.statistics) : {}),
                 pp: row.pp,
                 ended_at: row.ended_at,
                 saved_at: row.saved_at

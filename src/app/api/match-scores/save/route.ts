@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveMatchScores, getSavedRooms, getTournamentSettings } from '@/lib/mysql-registrations';
+import { saveMatchScores, getSavedRooms, getTournamentSettings, getRoomScores } from '@/lib/mysql-registrations';
 
 export async function POST(request: NextRequest) {
     try {
@@ -86,18 +86,34 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// 获取已保存的房间列表
-export async function GET() {
+// 获取已保存的房间列表或特定房间的分数
+export async function GET(request: NextRequest) {
     try {
-        const savedRooms = await getSavedRooms();
+        // 检查是否有roomId参数
+        const searchParams = request.nextUrl.searchParams;
+        const roomIdParam = searchParams.get('roomId');
 
-        return NextResponse.json({
-            success: true,
-            rooms: savedRooms,
-            total_scores: savedRooms.reduce((total, room) => total + (room.scores_count || 0), 0)
-        });
+        if (roomIdParam) {
+            // 如果提供了roomId，获取该房间的分数
+            // 直接将roomIdParam作为字符串传递，避免类型转换错误
+            const roomScores = await getRoomScores(roomIdParam);
+            return NextResponse.json({
+                success: true,
+                room: roomScores.room,
+                scores: roomScores.scores
+            });
+        } else {
+            // 否则返回已保存房间列表
+            const savedRooms = await getSavedRooms();
+
+            return NextResponse.json({
+                success: true,
+                rooms: savedRooms,
+                total_scores: savedRooms.reduce((total, room) => total + (room.scores_count || 0), 0)
+            });
+        }
     } catch (error) {
-        console.error('获取保存的房间列表时发生错误:', error);
+        console.error('获取保存的房间列表或房间分数时发生错误:', error);
         return NextResponse.json(
             { success: false, error: '服务器内部错误' },
             { status: 500 }

@@ -125,7 +125,7 @@ export default function Schedule() {
             <h1 className="text-3xl font-bold mb-6 text-white">赛程安排</h1>
             <div className='mb-8'>
                 <h2 className="text-2xl font-semibold mb-4 text-white">QUA成绩</h2>
-                <a href='/multiplayer-scores?room=1774254' className='text-[#E93B66] font-semibold'>Playlist 1774254</a>
+                <button onClick={() => window.location.href = '/multiplayer-scores?room=1774254'} className='bg-[#E93B66] text-white px-4 py-2 rounded font-semibold hover:bg-opacity-90 transition-colors'>Playlist 1774254</button>
             </div>
             <div className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4 text-white">比赛时间表</h2>

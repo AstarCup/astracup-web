@@ -43,3 +43,4 @@ test-osu-api.js
 
 # version file
 public/version.json
+.trae
