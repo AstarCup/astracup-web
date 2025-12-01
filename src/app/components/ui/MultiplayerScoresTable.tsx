@@ -35,22 +35,6 @@ export default function MultiplayerScoresTable({
         }
     };
 
-    // 获取mod颜色class
-    const getModColorClass = (mod: string): string => {
-        switch (mod) {
-            case 'HD': return 'bg-yellow-500 text-black';
-            case 'HR': return 'bg-red-500 text-white';
-            case 'DT': return 'bg-purple-500 text-white';
-            case 'NC': return 'bg-purple-400 text-white';
-            case 'FL': return 'bg-blue-500 text-white';
-            case 'EZ': return 'bg-green-500 text-white';
-            case 'HT': return 'bg-orange-500 text-white';
-            case 'SO': return 'bg-gray-600 text-white';
-            case 'NF': return 'bg-gray-700 text-white';
-            default: return 'bg-gray-500 text-white';
-        }
-    };
-
     // 获取排名颜色class
     const getRankColorClass = (rank: string): string => {
         switch (rank) {

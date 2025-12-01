@@ -74,16 +74,39 @@ export default function TotalScoresByModTable({
 
         const playerMap = new Map<string, PlayerModScores>();
 
+        console.log(`Total scores received: ${scores.length}`);
+        console.log(`Number of approved players: ${approvedPlayers.size}`);
+        console.log(`Number of registrations: ${registrations.length}`);
+
         // 初始化所有已过审玩家
         approvedPlayers.forEach(osuId => {
-            // 从分数数据中查找玩家信息（使用第一个找到的分数来获取玩家信息）
-            const playerScore = scores.find(score => score.user_id.toString() === osuId);
-            if (playerScore) {
-                playerMap.set(osuId, {
+            // 初始化玩家对象
+            let playerInfo = {
+                userId: osuId,
+                username: `玩家 ${osuId}`,
+                avatarUrl: `https://a.ppy.sh/${osuId}`,
+                countryCode: '',
+                scores: {},
+                ranks: {},
+                totalScore: 0,
+                totalRank: null,
+                zScores: {},
+                zSum: 0,
+                rating: 0,
+                averageScore: 0,
+                playedMaps: 0
+            };
+
+            // 从所有分数数据中查找该玩家的信息
+            const playerScores = scores.filter(score => score.user_id.toString() === osuId);
+            if (playerScores.length > 0) {
+                // 使用第一个分数的玩家信息
+                const firstScore = playerScores[0];
+                playerInfo = {
                     userId: osuId,
-                    username: playerScore.username,
-                    avatarUrl: playerScore.avatar_url,
-                    countryCode: playerScore.country_code,
+                    username: firstScore.username,
+                    avatarUrl: firstScore.avatar_url || `https://a.ppy.sh/${osuId}`,
+                    countryCode: firstScore.country_code,
                     scores: {},
                     ranks: {},
                     totalScore: 0,
@@ -93,16 +116,16 @@ export default function TotalScoresByModTable({
                     rating: 0,
                     averageScore: 0,
                     playedMaps: 0
-                });
+                };
             } else {
                 // 如果玩家没有分数数据，从已报名数据中查找玩家信息
                 const registration = registrations.find(reg => reg.osuId === osuId);
                 if (registration) {
-                    // console.log(`玩家 ${osuId} 没有分数数据，但从已报名数据中获取信息`);
-                    playerMap.set(osuId, {
+                    console.log(`玩家 ${osuId} 没有分数数据，但从已报名数据中获取信息`);
+                    playerInfo = {
                         userId: osuId,
                         username: registration.username,
-                        avatarUrl: registration.avatar_url || '',
+                        avatarUrl: registration.avatar_url || `https://a.ppy.sh/${osuId}`,
                         countryCode: registration.country || '',
                         scores: {},
                         ranks: {},
@@ -113,28 +136,16 @@ export default function TotalScoresByModTable({
                         rating: 0,
                         averageScore: 0,
                         playedMaps: 0
-                    });
-                } else {
-                    // 如果连已报名数据中也没有，使用默认信息
-                    // console.log(`玩家 ${osuId} 没有分数数据，也没有已报名数据，使用默认信息`);
-                    playerMap.set(osuId, {
-                        userId: osuId,
-                        username: `玩家 ${osuId}`,
-                        avatarUrl: '',
-                        countryCode: '',
-                        scores: {},
-                        ranks: {},
-                        totalScore: 0,
-                        totalRank: null,
-                        zScores: {},
-                        zSum: 0,
-                        rating: 0,
-                        averageScore: 0,
-                        playedMaps: 0
-                    });
+                    };
                 }
             }
+
+            playerMap.set(osuId, playerInfo);
         });
+
+        console.log(`Initialized ${playerMap.size} players from approvedPlayers`);
+
+        console.log(`Initialized ${playerMap.size} players`);
 
         // console.log('初始化的玩家数量:', playerMap.size);
 
@@ -145,45 +156,108 @@ export default function TotalScoresByModTable({
             const player = playerMap.get(score.user_id.toString());
             if (!player) return;
 
-            // 通过playlistId找到对应的map selection
-            const playlistId = (score as any).playlistId;
-            const beatmapId = (score as any).beatmapId;
+            // 使用beatmap_id字段进行匹配（数据库返回的是beatmap_id字段）
+            // 同时支持多种字段名以兼容不同的数据来源
+            const scoreBeatmapId = (score as any).beatmapId || score.beatmap_id;
+            const scoreBeatmapsetId = (score as any).beatmapsetId || score.beatmapset_id;
+            const scoreRoomId = (score as any).roomId;
 
-            // console.log(`处理玩家 ${score.username} 的分数:`, {
-            // playlistId,
-            // beatmapId,
-            // totalScore: score.total_score
-            // });
+            console.log(`字段映射调试 - 原始分数对象:`, {
+                beatmap_id: score.beatmap_id,
+                beatmapId: (score as any).beatmapId,
+                beatmapset_id: score.beatmapset_id,
+                beatmapsetId: (score as any).beatmapsetId,
+                最终beatmapId: scoreBeatmapId,
+                最终beatmapsetId: scoreBeatmapsetId,
+                所有字段: Object.keys(score)
+            });
 
-            if (playlistId && selectedRoom) {
-                // 找到对应的playlist item
-                const playlistItem = selectedRoom.playlist.find((item: any) => item.id === playlistId);
-                if (playlistItem) {
-                    // 找到这个playlist对应的map selection
-                    const mapSelection = mapSelections.find(selection =>
-                        selection.beatmapId === playlistItem.beatmap.id
-                    );
+            console.log(`处理玩家 ${score.username} 的分数:`, {
+                userId: score.user_id,
+                roomId: scoreRoomId,
+                beatmapId: scoreBeatmapId,
+                beatmapsetId: scoreBeatmapsetId,
+                totalScore: score.total_score
+            });
 
-                    // console.log(`找到playlist item:`, playlistItem.beatmap.id);
-                    // console.log(`找到map selection:`, mapSelection);
+            let mapSelection = null;
+
+            // 尝试通过beatmapId或beatmapsetId找到对应的map selection
+            if (scoreBeatmapId || scoreBeatmapsetId) {
+                console.log(`正在查找beatmapId: ${scoreBeatmapId} 或 beatmapsetId: ${scoreBeatmapsetId} 的map selection`);
+                console.log(`可用的map selections数量: ${mapSelections.length}`);
+
+                // 如果没有map selections，跳过匹配
+                if (mapSelections.length === 0) {
+                    console.log(`Warning: No map selections available for matching`);
+                } else {
+                    // 打印所有map selections的beatmapId用于调试
+                    mapSelections.forEach((selection, index) => {
+                        console.log(`Map selection ${index}: beatmapId=${selection.beatmapId}, beatmapsetId=${selection.beatmapsetId}, mods=${selection.selectedMods}${selection.modPosition}`);
+                    });
+
+                    // 先尝试用beatmapId匹配（转换为字符串确保类型一致）
+                    if (scoreBeatmapId) {
+                        const scoreBeatmapIdStr = scoreBeatmapId.toString();
+                        mapSelection = mapSelections.find(selection =>
+                            selection.beatmapId && selection.beatmapId.toString() === scoreBeatmapIdStr
+                        );
+                    }
+
+                    // 如果beatmapId匹配失败，尝试用beatmapsetId匹配
+                    if (!mapSelection && scoreBeatmapsetId) {
+                        const scoreBeatmapsetIdStr = scoreBeatmapsetId.toString();
+                        mapSelection = mapSelections.find(selection =>
+                            selection.beatmapsetId && selection.beatmapsetId.toString() === scoreBeatmapsetIdStr
+                        );
+                    }
 
                     if (mapSelection) {
-                        const modPosition = `${mapSelection.selectedMods}${mapSelection.modPosition}`;
-
-                        // 如果这个mod位已经有分数了，取最高分
-                        const existingScore = player.scores[modPosition];
-                        if (!existingScore || score.total_score > existingScore) {
-                            // 更新总分：减去旧的分数（如果有），加上新的分数
-                            if (existingScore) {
-                                player.totalScore = player.totalScore - existingScore + score.total_score;
-                            } else {
-                                player.totalScore += score.total_score;
-                            }
-                            player.scores[modPosition] = score.total_score;
-                            // console.log(`为玩家 ${score.username} 设置 ${modPosition} 分数: ${score.total_score}`);
-                        }
+                        console.log(`Found map selection for ${score.username}:`, {
+                            beatmapId: mapSelection.beatmapId,
+                            beatmapsetId: mapSelection.beatmapsetId,
+                            mods: mapSelection.selectedMods + mapSelection.modPosition
+                        });
+                    } else {
+                        console.log(`No map selection found for ${score.username}:`, {
+                            scoreBeatmapId,
+                            scoreBeatmapsetId,
+                            availableBeatmapIds: mapSelections.map(s => s.beatmapId).filter(Boolean),
+                            availableBeatmapsetIds: mapSelections.map(s => s.beatmapsetId).filter(Boolean)
+                        });
                     }
                 }
+            } else {
+                console.log(`Warning: Score for ${score.username} has no beatmap information:`, {
+                    scoreBeatmapId,
+                    scoreBeatmapsetId,
+                    originalScore: score
+                });
+            }
+
+            if (mapSelection) {
+                const modPosition = `${mapSelection.selectedMods}${mapSelection.modPosition}`;
+                console.log(`Found mod position: ${modPosition} for beatmapId: ${scoreBeatmapId}`);
+
+                // 如果这个mod位已经有分数了，取最高分
+                const existingScore = player.scores[modPosition];
+                if (!existingScore || score.total_score > existingScore) {
+                    // 更新总分：减去旧的分数（如果有），加上新的分数
+                    if (existingScore) {
+                        player.totalScore = player.totalScore - existingScore + score.total_score;
+                    } else {
+                        player.totalScore += score.total_score;
+                    }
+                    player.scores[modPosition] = score.total_score;
+                    console.log(`为玩家 ${score.username} 设置 ${modPosition} 分数: ${score.total_score}`);
+                }
+            } else {
+                console.log(`No map selection found for score:`, {
+                    userId: score.user_id,
+                    username: score.username,
+                    roomId: scoreRoomId,
+                    scoreBeatmapId
+                });
             }
         });
 
@@ -266,6 +340,13 @@ export default function TotalScoresByModTable({
 
         // 计算总分排名
         const playersWithTotalScores = result.filter(player => player.totalScore > 0);
+        console.log(`Players with total scores: ${playersWithTotalScores.length} out of ${result.length}`);
+
+        // 打印每个玩家的总分和已玩图池数量
+        result.forEach(player => {
+            console.log(`${player.username} (${player.userId}): totalScore=${player.totalScore}, playedMaps=${player.playedMaps}`);
+        });
+
         playersWithTotalScores.sort((a, b) => b.totalScore - a.totalScore);
 
         // 分配总分排名（处理并列情况）
@@ -280,7 +361,7 @@ export default function TotalScoresByModTable({
             player.totalRank = currentTotalRank;
         });
 
-        // console.log('处理完成，玩家分数结果:', result);
+        console.log('处理完成，玩家分数结果:', result);
         return result;
     };
 
@@ -303,30 +384,39 @@ export default function TotalScoresByModTable({
         scores.forEach(score => {
             if (!approvedPlayers.has(score.user_id.toString())) return;
 
-            // 通过playlistId找到对应的map selection
-            const playlistId = (score as any).playlistId;
-            const beatmapId = (score as any).beatmapId;
+            // 使用beatmap_id字段进行匹配（数据库返回的是beatmap_id字段）
+            // 同时支持多种字段名以兼容不同的数据来源
+            const scoreBeatmapId = (score as any).beatmapId || score.beatmap_id;
+            const scoreBeatmapsetId = (score as any).beatmapsetId || score.beatmapset_id;
 
-            if (playlistId && selectedRoom) {
-                // 找到对应的playlist item
-                const playlistItem = selectedRoom.playlist.find((item: any) => item.id === playlistId);
-                if (playlistItem) {
-                    // 找到这个playlist对应的map selection
-                    const mapSelection = mapSelections.find(selection =>
-                        selection.beatmapId === playlistItem.beatmap.id
+            let mapSelection = null;
+
+            // 尝试通过beatmapId或beatmapsetId找到对应的map selection
+            if (scoreBeatmapId || scoreBeatmapsetId) {
+                // 先尝试用beatmapId匹配
+                if (scoreBeatmapId) {
+                    mapSelection = mapSelections.find(selection =>
+                        selection.beatmapId.toString() === scoreBeatmapId.toString()
                     );
+                }
 
-                    if (mapSelection) {
-                        const modPosition = `${mapSelection.selectedMods}${mapSelection.modPosition}`;
-                        const userId = score.user_id.toString();
+                // 如果beatmapId匹配失败，尝试用beatmapsetId匹配
+                if (!mapSelection && scoreBeatmapsetId) {
+                    mapSelection = mapSelections.find(selection =>
+                        selection.beatmapsetId.toString() === scoreBeatmapsetId.toString()
+                    );
+                }
+            }
 
-                        // 只取每个玩家在该mod位的最高分
-                        if (modPlayerScores[modPosition]) {
-                            const currentScore = modPlayerScores[modPosition][userId];
-                            if (!currentScore || score.total_score > currentScore) {
-                                modPlayerScores[modPosition][userId] = score.total_score;
-                            }
-                        }
+            if (mapSelection) {
+                const modPosition = `${mapSelection.selectedMods}${mapSelection.modPosition}`;
+                const userId = score.user_id.toString();
+
+                // 只取每个玩家在该mod位的最高分
+                if (modPlayerScores[modPosition]) {
+                    const currentScore = modPlayerScores[modPosition][userId];
+                    if (!currentScore || score.total_score > currentScore) {
+                        modPlayerScores[modPosition][userId] = score.total_score;
                     }
                 }
             }
