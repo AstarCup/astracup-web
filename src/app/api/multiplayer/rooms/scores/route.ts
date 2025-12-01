@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
                             }
 
                             return processedScore;
-                        }).filter(score => score !== null) as DisplayScore[];
+                        }).filter((score: null) => score !== null) as DisplayScore[];
 
                         allScores.push(...processedScores);
                         continue; // 成功从数据库获取，跳过API调用
