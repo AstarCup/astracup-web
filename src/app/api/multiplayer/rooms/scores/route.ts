@@ -14,18 +14,146 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 获取客户端token
-        const accessToken = await getValidClientToken();
-
         // 获取所有房间的所有分数
         const allScores: DisplayScore[] = [];
         const roomsData: any[] = [];
+        let databaseHasData = false;
 
-        console.log(`开始获取 ${roomIds.length} 个房间的分数数据...`);
+        console.log(`开始获取 ${roomIds.length} 个房间的分数数据，优先从数据库获取...`);
+
+        // 第一步：优先从数据库获取所有房间的分数
+        for (const roomId of roomIds) {
+            try {
+                console.log(`检查数据库中房间 ${roomId} 的分数...`);
+
+                // 调用数据库API获取房间分数
+                const dbResponse = await fetch(
+                    `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/match-scores/save?roomId=${roomId}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+                if (dbResponse.ok) {
+                    const dbData = await dbResponse.json();
+                    if (dbData.success && dbData.scores && dbData.scores.length > 0) {
+                        databaseHasData = true;
+                        console.log(`从数据库获取到房间 ${roomId} 的 ${dbData.scores.length} 条分数`);
+
+                        // 添加房间信息
+                        const roomInfo = {
+                            id: dbData.room?.id || roomId,
+                            name: dbData.room?.name || `Room ${roomId}`,
+                            category: dbData.room?.category || 'normal',
+                            participant_count: dbData.room?.participant_count || 0,
+                            active: false, // 数据库中的房间通常是非活跃的
+                            playlist_count: dbData.scores.length > 0 ? new Set(dbData.scores.map((s: any) => s.playlistId)).size : 0
+                        };
+                        roomsData.push(roomInfo);
+
+                        // 处理数据库分数数据，确保字段名正确
+                        const processedScores: DisplayScore[] = dbData.scores.map((score: any) => {
+                            // 确保字段名一致，支持多种格式
+                            const processedScore: DisplayScore = {
+                                user_id: score.user_id,
+                                username: score.username,
+                                avatar_url: score.avatar_url,
+                                country_code: score.country_code || '',
+                                total_score: score.total_score,
+                                accuracy: score.accuracy,
+                                max_combo: score.max_combo,
+                                mods: Array.isArray(score.mods) ? score.mods : [],
+                                rank: score.rank,
+                                passed: score.passed,
+                                statistics: score.statistics || {
+                                    count_300: 0,
+                                    count_100: 0,
+                                    count_50: 0,
+                                    count_miss: 0,
+                                },
+                                pp: score.pp,
+                                ended_at: score.ended_at,
+                                position: score.position || 0,
+                                // 确保beatmap信息字段名正确
+                                beatmap_id: score.beatmap_id || (score as any).beatmapId,
+                                beatmapset_id: score.beatmapset_id || (score as any).beatmapsetId,
+                                // 添加房间信息
+                                roomId: roomId,
+                                roomName: roomInfo.name,
+                                playlistId: score.playlistId,
+                            };
+
+                            // 时间筛选
+                            if (startDate || endDate) {
+                                if (!score.ended_at) return null;
+                                const endedAt = new Date(score.ended_at);
+                                if (startDate && endedAt < new Date(startDate)) {
+                                    return null;
+                                }
+                                if (endDate && endedAt > new Date(endDate)) {
+                                    return null;
+                                }
+                            }
+
+                            // 有效性筛选（只通过且完成的分数）
+                            if (onlyValid && (!score.passed || !score.ended_at)) {
+                                return null;
+                            }
+
+                            return processedScore;
+                        }).filter(score => score !== null) as DisplayScore[];
+
+                        allScores.push(...processedScores);
+                        continue; // 成功从数据库获取，跳过API调用
+                    }
+                }
+
+                console.log(`数据库中房间 ${roomId} 没有数据或获取失败`);
+            } catch (error) {
+                console.error(`从数据库获取房间 ${roomId} 分数时出错:`, error);
+            }
+        }
+
+        // 如果所有房间都有数据库数据，直接返回
+        if (databaseHasData) {
+            // 按分数降序排序并重新计算排名
+            const sortedScores = allScores
+                .sort((a, b) => b.total_score - a.total_score)
+                .map((score, index) => ({
+                    ...score,
+                    position: index + 1,
+                }));
+
+            console.log(`从数据库总共获取到 ${sortedScores.length} 条有效分数`);
+
+            return NextResponse.json({
+                success: true,
+                scores: sortedScores,
+                total: sortedScores.length,
+                rooms: roomsData.map(room => ({
+                    id: room.id,
+                    name: room.name,
+                    category: room.category,
+                    participant_count: room.participant_count,
+                    active: room.active,
+                    playlist_count: room.playlist_count
+                })),
+                source: 'database'
+            });
+        }
+
+        // 如果数据库中没有数据，才从osu API获取
+        console.log('数据库中没有完整数据，从osu API获取...');
+
+        // 获取客户端token
+        const accessToken = await getValidClientToken();
 
         for (const roomId of roomIds) {
             try {
-                console.log(`正在获取房间 ${roomId} 的信息...`);
+                console.log(`正在从API获取房间 ${roomId} 的信息...`);
 
                 // 获取房间信息
                 const roomResponse = await fetch(
