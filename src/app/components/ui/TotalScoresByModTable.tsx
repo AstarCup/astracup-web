@@ -158,9 +158,19 @@ export default function TotalScoresByModTable({
 
             // 使用beatmap_id字段进行匹配（数据库返回的是beatmap_id字段）
             // 同时支持多种字段名以兼容不同的数据来源
-            const scoreBeatmapId = score.beatmap_id;
-            const scoreBeatmapsetId = score.beatmapset_id;
+            const scoreBeatmapId = (score as any).beatmapId || score.beatmap_id;
+            const scoreBeatmapsetId = (score as any).beatmapsetId || score.beatmapset_id;
             const scoreRoomId = (score as any).roomId;
+
+            console.log(`字段映射调试 - 原始分数对象:`, {
+                beatmap_id: score.beatmap_id,
+                beatmapId: (score as any).beatmapId,
+                beatmapset_id: score.beatmapset_id,
+                beatmapsetId: (score as any).beatmapsetId,
+                最终beatmapId: scoreBeatmapId,
+                最终beatmapsetId: scoreBeatmapsetId,
+                所有字段: Object.keys(score)
+            });
 
             console.log(`处理玩家 ${score.username} 的分数:`, {
                 userId: score.user_id,
@@ -375,8 +385,9 @@ export default function TotalScoresByModTable({
             if (!approvedPlayers.has(score.user_id.toString())) return;
 
             // 使用beatmap_id字段进行匹配（数据库返回的是beatmap_id字段）
-            const scoreBeatmapId = score.beatmap_id;
-            const scoreBeatmapsetId = score.beatmapset_id;
+            // 同时支持多种字段名以兼容不同的数据来源
+            const scoreBeatmapId = (score as any).beatmapId || score.beatmap_id;
+            const scoreBeatmapsetId = (score as any).beatmapsetId || score.beatmapset_id;
 
             let mapSelection = null;
 
