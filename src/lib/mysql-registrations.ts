@@ -46,7 +46,7 @@ export const getPoolStatus = (): any => {
     if (!pool) {
         return { status: 'not_initialized' };
     }
-    
+
     return {
         status: 'active',
         connectionLimit: pool.config.connectionLimit,
@@ -1899,7 +1899,23 @@ const mysqlStorage = {
             }
 
             // 批量插入分数数据
-            const insertPromises = scores.map(score => {
+            const insertPromises = scores.map((score, index) => {
+                // 验证必要字段
+                if (!score.beatmapId && !score.beatmap_id) {
+                    console.warn(`Warning: Score ${index} for user ${score.username} has no beatmapId or beatmap_id`);
+                }
+
+                const beatmapId = score.beatmapId || score.beatmap_id || null;
+                const beatmapsetId = score.beatmapsetId || score.beatmapset_id || null;
+
+                console.log(`Saving score for ${score.username}:`, {
+                    user_id: score.user_id,
+                    playlistId: score.playlistId,
+                    beatmapId: beatmapId,
+                    beatmapsetId: beatmapsetId,
+                    total_score: score.total_score
+                });
+
                 return connection.execute(`
                     INSERT INTO match_scores (
                         room_id, room_name, room_category, room_type, starts_at, ends_at,
@@ -1921,7 +1937,7 @@ const mysqlStorage = {
                     score.user_id,
                     score.username,
                     score.playlistId,
-                    score.beatmapId,
+                    beatmapId, // 使用验证后的beatmapId
                     score.total_score,
                     score.accuracy,
                     score.max_combo,
@@ -1936,6 +1952,8 @@ const mysqlStorage = {
 
             await Promise.all(insertPromises);
             await connection.commit();
+
+            console.log(`Successfully saved ${scores.length} scores to database for room ${room.name}`);
 
             return {
                 success: true,

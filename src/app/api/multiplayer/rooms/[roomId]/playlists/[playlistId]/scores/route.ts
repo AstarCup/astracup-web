@@ -103,6 +103,45 @@ export async function GET(
         } else {
             console.log('Failed to fetch playlist item:', playlistItemResponse.status, playlistItemResponse.statusText);
             console.log('Playlist item URL:', `https://osu.ppy.sh/api/v2/rooms/${roomId}/playlist/${playlistId}`);
+
+            // 如果无法获取playlist item数据，尝试从分数数据中获取beatmap信息
+            if (data.scores.length > 0) {
+                const firstScore = data.scores[0];
+                playlistItemBeatmapId = firstScore.beatmap_id;
+                // 注意：分数数据中通常不包含beatmapset_id，需要另外获取
+                console.log(`Using beatmap_id from first score: ${playlistItemBeatmapId}`);
+
+                // 尝试获取beatmap详细信息来获取beatmapset_id
+                if (playlistItemBeatmapId) {
+                    try {
+                        const beatmapResponse = await fetch(
+                            `https://osu.ppy.sh/api/v2/beatmaps/${playlistItemBeatmapId}`,
+                            {
+                                headers: {
+                                    'Authorization': `Bearer ${accessToken}`,
+                                    'Content-Type': 'application/json',
+                                },
+                            }
+                        );
+
+                        if (beatmapResponse.ok) {
+                            const beatmapData = await beatmapResponse.json();
+                            playlistItemBeatmapsetId = beatmapData.beatmapset_id;
+                            console.log(`Retrieved beatmapset_id from beatmap API: ${playlistItemBeatmapsetId}`);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching beatmap details:', error);
+                    }
+                }
+            }
+        }
+
+        // 最终验证：确保我们有必要的beatmap信息
+        if (!playlistItemBeatmapId) {
+            console.error('Warning: Could not determine beatmapId for playlist item');
+        }
+        if (!playlistItemBeatmapsetId) {
+            console.error('Warning: Could not determine beatmapsetId for playlist item');
         }
 
         // 转换数据格式用于前端展示

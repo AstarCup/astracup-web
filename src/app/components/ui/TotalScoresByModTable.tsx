@@ -157,6 +157,7 @@ export default function TotalScoresByModTable({
             if (!player) return;
 
             // 使用beatmap_id字段进行匹配（数据库返回的是beatmap_id字段）
+            // 同时支持多种字段名以兼容不同的数据来源
             const scoreBeatmapId = score.beatmap_id;
             const scoreBeatmapsetId = score.beatmapset_id;
             const scoreRoomId = (score as any).roomId;
@@ -176,32 +177,52 @@ export default function TotalScoresByModTable({
                 console.log(`正在查找beatmapId: ${scoreBeatmapId} 或 beatmapsetId: ${scoreBeatmapsetId} 的map selection`);
                 console.log(`可用的map selections数量: ${mapSelections.length}`);
 
-                // 打印所有map selections的beatmapId用于调试
-                mapSelections.forEach((selection, index) => {
-                    console.log(`Map selection ${index}: beatmapId=${selection.beatmapId}, beatmapsetId=${selection.beatmapsetId}, mods=${selection.selectedMods}${selection.modPosition}`);
-                });
-
-                // 先尝试用beatmapId匹配
-                if (scoreBeatmapId) {
-                    mapSelection = mapSelections.find(selection =>
-                        selection.beatmapId.toString() === scoreBeatmapId.toString()
-                    );
-                }
-
-                // 如果beatmapId匹配失败，尝试用beatmapsetId匹配
-                if (!mapSelection && scoreBeatmapsetId) {
-                    mapSelection = mapSelections.find(selection =>
-                        selection.beatmapsetId.toString() === scoreBeatmapsetId.toString()
-                    );
-                }
-
-                if (mapSelection) {
-                    console.log(`Found map selection:`, mapSelection);
+                // 如果没有map selections，跳过匹配
+                if (mapSelections.length === 0) {
+                    console.log(`Warning: No map selections available for matching`);
                 } else {
-                    console.log(`No map selection found for beatmapId: ${scoreBeatmapId} or beatmapsetId: ${scoreBeatmapsetId}`);
-                    console.log(`所有可用的beatmapIds: ${mapSelections.map(s => s.beatmapId).join(', ')}`);
-                    console.log(`所有可用的beatmapsetIds: ${mapSelections.map(s => s.beatmapsetId).join(', ')}`);
+                    // 打印所有map selections的beatmapId用于调试
+                    mapSelections.forEach((selection, index) => {
+                        console.log(`Map selection ${index}: beatmapId=${selection.beatmapId}, beatmapsetId=${selection.beatmapsetId}, mods=${selection.selectedMods}${selection.modPosition}`);
+                    });
+
+                    // 先尝试用beatmapId匹配（转换为字符串确保类型一致）
+                    if (scoreBeatmapId) {
+                        const scoreBeatmapIdStr = scoreBeatmapId.toString();
+                        mapSelection = mapSelections.find(selection =>
+                            selection.beatmapId && selection.beatmapId.toString() === scoreBeatmapIdStr
+                        );
+                    }
+
+                    // 如果beatmapId匹配失败，尝试用beatmapsetId匹配
+                    if (!mapSelection && scoreBeatmapsetId) {
+                        const scoreBeatmapsetIdStr = scoreBeatmapsetId.toString();
+                        mapSelection = mapSelections.find(selection =>
+                            selection.beatmapsetId && selection.beatmapsetId.toString() === scoreBeatmapsetIdStr
+                        );
+                    }
+
+                    if (mapSelection) {
+                        console.log(`Found map selection for ${score.username}:`, {
+                            beatmapId: mapSelection.beatmapId,
+                            beatmapsetId: mapSelection.beatmapsetId,
+                            mods: mapSelection.selectedMods + mapSelection.modPosition
+                        });
+                    } else {
+                        console.log(`No map selection found for ${score.username}:`, {
+                            scoreBeatmapId,
+                            scoreBeatmapsetId,
+                            availableBeatmapIds: mapSelections.map(s => s.beatmapId).filter(Boolean),
+                            availableBeatmapsetIds: mapSelections.map(s => s.beatmapsetId).filter(Boolean)
+                        });
+                    }
                 }
+            } else {
+                console.log(`Warning: Score for ${score.username} has no beatmap information:`, {
+                    scoreBeatmapId,
+                    scoreBeatmapsetId,
+                    originalScore: score
+                });
             }
 
             if (mapSelection) {
