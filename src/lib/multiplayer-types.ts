@@ -179,4 +179,8 @@ export interface DisplayScore {
     // 添加beatmap信息用于匹配map selections
     beatmap_id?: number | null;
     beatmapset_id?: number | null;
+    // 添加房间信息
+    roomId?: number | string | null;
+    roomName?: string | null;
+    playlistId?: number | null;
 }

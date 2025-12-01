@@ -166,19 +166,22 @@ export default function MultiplayerScoresPage() {
                     return;
                 }
 
-                // 首先尝试从数据库中获取分数
+                // 优先从数据库获取分数
+                console.log(`优先从数据库获取 ${uniqueRoomIds.length} 个房间的分数...`);
                 let allDatabaseScores: DisplayScore[] = [];
+                let databaseHasData = false;
 
                 // 从数据库获取分数
                 for (const roomId of uniqueRoomIds) {
                     try {
-                        console.log(`Loading scores from database for room ${roomId}`);
+                        console.log(`Checking database for room ${roomId}...`);
                         const scoresResponse = await fetch(`/api/match-scores/save?roomId=${roomId}`);
                         const scoresData = await scoresResponse.json();
 
                         console.log(`Database response for room ${roomId}:`, scoresData.success ? `${scoresData.scores?.length || 0} scores` : 'Failed');
 
-                        if (scoresData.success && scoresData.scores) {
+                        if (scoresData.success && scoresData.scores && scoresData.scores.length > 0) {
+                            databaseHasData = true;
                             // 为每个分数添加房间信息
                             const scoresWithRoomInfo = scoresData.scores.map((score: DisplayScore) => ({
                                 ...score,
@@ -186,7 +189,7 @@ export default function MultiplayerScoresPage() {
                                 roomName: scoresData.room?.name || `Room ${roomId}`
                             }));
                             allDatabaseScores.push(...scoresWithRoomInfo);
-                            console.log(`Added ${scoresWithRoomInfo.length} scores from room ${roomId}`);
+                            console.log(`Added ${scoresWithRoomInfo.length} scores from database room ${roomId}`);
                         }
                     } catch (err) {
                         console.error(`Error loading scores from database for room ${roomId}:`, err);
@@ -197,126 +200,97 @@ export default function MultiplayerScoresPage() {
 
                 // 如果数据库中有数据，直接使用
                 if (allDatabaseScores.length > 0) {
+                    console.log('使用数据库中的分数数据');
                     setDatabaseScores(allDatabaseScores);
+                    setError(`成功从数据库加载了 ${allDatabaseScores.length} 条分数记录。`);
                 } else {
+                    console.log('数据库中没有数据，从osu API获取...');
+
                     // 数据库中没有数据，从API获取所有房间的分数
-                    let successfullyLoadedRooms = 0;
-                    let failedRooms = 0;
-                    let allApiScores: DisplayScore[] = [];
+                    const response = await fetch('/api/multiplayer/rooms/scores', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            roomIds: uniqueRoomIds,
+                            onlyValid: true, // 只获取通过且完成的分数
+                            // 可以根据需要添加时间筛选
+                            // startDate: '2025-11-01T00:00:00Z',
+                            // endDate: '2025-12-31T23:59:59Z',
+                        }),
+                    });
 
-                    // 从session获取当前用户的osuId，用于保存分数
-                    let currentUserOsuId = '';
-                    try {
-                        const sessionResponse = await fetch('/api/session/get');
-                        const sessionData = await sessionResponse.json();
-                        if (sessionData.success && sessionData.session?.osuId) {
-                            currentUserOsuId = sessionData.session.osuId;
-                        }
-                    } catch (err) {
-                        console.error('Error getting session data:', err);
-                    }
+                    const data = await response.json();
 
-                    // 存储需要保存的房间和分数
-                    let roomsToSave: { room: any; scores: DisplayScore[] }[] = [];
+                    if (data.success) {
+                        console.log(`成功从osu API获取到 ${data.scores.length} 条分数`);
 
-                    for (const roomId of uniqueRoomIds) {
+                        // 从session获取当前用户的osuId，用于保存分数
+                        let currentUserOsuId = '';
                         try {
-                            // 加载房间信息
-                            const roomResponse = await fetch(`/api/multiplayer/rooms?roomId=${roomId}`);
-                            const roomData = await roomResponse.json();
-
-                            if (roomData.success && roomData.rooms.length > 0) {
-                                const room = roomData.rooms[0];
-                                // 加载该房间的所有图池分数
-                                const roomScores = await loadAllScoresWithRoom(room);
-                                // 为分数添加房间信息并添加到allApiScores
-                                const scoresWithRoomInfo = roomScores.map((score: DisplayScore) => ({
-                                    ...score,
-                                    roomId: roomId,
-                                    roomName: room.name
-                                }));
-                                allApiScores = [...allApiScores, ...scoresWithRoomInfo];
-
-                                // 将房间和分数添加到保存列表，不立即保存
-                                if (currentUserOsuId && roomScores.length > 0) {
-                                    roomsToSave.push({ room, scores: roomScores });
-                                }
-
-                                successfullyLoadedRooms++;
-                            } else {
-                                console.error(`Failed to load room ${roomId}:`, roomData.error || 'Room not found');
-                                failedRooms++;
+                            const sessionResponse = await fetch('/api/session/get');
+                            const sessionData = await sessionResponse.json();
+                            if (sessionData.success && sessionData.session?.osuId) {
+                                currentUserOsuId = sessionData.session.osuId;
                             }
                         } catch (err) {
-                            console.error(`Error loading scores from API for room ${roomId}:`, err);
-                            failedRooms++;
+                            console.error('Error getting session data:', err);
                         }
-                    }
 
-                    // 全部加载完后，一次性保存所有房间的分数
-                    if (currentUserOsuId && roomsToSave.length > 0) {
-                        try {
-                            for (const { room, scores } of roomsToSave) {
-                                const saveResponse = await fetch('/api/match-scores/save', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                        room: room,
-                                        scores: scores,
-                                        osuId: currentUserOsuId
-                                    }),
+                        // 如果有当前用户且获取到了分数，保存到数据库
+                        if (currentUserOsuId && data.scores.length > 0) {
+                            try {
+                                // 按房间分组保存
+                                const scoresByRoom: { [roomId: string]: DisplayScore[] } = {};
+                                data.scores.forEach((score: DisplayScore) => {
+                                    const roomId = score.roomId?.toString();
+                                    if (roomId) {
+                                        if (!scoresByRoom[roomId]) {
+                                            scoresByRoom[roomId] = [];
+                                        }
+                                        scoresByRoom[roomId].push(score);
+                                    }
                                 });
 
-                                const saveData = await saveResponse.json();
-                                if (saveData.success) {
-                                    console.log(`Successfully saved scores for room ${room.id}`);
+                                // 为每个房间保存分数
+                                for (const [roomId, scores] of Object.entries(scoresByRoom)) {
+                                    const roomInfo = data.rooms.find((r: any) => r.id.toString() === roomId);
+                                    if (roomInfo) {
+                                        const saveResponse = await fetch('/api/match-scores/save', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({
+                                                room: roomInfo,
+                                                scores: scores,
+                                                osuId: currentUserOsuId
+                                            }),
+                                        });
+
+                                        const saveData = await saveResponse.json();
+                                        if (saveData.success) {
+                                            console.log(`Successfully saved ${scores.length} scores for room ${roomId}`);
+                                        } else {
+                                            console.error(`Failed to save scores for room ${roomId}:`, saveData.error);
+                                        }
+                                    }
                                 }
+
+                                setError(`从osu API获取并保存了 ${data.scores.length} 条分数记录，涵盖 ${Object.keys(scoresByRoom).length} 个房间。`);
+                            } catch (err) {
+                                console.error('Error saving scores to database:', err);
+                                setError(`从osu API获取了 ${data.scores.length} 条分数记录，但保存到数据库时出错。`);
                             }
-                        } catch (err) {
-                            console.error('Error saving scores to database:', err);
                         }
-                    }
 
-                    // 重新从数据库获取分数，确保数据最新
-                    let refreshedDatabaseScores: DisplayScore[] = [];
-                    for (const roomId of uniqueRoomIds) {
-                        try {
-                            const scoresResponse = await fetch(`/api/match-scores/save?roomId=${roomId}`);
-                            const scoresData = await scoresResponse.json();
-
-                            if (scoresData.success && scoresData.scores) {
-                                // 为每个分数添加房间信息
-                                const scoresWithRoomInfo = scoresData.scores.map((score: DisplayScore) => ({
-                                    ...score,
-                                    roomId: roomId,
-                                    roomName: scoresData.room?.name || `Room ${roomId}`
-                                }));
-                                refreshedDatabaseScores.push(...scoresWithRoomInfo);
-                            }
-                        } catch (err) {
-                            console.error(`Error refreshing scores from database for room ${roomId}:`, err);
-                        }
-                    }
-
-                    // 设置分数到databaseScores，用于显示
-                    if (refreshedDatabaseScores.length > 0) {
-                        setDatabaseScores(refreshedDatabaseScores);
+                        // 设置分数数据
+                        setDatabaseScores(data.scores);
                     } else {
-                        setDatabaseScores(allApiScores);
-                    }
-
-                    // 显示加载结果
-                    if (successfullyLoadedRooms > 0) {
-                        if (failedRooms > 0) {
-                            setError(`成功加载了 ${successfullyLoadedRooms} 个房间的分数数据，并自动保存到数据库，但有 ${failedRooms} 个房间无法加载。`);
-                        } else {
-                            setError(`成功加载了 ${successfullyLoadedRooms} 个房间的分数数据，并自动保存到数据库。`);
-                        }
-                    } else {
-                        // 如果所有房间都无法加载，才显示错误信息
-                        setError(`无法从API获取该轮次的任何分数数据，所有 ${uniqueRoomIds.length} 个房间都无法加载。`);
+                        console.error('Batch API failed:', data.error);
+                        setError(`从osu API获取分数失败: ${data.error}`);
+                        setDatabaseScores([]);
                     }
                 }
             } else {
