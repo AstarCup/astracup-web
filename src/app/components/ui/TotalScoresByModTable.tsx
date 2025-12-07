@@ -21,6 +21,7 @@ interface PlayerModScores {
     avatarUrl: string;
     countryCode: string;
     scores: { [modPosition: string]: number | null }; // mod位 -> 分数
+    scoreDetails: { [modPosition: string]: DisplayScore | null }; // mod位 -> 完整分数对象
     ranks: { [modPosition: string]: number | null }; // mod位 -> 排名
     totalScore: number;
     totalRank: number | null; // 总分排名
@@ -87,6 +88,7 @@ export default function TotalScoresByModTable({
                 avatarUrl: `https://a.ppy.sh/${osuId}`,
                 countryCode: '',
                 scores: {},
+                scoreDetails: {},
                 ranks: {},
                 totalScore: 0,
                 totalRank: null,
@@ -108,6 +110,7 @@ export default function TotalScoresByModTable({
                     avatarUrl: firstScore.avatar_url || `https://a.ppy.sh/${osuId}`,
                     countryCode: firstScore.country_code,
                     scores: {},
+                    scoreDetails: {},
                     ranks: {},
                     totalScore: 0,
                     totalRank: null,
@@ -128,6 +131,7 @@ export default function TotalScoresByModTable({
                         avatarUrl: registration.avatar_url || `https://a.ppy.sh/${osuId}`,
                         countryCode: registration.country || '',
                         scores: {},
+                        scoreDetails: {},
                         ranks: {},
                         totalScore: 0,
                         totalRank: null,
@@ -249,6 +253,7 @@ export default function TotalScoresByModTable({
                         player.totalScore += score.total_score;
                     }
                     player.scores[modPosition] = score.total_score;
+                    player.scoreDetails[modPosition] = score; // 保存完整的分数对象
                     console.log(`为玩家 ${score.username} 设置 ${modPosition} 分数: ${score.total_score}`);
                 }
             } else {
@@ -563,6 +568,88 @@ export default function TotalScoresByModTable({
         return 'bg-white'; // 前16名的默认背景
     };
 
+    // 分数详细信息 Hover 卡片组件
+    const ScoreDetailsHoverCard = ({ scoreDetails }: { scoreDetails: DisplayScore | null }) => {
+        if (!scoreDetails) return null;
+
+        const { statistics, accuracy, max_combo, rank, mods, ended_at } = scoreDetails;
+
+        return (
+            <div className="absolute z-50 w-64 bg-white rounded-lg shadow-lg border border-gray-200 p-4 top-full left-1/2 transform -translate-x-1/2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                <div className="text-sm space-y-3">
+                    {/* 准确率 */}
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-600">ACC:</span>
+                        <span className="font-mono font-semibold text-blue-600">
+                            {(accuracy * 100).toFixed(2)}%
+                        </span>
+                    </div>
+
+                    {/* 最大连击 */}
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-600">MaxCombo:</span>
+                        <span className="font-mono font-semibold text-purple-600">
+                            {max_combo.toLocaleString()}
+                        </span>
+                    </div>
+
+                    {/* 判定详情 */}
+                    <div className="border-t border-gray-200 pt-2 mt-2">
+                        <div className="grid grid-cols-4 gap-2 text-xs">
+                            <div className="flex flex-col justify-between">
+                                <span className="text-gray-600">300</span>
+                                <span className="font-mono font-semibold text-xl text-blue-600">
+                                    {statistics.count_300?.toLocaleString() || 0}
+                                </span>
+                            </div>
+                            <div className="flex flex-col justify-between">
+                                <span className="text-gray-600">100</span>
+                                <span className="font-mono font-semibold text-xl text-green-600">
+                                    {statistics.count_100?.toLocaleString() || 0}
+                                </span>
+                            </div>
+                            <div className="flex flex-col justify-between">
+                                <span className="text-gray-600">50</span>
+                                <span className="font-mono font-semibold text-xl text-yellow-600">
+                                    {statistics.count_50?.toLocaleString() || 0}
+                                </span>
+                            </div>
+                            <div className="flex flex-col justify-between">
+                                <span className="text-gray-600">Miss</span>
+                                <span className="font-mono font-semibold text-xl text-red-600">
+                                    {statistics.count_miss?.toLocaleString() || 0}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 排名和MOD */}
+                    <div className="border-t border-gray-200 pt-2 mt-2">
+                        <div className="flex justify-between items-center">
+                            <span className="text-gray-600">Rank:</span>
+                            <span className={`font-bold ${rank === 'S' ? 'text-purple-600' : rank === 'A' ? 'text-green-600' : rank === 'B' ? 'text-blue-600' : 'text-gray-600'}`}>
+                                {rank}
+                            </span>
+                        </div>
+                        {mods && mods.length > 0 && (
+                            <div className="flex justify-between items-center mt-1">
+                                <span className="text-gray-600">MOD:</span>
+                                <span className="font-mono text-xs font-semibold text-gray-700">
+                                    {mods.join(', ')}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+
+
+                </div>
+
+                {/* 小箭头指向分数 */}
+                <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-white"></div>
+            </div>
+        );
+    };
+
     if (loading) {
         return (
             <div className="text-center py-8 text-white">
@@ -701,15 +788,19 @@ export default function TotalScoresByModTable({
                                     {modPositions.map(modPosition => {
                                         const score = player.scores[modPosition];
                                         const rank = player.ranks[modPosition];
+                                        const scoreDetail = player.scoreDetails[modPosition];
                                         return (
                                             <td
                                                 key={modPosition}
-                                                className="px-4 py-3 text-center font-mono border-r border-gray-600 last:border-r-0"
+                                                className="px-4 py-3 text-center font-mono border-r border-gray-600 last:border-r-0 relative group"
                                             >
                                                 {score ? (
-                                                    <span className={getScoreStyle(rank)}>
-                                                        {score.toLocaleString()}
-                                                    </span>
+                                                    <div className="relative">
+                                                        <span className={`${getScoreStyle(rank)} cursor-help`}>
+                                                            {score.toLocaleString()}
+                                                        </span>
+                                                        <ScoreDetailsHoverCard scoreDetails={scoreDetail} />
+                                                    </div>
                                                 ) : (
                                                     <span className="text-gray-500">-</span>
                                                 )}

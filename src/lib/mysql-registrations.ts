@@ -321,7 +321,7 @@ export const initDatabase = async (): Promise<void> => {
                 playlist_id BIGINT COMMENT '图池ID',
                 beatmap_id BIGINT COMMENT '谱面ID',
                 total_score BIGINT DEFAULT 0 COMMENT '总分',
-                accuracy DECIMAL(5,2) DEFAULT 0 COMMENT '准确率',
+                accuracy DECIMAL(8,5) DEFAULT 0 COMMENT '准确率',
                 max_combo INT DEFAULT 0 COMMENT '最大连击',
                 mods VARCHAR(255) COMMENT '使用的mods',
                 \`rank\` VARCHAR(10) COMMENT '排名',
@@ -1900,20 +1900,26 @@ const mysqlStorage = {
 
             // 批量插入分数数据
             const insertPromises = scores.map((score, index) => {
+                // 验证玩家信息的完整性
+                if (!score.user_id || !score.username) {
+                    console.error(`[Player Validation Error] Score ${index}: Invalid player info - user_id=${score.user_id}, username=${score.username}`);
+                    return Promise.reject(new Error(`Invalid player info in score ${index}`));
+                }
+
                 // 验证必要字段
                 if (!score.beatmapId && !score.beatmap_id) {
                     console.warn(`Warning: Score ${index} for user ${score.username} has no beatmapId or beatmap_id`);
                 }
 
                 const beatmapId = score.beatmapId || score.beatmap_id || null;
-                const beatmapsetId = score.beatmapsetId || score.beatmapset_id || null;
 
-                console.log(`Saving score for ${score.username}:`, {
+                console.log(`[Score Validation] Saving score for player ${score.username} (ID: ${score.user_id}):`, {
                     user_id: score.user_id,
+                    username: score.username,
                     playlistId: score.playlistId,
                     beatmapId: beatmapId,
-                    beatmapsetId: beatmapsetId,
-                    total_score: score.total_score
+                    total_score: score.total_score,
+                    room_id: room.id
                 });
 
                 return connection.execute(`
@@ -1925,27 +1931,27 @@ const mysqlStorage = {
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `, [
                     room.id,
-                    room.name,
-                    room.category,
-                    room.type,
+                    room.name || null,
+                    room.category || null,
+                    room.type || null,
                     room.starts_at ? new Date(room.starts_at) : null,
                     room.ends_at ? new Date(room.ends_at) : null,
-                    room.participant_count,
-                    room.host?.id,
-                    room.host?.username,
+                    room.participant_count || 0,
+                    room.host?.id || null,
+                    room.host?.username || null,
                     room.playlist?.length || 0,
                     score.user_id,
                     score.username,
-                    score.playlistId,
-                    beatmapId, // 使用验证后的beatmapId
-                    score.total_score,
-                    score.accuracy,
-                    score.max_combo,
-                    score.mods?.join(',') || '',
-                    score.rank,
-                    score.passed,
+                    score.playlistId || null,
+                    beatmapId,
+                    score.total_score || 0,
+                    score.accuracy || 0,
+                    score.max_combo || 0,
+                    score.mods?.join(',') || null,
+                    score.rank || null,
+                    score.passed !== undefined ? score.passed : true,
                     JSON.stringify(score.statistics || {}),
-                    score.pp,
+                    score.pp || null,
                     score.ended_at ? new Date(score.ended_at) : null
                 ]);
             });

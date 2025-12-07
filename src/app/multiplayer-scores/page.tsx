@@ -26,7 +26,12 @@ export default function MultiplayerScoresPage() {
     const [loadingPlayers, setLoadingPlayers] = useState(false);
     const [loadingRegistrations, setLoadingRegistrations] = useState(false); // 加载已报名数据的状态
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'byPlaylist' | 'byTotal'>('byPlaylist');
+    const [activeTab, setActiveTab] = useState<'byPlaylist' | 'byTotal'>(() => {
+        // 如果有round_number参数，默认显示按总分tab
+        const urlParams = new URLSearchParams(window.location.search);
+        const roundNumberParam = urlParams.get('round_number');
+        return roundNumberParam ? 'byTotal' : 'byPlaylist';
+    });
 
     // 管理员控制面板状态
     const isAdmin = useIsAdmin();
@@ -257,6 +262,8 @@ export default function MultiplayerScoresPage() {
                                 for (const [roomId, scores] of Object.entries(scoresByRoom)) {
                                     const roomInfo = data.rooms.find((r: any) => r.id.toString() === roomId);
                                     if (roomInfo) {
+                                        console.log(`[Round Save] Saving ${scores.length} scores for room ${roomId} (${roomInfo.name})`);
+
                                         const saveResponse = await fetch('/api/match-scores/save', {
                                             method: 'POST',
                                             headers: {
@@ -271,16 +278,16 @@ export default function MultiplayerScoresPage() {
 
                                         const saveData = await saveResponse.json();
                                         if (saveData.success) {
-                                            console.log(`Successfully saved ${scores.length} scores for room ${roomId}`);
+                                            console.log(`[Round Save] Successfully saved ${scores.length} scores for room ${roomId}`);
                                         } else {
-                                            console.error(`Failed to save scores for room ${roomId}:`, saveData.error);
+                                            console.error(`[Round Save] Failed to save scores for room ${roomId}:`, saveData.error);
                                         }
                                     }
                                 }
 
                                 setError(`从osu API获取并保存了 ${data.scores.length} 条分数记录，涵盖 ${Object.keys(scoresByRoom).length} 个房间。`);
                             } catch (err) {
-                                console.error('Error saving scores to database:', err);
+                                console.error('[Round Save] Error saving scores to database:', err);
                                 setError(`从osu API获取了 ${data.scores.length} 条分数记录，但保存到数据库时出错。`);
                             }
                         }
@@ -704,57 +711,67 @@ export default function MultiplayerScoresPage() {
             let totalSavedScores = 0;
 
             if (roundNumberParam) {
-                // 如果有round_number参数，保存该轮次所有房间的分数数据
-                // 获取该轮次的所有match_link数据
-                const matchSchedulesResponse = await fetch('/api/match-schedules');
-                const matchSchedulesData = await matchSchedulesResponse.json();
+                // 如果有round_number参数，直接使用当前已加载的databaseScores进行保存
+                if (databaseScores.length === 0) {
+                    setSaveError('没有可保存的分数数据，请先加载分数');
+                    return;
+                }
 
-                if (matchSchedulesData.success) {
-                    // 过滤出该轮次的比赛
-                    const roundSchedules = matchSchedulesData.schedules.filter((schedule: any) =>
-                        schedule.room && schedule.room.round_number === parseInt(roundNumberParam)
-                    );
+                console.log(`[Round Save] 准备保存 ${databaseScores.length} 条已加载的分数数据`);
 
-                    // 从match_link中提取房间号
-                    const roomIds = roundSchedules
-                        .map((schedule: any) => extractRoomIdFromUrl(schedule.match_link))
-                        .filter((roomId: string | null): roomId is string => roomId !== null);
-
-                    // 去重
-                    const uniqueRoomIds = [...new Set(roomIds)];
-
-                    // 遍历所有房间，保存每个房间的分数数据
-                    for (const roomId of uniqueRoomIds) {
-                        try {
-                            // 加载房间信息
-                            const roomResponse = await fetch(`/api/multiplayer/rooms?roomId=${roomId}`);
-                            const roomData = await roomResponse.json();
-
-                            if (roomData.success && roomData.rooms.length > 0) {
-                                const room = roomData.rooms[0];
-                                // 加载该房间的所有分数数据
-                                await loadRoomById(String(roomId));
-                                // 保存该房间的分数数据
-                                const scoresResponse = await fetch('/api/match-scores/save', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                        room: room,
-                                        scores: allScores,
-                                        osuId: currentUserOsuId
-                                    }),
-                                });
-
-                                const scoresData = await scoresResponse.json();
-                                if (scoresData.success) {
-                                    totalSavedScores += scoresData.data.scores_count;
-                                }
-                            }
-                        } catch (err) {
-                            console.error(`保存房间 ${roomId} 的分数数据时发生错误:`, err);
+                // 按房间分组保存分数
+                const scoresByRoom: { [roomId: string]: DisplayScore[] } = {};
+                databaseScores.forEach((score: DisplayScore) => {
+                    const roomId = score.roomId?.toString();
+                    if (roomId) {
+                        if (!scoresByRoom[roomId]) {
+                            scoresByRoom[roomId] = [];
                         }
+                        scoresByRoom[roomId].push(score);
+                    }
+                });
+
+                console.log(`[Round Save] 分组结果: ${Object.keys(scoresByRoom).length} 个房间`);
+
+                // 为每个房间保存分数
+                for (const [roomId, roomScores] of Object.entries(scoresByRoom)) {
+                    try {
+                        // 获取房间信息
+                        const roomResponse = await fetch(`/api/multiplayer/rooms?roomId=${roomId}`);
+                        const roomData = await roomResponse.json();
+
+                        if (roomData.success && roomData.rooms.length > 0) {
+                            const room = roomData.rooms[0];
+
+                            console.log(`[Round Save] 保存房间 ${roomId} (${room.name}) 的 ${roomScores.length} 条分数`);
+
+                            const saveResponse = await fetch('/api/match-scores/save', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    room: room,
+                                    scores: roomScores,
+                                    osuId: currentUserOsuId
+                                }),
+                            });
+
+                            const saveData = await saveResponse.json();
+                            if (saveData.success) {
+                                totalSavedScores += saveData.data.scores_count;
+                                console.log(`[Round Save] 成功保存房间 ${roomId} 的 ${saveData.data.scores_count} 条分数`);
+                            } else {
+                                console.error(`[Round Save] 保存房间 ${roomId} 失败:`, saveData.error);
+                                setSaveError(`保存房间 ${room.name} 的分数失败: ${saveData.error}`);
+                            }
+                        } else {
+                            console.error(`[Round Save] 获取房间 ${roomId} 信息失败`);
+                            setSaveError(`获取房间 ${roomId} 信息失败`);
+                        }
+                    } catch (err) {
+                        console.error(`[Round Save] 保存房间 ${roomId} 的分数数据时发生错误:`, err);
+                        setSaveError(`保存房间 ${roomId} 的分数数据时发生错误`);
                     }
                 }
             } else if (selectedRoom) {
@@ -893,8 +910,8 @@ export default function MultiplayerScoresPage() {
                         {/* 保存当前房间分数按钮 */}
                         <button
                             onClick={saveScoresToDatabase}
-                            disabled={savingScores || !selectedRoom}
-                            className={`px-4 py-2 rounded font-medium transition ${savingScores || !selectedRoom
+                            disabled={savingScores || (!selectedRoom && !databaseScores.length)}
+                            className={`px-4 py-2 rounded font-medium transition ${savingScores || (!selectedRoom && !databaseScores.length)
                                 ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
                                 : 'bg-green-600 text-white hover:bg-green-700'
                                 }`}
@@ -1022,27 +1039,29 @@ export default function MultiplayerScoresPage() {
                     </div>
                 </div>
             )}
-            {/* Tab切换 - 放在顶部 */}
-            <div className="flex border-b border-gray-600 mb-6">
-                <button
-                    className={`px-6 py-3 font-medium text-lg transition ${activeTab === 'byPlaylist'
-                        ? 'text-white border-b-2 border-[#E93B66]'
-                        : 'text-gray-400 hover:text-white'
-                        }`}
-                    onClick={() => setActiveTab('byPlaylist')}
-                >
-                    按图池
-                </button>
-                <button
-                    className={`px-6 py-3 font-medium text-lg transition ${activeTab === 'byTotal'
-                        ? 'text-white border-b-2 border-[#E93B66]'
-                        : 'text-gray-400 hover:text-white'
-                        }`}
-                    onClick={() => setActiveTab('byTotal')}
-                >
-                    按总分
-                </button>
-            </div>
+            {/* Tab切换 - 放在顶部，只在没有round_number参数时显示 */}
+            {!new URLSearchParams(window.location.search).get('round_number') && (
+                <div className="flex border-b border-gray-600 mb-6">
+                    <button
+                        className={`px-6 py-3 font-medium text-lg transition ${activeTab === 'byPlaylist'
+                            ? 'text-white border-b-2 border-[#E93B66]'
+                            : 'text-gray-400 hover:text-white'
+                            }`}
+                        onClick={() => setActiveTab('byPlaylist')}
+                    >
+                        按图池
+                    </button>
+                    <button
+                        className={`px-6 py-3 font-medium text-lg transition ${activeTab === 'byTotal'
+                            ? 'text-white border-b-2 border-[#E93B66]'
+                            : 'text-gray-400 hover:text-white'
+                            }`}
+                        onClick={() => setActiveTab('byTotal')}
+                    >
+                        按总分
+                    </button>
+                </div>
+            )}
 
             {/* Playlist选择区域 - 只在按图池tab时显示 */}
             {activeTab === 'byPlaylist' && selectedRoom && selectedRoom.playlist.length > 0 && (
@@ -1105,34 +1124,11 @@ export default function MultiplayerScoresPage() {
                 </div>
             )}
 
-            {/* Tab切换和分数表格 */}
+            {/* 分数表格 */}
             {(selectedRoom || databaseScores.length > 0) && (
                 <div className="bg-[#3D3D3D] p-6">
-                    {/* 表格内容 */}
-                    {activeTab === 'byPlaylist' && (
-                        <>
-                            {/* 按图池需要选择具体图池 */}
-                            {selectedPlaylist ? (
-                                <MultiplayerScoresTable
-                                    scores={databaseScores.length > 0 ? databaseScores.filter(score => {
-                                        const scoreBeatmapId = (score as any).beatmapId || (score as any).beatmap?.id;
-                                        const playlistInfo = getSelectedPlaylistInfo();
-                                        return playlistInfo && scoreBeatmapId === playlistInfo.beatmap_id;
-                                    }) : filteredScores}
-                                    title={getPageTitle()}
-                                    loading={loadingScores || loadingPlayers || loadingDatabaseScores}
-                                    onRefresh={loadScores}
-                                />
-                            ) : (
-                                <div className="text-center py-8 text-white">
-                                    <p className="text-lg">请先选择一个图池</p>
-                                    <p className="text-sm text-gray-400 mt-2">在上方图池选择区域选择一个图池来查看分数</p>
-                                </div>
-                            )}
-                        </>
-                    )}
-
-                    {activeTab === 'byTotal' && (
+                    {/* 如果有round_number参数，直接显示按总分表格 */}
+                    {new URLSearchParams(window.location.search).get('round_number') ? (
                         <TotalScoresByModTable
                             scores={databaseScores.length > 0 ? databaseScores : allScores}
                             mapSelections={mapSelections}
@@ -1142,6 +1138,45 @@ export default function MultiplayerScoresPage() {
                             selectedRoom={selectedRoom} // 传递房间信息用于匹配
                             registrations={registrations} // 传递已报名数据用于获取玩家信息
                         />
+                    ) : (
+                        /* 否则根据activeTab显示对应表格 */
+                        <>
+                            {/* 表格内容 */}
+                            {activeTab === 'byPlaylist' && (
+                                <>
+                                    {/* 按图池需要选择具体图池 */}
+                                    {selectedPlaylist ? (
+                                        <MultiplayerScoresTable
+                                            scores={databaseScores.length > 0 ? databaseScores.filter(score => {
+                                                const scoreBeatmapId = (score as any).beatmapId || (score as any).beatmap?.id;
+                                                const playlistInfo = getSelectedPlaylistInfo();
+                                                return playlistInfo && scoreBeatmapId === playlistInfo.beatmap_id;
+                                            }) : filteredScores}
+                                            title={getPageTitle()}
+                                            loading={loadingScores || loadingPlayers || loadingDatabaseScores}
+                                            onRefresh={loadScores}
+                                        />
+                                    ) : (
+                                        <div className="text-center py-8 text-white">
+                                            <p className="text-lg">请先选择一个图池</p>
+                                            <p className="text-sm text-gray-400 mt-2">在上方图池选择区域选择一个图池来查看分数</p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {activeTab === 'byTotal' && (
+                                <TotalScoresByModTable
+                                    scores={databaseScores.length > 0 ? databaseScores : allScores}
+                                    mapSelections={mapSelections}
+                                    approvedPlayers={approvedPlayers}
+                                    currentBeatmapId={undefined} // 按总分不需要当前图池ID
+                                    loading={loadingDatabaseScores || loadingAllScores || loadingPlayers || loadingMapSelections}
+                                    selectedRoom={selectedRoom} // 传递房间信息用于匹配
+                                    registrations={registrations} // 传递已报名数据用于获取玩家信息
+                                />
+                            )}
+                        </>
                     )}
                 </div>
             )}
