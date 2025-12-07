@@ -39,6 +39,45 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
         }
     };
 
+    // 气泡组件
+    const ScoreBubble = ({ text, position }: { text: string; position: 'top' | 'bottom' }) => {
+        const positionClasses = position === 'top'
+            ? 'bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 mb-1'
+            : 'top-full left-1/2 transform -translate-x-1/2 translate-y-1 mt-1';
+
+        const arrowClasses = position === 'top'
+            ? 'top-full left-1/2 transform -translate-x-1/2 -translate-y-1'
+            : 'bottom-full left-1/2 transform -translate-x-1/2 translate-y-1';
+
+        return (
+            <div className={`absolute ${positionClasses} z-10`}>
+                <div className="relative">
+                    <div className="text-black bg-white border border-black text-xs px-2 py-1 rounded-lg shadow-lg whitespace-nowrap font-semibold">
+                        {text}
+                    </div>
+                    {/* 小三角形箭头 */}
+                    <div className={`absolute w-2 h-2 bg-black transform rotate-45 -z-2 ${arrowClasses}`}></div>
+                </div>
+            </div>
+        );
+    };
+
+    // 检查是否需要显示气泡
+    const shouldShowBubbles = (player1Score: string, player2Score: string) => {
+        const score1 = parseInt(player1Score) || 0;
+        const score2 = parseInt(player2Score) || 0;
+        const maxScore = Math.max(score1, score2);
+        const minScore = Math.min(score1, score2);
+        return maxScore - 1 === minScore && score1 !== score2;
+    };
+
+    // 确定哪个玩家是最高分
+    const getHighScorer = (player1Score: string, player2Score: string) => {
+        const score1 = parseInt(player1Score) || 0;
+        const score2 = parseInt(player2Score) || 0;
+        return score1 > score2 ? 'player1' : 'player2';
+    };
+
     const formatDateTime = (dateString: string, timeString: string) => {
         try {
             // 如果date是ISO格式，提取日期部分
@@ -179,9 +218,27 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
 
                                             {/* Score */}
                                             <div className="flex items-center space-x-2 text-lg font-bold">
-                                                <span className="text-red-600">{item.player1Score}</span>
+                                                {/* Player 1 Score with Bubble */}
+                                                <div className="relative">
+                                                    <span className="text-red-600">{item.player1Score}</span>
+                                                    {shouldShowBubbles(item.player1Score, item.player2Score) && getHighScorer(item.player1Score, item.player2Score) === 'player1' && (
+                                                        <ScoreBubble text="你，你可有何话说！" position="bottom" />
+                                                    )}
+                                                    {shouldShowBubbles(item.player1Score, item.player2Score) && getHighScorer(item.player1Score, item.player2Score) === 'player2' && (
+                                                        <ScoreBubble text="再无话说，请速速动手！" position="top" />
+                                                    )}
+                                                </div>
                                                 <span className="text-gray-400">:</span>
-                                                <span className="text-blue-600">{item.player2Score}</span>
+                                                {/* Player 2 Score with Bubble */}
+                                                <div className="relative">
+                                                    <span className="text-blue-600">{item.player2Score}</span>
+                                                    {shouldShowBubbles(item.player1Score, item.player2Score) && getHighScorer(item.player1Score, item.player2Score) === 'player2' && (
+                                                        <ScoreBubble text="你，你可有何话说！" position="bottom" />
+                                                    )}
+                                                    {shouldShowBubbles(item.player1Score, item.player2Score) && getHighScorer(item.player1Score, item.player2Score) === 'player1' && (
+                                                        <ScoreBubble text="再无话说，请速速动手！" position="top" />
+                                                    )}
+                                                </div>
                                             </div>
 
                                             {/* Player 2 */}
