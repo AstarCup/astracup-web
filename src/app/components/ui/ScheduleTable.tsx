@@ -136,9 +136,9 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
                                         <span>{round}</span>
                                         <button
                                             onClick={() => window.location.href = `/multiplayer-scores?round_number=${groupedSchedule[round][0].round_number}`}
-                                            className='bg-[#E93B66] mx-2 text-white px-4 py-2 rounded font-semibold hover:bg-opacity-90 transition-colors'
+                                            className='text-[#E93B66] mx-2 px-4 py-2 rounded font-semibold hover:bg-opacity-90 transition-colors'
                                         >
-                                            查看分数 - 未完成的功能
+                                            查看分数
                                         </button>
                                     </div>
                                 </td>
