@@ -321,7 +321,7 @@ export const initDatabase = async (): Promise<void> => {
                 playlist_id BIGINT COMMENT '图池ID',
                 beatmap_id BIGINT COMMENT '谱面ID',
                 total_score BIGINT DEFAULT 0 COMMENT '总分',
-                accuracy DECIMAL(5,2) DEFAULT 0 COMMENT '准确率',
+                accuracy DECIMAL(8,5) DEFAULT 0 COMMENT '准确率',
                 max_combo INT DEFAULT 0 COMMENT '最大连击',
                 mods VARCHAR(255) COMMENT '使用的mods',
                 \`rank\` VARCHAR(10) COMMENT '排名',
