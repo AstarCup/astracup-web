@@ -706,57 +706,67 @@ export default function MultiplayerScoresPage() {
             let totalSavedScores = 0;
 
             if (roundNumberParam) {
-                // 如果有round_number参数，保存该轮次所有房间的分数数据
-                // 获取该轮次的所有match_link数据
-                const matchSchedulesResponse = await fetch('/api/match-schedules');
-                const matchSchedulesData = await matchSchedulesResponse.json();
+                // 如果有round_number参数，直接使用当前已加载的databaseScores进行保存
+                if (databaseScores.length === 0) {
+                    setSaveError('没有可保存的分数数据，请先加载分数');
+                    return;
+                }
 
-                if (matchSchedulesData.success) {
-                    // 过滤出该轮次的比赛
-                    const roundSchedules = matchSchedulesData.schedules.filter((schedule: any) =>
-                        schedule.room && schedule.room.round_number === parseInt(roundNumberParam)
-                    );
+                console.log(`[Round Save] 准备保存 ${databaseScores.length} 条已加载的分数数据`);
 
-                    // 从match_link中提取房间号
-                    const roomIds = roundSchedules
-                        .map((schedule: any) => extractRoomIdFromUrl(schedule.match_link))
-                        .filter((roomId: string | null): roomId is string => roomId !== null);
-
-                    // 去重
-                    const uniqueRoomIds = [...new Set(roomIds)];
-
-                    // 遍历所有房间，保存每个房间的分数数据
-                    for (const roomId of uniqueRoomIds) {
-                        try {
-                            // 加载房间信息
-                            const roomResponse = await fetch(`/api/multiplayer/rooms?roomId=${roomId}`);
-                            const roomData = await roomResponse.json();
-
-                            if (roomData.success && roomData.rooms.length > 0) {
-                                const room = roomData.rooms[0];
-                                // 加载该房间的所有分数数据
-                                await loadRoomById(String(roomId));
-                                // 保存该房间的分数数据
-                                const scoresResponse = await fetch('/api/match-scores/save', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                        room: room,
-                                        scores: allScores,
-                                        osuId: currentUserOsuId
-                                    }),
-                                });
-
-                                const scoresData = await scoresResponse.json();
-                                if (scoresData.success) {
-                                    totalSavedScores += scoresData.data.scores_count;
-                                }
-                            }
-                        } catch (err) {
-                            console.error(`保存房间 ${roomId} 的分数数据时发生错误:`, err);
+                // 按房间分组保存分数
+                const scoresByRoom: { [roomId: string]: DisplayScore[] } = {};
+                databaseScores.forEach((score: DisplayScore) => {
+                    const roomId = score.roomId?.toString();
+                    if (roomId) {
+                        if (!scoresByRoom[roomId]) {
+                            scoresByRoom[roomId] = [];
                         }
+                        scoresByRoom[roomId].push(score);
+                    }
+                });
+
+                console.log(`[Round Save] 分组结果: ${Object.keys(scoresByRoom).length} 个房间`);
+
+                // 为每个房间保存分数
+                for (const [roomId, roomScores] of Object.entries(scoresByRoom)) {
+                    try {
+                        // 获取房间信息
+                        const roomResponse = await fetch(`/api/multiplayer/rooms?roomId=${roomId}`);
+                        const roomData = await roomResponse.json();
+
+                        if (roomData.success && roomData.rooms.length > 0) {
+                            const room = roomData.rooms[0];
+
+                            console.log(`[Round Save] 保存房间 ${roomId} (${room.name}) 的 ${roomScores.length} 条分数`);
+
+                            const saveResponse = await fetch('/api/match-scores/save', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    room: room,
+                                    scores: roomScores,
+                                    osuId: currentUserOsuId
+                                }),
+                            });
+
+                            const saveData = await saveResponse.json();
+                            if (saveData.success) {
+                                totalSavedScores += saveData.data.scores_count;
+                                console.log(`[Round Save] 成功保存房间 ${roomId} 的 ${saveData.data.scores_count} 条分数`);
+                            } else {
+                                console.error(`[Round Save] 保存房间 ${roomId} 失败:`, saveData.error);
+                                setSaveError(`保存房间 ${room.name} 的分数失败: ${saveData.error}`);
+                            }
+                        } else {
+                            console.error(`[Round Save] 获取房间 ${roomId} 信息失败`);
+                            setSaveError(`获取房间 ${roomId} 信息失败`);
+                        }
+                    } catch (err) {
+                        console.error(`[Round Save] 保存房间 ${roomId} 的分数数据时发生错误:`, err);
+                        setSaveError(`保存房间 ${roomId} 的分数数据时发生错误`);
                     }
                 }
             } else if (selectedRoom) {
@@ -895,8 +905,8 @@ export default function MultiplayerScoresPage() {
                         {/* 保存当前房间分数按钮 */}
                         <button
                             onClick={saveScoresToDatabase}
-                            disabled={savingScores || !selectedRoom}
-                            className={`px-4 py-2 rounded font-medium transition ${savingScores || !selectedRoom
+                            disabled={savingScores || (!selectedRoom && !databaseScores.length)}
+                            className={`px-4 py-2 rounded font-medium transition ${savingScores || (!selectedRoom && !databaseScores.length)
                                 ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
                                 : 'bg-green-600 text-white hover:bg-green-700'
                                 }`}
