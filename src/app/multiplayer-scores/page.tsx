@@ -597,7 +597,7 @@ export default function MultiplayerScoresPage() {
 
                 if (data.success && data.rooms.length > 0) {
                     room = data.rooms[0];
-                    // // console.log('成功从API加载房间信息:', room);
+                    console.log('成功从API加载房间信息:', room);
 
                     // 获取该房间所有图池的分数
                     if (room) {
@@ -617,7 +617,7 @@ export default function MultiplayerScoresPage() {
                             }
 
                             if (currentUserOsuId) {
-                                // console.log(`保存房间 ${roomId} 的 ${allApiScores.length} 条分数到数据库...`);
+                                console.log(`保存房间 ${roomId} 的 ${allApiScores.length} 条分数到数据库...`);
 
                                 const saveResponse = await fetch('/api/match-scores/save', {
                                     method: 'POST',
@@ -633,7 +633,7 @@ export default function MultiplayerScoresPage() {
 
                                 const saveData = await saveResponse.json();
                                 if (saveData.success) {
-                                    // console.log(`成功保存房间 ${roomId} 的 ${saveData.data.scores_count} 条分数到数据库`);
+                                    console.log(`成功保存房间 ${roomId} 的 ${saveData.data.scores_count} 条分数到数据库`);
                                     setError(`从osu! API获取并保存了 ${saveData.data.scores_count} 条分数记录`);
                                 } else {
                                     console.error(`保存房间 ${roomId} 分数到数据库失败:`, saveData.error);
@@ -683,7 +683,7 @@ export default function MultiplayerScoresPage() {
                 setSelectedPlaylist(null);
                 setScores([]);
                 setAllScores(allApiScores);
-                // console.log('房间数据加载完成，分数数量:', allApiScores.length);
+                console.log('房间数据加载完成，分数数量:', allApiScores.length);
             } else {
                 setSelectedRoom(null);
                 setSelectedPlaylist(null);
@@ -715,16 +715,6 @@ export default function MultiplayerScoresPage() {
             const data = await response.json();
 
             if (data.success) {
-                // 调试：打印前端接收到的第一个分数的statistics数据
-                if (data.scores.length > 0) {
-                    // // // console.log('=== Frontend Debug - First Score Statistics ===');
-                    // // // console.log('Statistics data received:', data.scores[0].statistics);
-                    // // // console.log('count_300:', data.scores[0].statistics.count_300);
-                    // // // console.log('count_100:', data.scores[0].statistics.count_100);
-                    // // // console.log('count_50:', data.scores[0].statistics.count_50);
-                    // // // console.log('count_miss:', data.scores[0].statistics.count_miss);
-                    // // // console.log('=== End Frontend Debug ===');
-                }
                 setScores(data.scores);
             } else {
                 setError(data.error || '加载分数失败');
