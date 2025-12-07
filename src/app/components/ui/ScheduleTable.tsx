@@ -198,19 +198,27 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
                                         <div className="flex items-center justify-center space-x-4">
                                             {/* Player 1 */}
                                             <div className="flex items-center space-x-2">
-                                                {item.player1Avatar ? (
-                                                    <Image
-                                                        src={item.player1Avatar}
-                                                        alt="Player 1 Avatar"
-                                                        width={32}
-                                                        height={32}
-                                                        className="w-8 h-8 rounded-full"
-                                                    />
-                                                ) : (
-                                                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-                                                        <span className="text-xs text-gray-600">?</span>
-                                                    </div>
-                                                )}
+                                                <div className="relative">
+                                                    {item.player1Avatar ? (
+                                                        <Image
+                                                            src={item.player1Avatar}
+                                                            alt="Player 1 Avatar"
+                                                            width={32}
+                                                            height={32}
+                                                            className="w-8 h-8 rounded-full"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+                                                            <span className="text-xs text-gray-600">?</span>
+                                                        </div>
+                                                    )}
+                                                    {shouldShowBubbles(item.player1Score, item.player2Score) && getHighScorer(item.player1Score, item.player2Score) === 'player1' && (
+                                                        <ScoreBubble text="你，你可有何话说！" position="bottom" />
+                                                    )}
+                                                    {shouldShowBubbles(item.player1Score, item.player2Score) && getHighScorer(item.player1Score, item.player2Score) === 'player2' && (
+                                                        <ScoreBubble text="再无话说，请速速动手！" position="top" />
+                                                    )}
+                                                </div>
                                                 <span className="text-sm font-medium text-gray-900">
                                                     {item.players.split(' vs ')[0] || '未知选手'}
                                                 </span>
@@ -218,27 +226,9 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
 
                                             {/* Score */}
                                             <div className="flex items-center space-x-2 text-lg font-bold">
-                                                {/* Player 1 Score with Bubble */}
-                                                <div className="relative">
-                                                    <span className="text-red-600">{item.player1Score}</span>
-                                                    {shouldShowBubbles(item.player1Score, item.player2Score) && getHighScorer(item.player1Score, item.player2Score) === 'player1' && (
-                                                        <ScoreBubble text="你，你可有何话说！" position="bottom" />
-                                                    )}
-                                                    {shouldShowBubbles(item.player1Score, item.player2Score) && getHighScorer(item.player1Score, item.player2Score) === 'player2' && (
-                                                        <ScoreBubble text="再无话说，请速速动手！" position="top" />
-                                                    )}
-                                                </div>
+                                                <span className="text-red-600">{item.player1Score}</span>
                                                 <span className="text-gray-400">:</span>
-                                                {/* Player 2 Score with Bubble */}
-                                                <div className="relative">
-                                                    <span className="text-blue-600">{item.player2Score}</span>
-                                                    {shouldShowBubbles(item.player1Score, item.player2Score) && getHighScorer(item.player1Score, item.player2Score) === 'player2' && (
-                                                        <ScoreBubble text="你，你可有何话说！" position="bottom" />
-                                                    )}
-                                                    {shouldShowBubbles(item.player1Score, item.player2Score) && getHighScorer(item.player1Score, item.player2Score) === 'player1' && (
-                                                        <ScoreBubble text="再无话说，请速速动手！" position="top" />
-                                                    )}
-                                                </div>
+                                                <span className="text-blue-600">{item.player2Score}</span>
                                             </div>
 
                                             {/* Player 2 */}
@@ -246,19 +236,27 @@ export default function ScheduleTable({ schedule }: ScheduleTableProps) {
                                                 <span className="text-sm font-medium text-gray-900">
                                                     {item.players.split(' vs ')[1] || '未知选手'}
                                                 </span>
-                                                {item.player2Avatar ? (
-                                                    <Image
-                                                        src={item.player2Avatar}
-                                                        alt="Player 2 Avatar"
-                                                        width={32}
-                                                        height={32}
-                                                        className="w-8 h-8 rounded-full"
-                                                    />
-                                                ) : (
-                                                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-                                                        <span className="text-xs text-gray-600">?</span>
-                                                    </div>
-                                                )}
+                                                <div className="relative">
+                                                    {item.player2Avatar ? (
+                                                        <Image
+                                                            src={item.player2Avatar}
+                                                            alt="Player 2 Avatar"
+                                                            width={32}
+                                                            height={32}
+                                                            className="w-8 h-8 rounded-full"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+                                                            <span className="text-xs text-gray-600">?</span>
+                                                        </div>
+                                                    )}
+                                                    {shouldShowBubbles(item.player1Score, item.player2Score) && getHighScorer(item.player1Score, item.player2Score) === 'player2' && (
+                                                        <ScoreBubble text="你，你可有何话说！" position="bottom" />
+                                                    )}
+                                                    {shouldShowBubbles(item.player1Score, item.player2Score) && getHighScorer(item.player1Score, item.player2Score) === 'player1' && (
+                                                        <ScoreBubble text="再无话说，请速速动手！" position="top" />
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
