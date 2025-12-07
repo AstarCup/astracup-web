@@ -600,7 +600,9 @@ export default function MultiplayerScoresPage() {
                     // // console.log('成功从API加载房间信息:', room);
 
                     // 获取该房间所有图池的分数
-                    allApiScores = await loadAllScoresWithRoom(room);
+                    if (room) {
+                        allApiScores = await loadAllScoresWithRoom(room);
+                    }
 
                     // 如果获取到了分数数据，尝试保存到数据库
                     if (allApiScores.length > 0) {

@@ -166,30 +166,10 @@ export default function TotalScoresByModTable({
             const scoreBeatmapsetId = (score as any).beatmapsetId || score.beatmapset_id;
             const scoreRoomId = (score as any).roomId;
 
-            console.log(`字段映射调试 - 原始分数对象:`, {
-                beatmap_id: score.beatmap_id,
-                beatmapId: (score as any).beatmapId,
-                beatmapset_id: score.beatmapset_id,
-                beatmapsetId: (score as any).beatmapsetId,
-                最终beatmapId: scoreBeatmapId,
-                最终beatmapsetId: scoreBeatmapsetId,
-                所有字段: Object.keys(score)
-            });
-
-            console.log(`处理玩家 ${score.username} 的分数:`, {
-                userId: score.user_id,
-                roomId: scoreRoomId,
-                beatmapId: scoreBeatmapId,
-                beatmapsetId: scoreBeatmapsetId,
-                totalScore: score.total_score
-            });
-
             let mapSelection = null;
 
             // 尝试通过beatmapId或beatmapsetId找到对应的map selection
             if (scoreBeatmapId || scoreBeatmapsetId) {
-                console.log(`正在查找beatmapId: ${scoreBeatmapId} 或 beatmapsetId: ${scoreBeatmapsetId} 的map selection`);
-                console.log(`可用的map selections数量: ${mapSelections.length}`);
 
                 // 如果没有map selections，跳过匹配
                 if (mapSelections.length === 0) {
@@ -216,20 +196,7 @@ export default function TotalScoresByModTable({
                         );
                     }
 
-                    if (mapSelection) {
-                        console.log(`Found map selection for ${score.username}:`, {
-                            beatmapId: mapSelection.beatmapId,
-                            beatmapsetId: mapSelection.beatmapsetId,
-                            mods: mapSelection.selectedMods + mapSelection.modPosition
-                        });
-                    } else {
-                        console.log(`No map selection found for ${score.username}:`, {
-                            scoreBeatmapId,
-                            scoreBeatmapsetId,
-                            availableBeatmapIds: mapSelections.map(s => s.beatmapId).filter(Boolean),
-                            availableBeatmapsetIds: mapSelections.map(s => s.beatmapsetId).filter(Boolean)
-                        });
-                    }
+
                 }
             } else {
                 console.log(`Warning: Score for ${score.username} has no beatmap information:`, {
@@ -241,7 +208,6 @@ export default function TotalScoresByModTable({
 
             if (mapSelection) {
                 const modPosition = `${mapSelection.selectedMods}${mapSelection.modPosition}`;
-                console.log(`Found mod position: ${modPosition} for beatmapId: ${scoreBeatmapId}`);
 
                 // 如果这个mod位已经有分数了，取最高分
                 const existingScore = player.scores[modPosition];
@@ -254,7 +220,6 @@ export default function TotalScoresByModTable({
                     }
                     player.scores[modPosition] = score.total_score;
                     player.scoreDetails[modPosition] = score; // 保存完整的分数对象
-                    console.log(`为玩家 ${score.username} 设置 ${modPosition} 分数: ${score.total_score}`);
                 }
             } else {
                 console.log(`No map selection found for score:`, {
