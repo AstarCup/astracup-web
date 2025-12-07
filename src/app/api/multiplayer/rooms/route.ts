@@ -1,110 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getValidClientToken } from '@/lib/osu-auth';
-import { MultiplayerRoom } from '@/lib/multiplayer-types';
 
 export async function GET(request: NextRequest) {
     try {
-        // 获取客户端token
-        const accessToken = await getValidClientToken();
-
         const { searchParams } = new URL(request.url);
-        const mode = searchParams.get('mode') || 'active';
-        const limit = searchParams.get('limit') || '50';
-        const sort = searchParams.get('sort') || 'ended';
-        const roomId = searchParams.get('roomId');
+        const roomIds = searchParams.get('roomIds');
 
-        let apiUrl: string;
-
-        if (roomId) {
-            // 查询特定房间
-            apiUrl = `https://osu.ppy.sh/api/v2/rooms/${roomId}`;
-        } else {
-            // 查询房间列表
-            apiUrl = `https://osu.ppy.sh/api/v2/rooms?mode=${mode}&limit=${limit}&sort=${sort}`;
-        }
-
-        const response = await fetch(
-            apiUrl,
-            {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-            }
-        );
-
-        if (!response.ok) {
-            console.error('Failed to fetch multiplayer rooms:', response.status, response.statusText);
-            // 如果是单个房间查询且返回404，返回空房间列表而不是错误
-            if (roomId && response.status === 404) {
-                return NextResponse.json(
-                    { success: true, rooms: [], total: 0 },
-                    { status: 200 }
-                );
-            }
+        if (!roomIds) {
             return NextResponse.json(
-                { success: false, error: '获取multiplayer房间失败' },
-                { status: response.status }
+                { success: false, error: '房间ID列表不能为空' },
+                { status: 400 }
             );
         }
 
-        const data = await response.json();
+        const roomIdArray = roomIds.split(',').map(id => id.trim()).filter(id => id);
 
-        let rooms: MultiplayerRoom[] = [];
+        if (roomIdArray.length === 0) {
+            return NextResponse.json(
+                { success: false, error: '没有有效的房间ID' },
+                { status: 400 }
+            );
+        }
 
-        if (roomId) {
-            // 单个房间查询 - 直接处理返回的房间对象，包括有密码的房间
-            // 因为我们使用客户端令牌访问，应该有权限访问这些房间
-            rooms = [{
-                id: data.id,
-                name: data.name,
-                category: data.category,
-                type: data.type,
-                starts_at: data.starts_at,
-                ends_at: data.ends_at,
-                max_attempts: data.max_attempts,
-                participant_count: data.participant_count,
-                channel_id: data.channel_id,
-                active: data.active,
-                has_password: data.has_password,
-                queue_mode: data.queue_mode,
-                auto_skip: data.auto_skip,
-                current_playlist_item: data.current_playlist_item,
-                current_user_score: data.current_user_score,
-                host: {
-                    id: data.host.id,
-                    username: data.host.username,
-                    avatar_url: data.host.avatar_url,
-                },
-                playlist: data.playlist || [],
-            }];
-        } else {
-            // 房间列表查询 - 过滤掉有密码的房间
-            rooms = data.rooms
-                ?.filter((room: any) => !room.has_password)
-                ?.map((room: any) => ({
-                    id: room.id,
-                    name: room.name,
-                    category: room.category,
-                    type: room.type,
-                    starts_at: room.starts_at,
-                    ends_at: room.ends_at,
-                    max_attempts: room.max_attempts,
-                    participant_count: room.participant_count,
-                    channel_id: room.channel_id,
-                    active: room.active,
-                    has_password: room.has_password,
-                    queue_mode: room.queue_mode,
-                    auto_skip: room.auto_skip,
-                    current_playlist_item: room.current_playlist_item,
-                    current_user_score: room.current_user_score,
-                    host: {
-                        id: room.host.id,
-                        username: room.host.username,
-                        avatar_url: room.host.avatar_url,
-                    },
-                    playlist: room.playlist || [],
-                })) || [];
+        // 获取客户端token
+        const accessToken = await getValidClientToken();
+        const rooms = [];
+
+        // 批量获取房间信息
+        for (const roomId of roomIdArray) {
+            try {
+                const roomResponse = await fetch(
+                    `https://osu.ppy.sh/api/v2/rooms/${roomId}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+                if (roomResponse.ok) {
+                    const roomData = await roomResponse.json();
+                    rooms.push({
+                        id: parseInt(roomId),
+                        name: roomData.name,
+                        category: roomData.category,
+                        type: roomData.type,
+                        starts_at: roomData.starts_at,
+                        ends_at: roomData.ends_at,
+                        participant_count: roomData.participant_count,
+                        host: roomData.host,
+                        playlist_count: roomData.playlist?.length || 0,
+                    });
+                } else {
+                    console.warn(`Failed to fetch room ${roomId}:`, roomResponse.status);
+                }
+            } catch (error) {
+                console.error(`Error fetching room ${roomId}:`, error);
+            }
         }
 
         return NextResponse.json({
@@ -112,10 +65,11 @@ export async function GET(request: NextRequest) {
             rooms: rooms,
             total: rooms.length,
         });
+
     } catch (error) {
-        console.error('Error fetching multiplayer rooms:', error);
+        console.error('Error fetching rooms:', error);
         return NextResponse.json(
-            { success: false, error: '获取multiplayer房间时发生错误' },
+            { success: false, error: '获取房间信息时发生错误' },
             { status: 500 }
         );
     }

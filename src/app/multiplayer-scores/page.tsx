@@ -257,6 +257,8 @@ export default function MultiplayerScoresPage() {
                                 for (const [roomId, scores] of Object.entries(scoresByRoom)) {
                                     const roomInfo = data.rooms.find((r: any) => r.id.toString() === roomId);
                                     if (roomInfo) {
+                                        console.log(`[Round Save] Saving ${scores.length} scores for room ${roomId} (${roomInfo.name})`);
+
                                         const saveResponse = await fetch('/api/match-scores/save', {
                                             method: 'POST',
                                             headers: {
@@ -271,16 +273,16 @@ export default function MultiplayerScoresPage() {
 
                                         const saveData = await saveResponse.json();
                                         if (saveData.success) {
-                                            console.log(`Successfully saved ${scores.length} scores for room ${roomId}`);
+                                            console.log(`[Round Save] Successfully saved ${scores.length} scores for room ${roomId}`);
                                         } else {
-                                            console.error(`Failed to save scores for room ${roomId}:`, saveData.error);
+                                            console.error(`[Round Save] Failed to save scores for room ${roomId}:`, saveData.error);
                                         }
                                     }
                                 }
 
                                 setError(`从osu API获取并保存了 ${data.scores.length} 条分数记录，涵盖 ${Object.keys(scoresByRoom).length} 个房间。`);
                             } catch (err) {
-                                console.error('Error saving scores to database:', err);
+                                console.error('[Round Save] Error saving scores to database:', err);
                                 setError(`从osu API获取了 ${data.scores.length} 条分数记录，但保存到数据库时出错。`);
                             }
                         }

@@ -56,11 +56,19 @@ export async function POST(request: NextRequest) {
 
                         // 处理数据库分数数据，确保字段名正确
                         const processedScores: DisplayScore[] = dbData.scores.map((score: any) => {
+                            // 验证玩家信息的完整性
+                            if (!score.user_id || !score.username) {
+                                console.warn(`[Player Info Error] Invalid player info in score from database room ${roomId}: user_id=${score.user_id}, username=${score.username}`);
+                                return null;
+                            }
+
+                            console.log(`[Player Info] Processing score for user ${score.username} (ID: ${score.user_id}) from room ${roomId}`);
+
                             // 确保字段名一致，支持多种格式
                             const processedScore: DisplayScore = {
                                 user_id: score.user_id,
                                 username: score.username,
-                                avatar_url: score.avatar_url,
+                                avatar_url: score.avatar_url || '',
                                 country_code: score.country_code || '',
                                 total_score: score.total_score,
                                 accuracy: score.accuracy,

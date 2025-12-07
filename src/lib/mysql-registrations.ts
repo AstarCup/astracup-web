@@ -1900,6 +1900,12 @@ const mysqlStorage = {
 
             // 批量插入分数数据
             const insertPromises = scores.map((score, index) => {
+                // 验证玩家信息的完整性
+                if (!score.user_id || !score.username) {
+                    console.error(`[Player Validation Error] Score ${index}: Invalid player info - user_id=${score.user_id}, username=${score.username}`);
+                    return Promise.reject(new Error(`Invalid player info in score ${index}`));
+                }
+
                 // 验证必要字段
                 if (!score.beatmapId && !score.beatmap_id) {
                     console.warn(`Warning: Score ${index} for user ${score.username} has no beatmapId or beatmap_id`);
@@ -1908,12 +1914,14 @@ const mysqlStorage = {
                 const beatmapId = score.beatmapId || score.beatmap_id || null;
                 const beatmapsetId = score.beatmapsetId || score.beatmapset_id || null;
 
-                console.log(`Saving score for ${score.username}:`, {
+                console.log(`[Score Validation] Saving score for player ${score.username} (ID: ${score.user_id}):`, {
                     user_id: score.user_id,
+                    username: score.username,
                     playlistId: score.playlistId,
                     beatmapId: beatmapId,
                     beatmapsetId: beatmapsetId,
-                    total_score: score.total_score
+                    total_score: score.total_score,
+                    room_id: room.id
                 });
 
                 return connection.execute(`

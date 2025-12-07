@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateMatchScores, getRoomScores, getTournamentSettings } from '@/lib/mysql-registrations';
+import { updateMatchScores } from '@/lib/mysql-registrations';
 
 export async function POST(request: NextRequest) {
     try {
@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
 
         // 优先尝试从数据库获取管理员列表
         try {
+            const { getTournamentSettings } = await import('@/lib/mysql-registrations');
             const tournamentSettings = await getTournamentSettings();
             if (tournamentSettings?.admin_group && Array.isArray(tournamentSettings.admin_group)) {
                 adminList = tournamentSettings.admin_group.filter((id: any): id is string =>
@@ -43,6 +44,22 @@ export async function POST(request: NextRequest) {
                 { success: false, error: '权限不足，只有管理员可以执行此操作' },
                 { status: 403 }
             );
+        }
+
+        // 验证分数数据的完整性
+        console.log(`[Update] Updating ${scores.length} scores for room ${room.id} (${room.name})`);
+
+        // 验证每个分数的玩家信息
+        for (let i = 0; i < scores.length; i++) {
+            const score = scores[i];
+            if (!score.user_id || !score.username) {
+                console.error(`[Update Validation Error] Score ${i}: Invalid player info - user_id=${score.user_id}, username=${score.username}`);
+                return NextResponse.json(
+                    { success: false, error: `分数 ${i} 的玩家信息不完整` },
+                    { status: 400 }
+                );
+            }
+            console.log(`[Update Validation] Score ${i}: Player ${score.username} (ID: ${score.user_id}), Score: ${score.total_score}`);
         }
 
         // 使用数据库更新分数
@@ -79,44 +96,6 @@ export async function POST(request: NextRequest) {
 
     } catch (error) {
         console.error('更新分数时发生错误:', error);
-        return NextResponse.json(
-            { success: false, error: '服务器内部错误' },
-            { status: 500 }
-        );
-    }
-}
-
-// 获取特定房间的保存数据
-export async function GET(request: NextRequest) {
-    try {
-        const { searchParams } = new URL(request.url);
-        const roomId = searchParams.get('roomId');
-
-        if (!roomId) {
-            return NextResponse.json(
-                { success: false, error: '缺少roomId参数' },
-                { status: 400 }
-            );
-        }
-
-        const { room, scores } = await getRoomScores(parseInt(roomId));
-
-        if (!room) {
-            return NextResponse.json(
-                { success: false, error: '未找到该房间的保存数据' },
-                { status: 404 }
-            );
-        }
-
-        return NextResponse.json({
-            success: true,
-            room,
-            scores,
-            scores_count: scores.length
-        });
-
-    } catch (error) {
-        console.error('获取房间数据时发生错误:', error);
         return NextResponse.json(
             { success: false, error: '服务器内部错误' },
             { status: 500 }
