@@ -171,12 +171,13 @@ export default function MultiplayerScoresPage() {
                     return;
                 }
 
-                // 优先从数据库获取分数
+                // 优先从数据库获取分数，并记录哪些房间没有数据
                 // console.log(`优先从数据库获取 ${uniqueRoomIds.length} 个房间的分数...`);
                 let allDatabaseScores: DisplayScore[] = [];
-                let databaseHasData = false;
+                const roomsWithoutData: string[] = [];
+                const roomsWithData: string[] = [];
 
-                // 从数据库获取分数
+                // 从数据库获取分数，逐个房间检查
                 for (const roomId of uniqueRoomIds) {
                     try {
                         // console.log(`Checking database for room ${roomId}...`);
@@ -186,7 +187,6 @@ export default function MultiplayerScoresPage() {
                         // console.log(`Database response for room ${roomId}:`, scoresData.success ? `${scoresData.scores?.length || 0} scores` : 'Failed');
 
                         if (scoresData.success && scoresData.scores && scoresData.scores.length > 0) {
-                            databaseHasData = true;
                             // 为每个分数添加房间信息
                             const scoresWithRoomInfo = scoresData.scores.map((score: DisplayScore) => ({
                                 ...score,
@@ -194,31 +194,33 @@ export default function MultiplayerScoresPage() {
                                 roomName: scoresData.room?.name || `Room ${roomId}`
                             }));
                             allDatabaseScores.push(...scoresWithRoomInfo);
+                            roomsWithData.push(roomId as string);
                             // console.log(`Added ${scoresWithRoomInfo.length} scores from database room ${roomId}`);
+                        } else {
+                            // 该房间没有数据，需要从API获取
+                            roomsWithoutData.push(roomId as string);
+                            // console.log(`Room ${roomId} has no data in database, will fetch from API`);
                         }
                     } catch (err) {
                         console.error(`Error loading scores from database for room ${roomId}:`, err);
+                        roomsWithoutData.push(roomId as string);
                     }
                 }
 
                 // console.log(`Total scores loaded from database: ${allDatabaseScores.length}`);
+                // console.log(`Rooms with data: ${roomsWithData.length}, Rooms without data: ${roomsWithoutData.length}`);
 
-                // 如果数据库中有数据，直接使用
-                if (allDatabaseScores.length > 0) {
-                    // console.log('使用数据库中的分数数据');
-                    setDatabaseScores(allDatabaseScores);
-                    setError(`成功从数据库加载了 ${allDatabaseScores.length} 条分数记录。`);
-                } else {
-                    // console.log('数据库中没有数据，从osu API获取...');
+                // 如果有房间没有数据，从osu API获取这些房间的分数
+                if (roomsWithoutData.length > 0) {
+                    // console.log(`从osu API获取 ${roomsWithoutData.length} 个房间的分数...`);
 
-                    // 数据库中没有数据，从API获取所有房间的分数
                     const response = await fetch('/api/multiplayer/rooms/scores', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            roomIds: uniqueRoomIds,
+                            roomIds: roomsWithoutData,
                             onlyValid: true, // 只获取通过且完成的分数
                             // 可以根据需要添加时间筛选
                             // startDate: '2025-11-01T00:00:00Z',
@@ -230,6 +232,9 @@ export default function MultiplayerScoresPage() {
 
                     if (data.success) {
                         // console.log(`成功从osu API获取到 ${data.scores.length} 条分数`);
+
+                        // 将新获取的分数与数据库分数合并
+                        allDatabaseScores.push(...data.scores);
 
                         // 从session获取当前用户的osuId，用于保存分数
                         let currentUserOsuId = '';
@@ -285,21 +290,25 @@ export default function MultiplayerScoresPage() {
                                     }
                                 }
 
-                                setError(`从osu API获取并保存了 ${data.scores.length} 条分数记录，涵盖 ${Object.keys(scoresByRoom).length} 个房间。`);
+                                setError(`从数据库加载了 ${roomsWithData.length} 个房间的数据，从osu API获取并保存了 ${data.scores.length} 条新分数记录，涵盖 ${Object.keys(scoresByRoom).length} 个房间。`);
                             } catch (err) {
                                 console.error('[Round Save] Error saving scores to database:', err);
-                                setError(`从osu API获取了 ${data.scores.length} 条分数记录，但保存到数据库时出错。`);
+                                setError(`从数据库加载了 ${roomsWithData.length} 个房间的数据，从osu API获取了 ${data.scores.length} 条分数记录，但保存到数据库时出错。`);
                             }
+                        } else {
+                            setError(`从数据库加载了 ${roomsWithData.length} 个房间的数据，从osu API获取了 ${data.scores.length} 条分数记录。`);
                         }
-
-                        // 设置分数数据
-                        setDatabaseScores(data.scores);
                     } else {
                         console.error('Batch API failed:', data.error);
-                        setError(`从osu API获取分数失败: ${data.error}`);
-                        setDatabaseScores([]);
+                        setError(`从osu API获取分数失败: ${data.error}。已从数据库加载了 ${roomsWithData.length} 个房间的数据。`);
                     }
+                } else {
+                    // 所有房间都有数据
+                    setError(`成功从数据库加载了 ${allDatabaseScores.length} 条分数记录，涵盖 ${roomsWithData.length} 个房间。`);
                 }
+
+                // 设置最终的分数数据
+                setDatabaseScores(allDatabaseScores);
             } else {
                 setDatabaseScores([]);
                 setError(matchSchedulesData.error || '获取赛程数据失败');
