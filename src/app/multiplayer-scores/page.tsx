@@ -416,7 +416,7 @@ export default function MultiplayerScoresPage() {
             console.error('Error loading registrations:', err);
             setRegistrations([]);
         } finally {
-u            setLoadingRegistrations(false);
+            setLoadingRegistrations(false);
         }
     };
 
