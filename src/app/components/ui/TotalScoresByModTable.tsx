@@ -75,9 +75,9 @@ export default function TotalScoresByModTable({
 
         const playerMap = new Map<string, PlayerModScores>();
 
-        console.log(`Total scores received: ${scores.length}`);
-        console.log(`Number of approved players: ${approvedPlayers.size}`);
-        console.log(`Number of registrations: ${registrations.length}`);
+        // console.log(`Total scores received: ${scores.length}`);
+        // console.log(`Number of approved players: ${approvedPlayers.size}`);
+        // console.log(`Number of registrations: ${registrations.length}`);
 
         // 初始化所有已过审玩家
         approvedPlayers.forEach(osuId => {
@@ -124,7 +124,7 @@ export default function TotalScoresByModTable({
                 // 如果玩家没有分数数据，从已报名数据中查找玩家信息
                 const registration = registrations.find(reg => reg.osuId === osuId);
                 if (registration) {
-                    console.log(`玩家 ${osuId} 没有分数数据，但从已报名数据中获取信息`);
+                    // console.log(`玩家 ${osuId} 没有分数数据，但从已报名数据中获取信息`);
                     playerInfo = {
                         userId: osuId,
                         username: registration.username,
@@ -147,9 +147,9 @@ export default function TotalScoresByModTable({
             playerMap.set(osuId, playerInfo);
         });
 
-        console.log(`Initialized ${playerMap.size} players from approvedPlayers`);
+        // console.log(`Initialized ${playerMap.size} players from approvedPlayers`);
 
-        console.log(`Initialized ${playerMap.size} players`);
+        // console.log(`Initialized ${playerMap.size} players`);
 
         // console.log('初始化的玩家数量:', playerMap.size);
 
@@ -173,12 +173,9 @@ export default function TotalScoresByModTable({
 
                 // 如果没有map selections，跳过匹配
                 if (mapSelections.length === 0) {
-                    console.log(`Warning: No map selections available for matching`);
+                    // console.log(`Warning: No map selections available for matching`);
                 } else {
-                    // 打印所有map selections的beatmapId用于调试
-                    mapSelections.forEach((selection, index) => {
-                        console.log(`Map selection ${index}: beatmapId=${selection.beatmapId}, beatmapsetId=${selection.beatmapsetId}, mods=${selection.selectedMods}${selection.modPosition}`);
-                    });
+
 
                     // 先尝试用beatmapId匹配（转换为字符串确保类型一致）
                     if (scoreBeatmapId) {
@@ -199,11 +196,11 @@ export default function TotalScoresByModTable({
 
                 }
             } else {
-                console.log(`Warning: Score for ${score.username} has no beatmap information:`, {
-                    scoreBeatmapId,
-                    scoreBeatmapsetId,
-                    originalScore: score
-                });
+                // console.log(`Warning: Score for ${score.username} has no beatmap information:`, {
+                //     scoreBeatmapId,
+                //     scoreBeatmapsetId,
+                //     originalScore: score
+                // });
             }
 
             if (mapSelection) {
@@ -222,12 +219,12 @@ export default function TotalScoresByModTable({
                     player.scoreDetails[modPosition] = score; // 保存完整的分数对象
                 }
             } else {
-                console.log(`No map selection found for score:`, {
-                    userId: score.user_id,
-                    username: score.username,
-                    roomId: scoreRoomId,
-                    scoreBeatmapId
-                });
+                // console.log(`No map selection found for score:`, {
+                //     userId: score.user_id,
+                //     username: score.username,
+                //     roomId: scoreRoomId,
+                //     scoreBeatmapId
+                // });
             }
         });
 
@@ -310,11 +307,11 @@ export default function TotalScoresByModTable({
 
         // 计算总分排名
         const playersWithTotalScores = result.filter(player => player.totalScore > 0);
-        console.log(`Players with total scores: ${playersWithTotalScores.length} out of ${result.length}`);
+        // console.log(`Players with total scores: ${playersWithTotalScores.length} out of ${result.length}`);
 
         // 打印每个玩家的总分和已玩图池数量
         result.forEach(player => {
-            console.log(`${player.username} (${player.userId}): totalScore=${player.totalScore}, playedMaps=${player.playedMaps}`);
+            // console.log(`${player.username} (${player.userId}): totalScore=${player.totalScore}, playedMaps=${player.playedMaps}`);
         });
 
         playersWithTotalScores.sort((a, b) => b.totalScore - a.totalScore);
@@ -331,7 +328,7 @@ export default function TotalScoresByModTable({
             player.totalRank = currentTotalRank;
         });
 
-        console.log('处理完成，玩家分数结果:', result);
+        // console.log('处理完成，玩家分数结果:', result);
         return result;
     };
 
