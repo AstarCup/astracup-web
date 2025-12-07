@@ -26,7 +26,12 @@ export default function MultiplayerScoresPage() {
     const [loadingPlayers, setLoadingPlayers] = useState(false);
     const [loadingRegistrations, setLoadingRegistrations] = useState(false); // 加载已报名数据的状态
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'byPlaylist' | 'byTotal'>('byPlaylist');
+    const [activeTab, setActiveTab] = useState<'byPlaylist' | 'byTotal'>(() => {
+        // 如果有round_number参数，默认显示按总分tab
+        const urlParams = new URLSearchParams(window.location.search);
+        const roundNumberParam = urlParams.get('round_number');
+        return roundNumberParam ? 'byTotal' : 'byPlaylist';
+    });
 
     // 管理员控制面板状态
     const isAdmin = useIsAdmin();
@@ -411,7 +416,7 @@ export default function MultiplayerScoresPage() {
             console.error('Error loading registrations:', err);
             setRegistrations([]);
         } finally {
-            setLoadingRegistrations(false);
+u            setLoadingRegistrations(false);
         }
     };
 
@@ -1034,27 +1039,29 @@ export default function MultiplayerScoresPage() {
                     </div>
                 </div>
             )}
-            {/* Tab切换 - 放在顶部 */}
-            <div className="flex border-b border-gray-600 mb-6">
-                <button
-                    className={`px-6 py-3 font-medium text-lg transition ${activeTab === 'byPlaylist'
-                        ? 'text-white border-b-2 border-[#E93B66]'
-                        : 'text-gray-400 hover:text-white'
-                        }`}
-                    onClick={() => setActiveTab('byPlaylist')}
-                >
-                    按图池
-                </button>
-                <button
-                    className={`px-6 py-3 font-medium text-lg transition ${activeTab === 'byTotal'
-                        ? 'text-white border-b-2 border-[#E93B66]'
-                        : 'text-gray-400 hover:text-white'
-                        }`}
-                    onClick={() => setActiveTab('byTotal')}
-                >
-                    按总分
-                </button>
-            </div>
+            {/* Tab切换 - 放在顶部，只在没有round_number参数时显示 */}
+            {!new URLSearchParams(window.location.search).get('round_number') && (
+                <div className="flex border-b border-gray-600 mb-6">
+                    <button
+                        className={`px-6 py-3 font-medium text-lg transition ${activeTab === 'byPlaylist'
+                            ? 'text-white border-b-2 border-[#E93B66]'
+                            : 'text-gray-400 hover:text-white'
+                            }`}
+                        onClick={() => setActiveTab('byPlaylist')}
+                    >
+                        按图池
+                    </button>
+                    <button
+                        className={`px-6 py-3 font-medium text-lg transition ${activeTab === 'byTotal'
+                            ? 'text-white border-b-2 border-[#E93B66]'
+                            : 'text-gray-400 hover:text-white'
+                            }`}
+                        onClick={() => setActiveTab('byTotal')}
+                    >
+                        按总分
+                    </button>
+                </div>
+            )}
 
             {/* Playlist选择区域 - 只在按图池tab时显示 */}
             {activeTab === 'byPlaylist' && selectedRoom && selectedRoom.playlist.length > 0 && (
@@ -1117,34 +1124,11 @@ export default function MultiplayerScoresPage() {
                 </div>
             )}
 
-            {/* Tab切换和分数表格 */}
+            {/* 分数表格 */}
             {(selectedRoom || databaseScores.length > 0) && (
                 <div className="bg-[#3D3D3D] p-6">
-                    {/* 表格内容 */}
-                    {activeTab === 'byPlaylist' && (
-                        <>
-                            {/* 按图池需要选择具体图池 */}
-                            {selectedPlaylist ? (
-                                <MultiplayerScoresTable
-                                    scores={databaseScores.length > 0 ? databaseScores.filter(score => {
-                                        const scoreBeatmapId = (score as any).beatmapId || (score as any).beatmap?.id;
-                                        const playlistInfo = getSelectedPlaylistInfo();
-                                        return playlistInfo && scoreBeatmapId === playlistInfo.beatmap_id;
-                                    }) : filteredScores}
-                                    title={getPageTitle()}
-                                    loading={loadingScores || loadingPlayers || loadingDatabaseScores}
-                                    onRefresh={loadScores}
-                                />
-                            ) : (
-                                <div className="text-center py-8 text-white">
-                                    <p className="text-lg">请先选择一个图池</p>
-                                    <p className="text-sm text-gray-400 mt-2">在上方图池选择区域选择一个图池来查看分数</p>
-                                </div>
-                            )}
-                        </>
-                    )}
-
-                    {activeTab === 'byTotal' && (
+                    {/* 如果有round_number参数，直接显示按总分表格 */}
+                    {new URLSearchParams(window.location.search).get('round_number') ? (
                         <TotalScoresByModTable
                             scores={databaseScores.length > 0 ? databaseScores : allScores}
                             mapSelections={mapSelections}
@@ -1154,6 +1138,45 @@ export default function MultiplayerScoresPage() {
                             selectedRoom={selectedRoom} // 传递房间信息用于匹配
                             registrations={registrations} // 传递已报名数据用于获取玩家信息
                         />
+                    ) : (
+                        /* 否则根据activeTab显示对应表格 */
+                        <>
+                            {/* 表格内容 */}
+                            {activeTab === 'byPlaylist' && (
+                                <>
+                                    {/* 按图池需要选择具体图池 */}
+                                    {selectedPlaylist ? (
+                                        <MultiplayerScoresTable
+                                            scores={databaseScores.length > 0 ? databaseScores.filter(score => {
+                                                const scoreBeatmapId = (score as any).beatmapId || (score as any).beatmap?.id;
+                                                const playlistInfo = getSelectedPlaylistInfo();
+                                                return playlistInfo && scoreBeatmapId === playlistInfo.beatmap_id;
+                                            }) : filteredScores}
+                                            title={getPageTitle()}
+                                            loading={loadingScores || loadingPlayers || loadingDatabaseScores}
+                                            onRefresh={loadScores}
+                                        />
+                                    ) : (
+                                        <div className="text-center py-8 text-white">
+                                            <p className="text-lg">请先选择一个图池</p>
+                                            <p className="text-sm text-gray-400 mt-2">在上方图池选择区域选择一个图池来查看分数</p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {activeTab === 'byTotal' && (
+                                <TotalScoresByModTable
+                                    scores={databaseScores.length > 0 ? databaseScores : allScores}
+                                    mapSelections={mapSelections}
+                                    approvedPlayers={approvedPlayers}
+                                    currentBeatmapId={undefined} // 按总分不需要当前图池ID
+                                    loading={loadingDatabaseScores || loadingAllScores || loadingPlayers || loadingMapSelections}
+                                    selectedRoom={selectedRoom} // 传递房间信息用于匹配
+                                    registrations={registrations} // 传递已报名数据用于获取玩家信息
+                                />
+                            )}
+                        </>
                     )}
                 </div>
             )}
