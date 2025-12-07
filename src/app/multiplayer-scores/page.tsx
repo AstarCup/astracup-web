@@ -953,43 +953,6 @@ export default function MultiplayerScoresPage() {
                         </button>
                     </div>
 
-                    {/* 操作状态信息 */}
-                    {saveMessage && (
-                        <div className="bg-green-500 text-white p-3 rounded mb-3">
-                            {saveMessage}
-                        </div>
-                    )}
-
-                    {saveError && (
-                        <div className="bg-red-500 text-white p-3 rounded mb-3">
-                            {saveError}
-                        </div>
-                    )}
-
-                    {/* 已保存的房间列表 */}
-                    {savedRooms.length > 0 && (
-                        <div className="mt-4">
-                            <h3 className="text-lg font-bold text-white mb-2">已保存的房间列表</h3>
-                            <div className="bg-[#3D3D3D] p-4 rounded">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {savedRooms.map(room => (
-                                        <div key={room.id} className="bg-[#4D4D4D] p-3 rounded">
-                                            <div className="text-white">
-                                                <p className="font-bold">{room.name}</p>
-                                                <p className="text-sm text-gray-300">ID: {room.id}</p>
-                                                <p className="text-sm text-gray-300">玩家数: {room.participant_count}</p>
-                                                <p className="text-sm text-gray-300">图池数: {room.playlist_count}</p>
-                                                <p className="text-xs text-gray-400">
-                                                    保存时间: {new Date(room.saved_at).toLocaleString('zh-CN')}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
                     {savedRooms.length === 0 && (
                         <div className="text-gray-400 text-sm">
                             暂无已保存的房间数据
