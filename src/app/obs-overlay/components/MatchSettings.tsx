@@ -66,6 +66,14 @@ export default function MatchSettings({
         currentScene: ''
     });
 
+    // 加载保存的比赛编号
+    useEffect(() => {
+        const savedMatchNumber = localStorage.getItem('matchNumber');
+        if (savedMatchNumber) {
+            setMatchNumber(savedMatchNumber);
+        }
+    }, []);
+
     // OBS 连接检测和初始化
     useEffect(() => {
         const checkOBSConnection = () => {
@@ -296,6 +304,7 @@ export default function MatchSettings({
             localStorage.removeItem('matchSettings');
             localStorage.removeItem('matchTeams');
             localStorage.removeItem('timerState');
+            localStorage.removeItem('matchNumber');
             // 重置为默认设置
             onSettingsChange({
                 matchInfo: '',
@@ -310,6 +319,8 @@ export default function MatchSettings({
                 remainingTime: 0,
                 isRunning: false
             });
+            // 重置比赛编号
+            setMatchNumber('1');
             alert('本地存储数据已清除，请刷新页面以重置比分和计时器');
         } catch (error) {
             console.error('清除本地存储失败:', error);
@@ -589,6 +600,8 @@ export default function MatchSettings({
     // 处理比赛编号变化
     const handleMatchNumberChange = (number: string) => {
         setMatchNumber(number);
+        // 保存到本地存储
+        localStorage.setItem('matchNumber', number);
         // 自动更新比赛信息 - 使用新的编号值直接生成
         const newMatchInfo = `星域杯S1 | ${mapPoolSettings.category ? mapPoolSettings.category.toUpperCase() : 'RO16'} #${number} | ${settings.redPlayer?.inGameName || '红队玩家'} vs ${settings.bluePlayer?.inGameName || '蓝队玩家'}`;
         onSettingsChange({
