@@ -359,10 +359,10 @@ export default function MatchSettings({
 
         if (redRoll > blueRoll) {
             winner = 'red';
-            resultText = `红方 ${redRoll} : ${blueRoll} 蓝方 | 由红方${settings.redPlayer?.inGameName || '红方玩家'}决定ban/pick顺序`;
+            resultText = `红方 ${redRoll} : ${blueRoll} 蓝方 | 由红方${settings.redPlayer?.inGameName || '红方玩家'}决定先ban还是后ban`;
         } else if (blueRoll > redRoll) {
             winner = 'blue';
-            resultText = `红方 ${redRoll} : ${blueRoll} 蓝方 | 由蓝方${settings.bluePlayer?.inGameName || '蓝方玩家'}决定ban/pick顺序`;
+            resultText = `红方 ${redRoll} : ${blueRoll} 蓝方 | 由蓝方${settings.bluePlayer?.inGameName || '蓝方玩家'}决定先ban还是后ban`;
         } else {
             // 平局，重新roll
             winner = redRoll >= blueRoll ? 'red' : 'blue';
