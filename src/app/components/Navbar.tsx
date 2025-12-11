@@ -376,9 +376,9 @@ export default function Navbar() {
                         </div>
 
                         {/* Mobile Right Side */}
-                        <div className="xl:hidden flex items-center justify-end space-x-2">
+                        <div className="xl:hidden flex items-center justify-end space-x-2 pointer-events-auto">
                             {/* Mobile User Profile */}
-                            <div className="flex items-center">
+                            <div className="flex items-center pointer-events-auto">
                                 {user ? (
                                     <Image
                                         src={avatarSrc}
@@ -400,7 +400,7 @@ export default function Navbar() {
 
                             {/* Mobile Menu Button */}
                             <button
-                                className="flex flex-col items-center space-y-1 p-2"
+                                className="flex flex-col items-center space-y-1 p-2 pointer-events-auto"
                                 onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
                                 aria-expanded={isMobileMenuOpen}
                                 aria-label="Toggle mobile menu"
@@ -414,7 +414,7 @@ export default function Navbar() {
 
                     {/* Mobile Menu Panel */}
                     <div
-                        className={`xl:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-screen py-0 opacity-100' : 'max-h-0 opacity-0'
+                        className={`xl:hidden pointer-events-auto overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-screen py-0 opacity-100' : 'max-h-0 opacity-0'
                             }`}
                     >
                         <div className="max-h-120 overflow-y-auto p-4 bg-black/50">
