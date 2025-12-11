@@ -248,16 +248,16 @@ export default function Navbar() {
     const isActive = (href: string) => pathname === href;
 
     return (
-        <nav className={`${audiowide.className} antialiased`}>
-            <div className="absolute inset-0" style={{
+        <nav className={`${audiowide.className} antialiased select-none pointer-events-none`}>
+            <div className="absolute inset-0 select-none" style={{
                 zIndex: -20,
                 background: 'linear-gradient(to bottom, rgba(0,0,0, 0.6) 10%, rgba(0,0,0, 0.3) 50%, rgba(0,0,0, 0.1) 80%, rgba(233, 59, 102, 0) 100%)'
             }}></div>
 
 
 
-            <div className="fixed top-0 left-0 w-full z-50 object-center font-bold">
-                <div className="absolute inset-0 backdrop-blur-lg" style={{
+            <div className="fixed top-0 left-0 w-full z-50 object-center font-bold select-none">
+                <div className="absolute inset-0 backdrop-blur-lg select-none pointer-events-none" style={{
                     zIndex: -20,
                     maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 10%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)',
                     WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 10%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)'
@@ -267,21 +267,18 @@ export default function Navbar() {
                     width={1920}
                     height={80}
                     alt="Background"
-                    className="absolute inset-0 object-cover bg-center bg-repeat-x"
+                    className="absolute inset-0 object-cover bg-center bg-repeat-x select-none pointer-events-none"
                     style={{ zIndex: -2 }} />
 
-
-
-
                 <div className="max-w-7xl mx-auto px-2">
-                    <div className="flex justify-between items-center h-30">
+                    <div className="flex justify-between items-center h-30 select-none pointer-events-none">
                         {/* Logo */}
-                        <div className="text-xl font-bold">
+                        <div className="text-xl font-bold pointer-events-auto">
                             <Link href="/"><Image src='/AstarCup.svg' alt='AstataCup' width={220} height={90} /></Link>
                         </div>
 
                         {/* Right Side Container */}
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-4 pointer-events-auto">
                             {/* Desktop Menu */}
                             <ul className="hidden xl:flex space-x-8 text-[#FFFFFF] p-2 m-2 navbar-menu">
 
