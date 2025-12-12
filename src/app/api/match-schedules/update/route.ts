@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { updateMatchScheduleStatus, getUserMatchSchedules } from '@/lib/mysql-registrations';
+import { updateMatchScheduleStatus, getUserMatchSchedules, getConnection } from '@/lib/mysql-registrations';
 import { getUserPermissions } from '@/lib/permissions';
 
 export async function POST(request: NextRequest) {
@@ -73,6 +73,30 @@ export async function POST(request: NextRequest) {
                     success: false,
                     error: '只能修改待确认状态的预约'
                 }, { status: 400 });
+            }
+
+            // 检查用户是否是比赛的创建者，如果是创建者则不能确认比赛
+            if (status === 'confirmed') {
+                // 获取比赛详情，检查created_by字段
+                const connection = await getConnection();
+                try {
+                    const [scheduleRows] = await connection.execute(
+                        'SELECT created_by FROM match_schedules WHERE id = ?',
+                        [id]
+                    );
+
+                    if ((scheduleRows as any[]).length > 0) {
+                        const scheduleData = (scheduleRows as any[])[0];
+                        if (scheduleData.created_by === userOsuId) {
+                            return NextResponse.json({
+                                success: false,
+                                error: '您不能确认自己创建的比赛预约'
+                            }, { status: 403 });
+                        }
+                    }
+                } finally {
+                    connection.release();
+                }
             }
         }
 

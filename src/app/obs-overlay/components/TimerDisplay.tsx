@@ -2,12 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { TimerState } from "../types/match";
+import Image from "next/image";
 
 interface TimerDisplayProps {
     timerState: TimerState;
     eventName?: string;
     mapPoolVisible?: boolean;
 }
+
+// 图片URL - 请在此处替换为您想要的图片URL
+const TIMER_IMAGE_URL = "https://vip.123pan.cn/1818470319/yk6baz03t0l000d7w33fz4u2bsqp82upDIYPBdF0DdDPBGxPDwivDa==.jpg";
 
 export default function TimerDisplay({ timerState, eventName = "", mapPoolVisible = false }: TimerDisplayProps) {
     const { remainingTime, isRunning } = timerState;
@@ -60,6 +64,9 @@ export default function TimerDisplay({ timerState, eventName = "", mapPoolVisibl
         return '#FFFFFF'; // 白色，正常时间
     };
 
+    // 检查是否应该显示图片：剩余时间小于等于30秒且大于0秒
+    const shouldShowImage = remainingTime <= 30 && remainingTime > 0;
+
     return (
         <div style={{
             position: 'absolute',
@@ -89,7 +96,7 @@ export default function TimerDisplay({ timerState, eventName = "", mapPoolVisibl
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0px'
+                gap: '20px'
             }}>
                 <div style={{
                     fontSize: '120px',
@@ -104,6 +111,29 @@ export default function TimerDisplay({ timerState, eventName = "", mapPoolVisibl
                 }}>
                     {displayText}
                 </div>
+
+                {/* 图片显示 - 只在30秒以下显示 */}
+                {shouldShowImage && TIMER_IMAGE_URL && (
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}>
+                        <Image
+                            src={TIMER_IMAGE_URL}
+                            alt="时间差不多喽"
+                            width={400}
+                            height={400}
+                            style={{
+                                borderRadius: '8px',
+                                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+                                objectFit: 'cover'
+                            }}
+                            unoptimized={TIMER_IMAGE_URL.startsWith('http')}
+                        />
+                    </div>
+                )}
+
                 {/* 暂停标志 */}
                 {!isRunning && remainingTime > 0 && (
                     <div style={{
