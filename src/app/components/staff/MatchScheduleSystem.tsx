@@ -385,6 +385,13 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
         return matchup.player1_osuId === userOsuId || matchup.player2_osuId === userOsuId;
     };
 
+    // 检查用户是否可以确认比赛
+    // 用户必须是比赛的参与者（player1或player2）且不是比赛的创建者
+    const canUserConfirmMatch = (schedule: MatchSchedule) => {
+        return (schedule.player1_osuId === userOsuId || schedule.player2_osuId === userOsuId)
+            && schedule.created_by !== userOsuId;
+    };
+
     // 打开编辑模态框
     const openEditModal = (schedule: MatchSchedule) => {
         setEditingSchedule(schedule);
@@ -612,7 +619,7 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
 
                             {/* 操作按钮 */}
                             <div className="flex gap-2">
-                                {isUserInMatch(schedule) && schedule.status === 'pending' && (
+                                {canUserConfirmMatch(schedule) && schedule.status === 'pending' && (
                                     <>
                                         <button
                                             onClick={() => handleUpdateStatus(schedule.id, 'confirmed')}
@@ -627,6 +634,16 @@ export default function MatchScheduleSystem({ userOsuId, isAdmin }: MatchSchedul
                                             取消预约
                                         </button>
                                     </>
+                                )}
+
+                                {/* 创建者只能取消预约，不能确认 */}
+                                {isUserInMatch(schedule) && schedule.status === 'pending' && schedule.created_by === userOsuId && (
+                                    <button
+                                        onClick={() => handleUpdateStatus(schedule.id, 'cancelled')}
+                                        className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-sm"
+                                    >
+                                        取消预约
+                                    </button>
                                 )}
 
                                 {isAdmin && schedule.status === 'confirmed' && (
