@@ -2212,7 +2212,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     <>
                                         {/* 右侧放不下时：第二排在左边，第一排在右边 */}
                                         <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[200px]">
-                                            <p>图池操作</p>
+                                            <p className='text-2xl text-gray text-blob ml-5'>图池操作</p>
                                             {secondColumn}
                                         </div>
                                         <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[240px]">
@@ -2226,7 +2226,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             {firstColumn}
                                         </div>
                                         <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[200px]">
-                                            <p>图池操作</p>
+                                            <p className='text-2xl text-gray text-blob ml-5'>图池操作</p>
                                             {secondColumn}
                                         </div>
                                     </>
