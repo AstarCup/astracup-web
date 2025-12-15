@@ -592,7 +592,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                         {maps.map(map => (
                                             <div
                                                 key={map.id}
-                                                className={`border rounded-md p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden w-64 h-80 ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''} ${!isLoadingUploadedUsers && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.length > 0 ? 'border-green-500' : 'border-gray-300'
+                                                className={`border rounded-md p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden w-100 h-64 ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''} ${!isLoadingUploadedUsers && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.length > 0 ? 'border-green-500' : 'border-gray-300'
                                                     }`}
                                                 style={{
                                                     backgroundImage: `url(https://assets.ppy.sh/beatmaps/${map.SID}/covers/cover.jpg)`,
@@ -691,7 +691,7 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                                     </div>
 
                                                     {/* 底部区域：上传状态 */}
-                                                    <div className="mb-3 bg-white rounded-md px-2 flex-grow">
+                                                    <div className="mb-3 bg-white rounded-md px-2 flex-grow h-[24px]">
                                                         <div className="text-xl text-bold text-gray-700 px-2 py-1">
                                                             {isLoadingUploadedUsers ? '加载中...' : getUsernamesList(uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`] || [])}
                                                         </div>
