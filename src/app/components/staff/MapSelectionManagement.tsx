@@ -440,7 +440,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         e.preventDefault();
 
         // 计算菜单位置
-        const menuWidth = 320; // 双排菜单宽度
+        const menuWidth = 480; // 双排菜单宽度
         const menuHeight = 400; // 预估菜单高度
 
         let left = e.clientX;
@@ -2197,7 +2197,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         }
                                         closeContextMenu();
                                     }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 transition-colors flex items-center gap-2 rounded-lg"
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 rounded-lg text-red-600 transition-colors flex items-center gap-2 rounded-lg"
                                 >
                                     <Image src='/icons/delete-bin-2-fill.svg' alt='delete' width={30} height={30} />
                                     删除
@@ -2211,20 +2211,20 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 {isOnRightSide ? (
                                     <>
                                         {/* 右侧放不下时：第二排在左边，第一排在右边 */}
-                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg w-[320px]">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[200px]">
                                             {secondColumn}
                                         </div>
-                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg w-[320px]">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[240px]">
                                             {firstColumn}
                                         </div>
                                     </>
                                 ) : (
                                     <>
                                         {/* 正常情况：第一排在左边，第二排在右边 */}
-                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg w-[320px]">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[240px]">
                                             {firstColumn}
                                         </div>
-                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg w-[320px]">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[200px]">
                                             {secondColumn}
                                         </div>
                                     </>
