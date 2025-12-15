@@ -2094,7 +2094,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     window.open(contextMenu.selection!.url, '_blank');
                                     closeContextMenu();
                                 }}
-                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                             >
                                 <Image src='/icons/link.svg' alt='viewOsu' width={30} height={30} />
                                 查看谱面
@@ -2106,7 +2106,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     showInfo('已在osu客户端中打开谱面');
                                     closeContextMenu();
                                 }}
-                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                             >
                                 <Image src='/icons/osu-lazer-logo-black.svg' alt='viewOsu' width={30} height={30} />
                                 从osu中打开
@@ -2120,7 +2120,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     showSuccess('已开始从Nerinyan下载');
                                     closeContextMenu();
                                 }}
-                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                             >
                                 <Image src='/icons/download.svg' alt='download' width={30} height={30} />
                                 下载谱面 (Nerinyan)
@@ -2133,7 +2133,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     showSuccess('已开始从osu官方下载');
                                     closeContextMenu();
                                 }}
-                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                             >
                                 <Image src='/icons/download.svg' alt='download' width={30} height={30} />
                                 osu官方下载
@@ -2149,7 +2149,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         refreshSelection(contextMenu.selection!);
                                         closeContextMenu();
                                     }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                                 >
                                     <Image src='/icons/loading-black.svg' alt='refresh map' width={30} height={30} />
                                     刷新MOD属性
@@ -2166,9 +2166,9 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         });
                                         closeContextMenu();
                                     }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                                 >
-                                    <Image src='/icons/settings-3-fill.svg' alt='edit' width={30} height={30} />
+                                    <Image src='/icons/settings-3-black.svg' alt='edit' width={30} height={30} />
                                     修改属性
                                 </button>
                             ),
@@ -2179,7 +2179,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         togglePadding(contextMenu.selection!.id, contextMenu.selection!.padding || false);
                                         closeContextMenu();
                                     }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                                 >
                                     <Image src='/icons/auction-fill-black.svg' alt='download' width={30} height={30} />
                                     {contextMenu.selection!.padding ? '取消测图' : '设为测图'}
@@ -2192,7 +2192,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         toggleApproval(contextMenu.selection!.id, contextMenu.selection!.approved);
                                         closeContextMenu();
                                     }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                                 >
                                     <Image src='/icons/auction-fill-black.svg' alt='download' width={30} height={30} />
                                     {contextMenu.selection!.approved ? '取消过审' : '过审'}
@@ -2206,7 +2206,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         }
                                         closeContextMenu();
                                     }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 transition-colors flex items-center gap-2 justify-center"
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 transition-colors flex items-center gap-2 rounded-lg"
                                 >
                                     <Image src='/icons/delete-bin-2-fill.svg' alt='delete' width={30} height={30} />
                                     删除
