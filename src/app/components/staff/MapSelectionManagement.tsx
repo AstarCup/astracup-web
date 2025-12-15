@@ -2215,25 +2215,25 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         ].filter(Boolean);
 
                         return (
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="flex flex-col items-start gap-3">
                                 {/* 根据位置决定列顺序 */}
                                 {isOnRightSide ? (
                                     <>
                                         {/* 右侧放不下时：第二排在左边，第一排在右边 */}
-                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[120px]">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[320px]">
                                             {secondColumn}
                                         </div>
-                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[120px]">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[320px]">
                                             {firstColumn}
                                         </div>
                                     </>
                                 ) : (
                                     <>
                                         {/* 正常情况：第一排在左边，第二排在右边 */}
-                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[120px]">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[320px]">
                                             {firstColumn}
                                         </div>
-                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[120px]">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[320px]">
                                             {secondColumn}
                                         </div>
                                     </>
