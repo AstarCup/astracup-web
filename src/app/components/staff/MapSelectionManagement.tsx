@@ -1592,7 +1592,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                     formatLength(beatmapPreview.total_length)
                                                 }
                                             </div>
-                                            <div className="text-center font-bold text-lg">
+                                            <div className="text-center font-bold text-base">
                                                 {beatmapPreview.max_combo || 0}
                                             </div>
                                             <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.bpm !== undefined ? (moddedStats.bpm > beatmapPreview.bpm + 0.01 ? 'text-red-500' : moddedStats.bpm < beatmapPreview.bpm - 0.01 ? 'text-green-500' : '') : ''}`}>
