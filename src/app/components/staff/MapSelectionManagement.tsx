@@ -440,7 +440,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         e.preventDefault();
 
         // 计算菜单位置
-        const menuWidth = 320; // 双排菜单宽度
+        const menuWidth = 480; // 双排菜单宽度
         const menuHeight = 400; // 预估菜单高度
 
         let left = e.clientX;
@@ -521,7 +521,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             { name: 'WG', description: 'Wiggle - ' },
             { name: 'WU', description: 'Wind Up - 精确度挑战' },
             // 后续添加的特殊mod组合
-            { name: 'AD+BR(RollSpeed:6.0)', description: 'AD+BR(RollSpeed:6.0)' }
+            { name: 'AD+BR(RollSpeed:6.0)', description: 'AD+BR(RollSpeed:6.0)' },
+            { name: 'DA(AR:8)', description: 'Difficulty Adjust - AR8' }
         ];
         setAvailableLazerMods(fallbackMods);
     };
@@ -1399,6 +1400,48 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             />
                         </div>
 
+                        {/* 一键选中当前筛选的图 - 仅管理员可见 */}
+                        {(permissions.isAdmin || permissions.isMapSelector) && (
+                            <button
+                                onClick={() => {
+                                    // 获取当前筛选出的未过审选图
+                                    const filteredUnapproved = filteredSelections.filter(s => !s.approved);
+
+                                    // 检查是否已经全部选中
+                                    const allSelected = filteredUnapproved.length > 0 &&
+                                        filteredUnapproved.every(s => tempApprovedSelections.has(s.id));
+
+                                    const newSelections = new Set(tempApprovedSelections);
+
+                                    if (allSelected) {
+                                        // 如果已经全部选中，则取消选中所有
+                                        filteredUnapproved.forEach(selection => {
+                                            newSelections.delete(selection.id);
+                                        });
+                                    } else {
+                                        // 否则选中所有当前筛选的未过审选图
+                                        filteredUnapproved.forEach(selection => {
+                                            newSelections.add(selection.id);
+                                        });
+                                    }
+
+                                    setTempApprovedSelections(newSelections);
+                                }}
+                                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors whitespace-nowrap"
+                            >
+                                {(() => {
+                                    const filteredUnapproved = filteredSelections.filter(s => !s.approved);
+                                    const allSelected = filteredUnapproved.length > 0 &&
+                                        filteredUnapproved.every(s => tempApprovedSelections.has(s.id));
+
+                                    if (allSelected) {
+                                        return "取消全选";
+                                    } else {
+                                        return `一键全选 (${filteredUnapproved.length})`;
+                                    }
+                                })()}
+                            </button>
+                        )}
 
                         {/* 添加选图按钮 */}
                         {(permissions.isMapSelector || permissions.isAdmin) && (
@@ -1549,7 +1592,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                     formatLength(beatmapPreview.total_length)
                                                 }
                                             </div>
-                                            <div className="text-center font-bold text-lg">
+                                            <div className="text-center font-bold text-base">
                                                 {beatmapPreview.max_combo || 0}
                                             </div>
                                             <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.bpm !== undefined ? (moddedStats.bpm > beatmapPreview.bpm + 0.01 ? 'text-red-500' : moddedStats.bpm < beatmapPreview.bpm - 0.01 ? 'text-green-500' : '') : ''}`}>
@@ -1754,16 +1797,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             </div>
 
                             <div className="flex gap-4 items-center mb-4">
-                                {/* <label className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={approved}
-                                        onChange={(e) => setApproved(e.target.checked)}
-                                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                                    />
-                                    <span className="text-sm text-gray-700">直接过审</span>
-                                </label> */}
-
                                 <label className="flex items-center gap-2">
                                     <input
                                         type="checkbox"
@@ -1836,8 +1869,26 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         {modSelections.map(selection => (
                                             <div
                                                 key={selection.id}
-                                                className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 ${selection.approved ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'
-                                                    }`}
+                                                className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${selection.approved ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'
+                                                    } ${tempApprovedSelections.has(selection.id) ? 'border-blue-500 bg-blue-50' : ''}`}
+                                                onClick={(e) => {
+                                                    // 检查点击目标是否为可点击元素（按钮、链接、输入框等）
+                                                    const target = e.target as HTMLElement;
+                                                    if (target.closest('button') || target.closest('a') || target.closest('input') || target.closest('textarea') || target.closest('select')) {
+                                                        return; // 不处理按钮、链接、表单元素的点击
+                                                    }
+
+                                                    // 只有管理员可以对未过审的选图进行批量选择
+                                                    if (permissions.isAdmin && !selection.approved) {
+                                                        const newSelections = new Set(tempApprovedSelections);
+                                                        if (newSelections.has(selection.id)) {
+                                                            newSelections.delete(selection.id);
+                                                        } else {
+                                                            newSelections.add(selection.id);
+                                                        }
+                                                        setTempApprovedSelections(newSelections);
+                                                    }
+                                                }}
                                                 onContextMenu={(e) => handleContextMenu(e, selection)}
                                             >
                                                 {/* 头部：封面和基本信息 */}
@@ -2076,7 +2127,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             {/* 右键菜单 */}
             {contextMenu.show && contextMenu.selection && (
                 <div
-                    className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-3 min-w-[320px]"
+                    className="fixed flex flex-row gap-2 z-50"
                     style={{
                         left: contextMenu.x,
                         top: contextMenu.y,
@@ -2206,7 +2257,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         }
                                         closeContextMenu();
                                     }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 transition-colors flex items-center gap-2 rounded-lg"
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 rounded-lg text-red-600 transition-colors flex items-center gap-2 rounded-lg"
                                 >
                                     <Image src='/icons/delete-bin-2-fill.svg' alt='delete' width={30} height={30} />
                                     删除
@@ -2215,25 +2266,25 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         ].filter(Boolean);
 
                         return (
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="flex flex-row items-start gap-3">
                                 {/* 根据位置决定列顺序 */}
                                 {isOnRightSide ? (
                                     <>
                                         {/* 右侧放不下时：第二排在左边，第一排在右边 */}
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[200px]">
                                             {secondColumn}
                                         </div>
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[240px]">
                                             {firstColumn}
                                         </div>
                                     </>
                                 ) : (
                                     <>
                                         {/* 正常情况：第一排在左边，第二排在右边 */}
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[240px]">
                                             {firstColumn}
                                         </div>
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[200px]">
                                             {secondColumn}
                                         </div>
                                     </>

@@ -277,40 +277,6 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
         }
     };
 
-    // 测试单个下载
-    const testSingleDownload = async (sid: string, source: 'nerinyan' | 'sayobot' | 'osu') => {
-        try {
-            console.log('Testing single download for SID:', sid, 'source:', source);
-            const response = await fetch(`/api/download-beatmap?sid=${sid}&source=${source}`, {
-                method: 'GET',
-                headers: {
-                    'Cache-Control': 'no-cache',
-                },
-            });
-
-            console.log('Test response:', {
-                ok: response.ok,
-                status: response.status,
-                statusText: response.statusText,
-                contentLength: response.headers.get('content-length'),
-                contentType: response.headers.get('content-type'),
-            });
-
-            if (response.ok) {
-                const blob = await response.blob();
-                console.log('Test blob size:', blob.size, 'bytes');
-                return { success: true, size: blob.size };
-            } else {
-                const errorText = await response.text();
-                console.error('Test failed:', errorText);
-                return { success: false, error: errorText };
-            }
-        } catch (error) {
-            console.error('Test error:', error);
-            return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-        }
-    };
-
     // 取消批量下载
     const cancelBulkDownload = () => {
         // 如果有正在进行的请求，取消它
@@ -346,16 +312,6 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
-    // 格式化日期时间
-    const formatDateTime = (dateTimeString: string) => {
-        try {
-            return new Date(dateTimeString).toLocaleString('zh-CN');
-        } catch (error) {
-            console.error('日期格式化错误:', error, dateTimeString);
-            return '时间格式错误';
-        }
-    };
-
     // 获取mod颜色class
     const getModColorClass = (mod: string): string => {
         switch (mod) {
@@ -364,9 +320,9 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
             case 'HR': return 'bg-red-500';
             case 'DT': return 'bg-purple-500';
             case 'EZ': return 'bg-green-500';
-            case 'LZ': return 'bg-gray-600';
+            case 'LZ': return 'bg-pink-600';
             case 'TB': return 'bg-black';
-            case 'FM': return 'bg-blue-500';
+            case 'FM': return 'bg-green-500';
             default: return 'bg-blue-500';
         }
     };
@@ -594,7 +550,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                         href={`https://osu.ppy.sh/beatmaps/${row.BID}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-left hover:underline bg-white"
+                                        className="text-left hover:underline"
                                     >
                                         {row.MapInfo}
                                     </a></td>

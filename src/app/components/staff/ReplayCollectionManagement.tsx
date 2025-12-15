@@ -235,6 +235,21 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
         return sortMapsByModOrder(filteredMaps);
     };
 
+    // 按mod分组地图
+    const getGroupedMapsByMod = () => {
+        const filteredMaps = getFilteredMaps();
+        const grouped: { [key: string]: PaddingMap[] } = {};
+
+        filteredMaps.forEach(map => {
+            if (!grouped[map.selectedMods]) {
+                grouped[map.selectedMods] = [];
+            }
+            grouped[map.selectedMods].push(map);
+        });
+
+        return grouped;
+    };
+
     // 获取可用的mod选项（包含数量统计）
     const getModFilterOptions = () => {
         const modCounts: { [key: string]: number } = {};
@@ -567,135 +582,140 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                                 </div>
                             )}
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                            {getFilteredMaps().map(map => (
-                                <div
-                                    key={map.id}
-                                    className={`border rounded-md p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''} ${!isLoadingUploadedUsers && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.length > 0 ? 'border-green-500' : 'border-gray-300'
-                                        }`}
-                                    style={{
-                                        backgroundImage: `url(https://assets.ppy.sh/beatmaps/${map.SID}/covers/cover.jpg)`,
-                                        backgroundSize: 'cover',
-                                        backgroundPosition: 'center',
-                                        backgroundRepeat: 'no-repeat',
-                                        opacity: !isLoadingUploadedUsers && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.length > 0 ? 0.76 : 1,
-                                        transition: 'opacity 0.2s ease-in-out'
-                                    }}
+                        <div className="space-y-6">
+                            {Object.entries(getGroupedMapsByMod()).map(([mod, maps]) => (
+                                <div key={mod} className="space-y-3">
+                                    <h4 className={`text-lg font-bold ${getModColor(mod)}`}>
+                                        {mod} ({maps.length}张地图)
+                                    </h4>
+                                    <div className="flex flex-wrap gap-4">
+                                        {maps.map(map => (
+                                            <div
+                                                key={map.id}
+                                                className={`border rounded-md p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden w-100 h-64 ${highlightedMapId === map.id ? 'ring-4 ring-blue-500 ring-opacity-75 shadow-lg highlight-pulse' : ''} ${!isLoadingUploadedUsers && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.length > 0 ? 'border-green-500' : 'border-gray-300'
+                                                    }`}
+                                                style={{
+                                                    backgroundImage: `url(https://assets.ppy.sh/beatmaps/${map.SID}/covers/cover.jpg)`,
+                                                    backgroundSize: 'cover',
+                                                    backgroundPosition: 'center',
+                                                    backgroundRepeat: 'no-repeat',
+                                                    opacity: !isLoadingUploadedUsers && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.length > 0 ? 0.76 : 1,
+                                                    transition: 'opacity 0.2s ease-in-out'
+                                                }}
 
-                                    onClick={() => {
-                                        if (uploading === null && user) {
-                                            const input = document.createElement('input');
-                                            input.type = 'file';
-                                            input.accept = '.osr';
-                                            input.onchange = (e) => {
-                                                const target = e.target as HTMLInputElement;
-                                                if (target.files && target.files[0]) {
-                                                    handleReplayUpload(map, target.files[0]);
-                                                }
-                                            };
-                                            input.click();
-                                        }
-                                    }}
-                                    onDragOver={(e) => {
-                                        e.preventDefault();
-                                        if (uploading === null) {
-                                            e.currentTarget.classList.add('bg-blue-50', 'border-blue-300');
-                                        }
-                                    }}
-                                    onDragLeave={(e) => {
-                                        e.preventDefault();
-                                        e.currentTarget.classList.remove('bg-blue-50', 'border-blue-300');
-                                    }}
-                                    onDrop={(e) => {
-                                        e.preventDefault();
-                                        e.currentTarget.classList.remove('bg-blue-50', 'border-blue-300');
-                                        if (uploading === null && user) {
-                                            const files = e.dataTransfer.files;
-                                            if (files.length > 0 && files[0].name.endsWith('.osr')) {
-                                                handleReplayUpload(map, files[0]);
-                                            } else {
-                                                showError('请上传.osr格式的回放文件');
-                                            }
-                                        }
-                                    }}
-                                >
-                                    {/* 删除按钮 - 只有已上传时显示 */}
-                                    {!isLoadingUploadedUsers && user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation(); // 阻止事件冒泡
-                                                handleReplayDelete(map);
-                                            }}
-                                            className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors z-30"
-                                            title="删除已上传的回放"
-                                        >
-                                            ×
-                                        </button>
-                                    )}
+                                                onClick={() => {
+                                                    if (uploading === null && user) {
+                                                        const input = document.createElement('input');
+                                                        input.type = 'file';
+                                                        input.accept = '.osr';
+                                                        input.onchange = (e) => {
+                                                            const target = e.target as HTMLInputElement;
+                                                            if (target.files && target.files[0]) {
+                                                                handleReplayUpload(map, target.files[0]);
+                                                            }
+                                                        };
+                                                        input.click();
+                                                    }
+                                                }}
+                                                onDragOver={(e) => {
+                                                    e.preventDefault();
+                                                    if (uploading === null) {
+                                                        e.currentTarget.classList.add('bg-blue-50', 'border-blue-300');
+                                                    }
+                                                }}
+                                                onDragLeave={(e) => {
+                                                    e.preventDefault();
+                                                    e.currentTarget.classList.remove('bg-blue-50', 'border-blue-300');
+                                                }}
+                                                onDrop={(e) => {
+                                                    e.preventDefault();
+                                                    e.currentTarget.classList.remove('bg-blue-50', 'border-blue-300');
+                                                    if (uploading === null && user) {
+                                                        const files = e.dataTransfer.files;
+                                                        if (files.length > 0 && files[0].name.endsWith('.osr')) {
+                                                            handleReplayUpload(map, files[0]);
+                                                        } else {
+                                                            showError('请上传.osr格式的回放文件');
+                                                        }
+                                                    }
+                                                }}
+                                            >
+                                                {/* 删除按钮 - 只有已上传时显示 */}
+                                                {!isLoadingUploadedUsers && user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation(); // 阻止事件冒泡
+                                                            handleReplayDelete(map);
+                                                        }}
+                                                        className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors z-30"
+                                                        title="删除已上传的回放"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                )}
 
-                                    {/* 渐变覆盖层 - 已上传时显示绿色，未上传时显示白色 */}
-                                    <div className={`absolute inset-0 ${!isLoadingUploadedUsers && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.length > 0 ? 'bg-gradient-to-tr from-green-100 via-green-50/80 to-transparent' : 'bg-gradient-to-tr from-white via-white/80 to-transparent'}`}></div>
+                                                {/* 渐变覆盖层 - 已上传时显示绿色，未上传时显示白色 */}
+                                                <div className={`absolute inset-0 ${!isLoadingUploadedUsers && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.length > 0 ? 'bg-gradient-to-tr from-green-100 via-green-50/80 to-transparent' : 'bg-gradient-to-tr from-white via-white/80 to-transparent'}`}></div>
 
-                                    {/* 内容层 */}
-                                    <div className="relative z-10">
-                                        <div className="mb-3 flex items-start justify-between">
-                                            {/* 左边：mod位信息（加粗） */}
-                                            <div className="flex-shrink-0">
-                                                <span className={`font-bold text-lg ${getModColor(map.selectedMods)} px-2 py-1 shadow-sm bg-white/90 rounded`}>
-                                                    {map.selectedMods}{map.modPosition}
-                                                </span>
+                                                {/* 内容层 */}
+                                                <div className="relative z-10 h-full flex flex-col">
+                                                    <div className="mb-3 flex items-start justify-between">
+                                                        {/* 左边：mod位信息（加粗） */}
+                                                        <div className="flex-shrink-0">
+                                                            <span className={`font-bold text-lg ${getModColor(map.selectedMods)} px-2 py-1 shadow-sm bg-white/90 rounded`}>
+                                                                {map.selectedMods}{map.modPosition}
+                                                            </span>
+                                                        </div>
+
+                                                        {/* 右边：歌曲信息 */}
+                                                        <div className="flex-1 min-w-0 ml-3 text-right">
+                                                            <h4 className="font-bold text-sm text-gray-800 truncate px-2 py-1" title={`${map.artist} - ${map.title}`}>
+                                                                {map.artist} - {map.title}
+                                                            </h4>
+                                                            <p className="text-xs text-gray-600 truncate px-2 py-1 mt-1" title={map.version}>
+                                                                [{map.version}]
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* 中间区域：星级和其他信息 */}
+                                                    <div className="mb-3">
+                                                        <div className="flex items-center justify-end text-sm mb-1">
+                                                            <span className="text-gray-700 font-medium px-2 py-1">
+                                                                ★{map.starRating}
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-xs text-gray-600 px-2 py-1">
+                                                            {map.totalLength ? formatLength(map.totalLength) : '-'} | {map.bpm} BPM
+                                                        </div>
+                                                    </div>
+
+                                                    {/* 底部区域：上传状态 */}
+                                                    <div className="mb-3 bg-white rounded-md px-2 flex-grow h-[24px]">
+                                                        <div className="text-xl text-bold text-gray-700 px-2 py-1">
+                                                            {isLoadingUploadedUsers ? '加载中...' : getUsernamesList(uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`] || [])}
+                                                        </div>
+                                                        {!isLoadingUploadedUsers && user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) && (
+                                                            <div className="text-xl text-bold text-green-600 font-medium mt-1 px-2 py-1">✓ 你已上传</div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* 底部提示 */}
+                                                    <div className="text-center mt-auto">
+                                                        <div className="text-xs text-gray-600 px-2 py-1 inline-block">
+                                                            {uploading === map.id ? '上传中...' : (uploading === null ? '点击上传或拖拽.osr文件' : '其他文件上传中...')}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* 上传中遮罩 - 只在当前卡片上传时显示，去掉白色背景 */}
+                                                    {uploading === map.id && (
+                                                        <div className="absolute inset-0 flex items-center justify-center z-30">
+                                                            <div className="text-sm text-blue-600 bg-white px-3 py-2 rounded shadow-lg">上传中...</div>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-
-                                            {/* 右边：歌曲信息 */}
-                                            <div className="flex-1 min-w-0 ml-3 text-right">
-                                                <h4 className="font-bold text-sm text-gray-800 truncate px-2 py-1" title={`${map.artist} - ${map.title}`}>
-                                                    {map.artist} - {map.title}
-                                                </h4>
-                                                <p className="text-xs text-gray-600 truncate px-2 py-1 mt-1" title={map.version}>
-                                                    [{map.version}]
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {/* 中间区域：星级和其他信息 */}
-                                        <div className="mb-3">
-                                            <div className="flex items-center justify-end text-sm mb-1">
-                                                <span className="text-gray-700 font-medium px-2 py-1">
-                                                    ★{map.starRating}
-                                                </span>
-                                            </div>
-                                            <div className="text-xs text-gray-600 px-2 py-1">
-                                                {map.totalLength ? formatLength(map.totalLength) : '-'} | {map.bpm} BPM
-                                            </div>
-                                        </div>
-
-                                        {/* 底部区域：上传状态 */}
-                                        <div className="mb-3 bg-white rounded-md px-2">
-                                            <div className="text-xl text-bold text-gray-700 px-2 py-1">
-                                                {isLoadingUploadedUsers ? '加载中...' : getUsernamesList(uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`] || [])}
-                                            </div>
-                                            {!isLoadingUploadedUsers && user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) && (
-                                                <div className="text-xl text-bold text-green-600 font-medium mt-1 px-2 py-1">✓ 你已上传</div>
-                                            )}
-                                            {/* 调试信息 */}
-                                            {/* <div className="text-xs text-gray-500 mt-1 px-2 py-1">
-                                                调试: mapKey={selectedSeason}/{selectedCategory}/{map.BID}, 已上传用户: {JSON.stringify(uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`] || [])}, 当前用户: {user.username}, 已上传: {!isLoadingUploadedUsers && user && uploadedUsers[`${selectedSeason}/${selectedCategory}/${map.BID}`]?.includes(user.username) ? '是' : '否'}
-                                            </div> */}
-                                        </div>
-
-                                        {/* 底部提示 */}
-                                        <div className="text-center">
-                                            <div className="text-xs text-gray-600 px-2 py-1 inline-block">
-                                                {uploading === map.id ? '上传中...' : (uploading === null ? '点击上传或拖拽.osr文件' : '其他文件上传中...')}
-                                            </div>
-                                        </div>
-
-                                        {/* 上传中遮罩 - 只在当前卡片上传时显示，去掉白色背景 */}
-                                        {uploading === map.id && (
-                                            <div className="absolute inset-0 flex items-center justify-center z-30">
-                                                <div className="text-sm text-blue-600 bg-white px-3 py-2 rounded shadow-lg">上传中...</div>
-                                            </div>
-                                        )}
+                                        ))}
                                     </div>
                                 </div>
                             ))}
