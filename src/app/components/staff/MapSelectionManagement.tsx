@@ -1400,6 +1400,48 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             />
                         </div>
 
+                        {/* 一键选中当前筛选的图 - 仅管理员可见 */}
+                        {(permissions.isAdmin || permissions.isMapSelector) && (
+                            <button
+                                onClick={() => {
+                                    // 获取当前筛选出的未过审选图
+                                    const filteredUnapproved = filteredSelections.filter(s => !s.approved);
+
+                                    // 检查是否已经全部选中
+                                    const allSelected = filteredUnapproved.length > 0 &&
+                                        filteredUnapproved.every(s => tempApprovedSelections.has(s.id));
+
+                                    const newSelections = new Set(tempApprovedSelections);
+
+                                    if (allSelected) {
+                                        // 如果已经全部选中，则取消选中所有
+                                        filteredUnapproved.forEach(selection => {
+                                            newSelections.delete(selection.id);
+                                        });
+                                    } else {
+                                        // 否则选中所有当前筛选的未过审选图
+                                        filteredUnapproved.forEach(selection => {
+                                            newSelections.add(selection.id);
+                                        });
+                                    }
+
+                                    setTempApprovedSelections(newSelections);
+                                }}
+                                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors whitespace-nowrap"
+                            >
+                                {(() => {
+                                    const filteredUnapproved = filteredSelections.filter(s => !s.approved);
+                                    const allSelected = filteredUnapproved.length > 0 &&
+                                        filteredUnapproved.every(s => tempApprovedSelections.has(s.id));
+
+                                    if (allSelected) {
+                                        return "取消全选";
+                                    } else {
+                                        return `一键全选 (${filteredUnapproved.length})`;
+                                    }
+                                })()}
+                            </button>
+                        )}
 
                         {/* 添加选图按钮 */}
                         {(permissions.isMapSelector || permissions.isAdmin) && (
@@ -1827,8 +1869,26 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         {modSelections.map(selection => (
                                             <div
                                                 key={selection.id}
-                                                className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 ${selection.approved ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'
-                                                    }`}
+                                                className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${selection.approved ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'
+                                                    } ${tempApprovedSelections.has(selection.id) ? 'border-blue-500 bg-blue-50' : ''}`}
+                                                onClick={(e) => {
+                                                    // 检查点击目标是否为可点击元素（按钮、链接、输入框等）
+                                                    const target = e.target as HTMLElement;
+                                                    if (target.closest('button') || target.closest('a') || target.closest('input') || target.closest('textarea') || target.closest('select')) {
+                                                        return; // 不处理按钮、链接、表单元素的点击
+                                                    }
+
+                                                    // 只有管理员可以对未过审的选图进行批量选择
+                                                    if (permissions.isAdmin && !selection.approved) {
+                                                        const newSelections = new Set(tempApprovedSelections);
+                                                        if (newSelections.has(selection.id)) {
+                                                            newSelections.delete(selection.id);
+                                                        } else {
+                                                            newSelections.add(selection.id);
+                                                        }
+                                                        setTempApprovedSelections(newSelections);
+                                                    }
+                                                }}
                                                 onContextMenu={(e) => handleContextMenu(e, selection)}
                                             >
                                                 {/* 头部：封面和基本信息 */}
@@ -2212,7 +2272,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     <>
                                         {/* 右侧放不下时：第二排在左边，第一排在右边 */}
                                         <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[200px]">
-                                            <p className='text-2xl text-gray text-blob ml-5'>图池操作</p>
                                             {secondColumn}
                                         </div>
                                         <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[240px]">
@@ -2226,7 +2285,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             {firstColumn}
                                         </div>
                                         <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[200px]">
-                                            <p className='text-2xl text-gray text-blob ml-5'>图池操作</p>
                                             {secondColumn}
                                         </div>
                                     </>
