@@ -2088,64 +2088,61 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         const isOnRightSide = contextMenu.x + 320 > window.innerWidth;
                         // 111111111111111111111111111111111111
                         const firstColumn = [
-                            <div className='bg-white border border-gray-300 rounded-lg shadow-lg p-3 min-w-[120px]'>
-                                <button
-                                    key="view"
-                                    onClick={() => {
-                                        window.open(contextMenu.selection!.url, '_blank');
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <Image src='/icons/link.svg' alt='viewOsu' width={30} height={30} />
-                                    查看谱面
-                                </button>,
-                                <button
-                                    key="open-in-osu"
-                                    onClick={() => {
-                                        window.open(`osu://b/${contextMenu.selection!.beatmapId}`, '_blank');
-                                        showInfo('已在osu客户端中打开谱面');
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <Image src='/icons/osu-lazer-logo-black.svg' alt='viewOsu' width={30} height={30} />
-                                    从osu中打开
-                                </button>,
+                            <button
+                                key="view"
+                                onClick={() => {
+                                    window.open(contextMenu.selection!.url, '_blank');
+                                    closeContextMenu();
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                            >
+                                <Image src='/icons/link.svg' alt='viewOsu' width={30} height={30} />
+                                查看谱面
+                            </button>,
+                            <button
+                                key="open-in-osu"
+                                onClick={() => {
+                                    window.open(`osu://b/${contextMenu.selection!.beatmapId}`, '_blank');
+                                    showInfo('已在osu客户端中打开谱面');
+                                    closeContextMenu();
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                            >
+                                <Image src='/icons/osu-lazer-logo-black.svg' alt='viewOsu' width={30} height={30} />
+                                从osu中打开
+                            </button>,
 
-                                <button
-                                    key="download-nerinyan"
-                                    onClick={() => {
-                                        const downloadUrl = `https://api.nerinyan.moe/d/${contextMenu.selection!.beatmapsetId}`;
-                                        window.open(downloadUrl, '_blank');
-                                        showSuccess('已开始从Nerinyan下载');
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <Image src='/icons/download.svg' alt='download' width={30} height={30} />
-                                    下载谱面 (Nerinyan)
-                                </button>,
-                                <button
-                                    key="download-official"
-                                    onClick={() => {
-                                        const downloadUrl = `https://osu.ppy.sh/beatmapsets/${contextMenu.selection!.beatmapsetId}/download`;
-                                        window.open(downloadUrl, '_blank');
-                                        showSuccess('已开始从osu官方下载');
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <Image src='/icons/download.svg' alt='download' width={30} height={30} />
-                                    osu官方下载
-                                </button>
-                            </div>
+                            <button
+                                key="download-nerinyan"
+                                onClick={() => {
+                                    const downloadUrl = `https://api.nerinyan.moe/d/${contextMenu.selection!.beatmapsetId}`;
+                                    window.open(downloadUrl, '_blank');
+                                    showSuccess('已开始从Nerinyan下载');
+                                    closeContextMenu();
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                            >
+                                <Image src='/icons/download.svg' alt='download' width={30} height={30} />
+                                下载谱面 (Nerinyan)
+                            </button>,
+                            <button
+                                key="download-official"
+                                onClick={() => {
+                                    const downloadUrl = `https://osu.ppy.sh/beatmapsets/${contextMenu.selection!.beatmapsetId}/download`;
+                                    window.open(downloadUrl, '_blank');
+                                    showSuccess('已开始从osu官方下载');
+                                    closeContextMenu();
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                            >
+                                <Image src='/icons/download.svg' alt='download' width={30} height={30} />
+                                osu官方下载
+                            </button>
                         ].filter(Boolean);
 
                         // 22222222222222222222222222222222
                         const secondColumn = [
-                            <div className='bg-white border border-gray-300 rounded-lg shadow-lg p-3 min-w-[120px]'>
-                                (permissions.isAdmin || permissions.isMapSelector) && (
+                            (permissions.isAdmin || permissions.isMapSelector) && (
                                 <button
                                     key="refresh"
                                     onClick={() => {
@@ -2157,8 +2154,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     <Image src='/icons/loading-black.svg' alt='refresh map' width={30} height={30} />
                                     刷新MOD属性
                                 </button>
-                                ),
-                                (permissions.isAdmin || permissions.isMapSelector) && (
+                            ),
+                            (permissions.isAdmin || permissions.isMapSelector) && (
                                 <button
                                     key="edit"
                                     onClick={() => {
@@ -2174,8 +2171,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     <Image src='/icons/settings-3-black.svg' alt='edit' width={30} height={30} />
                                     修改属性
                                 </button>
-                                ),
-                                (permissions.isAdmin || permissions.isMapSelector) && (
+                            ),
+                            (permissions.isAdmin || permissions.isMapSelector) && (
                                 <button
                                     key="padding"
                                     onClick={() => {
@@ -2187,8 +2184,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     <Image src='/icons/auction-fill-black.svg' alt='download' width={30} height={30} />
                                     {contextMenu.selection!.padding ? '取消测图' : '设为测图'}
                                 </button>
-                                ),
-                                (permissions.isAdmin || permissions.isMapSelector) && (
+                            ),
+                            (permissions.isAdmin || permissions.isMapSelector) && (
                                 <button
                                     key="approve"
                                     onClick={() => {
@@ -2200,8 +2197,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     <Image src='/icons/auction-fill-black.svg' alt='download' width={30} height={30} />
                                     {contextMenu.selection!.approved ? '取消过审' : '过审'}
                                 </button>
-                                ),
-                                (contextMenu.selection!.selectedBy === userForState.id.toString() || permissions.isAdmin || permissions.isMapSelector) && (
+                            ),
+                            (contextMenu.selection!.selectedBy === userForState.id.toString() || permissions.isAdmin || permissions.isMapSelector) && (
                                 <button
                                     onClick={() => {
                                         if (confirm('确定要删除这个选图吗？此操作不可撤销。')) {
@@ -2214,8 +2211,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     <Image src='/icons/delete-bin-2-fill.svg' alt='delete' width={30} height={30} />
                                     删除
                                 </button>
-                                )
-                            </div>
+                            )
                         ].filter(Boolean);
 
                         return (
@@ -2224,20 +2220,20 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 {isOnRightSide ? (
                                     <>
                                         {/* 右侧放不下时：第二排在左边，第一排在右边 */}
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[120px]">
                                             {secondColumn}
                                         </div>
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[120px]">
                                             {firstColumn}
                                         </div>
                                     </>
                                 ) : (
                                     <>
                                         {/* 正常情况：第一排在左边，第二排在右边 */}
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[120px]">
                                             {firstColumn}
                                         </div>
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[120px]">
                                             {secondColumn}
                                         </div>
                                     </>
