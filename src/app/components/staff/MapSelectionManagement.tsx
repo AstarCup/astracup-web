@@ -438,10 +438,40 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     // 右键菜单处理函数
     const handleContextMenu = (e: React.MouseEvent, selection: MapSelection) => {
         e.preventDefault();
+
+        // 计算菜单位置
+        const menuWidth = 320; // 双排菜单宽度
+        const menuHeight = 400; // 预估菜单高度
+
+        let left = e.clientX;
+        let top = e.clientY;
+
+        // 检查右侧是否放不下
+        if (left + menuWidth > window.innerWidth) {
+            // 如果放不下，显示在左边
+            left = e.clientX - menuWidth;
+
+            // 确保不会超出左边界
+            if (left < 0) {
+                left = 0;
+            }
+        }
+
+        // 检查底部是否放不下
+        if (top + menuHeight > window.innerHeight) {
+            // 如果放不下，显示在上方
+            top = e.clientY - menuHeight;
+
+            // 确保不会超出上边界
+            if (top < 0) {
+                top = 0;
+            }
+        }
+
         setContextMenu({
             show: true,
-            x: e.clientX,
-            y: e.clientY,
+            x: left,
+            y: top,
             selection
         });
     };
@@ -2046,134 +2076,171 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             {/* 右键菜单 */}
             {contextMenu.show && contextMenu.selection && (
                 <div
-                    className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg py-2 min-w-[160px]"
+                    className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-3 min-w-[320px]"
                     style={{
                         left: contextMenu.x,
                         top: contextMenu.y,
                     }}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <button
-                        onClick={() => {
-                            window.open(contextMenu.selection!.url, '_blank');
-                            closeContextMenu();
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
-                    >
-                        <Image src='/icons/link.svg' alt='viewOsu' width={30} height={30} />
-                        查看谱面
-                    </button>
-
-                    <button
-                        onClick={() => {
-                            window.open(`osu://b/${contextMenu.selection!.beatmapId}`, '_blank');
-                            showInfo('已在osu客户端中打开谱面');
-                            closeContextMenu();
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
-                    >
-                        <Image src='/icons/osu-lazer-logo-black.svg' alt='viewOsu' width={30} height={30} />
-                        从osu中打开
-                    </button>
-
-                    {/* 分隔符 */}
-                    <div className="border-t border-gray-200 my-2"></div>
-
-                    <button
-                        onClick={() => {
-                            const downloadUrl = `https://api.nerinyan.moe/d/${contextMenu.selection!.beatmapsetId}`;
-                            window.open(downloadUrl, '_blank');
-                            showSuccess('已开始从Nerinyan下载');
-                            closeContextMenu();
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
-                    >
-                        <Image src='/icons/download.svg' alt='download' width={30} height={30} />
-                        下载谱面 (Nerinyan)
-                    </button>
-
-                    <button
-                        onClick={() => {
-                            const downloadUrl = `https://osu.ppy.sh/beatmapsets/${contextMenu.selection!.beatmapsetId}/download`;
-                            window.open(downloadUrl, '_blank');
-                            showSuccess('已开始从osu官方下载');
-                            closeContextMenu();
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
-                    >
-                        <Image src='/icons/download.svg' alt='download' width={30} height={30} />
-                        osu官方下载
-                    </button>
-                    {/* 怕点错 */}
-                    {(permissions.isAdmin || permissions.isMapSelector) && (
-                        <button
-                            onClick={() => {
-                                toggleApproval(contextMenu.selection!.id, contextMenu.selection!.approved);
-                                closeContextMenu();
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
-                        >
-                            <Image src='/icons/auction-fill-black.svg' alt='download' width={30} height={30} />
-                            {contextMenu.selection!.approved ? '取消过审' : '过审'}
-                        </button>
-                    )}
-
-                    {(permissions.isAdmin || permissions.isMapSelector) && (
-                        <>
+                    {/* 判断是否在屏幕右侧，决定列顺序 */}
+                    {(() => {
+                        const isOnRightSide = contextMenu.x + 320 > window.innerWidth;
+                        // 111111111111111111111111111111111111
+                        const firstColumn = [
                             <button
+                                key="view"
                                 onClick={() => {
-                                    togglePadding(contextMenu.selection!.id, contextMenu.selection!.padding || false);
+                                    window.open(contextMenu.selection!.url, '_blank');
                                     closeContextMenu();
                                 }}
-                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                             >
-                                <Image src='/icons/auction-fill-black.svg' alt='download' width={30} height={30} />
-                                {contextMenu.selection!.padding ? '取消测图' : '设为测图'}
-                            </button>
-
+                                <Image src='/icons/link.svg' alt='viewOsu' width={30} height={30} />
+                                查看谱面
+                            </button>,
                             <button
+                                key="open-in-osu"
                                 onClick={() => {
-                                    refreshSelection(contextMenu.selection!);
+                                    window.open(`osu://b/${contextMenu.selection!.beatmapId}`, '_blank');
+                                    showInfo('已在osu客户端中打开谱面');
                                     closeContextMenu();
                                 }}
-                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                             >
-                                <Image src='/icons/loading-black.svg' alt='refresh map' width={30} height={30} />
-                                刷新MOD属性
-                            </button>
+                                <Image src='/icons/osu-lazer-logo-black.svg' alt='viewOsu' width={30} height={30} />
+                                从osu中打开
+                            </button>,
 
-                            {/* 修改属性选项 */}
                             <button
+                                key="download-nerinyan"
                                 onClick={() => {
-                                    setEditDialog({
-                                        show: true,
-                                        selection: contextMenu.selection,
-                                        isSubmitting: false
-                                    });
+                                    const downloadUrl = `https://api.nerinyan.moe/d/${contextMenu.selection!.beatmapsetId}`;
+                                    window.open(downloadUrl, '_blank');
+                                    showSuccess('已开始从Nerinyan下载');
                                     closeContextMenu();
                                 }}
-                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                             >
-                                <Image src='/icons/settings-3-fill.svg' alt='edit' width={30} height={30} />
-                                修改属性
+                                <Image src='/icons/download.svg' alt='download' width={30} height={30} />
+                                下载谱面 (Nerinyan)
+                            </button>,
+                            <button
+                                key="download-official"
+                                onClick={() => {
+                                    const downloadUrl = `https://osu.ppy.sh/beatmapsets/${contextMenu.selection!.beatmapsetId}/download`;
+                                    window.open(downloadUrl, '_blank');
+                                    showSuccess('已开始从osu官方下载');
+                                    closeContextMenu();
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                            >
+                                <Image src='/icons/download.svg' alt='download' width={30} height={30} />
+                                osu官方下载
                             </button>
-                        </>
-                    )}
+                        ].filter(Boolean);
 
-                    {(contextMenu.selection!.selectedBy === userForState.id.toString() || permissions.isAdmin || permissions.isMapSelector) && (
-                        <button
-                            onClick={() => {
-                                if (confirm('确定要删除这个选图吗？此操作不可撤销。')) {
-                                    deleteSelection(contextMenu.selection!.id);
-                                }
-                                closeContextMenu();
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 transition-colors flex items-center gap-2"
-                        >
-                            <Image src='/icons/delete-bin-2-fill.svg' alt='delete' width={30} height={30} />
-                            删除
-                        </button>
-                    )}
+                        // 22222222222222222222222222222222
+                        const secondColumn = [
+                            (permissions.isAdmin || permissions.isMapSelector) && (
+                                <button
+                                    key="refresh"
+                                    onClick={() => {
+                                        refreshSelection(contextMenu.selection!);
+                                        closeContextMenu();
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                >
+                                    <Image src='/icons/loading-black.svg' alt='refresh map' width={30} height={30} />
+                                    刷新MOD属性
+                                </button>
+                            ),
+                            (permissions.isAdmin || permissions.isMapSelector) && (
+                                <button
+                                    key="edit"
+                                    onClick={() => {
+                                        setEditDialog({
+                                            show: true,
+                                            selection: contextMenu.selection,
+                                            isSubmitting: false
+                                        });
+                                        closeContextMenu();
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                >
+                                    <Image src='/icons/settings-3-black.svg' alt='edit' width={30} height={30} />
+                                    修改属性
+                                </button>
+                            ),
+                            (permissions.isAdmin || permissions.isMapSelector) && (
+                                <button
+                                    key="padding"
+                                    onClick={() => {
+                                        togglePadding(contextMenu.selection!.id, contextMenu.selection!.padding || false);
+                                        closeContextMenu();
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                >
+                                    <Image src='/icons/auction-fill-black.svg' alt='download' width={30} height={30} />
+                                    {contextMenu.selection!.padding ? '取消测图' : '设为测图'}
+                                </button>
+                            ),
+                            (permissions.isAdmin || permissions.isMapSelector) && (
+                                <button
+                                    key="approve"
+                                    onClick={() => {
+                                        toggleApproval(contextMenu.selection!.id, contextMenu.selection!.approved);
+                                        closeContextMenu();
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                >
+                                    <Image src='/icons/auction-fill-black.svg' alt='download' width={30} height={30} />
+                                    {contextMenu.selection!.approved ? '取消过审' : '过审'}
+                                </button>
+                            ),
+                            (contextMenu.selection!.selectedBy === userForState.id.toString() || permissions.isAdmin || permissions.isMapSelector) && (
+                                <button
+                                    onClick={() => {
+                                        if (confirm('确定要删除这个选图吗？此操作不可撤销。')) {
+                                            deleteSelection(contextMenu.selection!.id);
+                                        }
+                                        closeContextMenu();
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 transition-colors flex items-center gap-2 rounded-lg"
+                                >
+                                    <Image src='/icons/delete-bin-2-fill.svg' alt='delete' width={30} height={30} />
+                                    删除
+                                </button>
+                            )
+                        ].filter(Boolean);
+
+                        return (
+                            <div className="grid grid-cols-2 gap-3">
+                                {/* 根据位置决定列顺序 */}
+                                {isOnRightSide ? (
+                                    <>
+                                        {/* 右侧放不下时：第二排在左边，第一排在右边 */}
+                                        <div className="space-y-2">
+                                            {secondColumn}
+                                        </div>
+                                        <div className="space-y-2">
+                                            {firstColumn}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* 正常情况：第一排在左边，第二排在右边 */}
+                                        <div className="space-y-2">
+                                            {firstColumn}
+                                        </div>
+                                        <div className="space-y-2">
+                                            {secondColumn}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        );
+                    })()}
                 </div>
             )}
 
