@@ -102,5 +102,13 @@
         "role": "special",
         "description": "比赛宣传",
         "coverUrl": "https://assets.ppy.sh/user-profile-covers/13184288/990bb9d12e323292672fbc3515523426fee3bd45d1f732c5068552669716f7ce.jpeg"
+    },
+    {
+        "name": "yutro",
+        "osuId": "6338477",
+        "avatarUrl": "https://a.ppy.sh/6338477",
+        "role": "special",
+        "description": "Replay外援",
+        "coverUrl": "https://assets.ppy.sh/user-profile-covers/6338477/b380764b93ed86ba735547a9ac9d08a29913c391a9d12b5a9e72eaea6845a26a.png"
     }
 ]
