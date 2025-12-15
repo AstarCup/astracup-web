@@ -521,7 +521,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             { name: 'WG', description: 'Wiggle - ' },
             { name: 'WU', description: 'Wind Up - 精确度挑战' },
             // 后续添加的特殊mod组合
-            { name: 'AD+BR(RollSpeed:6.0)', description: 'AD+BR(RollSpeed:6.0)' }
+            { name: 'AD+BR(RollSpeed:6.0)', description: 'AD+BR(RollSpeed:6.0)' },
+            { name: 'DA(AR:8)', description: 'Difficulty Adjust - AR8' }
         ];
         setAvailableLazerMods(fallbackMods);
     };
@@ -1754,16 +1755,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             </div>
 
                             <div className="flex gap-4 items-center mb-4">
-                                {/* <label className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={approved}
-                                        onChange={(e) => setApproved(e.target.checked)}
-                                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                                    />
-                                    <span className="text-sm text-gray-700">直接过审</span>
-                                </label> */}
-
                                 <label className="flex items-center gap-2">
                                     <input
                                         type="checkbox"
@@ -2215,25 +2206,25 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         ].filter(Boolean);
 
                         return (
-                            <div className="flex flex-col items-start gap-3">
+                            <div className="flex flex-row items-start gap-3">
                                 {/* 根据位置决定列顺序 */}
                                 {isOnRightSide ? (
                                     <>
                                         {/* 右侧放不下时：第二排在左边，第一排在右边 */}
-                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[320px]">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg w-[320px]">
                                             {secondColumn}
                                         </div>
-                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[320px]">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg w-[320px]">
                                             {firstColumn}
                                         </div>
                                     </>
                                 ) : (
                                     <>
                                         {/* 正常情况：第一排在左边，第二排在右边 */}
-                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[320px]">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg w-[320px]">
                                             {firstColumn}
                                         </div>
-                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[320px]">
+                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg shadow-lg w-[320px]">
                                             {secondColumn}
                                         </div>
                                     </>
