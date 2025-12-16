@@ -206,7 +206,8 @@ export async function POST(request: NextRequest) {
             category,
             url: beatmapInfo.url,
             coverUrl: beatmapInfo.cover_url || '',
-            approved: approved || false
+            approved: approved || false,
+            padding: false // 默认值为false
         };
 
         console.log('Adding map selection with data:', selectionData);
