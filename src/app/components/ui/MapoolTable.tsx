@@ -505,14 +505,18 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                         <a className={slotClass}>{row.Slot}</a>
                                         {/* 自定义mod名称气泡 - 显示在右上角 */}
                                         {(row.customModName || (row.customDTRate && row.customDTRate !== 1.5)) && (
-                                            <div className="absolute -top-1 left-10 bg-[#e93b66]/80 text-white text-xs px-3 py-1 rounded-full flex items-center justify-center font-bold shadow-md whitespace-nowrap">
+                                            <div className={`absolute -top-1 left-10 text-xs px-3 py-1 rounded-full flex items-center justify-center font-bold shadow-md whitespace-nowrap ${row.customModName === "原创"
+                                                ? "bg-gradient-to-r from-red-500 to-pink-300 text-white text-shadow-lg text-blob skew-x-12 rounded-none"
+                                                : row.customModName === "定制"
+                                                    ? "bg-gradient-to-r from-cyan-500 to-teal-300 text-white text-shadow-lg text-blob skew-x-12 rounded-none"
+                                                    : "bg-[#e93b66]/80 text-white"
+                                                }`}>
                                                 {row.customModName ? row.customModName : `${Number(row.customDTRate).toFixed(2)}x`}
                                             </div>
                                         )}
                                     </td>
                                     <td
                                         className="cursor-pointer text-[#E93B66] hover:underline relative group"
-                                        title="点击复制BID"
                                         onClick={() => {
                                             navigator.clipboard.writeText(row.BID);
                                             showInfo('BID 已复制到剪贴板');
@@ -654,7 +658,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                 <div className="text-center font-medium">BPM</div>
                                 <div className="text-center font-medium">★</div>
                                 <div className="text-center font-bold text-base">{formatLength(detailCard.row.totalLength || detailCard.row.HitLength || 0)}</div>
-                                <div className="text-center font-bold text-lg">{Number(detailCard.row.maxCombo || detailCard.row.MaxCombo || 0).toFixed(0)}</div>
+                                <div className="text-center font-bold text-base">{Number(detailCard.row.maxCombo || detailCard.row.MaxCombo || 0).toFixed(0)}</div>
                                 <div className="text-center font-bold text-base">{Math.round(detailCard.row.bpm || detailCard.row.BPM || 0)}</div>
                                 <div className="text-center font-bold text-base">{Number(detailCard.row.starRating || detailCard.row.SR || 0).toFixed(2)}</div>
                             </div>
