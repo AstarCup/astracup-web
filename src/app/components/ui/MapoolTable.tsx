@@ -36,6 +36,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
         row: any;
         index: number;
     } | null>(null);
+    const [showOriginalTitle, setShowOriginalTitle] = useState(false);
 
     // 详细信息卡片状态
     const [detailCard, setDetailCard] = useState<{
@@ -413,6 +414,15 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
             <div className="flex justify-between items-start mb-0">
                 <h1 className="text-xl font-bold text-white">{title}</h1>
                 <div className="flex space-x-3">
+                    {/* 原曲名切换按钮 */}
+                    <button
+                        onClick={() => setShowOriginalTitle(!showOriginalTitle)}
+                        className={`px-4 py-3 ${showOriginalTitle ? 'bg-green-500' : 'bg-gray-500'} text-white hover:bg-opacity-80 transition font-bold text-sm`}
+                        title={showOriginalTitle ? '切换为显示罗马化标题' : '切换为显示原曲名'}
+                    >
+                        {showOriginalTitle ? '显示罗马化' : '显示原曲名'}
+                    </button>
+
                     {/* 批量下载按钮 */}
                     <button
                         onClick={prepareBulkDownload}
@@ -555,8 +565,11 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-left hover:underline"
+                                        title={row.MapInfo} // 保持tooltip显示完整信息
                                     >
-                                        {row.MapInfo}
+                                        {showOriginalTitle && row.title_unicode
+                                            ? `${row.artist_unicode || row.artist} - ${row.title_unicode} [${row.version}]`
+                                            : row.MapInfo}
                                     </a></td>
                                     <td>{row._Creator}</td>
                                     <td title="Star 星数">{row.SR}★</td>
@@ -636,7 +649,9 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                 </div>
 
                                 <h3 className="font-bold text-sm truncate" title={detailCard.row.title || detailCard.row.MapInfo}>
-                                    {detailCard.row.title || detailCard.row.MapInfo}
+                                    {showOriginalTitle && detailCard.row.title_unicode
+                                        ? `${detailCard.row.artist_unicode || detailCard.row.artist} - ${detailCard.row.title_unicode} [${detailCard.row.version}]`
+                                        : detailCard.row.title || detailCard.row.MapInfo}
                                 </h3>
                                 <p className="font-bold text-xs text-gray-600">by {detailCard.row.creator || detailCard.row._Creator}</p>
                             </div>
