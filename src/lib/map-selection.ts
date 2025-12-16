@@ -427,7 +427,8 @@ export const mapSelectionStorage = {
                 selection.category,
                 selection.url,
                 selection.coverUrl,
-                selection.approved
+                selection.approved,
+                selection.padding !== undefined ? selection.padding : false // 添加padding字段
             ];
 
             // 调试日志
@@ -437,8 +438,8 @@ export const mapSelectionStorage = {
                 INSERT INTO map_selections (
                     beatmapId, beatmapsetId, title, title_unicode, artist, artist_unicode, version, creator,
                     starRating, bpm, totalLength, maxCombo, ar, cs, od, hp, selectedMods, modPosition, customDTRate, customModName, comment,
-                    selectedBy, selectedByUsername, selectedByAvatar, selectedAt, season, category, url, coverUrl, approved
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)
+                    selectedBy, selectedByUsername, selectedByAvatar, selectedAt, season, category, url, coverUrl, approved, padding
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?)
             `, params);
 
             connection.release();
