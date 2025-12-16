@@ -495,7 +495,7 @@ export const mapSelectionStorage = {
     },
 
     // 更新选图信息
-    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved' | 'padding' | 'customModName' | 'customDTRate' | 'title' | 'version' | 'category' | 'totalLength' | 'maxCombo' | 'starRating' | 'bpm' | 'ar' | 'cs' | 'od' | 'hp'>>, selectedBy: string): Promise<boolean> {
+    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved' | 'padding' | 'customModName' | 'customDTRate' | 'title' | 'title_unicode' | 'artist' | 'artist_unicode' | 'version' | 'category' | 'totalLength' | 'maxCombo' | 'starRating' | 'bpm' | 'ar' | 'cs' | 'od' | 'hp'>>, selectedBy: string): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
 
@@ -536,6 +536,18 @@ export const mapSelectionStorage = {
             if (updates.title !== undefined) {
                 setClause.push('title = ?');
                 params.push(updates.title);
+            }
+            if (updates.title_unicode !== undefined) {
+                setClause.push('title_unicode = ?');
+                params.push(updates.title_unicode);
+            }
+            if (updates.artist !== undefined) {
+                setClause.push('artist = ?');
+                params.push(updates.artist);
+            }
+            if (updates.artist_unicode !== undefined) {
+                setClause.push('artist_unicode = ?');
+                params.push(updates.artist_unicode);
             }
             if (updates.version !== undefined) {
                 setClause.push('version = ?');

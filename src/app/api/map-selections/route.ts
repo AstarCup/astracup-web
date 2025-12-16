@@ -304,6 +304,9 @@ export async function PUT(request: NextRequest) {
             moddedStats,
             // 新增：基础属性更新
             title,
+            title_unicode,
+            artist,
+            artist_unicode,
             version,
             ar,
             od,
@@ -340,6 +343,9 @@ export async function PUT(request: NextRequest) {
             bpm?: number;
             // 新增：基础属性
             title?: string;
+            title_unicode?: string;
+            artist?: string;
+            artist_unicode?: string;
             version?: string;
             totalLength?: number;
             maxCombo?: number;
@@ -354,6 +360,9 @@ export async function PUT(request: NextRequest) {
         if (approved !== undefined) updates.approved = approved;
         if (padding !== undefined) updates.padding = padding;
         if (title !== undefined) updates.title = title;
+        if (title_unicode !== undefined) updates.title_unicode = title_unicode;
+        if (artist !== undefined) updates.artist = artist;
+        if (artist_unicode !== undefined) updates.artist_unicode = artist_unicode;
         if (version !== undefined) updates.version = version;
         if (category !== undefined) updates.category = category;
         if (totalLength !== undefined) updates.totalLength = totalLength;
