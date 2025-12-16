@@ -18,7 +18,9 @@ interface BeatmapInfo {
     id: number;
     beatmapset_id: number;
     title: string;
+    title_unicode: string;
     artist: string;
+    artist_unicode: string;
     version: string;
     creator: string;
     star_rating: number;
@@ -38,7 +40,9 @@ interface MapSelection {
     beatmapId: number;
     beatmapsetId: number;
     title: string;
+    title_unicode?: string;     // 新增：Unicode标题
     artist: string;
+    artist_unicode?: string;    // 新增：Unicode艺术家
     version: string;
     creator: string;
     starRating: number;
@@ -648,7 +652,9 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     beatmapId: beatmapPreview.id,
                     beatmapsetId: beatmapPreview.beatmapset_id,
                     title: beatmapPreview.title,
+                    title_unicode: beatmapPreview.title_unicode,
                     artist: beatmapPreview.artist,
+                    artist_unicode: beatmapPreview.artist_unicode,
                     version: beatmapPreview.version,
                     creator: beatmapPreview.creator,
                     // Use modded stats if available, otherwise original
@@ -821,9 +827,11 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 totalLength: selection.selectedMods === 'DT' && selection.customDTRate ?
                     Math.round(latestBeatmap.total_length / selection.customDTRate) :
                     latestBeatmap.total_length,
-                // 同时更新基础beatmap信息
+                // 同时更新基础beatmap信息（包括Unicode字段）
                 title: latestBeatmap.title,
+                title_unicode: latestBeatmap.title_unicode || latestBeatmap.title,
                 artist: latestBeatmap.artist,
+                artist_unicode: latestBeatmap.artist_unicode || latestBeatmap.artist,
                 version: latestBeatmap.version,
                 creator: latestBeatmap.creator,
                 coverUrl: latestBeatmap.cover_url
@@ -850,9 +858,11 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 Math.round(latestBeatmap.total_length / selection.customDTRate) :
                                 latestBeatmap.total_length
                         },
-                        // 同时更新基础beatmap信息
+                        // 同时更新基础beatmap信息（包括Unicode字段）
                         title: latestBeatmap.title,
+                        title_unicode: latestBeatmap.title_unicode || latestBeatmap.title,
                         artist: latestBeatmap.artist,
+                        artist_unicode: latestBeatmap.artist_unicode || latestBeatmap.artist,
                         version: latestBeatmap.version,
                         creator: latestBeatmap.creator,
                         coverUrl: latestBeatmap.cover_url,
@@ -1197,10 +1207,12 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     }
                 }
 
-                // 普通文本搜索
+                // 普通文本搜索（包括Unicode字段）
                 return (
                     selection.title.toLowerCase().includes(query) ||
+                    (selection.title_unicode && selection.title_unicode.toLowerCase().includes(query)) ||
                     selection.artist.toLowerCase().includes(query) ||
+                    (selection.artist_unicode && selection.artist_unicode.toLowerCase().includes(query)) ||
                     selection.creator.toLowerCase().includes(query) ||
                     selection.version.toLowerCase().includes(query) ||
                     selection.selectedMods.toLowerCase().includes(query) ||
@@ -1320,7 +1332,13 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             Slot: `${map.selectedMods}${map.modPosition}`,
             BID: map.beatmapId.toString(),
             SID: map.beatmapsetId.toString(),
-            MapInfo: `${map.artist} - ${map.title} [${map.version}]`,
+            MapInfo: `${map.artist_unicode || map.artist} - ${map.title_unicode || map.title} [${map.version}]`,
+            title: map.title,
+            title_unicode: map.title_unicode || map.title,
+            artist: map.artist,
+            artist_unicode: map.artist_unicode || map.artist,
+            version: map.version,
+            creator: map.creator,
             _Creator: map.creator,
             SR: map.starRating.toFixed(2),
             CS: map.cs.toFixed(1),
@@ -1523,11 +1541,11 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             className="w-28 h-19 object-cover rounded"
                                         />
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-bold text-sm truncate" title={beatmapPreview.title}>
-                                                {beatmapPreview.title}
+                                            <h3 className="font-bold text-sm truncate" title={beatmapPreview.title_unicode || beatmapPreview.title}>
+                                                {beatmapPreview.title_unicode || beatmapPreview.title}
                                             </h3>
-                                            <p className="font-bold text-xs text-gray-600 truncate" title={beatmapPreview.artist}>
-                                                {beatmapPreview.artist}
+                                            <p className="font-bold text-xs text-gray-600 truncate" title={beatmapPreview.artist_unicode || beatmapPreview.artist}>
+                                                {beatmapPreview.artist_unicode || beatmapPreview.artist}
                                             </p>
                                             <p className="font-bold text-xs text-gray-600">[{beatmapPreview.version}] by {beatmapPreview.creator}</p>
                                         </div>
@@ -1970,11 +1988,11 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                             </div>
                                                         </div>
 
-                                                        <h3 className="font-bold text-sm truncate" title={selection.title}>
-                                                            {selection.title}
+                                                        <h3 className="font-bold text-sm truncate" title={selection.title_unicode || selection.title}>
+                                                            {selection.title_unicode || selection.title}
                                                         </h3>
-                                                        <p className="font-bold text-xs text-gray-600 truncate" title={`${selection.artist}`}>
-                                                            {selection.artist}
+                                                        <p className="font-bold text-xs text-gray-600 truncate" title={selection.artist_unicode || selection.artist}>
+                                                            {selection.artist_unicode || selection.artist}
                                                         </p>
                                                         <p className="font-bold text-xs text-gray-600">[{selection.version}] by {selection.creator}</p>
                                                     </div>

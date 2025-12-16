@@ -33,7 +33,9 @@ export interface MapSelection {
     beatmapId: number;          // beatmap ID
     beatmapsetId: number;       // beatmapset ID
     title: string;              // 歌曲标题
+    title_unicode: string;      // 歌曲标题（Unicode/原曲名）
     artist: string;             // 艺术家
+    artist_unicode: string;     // 艺术家（Unicode/原曲名）
     version: string;            // 难度名称
     creator: string;            // 作图者
     starRating: number;         // 星级
@@ -287,6 +289,36 @@ export const initMapSelectionDatabase = async (): Promise<void> => {
             }
         }
 
+        // 检查并添加title_unicode字段
+        try {
+            await connection.execute(`SELECT title_unicode FROM map_selections LIMIT 1`);
+        } catch (error: unknown) {
+            const mysqlError = error as { code?: string };
+            if (mysqlError.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding title_unicode field...');
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN title_unicode VARCHAR(255) DEFAULT NULL AFTER title
+                `);
+                console.log('Successfully added title_unicode field');
+            }
+        }
+
+        // 检查并添加artist_unicode字段
+        try {
+            await connection.execute(`SELECT artist_unicode FROM map_selections LIMIT 1`);
+        } catch (error: unknown) {
+            const mysqlError = error as { code?: string };
+            if (mysqlError.code === 'ER_BAD_FIELD_ERROR') {
+                console.log('Adding artist_unicode field...');
+                await connection.execute(`
+                    ALTER TABLE map_selections 
+                    ADD COLUMN artist_unicode VARCHAR(255) DEFAULT NULL AFTER artist
+                `);
+                console.log('Successfully added artist_unicode field');
+            }
+        }
+
         connection.release();
         console.log('Map selection database initialized successfully');
     } catch (error) {
@@ -325,7 +357,9 @@ export const mapSelectionStorage = {
                 beatmapId: row.beatmapId,
                 beatmapsetId: row.beatmapsetId,
                 title: row.title,
+                title_unicode: row.title_unicode || row.title, // 如果unicode字段为空，使用普通标题
                 artist: row.artist,
+                artist_unicode: row.artist_unicode || row.artist, // 如果unicode字段为空，使用普通艺术家
                 version: row.version,
                 creator: row.creator,
                 starRating: parseFloat(row.starRating),
@@ -368,7 +402,9 @@ export const mapSelectionStorage = {
                 selection.beatmapId,
                 selection.beatmapsetId,
                 selection.title,
+                selection.title_unicode || selection.title, // 如果unicode字段为空，使用普通标题
                 selection.artist,
+                selection.artist_unicode || selection.artist, // 如果unicode字段为空，使用普通艺术家
                 selection.version,
                 selection.creator,
                 selection.starRating,
@@ -391,7 +427,8 @@ export const mapSelectionStorage = {
                 selection.category,
                 selection.url,
                 selection.coverUrl,
-                selection.approved
+                selection.approved,
+                selection.padding !== undefined ? selection.padding : false // 添加padding字段
             ];
 
             // 调试日志
@@ -399,10 +436,10 @@ export const mapSelectionStorage = {
 
             const [result] = await connection.execute(`
                 INSERT INTO map_selections (
-                    beatmapId, beatmapsetId, title, artist, version, creator,
+                    beatmapId, beatmapsetId, title, title_unicode, artist, artist_unicode, version, creator,
                     starRating, bpm, totalLength, maxCombo, ar, cs, od, hp, selectedMods, modPosition, customDTRate, customModName, comment,
-                    selectedBy, selectedByUsername, selectedByAvatar, selectedAt, season, category, url, coverUrl, approved
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)
+                    selectedBy, selectedByUsername, selectedByAvatar, selectedAt, season, category, url, coverUrl, approved, padding
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?)
             `, params);
 
             connection.release();
@@ -459,7 +496,7 @@ export const mapSelectionStorage = {
     },
 
     // 更新选图信息
-    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved' | 'padding' | 'customModName' | 'customDTRate' | 'title' | 'version' | 'category' | 'totalLength' | 'maxCombo' | 'starRating' | 'bpm' | 'ar' | 'cs' | 'od' | 'hp'>>, selectedBy: string): Promise<boolean> {
+    async updateMapSelection(id: number, updates: Partial<Pick<MapSelection, 'selectedMods' | 'comment' | 'approved' | 'padding' | 'customModName' | 'customDTRate' | 'title' | 'title_unicode' | 'artist' | 'artist_unicode' | 'version' | 'category' | 'totalLength' | 'maxCombo' | 'starRating' | 'bpm' | 'ar' | 'cs' | 'od' | 'hp'>>, selectedBy: string): Promise<boolean> {
         try {
             const connection = await getPool().getConnection();
 
@@ -500,6 +537,18 @@ export const mapSelectionStorage = {
             if (updates.title !== undefined) {
                 setClause.push('title = ?');
                 params.push(updates.title);
+            }
+            if (updates.title_unicode !== undefined) {
+                setClause.push('title_unicode = ?');
+                params.push(updates.title_unicode);
+            }
+            if (updates.artist !== undefined) {
+                setClause.push('artist = ?');
+                params.push(updates.artist);
+            }
+            if (updates.artist_unicode !== undefined) {
+                setClause.push('artist_unicode = ?');
+                params.push(updates.artist_unicode);
             }
             if (updates.version !== undefined) {
                 setClause.push('version = ?');

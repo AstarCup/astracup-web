@@ -210,7 +210,9 @@ export interface BeatmapInfo {
     id: number;
     beatmapset_id: number;
     title: string;
+    title_unicode: string;
     artist: string;
+    artist_unicode: string;
     version: string;
     creator: string;
     star_rating: number;
@@ -301,7 +303,9 @@ export async function getBeatmapInfo(beatmapId: number): Promise<BeatmapInfo | n
             id: data.id,
             beatmapset_id: data.beatmapset_id,
             title: data.beatmapset?.title || '',
+            title_unicode: data.beatmapset?.title_unicode || data.beatmapset?.title || '',
             artist: data.beatmapset?.artist || '',
+            artist_unicode: data.beatmapset?.artist_unicode || data.beatmapset?.artist || '',
             version: data.version || '',
             creator: data.beatmapset?.creator || '',
             star_rating: data.difficulty_rating || 0,
@@ -379,7 +383,9 @@ export async function getBeatmapsetInfo(beatmapsetId: number): Promise<BeatmapIn
             id: beatmap.id,
             beatmapset_id: beatmap.beatmapset_id,
             title: data.title || '',
+            title_unicode: data.title_unicode || data.title || '',
             artist: data.artist || '',
+            artist_unicode: data.artist_unicode || data.artist || '',
             version: beatmap.version || '',
             creator: data.creator || '',
             star_rating: beatmap.difficulty_rating || 0,

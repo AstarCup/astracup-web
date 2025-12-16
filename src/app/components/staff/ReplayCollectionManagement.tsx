@@ -28,6 +28,8 @@ interface PaddingMap {
     id: number;
     artist: string;
     title: string;
+    title_unicode: string;
+    artist_unicode: string;
     version: string;
     selectedMods: string;
     modPosition: number;
@@ -344,6 +346,8 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                         id: map.id,
                         artist: map.artist,
                         title: map.title,
+                        title_unicode: map.title_unicode || map.title,
+                        artist_unicode: map.artist_unicode || map.artist,
                         version: map.version,
                         selectedMods: map.selectedMods,
                         modPosition: map.modPosition,
