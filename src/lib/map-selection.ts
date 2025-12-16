@@ -439,7 +439,7 @@ export const mapSelectionStorage = {
                     beatmapId, beatmapsetId, title, title_unicode, artist, artist_unicode, version, creator,
                     starRating, bpm, totalLength, maxCombo, ar, cs, od, hp, selectedMods, modPosition, customDTRate, customModName, comment,
                     selectedBy, selectedByUsername, selectedByAvatar, selectedAt, season, category, url, coverUrl, approved, padding
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?)
             `, params);
 
             connection.release();
