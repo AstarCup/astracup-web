@@ -27,8 +27,8 @@
         "name": "Kieost",
         "osuId": "17823832",
         "avatarUrl": "https://a.ppy.sh/17823832",
-        "role": "图池策划",
-        "description": "图池策划",
+        "role": "定制图mapool",
+        "description": "定制图",
         "coverUrl": "https://assets.ppy.sh/user-profile-covers/17823832/bfbf62075d26f28498471820ae96c8315c2a53ca170e6959c36a32fb45485d3e.png"
     },
     {
@@ -110,5 +110,13 @@
         "role": "special",
         "description": "Replay外援",
         "coverUrl": "https://assets.ppy.sh/user-profile-covers/6338477/b380764b93ed86ba735547a9ac9d08a29913c391a9d12b5a9e72eaea6845a26a.png"
+    },
+    {
+        "name": "Rinne_0",
+        "osuId": "11511458",
+        "avatarUrl": "https://a.ppy.sh/11511458",
+        "role": "图池策划、测试",
+        "description": "图池策划 测试",
+        "coverUrl": "https://assets.ppy.sh/user-cover-presets/35/e0ea464c7da58b8238961bb08b014f89d62f1ef0104fd234a9f9211206314678.jpeg"
     }
 ]
