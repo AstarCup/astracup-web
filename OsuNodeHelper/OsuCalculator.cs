@@ -59,6 +59,9 @@ public static class OsuCalculator
 
             // 应用mod到基础属性
             double clockRate = 1.0;
+            bool hasHR = false;
+            bool hasEZ = false;
+
             foreach (var mod in parsedMods)
             {
                 // 检查是否有速度变化mod
@@ -70,6 +73,14 @@ public static class OsuCalculator
                 else if (mod.Acronym == "HT")
                 {
                     clockRate = 0.75;
+                }
+                else if (mod.Acronym == "HR")
+                {
+                    hasHR = true;
+                }
+                else if (mod.Acronym == "EZ")
+                {
+                    hasEZ = true;
                 }
             }
 
@@ -85,12 +96,39 @@ public static class OsuCalculator
                 }
             }
 
-            // 计算应用mod后的属性
-            double arWithMod = applyModToApproachRate(beatmap.BeatmapInfo.Difficulty.ApproachRate, clockRate);
-            double odWithMod = applyModToOverallDifficulty(beatmap.BeatmapInfo.Difficulty.OverallDifficulty, clockRate);
-            double hpWithMod = applyModToDrainRate(beatmap.BeatmapInfo.Difficulty.DrainRate, clockRate);
+            // 获取基础属性
+            double baseAR = beatmap.BeatmapInfo.Difficulty.ApproachRate;
+            double baseCS = beatmap.BeatmapInfo.Difficulty.CircleSize;
+            double baseOD = beatmap.BeatmapInfo.Difficulty.OverallDifficulty;
+            double baseHP = beatmap.BeatmapInfo.Difficulty.DrainRate;
+
+            // 应用HR/EZ mod
+            if (hasHR)
+            {
+                // HR: 增加所有属性
+                baseAR = Math.Min(10, baseAR * 1.4);
+                baseCS = Math.Min(10, baseCS * 1.3);
+                baseOD = Math.Min(10, baseOD * 1.4);
+                baseHP = Math.Min(10, baseHP * 1.4);
+            }
+            else if (hasEZ)
+            {
+                // EZ: 减少所有属性
+                baseAR = Math.Max(0, baseAR * 0.5);
+                baseCS = Math.Max(0, baseCS * 0.5);
+                baseOD = Math.Max(0, baseOD * 0.5);
+                baseHP = Math.Max(0, baseHP * 0.5);
+            }
+
+            // 计算应用速度mod后的属性
+            double arWithMod = applyModToApproachRate(baseAR, clockRate);
+            double odWithMod = applyModToOverallDifficulty(baseOD, clockRate);
+            double hpWithMod = applyModToDrainRate(baseHP, clockRate);
             double lengthWithMod = length / clockRate;
             double bpmWithMod = bpm * clockRate;
+
+            // CS不受速度mod影响，但受HR/EZ影响
+            double csWithMod = baseCS;
 
             // 创建结果字典，包含所有属性
             var result = new Dictionary<string, object>();
@@ -101,9 +139,9 @@ public static class OsuCalculator
                 result[kvp.Key] = kvp.Value;
             }
 
-            // 然后添加/覆盖基础属性
+            // 然后添加/覆盖基础属性 - 只返回用户需要的属性
             result["ar"] = arWithMod;
-            result["cs"] = beatmap.BeatmapInfo.Difficulty.CircleSize; // CS不受速度mod影响
+            result["cs"] = csWithMod; // 使用应用了HR/EZ后的CS值
             result["od"] = odWithMod;
             result["hp"] = hpWithMod;
 
@@ -121,11 +159,11 @@ public static class OsuCalculator
             result["length_base"] = length;
             result["length_seconds_base"] = length / 1000.0;
 
-            // BPM信息（应用mod后）
-            result["bpm"] = bpmWithMod;
+            // BPM信息（应用mod后）- 格式化为2位小数
+            result["bpm"] = Math.Round(bpmWithMod, 2);
 
-            // 原始BPM信息（未应用mod）
-            result["bpm_base"] = bpm;
+            // 原始BPM信息（未应用mod）- 格式化为2位小数
+            result["bpm_base"] = Math.Round(bpm, 2);
 
             // 速度倍率
             result["clock_rate"] = clockRate;
