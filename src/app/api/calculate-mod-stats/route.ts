@@ -3,10 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 // 使用 node-api-dotnet 加载 PerformanceCalculator.dll
 async function loadDotNetCalculator() {
     try {
-        const dotnet = require('node-api-dotnet');
+        // 动态导入node-api-dotnet，避免在构建时打包
+        const dotnetModule = await import('node-api-dotnet');
+        const dotnet = dotnetModule.default || dotnetModule;
 
         // 添加解析事件监听器来处理依赖
-        dotnet.addListener('resolving', (assemblyName: string, assemblyVersion: any, resolve: (arg0: any) => void) => {
+        dotnet.addListener('resolving', (assemblyName: string, assemblyVersion: string, resolve: (path: string) => void) => {
             console.log(`Resolving assembly: ${assemblyName}, version: ${assemblyVersion}`);
 
             // 忽略 osu.Game 依赖，因为用户说可以不依赖它
@@ -209,7 +211,14 @@ export async function POST(req: NextRequest) {
             console.log('DLL loaded successfully');
 
             // 获取OsuCalculator类
-            const { OsuCalculator } = dotnet.OsuNodeHelper;
+            // 使用类型断言，因为OsuNodeHelper是在DLL加载后动态添加的
+            const OsuNodeHelperNamespace = (dotnet as any).OsuNodeHelper;
+
+            if (!OsuNodeHelperNamespace) {
+                throw new Error('OsuNodeHelper namespace not found after loading DLL');
+            }
+
+            const OsuCalculator = OsuNodeHelperNamespace.OsuCalculator;
 
             if (!OsuCalculator) {
                 throw new Error('OsuCalculator class not found in OsuNodeHelper namespace');
