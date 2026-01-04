@@ -1,7 +1,9 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using Microsoft.JavaScript.NodeApi;
 using osu.Game.Rulesets;
+using osu.Game.Beatmaps;
 using PerformanceCalculator;
 using Newtonsoft.Json;
 
@@ -15,158 +17,191 @@ public static class OsuCalculator
     {
         try
         {
-            // 调试：检查文件是否存在
-            if (!File.Exists(beatmapPath))
-            {
-                return JsonConvert.SerializeObject(new { error = $"Beatmap file not found: {beatmapPath}" });
-            }
-
             var workingBeatmap = new ProcessorWorkingBeatmap(beatmapPath);
             int finalRulesetId = rulesetId ?? workingBeatmap.BeatmapInfo.Ruleset.OnlineID;
-
-            // 调试：获取ruleset
             var ruleset = LegacyHelper.GetRulesetFromLegacyID(finalRulesetId);
-            if (ruleset == null)
-            {
-                return JsonConvert.SerializeObject(new { error = $"Ruleset not found for ID: {finalRulesetId}" });
-            }
-
             var parsedMods = ProcessorCommand.ParseMods(ruleset, mods ?? Array.Empty<string>(), modOptions ?? Array.Empty<string>());
             var calculator = ruleset.CreateDifficultyCalculator(workingBeatmap);
             var attributes = calculator.Calculate(parsedMods);
 
-            // 调试：检查attributes
-            if (attributes == null)
+            // 使用osu-tools中的方法：先序列化再反序列化为字典
+            var attributeValues = JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(attributes)) ?? new Dictionary<string, object>();
+
+            // 获取beatmap基本信息
+            var beatmap = workingBeatmap.GetPlayableBeatmap(ruleset.RulesetInfo, parsedMods);
+
+            // 计算时长（从最后一个击打对象的时间获取）
+            double length = 0;
+            double bpm = 0;
+
+            if (beatmap.HitObjects.Count > 0)
             {
-                return JsonConvert.SerializeObject(new { error = "Difficulty attributes are null" });
+                // 时长 = 最后一个击打对象的时间（毫秒）
+                var lastHitObject = beatmap.HitObjects[^1];
+                length = lastHitObject.StartTime;
+
+                // 尝试计算BPM（从timing points获取）
+                try
+                {
+                    if (beatmap.ControlPointInfo.TimingPoints.Count > 0)
+                    {
+                        var timingPoint = beatmap.ControlPointInfo.TimingPoints[0];
+                        bpm = 60000 / timingPoint.BeatLength;
+                    }
+                }
+                catch
+                {
+                    // 如果无法获取BPM，使用默认值
+                }
             }
 
-            var attributeType = attributes.GetType();
-
-            // 创建字典来存储结果，确保所有值都能被序列化
-            var resultDict = new System.Collections.Generic.Dictionary<string, object>();
-
-            // 尝试获取各个属性值
-            resultDict["star_rating"] = GetPropertyValue(attributes, "StarRating");
-            resultDict["aim_difficulty"] = GetPropertyValue(attributes, "AimDifficulty");
-            resultDict["speed_difficulty"] = GetPropertyValue(attributes, "SpeedDifficulty");
-            resultDict["max_combo"] = GetPropertyValue(attributes, "MaxCombo");
-
-            // 添加调试信息
-            resultDict["_type"] = attributeType.FullName;
-            resultDict["_assembly"] = attributeType.Assembly.FullName;
-            resultDict["_method"] = "dictionary_approach";
-
-            // 添加更多调试：尝试使用dynamic
-            try
+            // 应用mod到基础属性
+            double clockRate = 1.0;
+            foreach (var mod in parsedMods)
             {
-                dynamic dynAttributes = attributes;
-                resultDict["dynamic_star_rating"] = TryGetDynamicValue(dynAttributes, "StarRating");
-                resultDict["dynamic_aim_difficulty"] = TryGetDynamicValue(dynAttributes, "AimDifficulty");
-                resultDict["dynamic_speed_difficulty"] = TryGetDynamicValue(dynAttributes, "SpeedDifficulty");
-                resultDict["dynamic_max_combo"] = TryGetDynamicValue(dynAttributes, "MaxCombo");
-            }
-            catch (Exception dynEx)
-            {
-                resultDict["dynamic_error"] = $"Dynamic access failed: {dynEx.GetType().Name}: {dynEx.Message}";
+                // 检查是否有速度变化mod
+                if (mod.Acronym == "DT" || mod.Acronym == "NC")
+                {
+                    // DT通常增加1.5倍速度，但可以通过mod选项自定义
+                    clockRate = 1.5;
+                }
+                else if (mod.Acronym == "HT")
+                {
+                    clockRate = 0.75;
+                }
             }
 
-            // 使用包含空值的序列化设置
-            var settings = new JsonSerializerSettings
+            // 如果有自定义速度变化，使用它
+            foreach (var option in modOptions ?? Array.Empty<string>())
             {
-                NullValueHandling = NullValueHandling.Include,
-                Formatting = Formatting.None
+                if (option.StartsWith("DT_speed_change="))
+                {
+                    if (double.TryParse(option.Split('=')[1], out double customSpeed))
+                    {
+                        clockRate = customSpeed;
+                    }
+                }
+            }
+
+            // 计算应用mod后的属性
+            double arWithMod = applyModToApproachRate(beatmap.BeatmapInfo.Difficulty.ApproachRate, clockRate);
+            double odWithMod = applyModToOverallDifficulty(beatmap.BeatmapInfo.Difficulty.OverallDifficulty, clockRate);
+            double hpWithMod = applyModToDrainRate(beatmap.BeatmapInfo.Difficulty.DrainRate, clockRate);
+            double lengthWithMod = length / clockRate;
+            double bpmWithMod = bpm * clockRate;
+
+            // 添加基本属性到结果中
+            var result = new Dictionary<string, object>(attributeValues)
+            {
+                // 基础难度属性（应用mod后）
+                ["ar"] = arWithMod,
+                ["cs"] = beatmap.BeatmapInfo.Difficulty.CircleSize, // CS不受速度mod影响
+                ["od"] = odWithMod,
+                ["hp"] = hpWithMod,
+
+                // 原始基础属性（未应用mod）
+                ["ar_base"] = beatmap.BeatmapInfo.Difficulty.ApproachRate,
+                ["cs_base"] = beatmap.BeatmapInfo.Difficulty.CircleSize,
+                ["od_base"] = beatmap.BeatmapInfo.Difficulty.OverallDifficulty,
+                ["hp_base"] = beatmap.BeatmapInfo.Difficulty.DrainRate,
+
+                // 时长信息（应用mod后）
+                ["length"] = lengthWithMod,
+                ["length_seconds"] = lengthWithMod / 1000.0,
+
+                // 原始时长信息（未应用mod）
+                ["length_base"] = length,
+                ["length_seconds_base"] = length / 1000.0,
+
+                // BPM信息（应用mod后）
+                ["bpm"] = bpmWithMod,
+
+                // 原始BPM信息（未应用mod）
+                ["bpm_base"] = bpm,
+
+                // 速度倍率
+                ["clock_rate"] = clockRate,
+
+                // 从workingBeatmap获取更多信息
+                ["beatmap_id"] = workingBeatmap.BeatmapInfo.OnlineID,
+                ["artist"] = workingBeatmap.BeatmapInfo.Metadata.Artist,
+                ["title"] = workingBeatmap.BeatmapInfo.Metadata.Title,
+                ["creator"] = workingBeatmap.BeatmapInfo.Metadata.Author.Username,
+
+                // 对象计数
+                ["total_hit_objects"] = beatmap.HitObjects.Count
             };
 
-            return JsonConvert.SerializeObject(resultDict, settings);
+            // 返回序列化的结果
+            return JsonConvert.SerializeObject(result);
         }
         catch (Exception ex)
         {
-            // 返回详细的错误信息
-            return JsonConvert.SerializeObject(new
-            {
-                error = ex.Message,
-                stackTrace = ex.StackTrace,
-                innerException = ex.InnerException?.Message
-            });
+            return JsonConvert.SerializeObject(new { error = ex.Message });
         }
     }
 
-    // 辅助方法：尝试使用dynamic获取值
-    private static object TryGetDynamicValue(dynamic obj, string propertyName)
+    // 应用mod到Approach Rate
+    private static double applyModToApproachRate(double baseAr, double clockRate)
     {
-        try
-        {
-            // 使用dynamic的运行时绑定
-            var property = obj.GetType().GetProperty(propertyName);
-            if (property != null)
-            {
-                return obj[propertyName] ?? $"Dynamic property '{propertyName}' is null";
-            }
+        if (clockRate == 1.0) return baseAr;
 
-            // 尝试直接访问
-            return obj.GetType().GetProperty(propertyName)?.GetValue(obj) ?? $"Dynamic: Property '{propertyName}' not found";
-        }
-        catch (Exception ex)
-        {
-            return $"Dynamic ERROR getting '{propertyName}': {ex.GetType().Name}: {ex.Message}";
-        }
+        // AR计算公式：应用速度变化
+        // 当clockRate > 1时，AR增加
+        // 当clockRate < 1时，AR减少
+        double ar = baseAr;
+
+        // 转换AR为毫秒
+        double arMs = ar > 5 ? 1200 + (450 - 1200) * (ar - 5) / 5 :
+                       ar < 5 ? 1800 - (1800 - 1200) * ar / 5 :
+                       1200;
+
+        // 应用速度变化
+        arMs /= clockRate;
+
+        // 转换回AR值
+        if (arMs > 1200)
+            ar = (1800 - arMs) / 120;
+        else
+            ar = 5 + (1200 - arMs) * 5 / 750;
+
+        return Math.Min(11, Math.Max(0, ar));
     }
 
-    // 辅助方法：安全地获取属性值
-    private static object GetPropertyValue(object obj, string propertyName)
+    // 应用mod到Overall Difficulty
+    private static double applyModToOverallDifficulty(double baseOd, double clockRate)
     {
-        try
-        {
-            // 尝试使用更宽松的绑定标志
-            var property = obj.GetType().GetProperty(propertyName,
-                System.Reflection.BindingFlags.Public |
-                System.Reflection.BindingFlags.NonPublic |
-                System.Reflection.BindingFlags.Instance |
-                System.Reflection.BindingFlags.GetProperty);
+        if (clockRate == 1.0) return baseOd;
 
-            if (property == null)
-            {
-                // 尝试查找字段
-                var field = obj.GetType().GetField(propertyName,
-                    System.Reflection.BindingFlags.Public |
-                    System.Reflection.BindingFlags.NonPublic |
-                    System.Reflection.BindingFlags.Instance);
+        // OD计算公式：应用速度变化
+        double od = baseOd;
 
-                if (field != null)
-                {
-                    var fieldValue = field.GetValue(obj);
-                    return fieldValue ?? $"Field '{propertyName}' value is null";
-                }
+        // 转换OD为毫秒
+        double odMs = 79.5 - 6 * od;
 
-                return $"Property/Field '{propertyName}' not found";
-            }
+        // 应用速度变化
+        odMs /= clockRate;
 
-            if (!property.CanRead)
-            {
-                return $"Property '{propertyName}' cannot be read (CanRead=false)";
-            }
+        // 转换回OD值
+        od = (79.5 - odMs) / 6;
 
-            var value = property.GetValue(obj);
+        return Math.Min(11, Math.Max(0, od));
+    }
 
-            // 处理不同类型的返回值
-            if (value == null)
-            {
-                return $"Property '{propertyName}' returned null";
-            }
+    // 应用mod到Health Drain
+    private static double applyModToDrainRate(double baseHp, double clockRate)
+    {
+        if (clockRate == 1.0) return baseHp;
 
-            // 如果是数值类型，直接返回
-            if (value is double || value is int || value is float || value is decimal)
-            {
-                return value;
-            }
+        // HP受速度影响较小，但也会变化
+        double hp = baseHp;
 
-            // 其他类型转换为字符串
-            return value.ToString();
-        }
-        catch (Exception ex)
-        {
-            return $"ERROR getting '{propertyName}': {ex.GetType().Name}: {ex.Message}";
-        }
+        // 简单线性调整
+        if (clockRate > 1.0)
+            hp = Math.Min(10, hp * 1.4);
+        else if (clockRate < 1.0)
+            hp = Math.Max(0, hp * 0.75);
+
+        return Math.Min(10, Math.Max(0, hp));
     }
 }

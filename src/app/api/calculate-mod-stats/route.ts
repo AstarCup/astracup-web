@@ -29,7 +29,7 @@ async function calculateDifficultyWithExe(
     modsArray: string[],
     modOptions: string[],
     accessToken?: string
-): Promise<{ starRating: number; aimDifficulty: number; speedDifficulty: number }> {
+): Promise<any> {
     return new Promise(async (resolve, reject) => {
         try {
             // 获取beatmap文件内容并保存到临时文件
@@ -100,11 +100,8 @@ async function calculateDifficultyWithExe(
                         return;
                     }
 
-                    resolve({
-                        starRating: result.star_rating || 0,
-                        aimDifficulty: result.aim_difficulty || 0,
-                        speedDifficulty: result.speed_difficulty || 0
-                    });
+                    // 返回完整结果
+                    resolve(result);
                 } catch (parseError) {
                     console.error('Failed to parse OsuNodeHelper output:', parseError);
                     console.error('stdout:', stdout);
@@ -201,34 +198,59 @@ export async function POST(req: NextRequest) {
         let aimDifficulty = 0;
         let speedDifficulty = 0;
 
+        // 声明完整结果变量
+        let fullResult: any = null;
+        let calculationError: string | null = null;
+
         try {
             // 调用可执行文件计算难度
             const result = await calculateDifficultyWithExe(beatmapId, modsArray, modOptions, accessToken);
-            starRating = result.starRating;
-            aimDifficulty = result.aimDifficulty;
-            speedDifficulty = result.speedDifficulty;
+            starRating = result.star_rating || 0;
+            aimDifficulty = result.aim_difficulty || 0;
+            speedDifficulty = result.speed_difficulty || 0;
 
             console.log('Difficulty values:', { starRating, aimDifficulty, speedDifficulty });
+
+            // 获取完整结果
+            fullResult = result;
         } catch (error: any) {
             console.error('Error calling OsuNodeHelper:', error.message);
+            calculationError = error.message;
             console.log('Using simulated values due to error');
             starRating = 5.0; // 模拟值
             aimDifficulty = 3.0; // 模拟值
             speedDifficulty = 2.0; // 模拟值
         }
 
-        // 构建结果
+        // 构建结果 - 使用完整结果或模拟值
         const modStats = {
-            ar: customDASettings?.ar || 0,
-            cs: customDASettings?.cs || 0,
-            od: customDASettings?.od || 0,
-            hp: customDASettings?.hp || 0,
+            ar: fullResult?.ar || customDASettings?.ar || 0,
+            cs: fullResult?.cs || customDASettings?.cs || 0,
+            od: fullResult?.od || customDASettings?.od || 0,
+            hp: fullResult?.hp || customDASettings?.hp || 0,
             starRating: starRating,
-            bpm: beatmapInfo?.bpm || 0,
-            totalLength: beatmapInfo?.totalLength || 0,
+            bpm: fullResult?.bpm || beatmapInfo?.bpm || 0,
+            totalLength: fullResult?.length || beatmapInfo?.totalLength || 0,
             // 添加新API提供的额外信息
             aimDifficulty,
-            speedDifficulty
+            speedDifficulty,
+            // 添加更多完整属性
+            maxCombo: fullResult?.max_combo || 0,
+            totalHitObjects: fullResult?.total_hit_objects || 0,
+            lengthSeconds: fullResult?.length_seconds || 0,
+            clockRate: fullResult?.clock_rate || 1.0,
+            // 原始属性
+            arBase: fullResult?.ar_base || 0,
+            csBase: fullResult?.cs_base || 0,
+            odBase: fullResult?.od_base || 0,
+            hpBase: fullResult?.hp_base || 0,
+            bpmBase: fullResult?.bpm_base || 0,
+            lengthBase: fullResult?.length_base || 0,
+            // Beatmap元数据
+            beatmapId: fullResult?.beatmap_id || beatmapId,
+            artist: fullResult?.artist || beatmapInfo?.artist || '',
+            title: fullResult?.title || beatmapInfo?.title || '',
+            creator: fullResult?.creator || beatmapInfo?.creator || ''
         };
 
         // 应用DA模式的自定义属性覆盖
