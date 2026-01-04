@@ -43,23 +43,42 @@ public static class OsuCalculator
 
             var attributeType = attributes.GetType();
 
-            // 尝试直接访问已知的属性，而不是使用反射
-            // 根据osu! API文档，OsuDifficultyAttributes应该有这些属性
-            var result = new
-            {
-                // 尝试通过dynamic访问，避免编译时类型检查
-                star_rating = GetPropertyValue(attributes, "StarRating"),
-                aim_difficulty = GetPropertyValue(attributes, "AimDifficulty"),
-                speed_difficulty = GetPropertyValue(attributes, "SpeedDifficulty"),
-                max_combo = GetPropertyValue(attributes, "MaxCombo"),
+            // 创建字典来存储结果，确保所有值都能被序列化
+            var resultDict = new System.Collections.Generic.Dictionary<string, object>();
 
-                // 调试信息
-                _type = attributeType.FullName,
-                _assembly = attributeType.Assembly.FullName,
-                _method = "direct_access"
+            // 尝试获取各个属性值
+            resultDict["star_rating"] = GetPropertyValue(attributes, "StarRating");
+            resultDict["aim_difficulty"] = GetPropertyValue(attributes, "AimDifficulty");
+            resultDict["speed_difficulty"] = GetPropertyValue(attributes, "SpeedDifficulty");
+            resultDict["max_combo"] = GetPropertyValue(attributes, "MaxCombo");
+
+            // 添加调试信息
+            resultDict["_type"] = attributeType.FullName;
+            resultDict["_assembly"] = attributeType.Assembly.FullName;
+            resultDict["_method"] = "dictionary_approach";
+
+            // 添加更多调试：尝试使用dynamic
+            try
+            {
+                dynamic dynAttributes = attributes;
+                resultDict["dynamic_star_rating"] = TryGetDynamicValue(dynAttributes, "StarRating");
+                resultDict["dynamic_aim_difficulty"] = TryGetDynamicValue(dynAttributes, "AimDifficulty");
+                resultDict["dynamic_speed_difficulty"] = TryGetDynamicValue(dynAttributes, "SpeedDifficulty");
+                resultDict["dynamic_max_combo"] = TryGetDynamicValue(dynAttributes, "MaxCombo");
+            }
+            catch (Exception dynEx)
+            {
+                resultDict["dynamic_error"] = $"Dynamic access failed: {dynEx.GetType().Name}: {dynEx.Message}";
+            }
+
+            // 使用包含空值的序列化设置
+            var settings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Include,
+                Formatting = Formatting.None
             };
 
-            return JsonConvert.SerializeObject(result);
+            return JsonConvert.SerializeObject(resultDict, settings);
         }
         catch (Exception ex)
         {
@@ -70,6 +89,27 @@ public static class OsuCalculator
                 stackTrace = ex.StackTrace,
                 innerException = ex.InnerException?.Message
             });
+        }
+    }
+
+    // 辅助方法：尝试使用dynamic获取值
+    private static object TryGetDynamicValue(dynamic obj, string propertyName)
+    {
+        try
+        {
+            // 使用dynamic的运行时绑定
+            var property = obj.GetType().GetProperty(propertyName);
+            if (property != null)
+            {
+                return obj[propertyName] ?? $"Dynamic property '{propertyName}' is null";
+            }
+
+            // 尝试直接访问
+            return obj.GetType().GetProperty(propertyName)?.GetValue(obj) ?? $"Dynamic: Property '{propertyName}' not found";
+        }
+        catch (Exception ex)
+        {
+            return $"Dynamic ERROR getting '{propertyName}': {ex.GetType().Name}: {ex.Message}";
         }
     }
 
