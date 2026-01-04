@@ -7,12 +7,33 @@ echo "=== 开始构建过程 ==="
 # 保存原始工作目录
 ORIGINAL_DIR="$(pwd)"
 
-# 安装.NET（如果尚未安装）
-if ! command -v dotnet &> /dev/null; then
-    echo "Installing .NET..."
-    curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --install-dir /tmp/dotnet
-    export PATH="/tmp/dotnet:$PATH"
+# 安装.NET到临时目录，然后创建符号链接到/usr/lib/dotnet
+echo "=== 安装.NET运行时 ==="
+DOTNET_INSTALL_DIR="/tmp/dotnet"
+
+if [ ! -d "$DOTNET_INSTALL_DIR" ]; then
+    echo "安装.NET到$DOTNET_INSTALL_DIR..."
+    # 下载并安装.NET
+    curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --install-dir "$DOTNET_INSTALL_DIR"
+else
+    echo ".NET已安装在$DOTNET_INSTALL_DIR"
 fi
+
+# 创建符号链接到/usr/lib/dotnet（如果不存在）
+if [ ! -d "/usr/lib/dotnet" ]; then
+    echo "创建符号链接 /usr/lib/dotnet -> $DOTNET_INSTALL_DIR"
+    sudo ln -sf "$DOTNET_INSTALL_DIR" /usr/lib/dotnet 2>/dev/null || {
+        echo "警告: 无法创建符号链接到/usr/lib/dotnet，尝试替代方案"
+        # 如果无法创建符号链接，设置DOTNET_ROOT环境变量
+        export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
+    }
+else
+    echo "/usr/lib/dotnet已存在"
+fi
+
+# 设置环境变量
+export DOTNET_ROOT="${DOTNET_ROOT:-/usr/lib/dotnet}"
+export PATH="$DOTNET_INSTALL_DIR:$PATH"
 
 echo "=== .NET版本 ==="
 dotnet --version
