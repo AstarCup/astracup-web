@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework> <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.JavaScript.NodeApi" Version="0.8.*" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    
+    <Reference Include="PerformanceCalculator">
+      <HintPath>..\osu-tools\PerformanceCalculator\bin\Release\net8.0\win-x64\publish\PerformanceCalculator.dll</HintPath>
+    </Reference>
+    <Reference Include="osu.Game">
+      <HintPath>..\osu-tools\PerformanceCalculator\bin\Release\net8.0\win-x64\publish\osu.Game.dll</HintPath>
+    </Reference>
+    <Reference Include="ppy.osu.Game.Rulesets.Osu">
+      <HintPath>..\osu-tools\PerformanceCalculator\bin\Release\net8.0\win-x64\publish\osu.Game.Rulesets.Osu.dll</HintPath>
+    </Reference>
+    </ItemGroup>
+</Project>

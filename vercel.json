@@ -1,5 +1,5 @@
 {
-    "buildCommand": "curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --install-dir /tmp/dotnet && export PATH=\"/tmp/dotnet:$PATH\" && node scripts/generate-version.js && next build --turbopack",
+    "buildCommand": "curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --install-dir /tmp/dotnet && export PATH=\"/tmp/dotnet:$PATH\" && node scripts/generate-version.js && dotnet publish osu-tools/PerformanceCalculator/PerformanceCalculator.csproj -c Release -r linux-x64 --self-contained false && dotnet publish OsuNodeHelper/OsuNodeHelper.csproj -c Release -r linux-x64 --self-contained false && cp OsuNodeHelper/bin/Release/net8.0/linux-x64/publish/OsuNodeHelper.dll public/ && next build --turbopack",
     "installCommand": "npm install",
     "outputDirectory": ".next",
     "framework": "nextjs",
