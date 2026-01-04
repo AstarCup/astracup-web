@@ -2,6 +2,60 @@ import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 import path from 'path';
 
+// 确保 dotnet 可用的函数
+async function ensureDotnetAvailable(): Promise<string> {
+    const { execSync, spawnSync } = require('child_process');
+    const fs = require('fs');
+    const path = require('path');
+
+    const dotnetDir = '/tmp/dotnet';
+    const dotnetPath = path.join(dotnetDir, 'dotnet');
+
+    // 检查是否已经安装
+    if (fs.existsSync(dotnetPath)) {
+        try {
+            // 验证 dotnet 可以运行
+            execSync(`${dotnetPath} --version`, { stdio: 'ignore' });
+            console.log(`Using existing dotnet at: ${dotnetPath}`);
+            return dotnetPath;
+        } catch {
+            // dotnet 存在但无法运行，重新安装
+            console.log('dotnet exists but cannot run, reinstalling...');
+        }
+    }
+
+    // 安装 dotnet
+    console.log('Installing dotnet 8.0...');
+    try {
+        // 创建目录
+        if (!fs.existsSync(dotnetDir)) {
+            fs.mkdirSync(dotnetDir, { recursive: true });
+        }
+
+        // 下载并运行安装脚本
+        const installScript = `
+            curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin \
+                --channel 8.0 \
+                --install-dir ${dotnetDir} \
+                --no-path
+        `;
+
+        spawnSync('bash', ['-c', installScript], { stdio: 'inherit' });
+
+        // 设置执行权限
+        if (fs.existsSync(dotnetPath)) {
+            fs.chmodSync(dotnetPath, 0o755);
+            console.log(`dotnet installed successfully at: ${dotnetPath}`);
+            return dotnetPath;
+        } else {
+            throw new Error('dotnet installation failed - binary not found');
+        }
+    } catch (installError) {
+        console.error('Failed to install dotnet:', installError);
+        throw new Error('dotnet is not available and could not be installed');
+    }
+}
+
 // 内联的 calculateDifficulty 函数，原本来自 osu-difficulty-js
 async function calculateDifficulty(options: {
     beatmap: string | number;
@@ -16,9 +70,12 @@ async function calculateDifficulty(options: {
         ruleset,
         mods = [],
         modOptions = [],
-        dotnetPath = "dotnet",
+        dotnetPath,
         calculatorDllPath,
     } = options;
+
+    // 如果没有提供 dotnetPath，确保 dotnet 可用
+    const actualDotnetPath = dotnetPath || await ensureDotnetAvailable();
 
     if (!calculatorDllPath) {
         throw new Error("calculatorDllPath is required");
@@ -41,7 +98,7 @@ async function calculateDifficulty(options: {
     args.push(String(beatmap), "-j");
 
     return new Promise((resolve, reject) => {
-        const child = spawn(dotnetPath, args, {
+        const child = spawn(actualDotnetPath, args, {
             cwd: path.dirname(calculatorDllPath),
             stdio: ["pipe", "pipe", "pipe"],
         });
