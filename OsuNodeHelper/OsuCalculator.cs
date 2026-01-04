@@ -26,8 +26,28 @@ public static class OsuCalculator
             var calculator = ruleset.CreateDifficultyCalculator(workingBeatmap);
             var attributes = calculator.Calculate(parsedMods);
 
-            // 使用osu-tools中的方法：先序列化再反序列化为字典
-            var attributeValues = JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(attributes)) ?? new Dictionary<string, object>();
+            // 直接访问DifficultyAttributes的属性
+            double starRating = attributes.StarRating;
+            double aimDifficulty = 0;
+            double speedDifficulty = 0;
+            int maxCombo = attributes.MaxCombo;
+
+            // 尝试获取Aim和Speed难度（这些属性可能不存在于所有规则集中）
+            try
+            {
+                var attributesType = attributes.GetType();
+                var aimProperty = attributesType.GetProperty("AimDifficulty");
+                var speedProperty = attributesType.GetProperty("SpeedDifficulty");
+
+                if (aimProperty != null)
+                    aimDifficulty = (double)aimProperty.GetValue(attributes);
+                if (speedProperty != null)
+                    speedDifficulty = (double)speedProperty.GetValue(attributes);
+            }
+            catch
+            {
+                // 如果无法获取这些属性，保持默认值0
+            }
 
             // 获取beatmap基本信息
             var beatmap = workingBeatmap.GetPlayableBeatmap(ruleset.RulesetInfo, parsedMods);
@@ -133,13 +153,13 @@ public static class OsuCalculator
             // 创建结果字典，包含所有属性
             var result = new Dictionary<string, object>();
 
-            // 首先添加所有难度属性
-            foreach (var kvp in attributeValues)
-            {
-                result[kvp.Key] = kvp.Value;
-            }
+            // 添加难度属性
+            result["star_rating"] = starRating;
+            result["aim_difficulty"] = aimDifficulty;
+            result["speed_difficulty"] = speedDifficulty;
+            result["max_combo"] = maxCombo;
 
-            // 然后添加/覆盖基础属性 - 只返回用户需要的属性
+            // 添加基础属性 - 只返回用户需要的属性
             result["ar"] = arWithMod;
             result["cs"] = csWithMod; // 使用应用了HR/EZ后的CS值
             result["od"] = odWithMod;
@@ -176,74 +196,6 @@ public static class OsuCalculator
 
             // 对象计数
             result["total_hit_objects"] = beatmap.HitObjects.Count;
-
-            // 确保关键难度属性存在（如果attributeValues中没有）
-            // 首先检查attributeValues中是否已经有这些属性
-            if (!result.ContainsKey("star_rating"))
-            {
-                // 尝试从attributeValues中查找（可能有不同的命名）
-                var starRatingKey = attributeValues.Keys.FirstOrDefault(k =>
-                    k.Contains("star", StringComparison.OrdinalIgnoreCase) ||
-                    k.Contains("rating", StringComparison.OrdinalIgnoreCase));
-
-                if (starRatingKey != null)
-                {
-                    result["star_rating"] = attributeValues[starRatingKey];
-                }
-                else
-                {
-                    result["star_rating"] = 0;
-                }
-            }
-
-            if (!result.ContainsKey("aim_difficulty"))
-            {
-                // 尝试从attributeValues中查找
-                var aimKey = attributeValues.Keys.FirstOrDefault(k =>
-                    k.Contains("aim", StringComparison.OrdinalIgnoreCase));
-
-                if (aimKey != null)
-                {
-                    result["aim_difficulty"] = attributeValues[aimKey];
-                }
-                else
-                {
-                    result["aim_difficulty"] = 0;
-                }
-            }
-
-            if (!result.ContainsKey("speed_difficulty"))
-            {
-                // 尝试从attributeValues中查找
-                var speedKey = attributeValues.Keys.FirstOrDefault(k =>
-                    k.Contains("speed", StringComparison.OrdinalIgnoreCase));
-
-                if (speedKey != null)
-                {
-                    result["speed_difficulty"] = attributeValues[speedKey];
-                }
-                else
-                {
-                    result["speed_difficulty"] = 0;
-                }
-            }
-
-            if (!result.ContainsKey("max_combo"))
-            {
-                // 尝试从attributeValues中查找
-                var comboKey = attributeValues.Keys.FirstOrDefault(k =>
-                    k.Contains("combo", StringComparison.OrdinalIgnoreCase) ||
-                    k.Contains("max", StringComparison.OrdinalIgnoreCase));
-
-                if (comboKey != null)
-                {
-                    result["max_combo"] = attributeValues[comboKey];
-                }
-                else
-                {
-                    result["max_combo"] = 0;
-                }
-            }
 
             // 返回序列化的结果
             return JsonConvert.SerializeObject(result);
