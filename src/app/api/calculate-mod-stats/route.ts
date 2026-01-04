@@ -3,33 +3,66 @@ import { NextRequest, NextResponse } from 'next/server';
 // 使用 node-api-dotnet 加载 PerformanceCalculator.dll
 async function loadDotNetCalculator() {
     try {
-        // 在导入node-api-dotnet之前设置DOTNET_ROOT环境变量
-        // 这可以解决Vercel环境中.NET运行时找不到的问题
-        if (!process.env.DOTNET_ROOT) {
-            // 尝试常见的.NET安装路径
-            const possibleDotnetPaths = [
-                '/usr/lib/dotnet',
-                '/tmp/dotnet',
-                '/opt/dotnet',
-                '/usr/share/dotnet'
-            ];
+        const fs = require('fs');
+        const path = require('path');
 
-            for (const path of possibleDotnetPaths) {
+        // 在导入node-api-dotnet之前，确保/usr/lib/dotnet存在
+        // node-api-dotnet硬编码查找/usr/lib/dotnet
+        const usrLibDotnet = '/usr/lib/dotnet';
+        const possibleDotnetPaths = [
+            '/usr/lib/dotnet',
+            '/tmp/dotnet',
+            '/opt/dotnet',
+            '/usr/share/dotnet',
+            path.join(process.cwd(), 'public', 'dotnet')
+        ];
+
+        let dotnetPath = null;
+
+        // 查找现有的.NET安装
+        for (const p of possibleDotnetPaths) {
+            try {
+                fs.accessSync(p);
+                dotnetPath = p;
+                console.log(`找到.NET安装: ${p}`);
+                break;
+            } catch {
+                // 继续尝试下一个路径
+            }
+        }
+
+        // 如果没找到，尝试创建符号链接
+        if (!dotnetPath) {
+            // 检查public/dotnet是否存在（构建脚本应该安装了.NET到这里）
+            const publicDotnet = path.join(process.cwd(), 'public', 'dotnet');
+            if (fs.existsSync(publicDotnet)) {
+                console.log(`使用public/dotnet中的.NET: ${publicDotnet}`);
+                dotnetPath = publicDotnet;
+
+                // 尝试创建符号链接/usr/lib/dotnet -> public/dotnet
                 try {
-                    require('fs').accessSync(path);
-                    process.env.DOTNET_ROOT = path;
-                    console.log(`设置DOTNET_ROOT为: ${path}`);
-                    break;
-                } catch {
-                    // 继续尝试下一个路径
+                    // 创建/usr/lib目录（如果不存在）
+                    fs.mkdirSync('/usr/lib', { recursive: true });
+                    // 创建或更新符号链接
+                    if (fs.existsSync(usrLibDotnet)) {
+                        fs.unlinkSync(usrLibDotnet);
+                    }
+                    fs.symlinkSync(publicDotnet, usrLibDotnet);
+                    console.log(`创建符号链接 ${usrLibDotnet} -> ${publicDotnet}`);
+                } catch (symlinkError: any) {
+                    console.warn(`无法创建符号链接: ${symlinkError.message}`);
+                    // 设置环境变量作为备选方案
+                    process.env.DOTNET_ROOT = publicDotnet;
                 }
+            } else {
+                console.warn('未找到.NET安装，node-api-dotnet可能无法工作');
             }
+        }
 
-            // 如果都没找到，设置一个默认值
-            if (!process.env.DOTNET_ROOT) {
-                process.env.DOTNET_ROOT = '/tmp/dotnet';
-                console.log(`设置DOTNET_ROOT为默认值: /tmp/dotnet`);
-            }
+        // 设置环境变量
+        if (dotnetPath && !process.env.DOTNET_ROOT) {
+            process.env.DOTNET_ROOT = dotnetPath;
+            console.log(`设置DOTNET_ROOT为: ${dotnetPath}`);
         }
 
         // 动态导入node-api-dotnet，避免在构建时打包

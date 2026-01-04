@@ -7,36 +7,25 @@ echo "=== 开始构建过程 ==="
 # 保存原始工作目录
 ORIGINAL_DIR="$(pwd)"
 
-# 安装.NET到临时目录，然后创建符号链接到/usr/lib/dotnet
-echo "=== 安装.NET运行时 ==="
-DOTNET_INSTALL_DIR="/tmp/dotnet"
+# 安装.NET到public/dotnet目录
+echo "=== 安装.NET运行时到public/dotnet目录 ==="
+DOTNET_PUBLIC_DIR="public/dotnet"
 
-if [ ! -d "$DOTNET_INSTALL_DIR" ]; then
-    echo "安装.NET到$DOTNET_INSTALL_DIR..."
-    # 下载并安装.NET
-    curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --install-dir "$DOTNET_INSTALL_DIR"
-else
-    echo ".NET已安装在$DOTNET_INSTALL_DIR"
+# 清理旧的dotnet目录
+rm -rf "$DOTNET_PUBLIC_DIR"
+
+# 下载并安装.NET到public目录
+echo "安装.NET到$DOTNET_PUBLIC_DIR..."
+curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --install-dir "$DOTNET_PUBLIC_DIR"
+
+# 检查是否安装成功
+if [ ! -d "$DOTNET_PUBLIC_DIR" ]; then
+    echo "错误: .NET安装失败"
+    exit 1
 fi
-
-# 创建符号链接到/usr/lib/dotnet（如果不存在）
-if [ ! -d "/usr/lib/dotnet" ]; then
-    echo "创建符号链接 /usr/lib/dotnet -> $DOTNET_INSTALL_DIR"
-    sudo ln -sf "$DOTNET_INSTALL_DIR" /usr/lib/dotnet 2>/dev/null || {
-        echo "警告: 无法创建符号链接到/usr/lib/dotnet，尝试替代方案"
-        # 如果无法创建符号链接，设置DOTNET_ROOT环境变量
-        export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
-    }
-else
-    echo "/usr/lib/dotnet已存在"
-fi
-
-# 设置环境变量
-export DOTNET_ROOT="${DOTNET_ROOT:-/usr/lib/dotnet}"
-export PATH="$DOTNET_INSTALL_DIR:$PATH"
 
 echo "=== .NET版本 ==="
-dotnet --version
+"$DOTNET_PUBLIC_DIR/dotnet" --version
 
 # 生成版本信息
 echo "=== 生成版本信息 ==="
@@ -74,12 +63,12 @@ fi
 # 在临时目录中编译PerformanceCalculator项目
 echo "=== 编译PerformanceCalculator项目 ==="
 cd "$TEMP_BUILD_DIR/osu-tools/PerformanceCalculator"
-dotnet publish PerformanceCalculator.csproj -c Release -r linux-x64 --self-contained false
+"$ORIGINAL_DIR/$DOTNET_PUBLIC_DIR/dotnet" publish PerformanceCalculator.csproj -c Release -r linux-x64 --self-contained false
 
 # 在临时目录中编译OsuNodeHelper项目
 echo "=== 编译OsuNodeHelper项目 ==="
 cd "$TEMP_BUILD_DIR/OsuNodeHelper"
-dotnet publish OsuNodeHelper.csproj -c Release -r linux-x64 --self-contained false
+"$ORIGINAL_DIR/$DOTNET_PUBLIC_DIR/dotnet" publish OsuNodeHelper.csproj -c Release -r linux-x64 --self-contained false
 
 # 返回项目根目录
 cd "$ORIGINAL_DIR"
