@@ -78,23 +78,51 @@ public static class OsuCalculator
     {
         try
         {
+            // 尝试使用更宽松的绑定标志
             var property = obj.GetType().GetProperty(propertyName,
                 System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.NonPublic |
                 System.Reflection.BindingFlags.Instance |
                 System.Reflection.BindingFlags.GetProperty);
 
             if (property == null)
             {
-                return $"Property '{propertyName}' not found";
+                // 尝试查找字段
+                var field = obj.GetType().GetField(propertyName,
+                    System.Reflection.BindingFlags.Public |
+                    System.Reflection.BindingFlags.NonPublic |
+                    System.Reflection.BindingFlags.Instance);
+
+                if (field != null)
+                {
+                    var fieldValue = field.GetValue(obj);
+                    return fieldValue ?? $"Field '{propertyName}' value is null";
+                }
+
+                return $"Property/Field '{propertyName}' not found";
             }
 
             if (!property.CanRead)
             {
-                return $"Property '{propertyName}' cannot be read";
+                return $"Property '{propertyName}' cannot be read (CanRead=false)";
             }
 
             var value = property.GetValue(obj);
-            return value ?? "null";
+
+            // 处理不同类型的返回值
+            if (value == null)
+            {
+                return $"Property '{propertyName}' returned null";
+            }
+
+            // 如果是数值类型，直接返回
+            if (value is double || value is int || value is float || value is decimal)
+            {
+                return value;
+            }
+
+            // 其他类型转换为字符串
+            return value.ToString();
         }
         catch (Exception ex)
         {
