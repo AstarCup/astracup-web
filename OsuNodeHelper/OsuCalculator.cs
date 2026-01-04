@@ -139,11 +139,21 @@ public static class OsuCalculator
             result["total_hit_objects"] = beatmap.HitObjects.Count;
 
             // 确保关键难度属性存在（如果attributeValues中没有）
-            if (!result.ContainsKey("star_rating") && attributes is IHasStarRating hasStarRating)
+            if (!result.ContainsKey("star_rating"))
             {
                 try
                 {
-                    result["star_rating"] = hasStarRating.StarRating;
+                    // 尝试从attributes对象获取星数
+                    var attributesType = attributes.GetType();
+                    var starRatingProperty = attributesType.GetProperty("StarRating");
+                    if (starRatingProperty != null)
+                    {
+                        result["star_rating"] = starRatingProperty.GetValue(attributes);
+                    }
+                    else
+                    {
+                        result["star_rating"] = 0;
+                    }
                 }
                 catch
                 {
