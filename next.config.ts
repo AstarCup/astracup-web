@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  serverExternalPackages: ["rosu-pp-js"],
+  serverExternalPackages: ["rosu-pp-js", "node-api-dotnet"],
   turbopack: {},
   images: {
     remotePatterns: [

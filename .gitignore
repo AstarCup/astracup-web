@@ -39,8 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-test-osu-api.js
 
 # version file
 public/version.json
 .trae
+
+OsuNodeHelper/bin/Release/net8.0/win-x64
+OsuNodeHelper/obj
