@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Microsoft.JavaScript.NodeApi;
 using osu.Game.Rulesets;
 using osu.Game.Beatmaps;
+using osu.Game.Rulesets.Difficulty;
 using PerformanceCalculator;
 using Newtonsoft.Json;
 
@@ -90,47 +91,80 @@ public static class OsuCalculator
             double lengthWithMod = length / clockRate;
             double bpmWithMod = bpm * clockRate;
 
-            // 添加基本属性到结果中
-            var result = new Dictionary<string, object>(attributeValues)
+            // 创建结果字典，包含所有属性
+            var result = new Dictionary<string, object>();
+
+            // 首先添加所有难度属性
+            foreach (var kvp in attributeValues)
             {
-                // 基础难度属性（应用mod后）
-                ["ar"] = arWithMod,
-                ["cs"] = beatmap.BeatmapInfo.Difficulty.CircleSize, // CS不受速度mod影响
-                ["od"] = odWithMod,
-                ["hp"] = hpWithMod,
+                result[kvp.Key] = kvp.Value;
+            }
 
-                // 原始基础属性（未应用mod）
-                ["ar_base"] = beatmap.BeatmapInfo.Difficulty.ApproachRate,
-                ["cs_base"] = beatmap.BeatmapInfo.Difficulty.CircleSize,
-                ["od_base"] = beatmap.BeatmapInfo.Difficulty.OverallDifficulty,
-                ["hp_base"] = beatmap.BeatmapInfo.Difficulty.DrainRate,
+            // 然后添加/覆盖基础属性
+            result["ar"] = arWithMod;
+            result["cs"] = beatmap.BeatmapInfo.Difficulty.CircleSize; // CS不受速度mod影响
+            result["od"] = odWithMod;
+            result["hp"] = hpWithMod;
 
-                // 时长信息（应用mod后）
-                ["length"] = lengthWithMod,
-                ["length_seconds"] = lengthWithMod / 1000.0,
+            // 原始基础属性（未应用mod）
+            result["ar_base"] = beatmap.BeatmapInfo.Difficulty.ApproachRate;
+            result["cs_base"] = beatmap.BeatmapInfo.Difficulty.CircleSize;
+            result["od_base"] = beatmap.BeatmapInfo.Difficulty.OverallDifficulty;
+            result["hp_base"] = beatmap.BeatmapInfo.Difficulty.DrainRate;
 
-                // 原始时长信息（未应用mod）
-                ["length_base"] = length,
-                ["length_seconds_base"] = length / 1000.0,
+            // 时长信息（应用mod后）
+            result["length"] = lengthWithMod;
+            result["length_seconds"] = lengthWithMod / 1000.0;
 
-                // BPM信息（应用mod后）
-                ["bpm"] = bpmWithMod,
+            // 原始时长信息（未应用mod）
+            result["length_base"] = length;
+            result["length_seconds_base"] = length / 1000.0;
 
-                // 原始BPM信息（未应用mod）
-                ["bpm_base"] = bpm,
+            // BPM信息（应用mod后）
+            result["bpm"] = bpmWithMod;
 
-                // 速度倍率
-                ["clock_rate"] = clockRate,
+            // 原始BPM信息（未应用mod）
+            result["bpm_base"] = bpm;
 
-                // 从workingBeatmap获取更多信息
-                ["beatmap_id"] = workingBeatmap.BeatmapInfo.OnlineID,
-                ["artist"] = workingBeatmap.BeatmapInfo.Metadata.Artist,
-                ["title"] = workingBeatmap.BeatmapInfo.Metadata.Title,
-                ["creator"] = workingBeatmap.BeatmapInfo.Metadata.Author.Username,
+            // 速度倍率
+            result["clock_rate"] = clockRate;
 
-                // 对象计数
-                ["total_hit_objects"] = beatmap.HitObjects.Count
-            };
+            // 从workingBeatmap获取更多信息
+            result["beatmap_id"] = workingBeatmap.BeatmapInfo.OnlineID;
+            result["artist"] = workingBeatmap.BeatmapInfo.Metadata.Artist;
+            result["title"] = workingBeatmap.BeatmapInfo.Metadata.Title;
+            result["creator"] = workingBeatmap.BeatmapInfo.Metadata.Author.Username;
+
+            // 对象计数
+            result["total_hit_objects"] = beatmap.HitObjects.Count;
+
+            // 确保关键难度属性存在（如果attributeValues中没有）
+            if (!result.ContainsKey("star_rating") && attributes is IHasStarRating hasStarRating)
+            {
+                try
+                {
+                    result["star_rating"] = hasStarRating.StarRating;
+                }
+                catch
+                {
+                    result["star_rating"] = 0;
+                }
+            }
+
+            if (!result.ContainsKey("aim_difficulty"))
+            {
+                result["aim_difficulty"] = 0;
+            }
+
+            if (!result.ContainsKey("speed_difficulty"))
+            {
+                result["speed_difficulty"] = 0;
+            }
+
+            if (!result.ContainsKey("max_combo"))
+            {
+                result["max_combo"] = 0;
+            }
 
             // 返回序列化的结果
             return JsonConvert.SerializeObject(result);
