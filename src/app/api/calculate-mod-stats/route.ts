@@ -4,7 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 async function loadOsuDifficulty() {
     try {
         // 使用 require 导入 CommonJS 模块
-        const osuDifficulty = require('../../../../osu-difficulty-js-local');
+        // 现在模块在 src/lib/osu-difficulty-js 目录
+        const osuDifficulty = require('../../../lib/osu-difficulty-js');
         return osuDifficulty;
     } catch (error) {
         console.error('Failed to load osu-difficulty-js:', error);
