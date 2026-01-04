@@ -1,0 +1,14 @@
+{
+    "buildCommand": "curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --install-dir /tmp/dotnet && export PATH=\"/tmp/dotnet:$PATH\" && node scripts/generate-version.js && next build --turbopack",
+    "installCommand": "npm install",
+    "outputDirectory": ".next",
+    "framework": "nextjs",
+    "functions": {
+        "src/app/api/**/*.ts": {
+            "maxDuration": 30
+        }
+    },
+    "env": {
+        "NODE_ENV": "production"
+    }
+}
