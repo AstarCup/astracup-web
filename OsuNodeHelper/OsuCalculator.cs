@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.JavaScript.NodeApi;
 using osu.Game.Rulesets;
 using osu.Game.Beatmaps;
@@ -139,23 +140,19 @@ public static class OsuCalculator
             result["total_hit_objects"] = beatmap.HitObjects.Count;
 
             // 确保关键难度属性存在（如果attributeValues中没有）
+            // 首先检查attributeValues中是否已经有这些属性
             if (!result.ContainsKey("star_rating"))
             {
-                try
+                // 尝试从attributeValues中查找（可能有不同的命名）
+                var starRatingKey = attributeValues.Keys.FirstOrDefault(k =>
+                    k.Contains("star", StringComparison.OrdinalIgnoreCase) ||
+                    k.Contains("rating", StringComparison.OrdinalIgnoreCase));
+
+                if (starRatingKey != null)
                 {
-                    // 尝试从attributes对象获取星数
-                    var attributesType = attributes.GetType();
-                    var starRatingProperty = attributesType.GetProperty("StarRating");
-                    if (starRatingProperty != null)
-                    {
-                        result["star_rating"] = starRatingProperty.GetValue(attributes);
-                    }
-                    else
-                    {
-                        result["star_rating"] = 0;
-                    }
+                    result["star_rating"] = attributeValues[starRatingKey];
                 }
-                catch
+                else
                 {
                     result["star_rating"] = 0;
                 }
@@ -163,17 +160,51 @@ public static class OsuCalculator
 
             if (!result.ContainsKey("aim_difficulty"))
             {
-                result["aim_difficulty"] = 0;
+                // 尝试从attributeValues中查找
+                var aimKey = attributeValues.Keys.FirstOrDefault(k =>
+                    k.Contains("aim", StringComparison.OrdinalIgnoreCase));
+
+                if (aimKey != null)
+                {
+                    result["aim_difficulty"] = attributeValues[aimKey];
+                }
+                else
+                {
+                    result["aim_difficulty"] = 0;
+                }
             }
 
             if (!result.ContainsKey("speed_difficulty"))
             {
-                result["speed_difficulty"] = 0;
+                // 尝试从attributeValues中查找
+                var speedKey = attributeValues.Keys.FirstOrDefault(k =>
+                    k.Contains("speed", StringComparison.OrdinalIgnoreCase));
+
+                if (speedKey != null)
+                {
+                    result["speed_difficulty"] = attributeValues[speedKey];
+                }
+                else
+                {
+                    result["speed_difficulty"] = 0;
+                }
             }
 
             if (!result.ContainsKey("max_combo"))
             {
-                result["max_combo"] = 0;
+                // 尝试从attributeValues中查找
+                var comboKey = attributeValues.Keys.FirstOrDefault(k =>
+                    k.Contains("combo", StringComparison.OrdinalIgnoreCase) ||
+                    k.Contains("max", StringComparison.OrdinalIgnoreCase));
+
+                if (comboKey != null)
+                {
+                    result["max_combo"] = attributeValues[comboKey];
+                }
+                else
+                {
+                    result["max_combo"] = 0;
+                }
             }
 
             // 返回序列化的结果
