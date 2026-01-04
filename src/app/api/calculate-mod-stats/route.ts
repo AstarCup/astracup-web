@@ -3,6 +3,35 @@ import { NextRequest, NextResponse } from 'next/server';
 // 使用 node-api-dotnet 加载 PerformanceCalculator.dll
 async function loadDotNetCalculator() {
     try {
+        // 在导入node-api-dotnet之前设置DOTNET_ROOT环境变量
+        // 这可以解决Vercel环境中.NET运行时找不到的问题
+        if (!process.env.DOTNET_ROOT) {
+            // 尝试常见的.NET安装路径
+            const possibleDotnetPaths = [
+                '/usr/lib/dotnet',
+                '/tmp/dotnet',
+                '/opt/dotnet',
+                '/usr/share/dotnet'
+            ];
+
+            for (const path of possibleDotnetPaths) {
+                try {
+                    require('fs').accessSync(path);
+                    process.env.DOTNET_ROOT = path;
+                    console.log(`设置DOTNET_ROOT为: ${path}`);
+                    break;
+                } catch {
+                    // 继续尝试下一个路径
+                }
+            }
+
+            // 如果都没找到，设置一个默认值
+            if (!process.env.DOTNET_ROOT) {
+                process.env.DOTNET_ROOT = '/tmp/dotnet';
+                console.log(`设置DOTNET_ROOT为默认值: /tmp/dotnet`);
+            }
+        }
+
         // 动态导入node-api-dotnet，避免在构建时打包
         const dotnetModule = await import('node-api-dotnet');
         const dotnet = dotnetModule.default || dotnetModule;
