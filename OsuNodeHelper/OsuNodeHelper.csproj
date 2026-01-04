@@ -9,13 +9,13 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     
     <Reference Include="PerformanceCalculator">
-      <HintPath>..\osu-tools\PerformanceCalculator\bin\Release\net8.0\win-x64\publish\PerformanceCalculator.dll</HintPath>
+      <HintPath>../osu-tools/PerformanceCalculator/bin/Release/net8.0/linux-x64/publish/PerformanceCalculator.dll</HintPath>
     </Reference>
     <Reference Include="osu.Game">
-      <HintPath>..\osu-tools\PerformanceCalculator\bin\Release\net8.0\win-x64\publish\osu.Game.dll</HintPath>
+      <HintPath>../osu-tools/PerformanceCalculator/bin/Release/net8.0/linux-x64/publish/osu.Game.dll</HintPath>
     </Reference>
     <Reference Include="ppy.osu.Game.Rulesets.Osu">
-      <HintPath>..\osu-tools\PerformanceCalculator\bin\Release\net8.0\win-x64\publish\osu.Game.Rulesets.Osu.dll</HintPath>
+      <HintPath>../osu-tools/PerformanceCalculator/bin/Release/net8.0/linux-x64/publish/osu.Game.Rulesets.Osu.dll</HintPath>
     </Reference>
     </ItemGroup>
 </Project>
