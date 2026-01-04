@@ -41,56 +41,23 @@ public static class OsuCalculator
                 return JsonConvert.SerializeObject(new { error = "Difficulty attributes are null" });
             }
 
-            // 使用反射获取所有公共实例属性
             var attributeType = attributes.GetType();
-            var properties = attributeType.GetProperties(
-                System.Reflection.BindingFlags.Public |
-                System.Reflection.BindingFlags.Instance |
-                System.Reflection.BindingFlags.GetProperty);
 
-            // 创建动态对象来存储所有属性
-            var result = new System.Dynamic.ExpandoObject() as IDictionary<string, object>;
-
-            foreach (var prop in properties)
+            // 尝试直接访问已知的属性，而不是使用反射
+            // 根据osu! API文档，OsuDifficultyAttributes应该有这些属性
+            var result = new
             {
-                try
-                {
-                    // 尝试获取属性值
-                    var value = prop.GetValue(attributes);
+                // 尝试通过dynamic访问，避免编译时类型检查
+                star_rating = GetPropertyValue(attributes, "StarRating"),
+                aim_difficulty = GetPropertyValue(attributes, "AimDifficulty"),
+                speed_difficulty = GetPropertyValue(attributes, "SpeedDifficulty"),
+                max_combo = GetPropertyValue(attributes, "MaxCombo"),
 
-                    // 处理特殊类型
-                    if (value == null)
-                    {
-                        result[prop.Name] = null;
-                    }
-                    else if (value is double doubleValue)
-                    {
-                        result[prop.Name] = doubleValue;
-                    }
-                    else if (value is int intValue)
-                    {
-                        result[prop.Name] = intValue;
-                    }
-                    else if (value is float floatValue)
-                    {
-                        result[prop.Name] = floatValue;
-                    }
-                    else
-                    {
-                        // 其他类型转换为字符串
-                        result[prop.Name] = value.ToString();
-                    }
-                }
-                catch (Exception propEx)
-                {
-                    // 记录详细的错误信息
-                    result[prop.Name] = $"ERROR: {propEx.GetType().Name}: {propEx.Message}";
-                }
-            }
-
-            // 添加类型信息
-            result["_type"] = attributeType.FullName;
-            result["_assembly"] = attributeType.Assembly.FullName;
+                // 调试信息
+                _type = attributeType.FullName,
+                _assembly = attributeType.Assembly.FullName,
+                _method = "direct_access"
+            };
 
             return JsonConvert.SerializeObject(result);
         }
@@ -103,6 +70,35 @@ public static class OsuCalculator
                 stackTrace = ex.StackTrace,
                 innerException = ex.InnerException?.Message
             });
+        }
+    }
+
+    // 辅助方法：安全地获取属性值
+    private static object GetPropertyValue(object obj, string propertyName)
+    {
+        try
+        {
+            var property = obj.GetType().GetProperty(propertyName,
+                System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.GetProperty);
+
+            if (property == null)
+            {
+                return $"Property '{propertyName}' not found";
+            }
+
+            if (!property.CanRead)
+            {
+                return $"Property '{propertyName}' cannot be read";
+            }
+
+            var value = property.GetValue(obj);
+            return value ?? "null";
+        }
+        catch (Exception ex)
+        {
+            return $"ERROR getting '{propertyName}': {ex.GetType().Name}: {ex.Message}";
         }
     }
 }
