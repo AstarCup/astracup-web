@@ -41,9 +41,12 @@ public static class OsuCalculator
                 return JsonConvert.SerializeObject(new { error = "Difficulty attributes are null" });
             }
 
-            // 使用反射获取所有属性，以便调试
+            // 使用反射获取所有公共实例属性
             var attributeType = attributes.GetType();
-            var properties = attributeType.GetProperties();
+            var properties = attributeType.GetProperties(
+                System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.GetProperty);
 
             // 创建动态对象来存储所有属性
             var result = new System.Dynamic.ExpandoObject() as IDictionary<string, object>;
@@ -52,12 +55,36 @@ public static class OsuCalculator
             {
                 try
                 {
+                    // 尝试获取属性值
                     var value = prop.GetValue(attributes);
-                    result[prop.Name] = value;
+
+                    // 处理特殊类型
+                    if (value == null)
+                    {
+                        result[prop.Name] = null;
+                    }
+                    else if (value is double doubleValue)
+                    {
+                        result[prop.Name] = doubleValue;
+                    }
+                    else if (value is int intValue)
+                    {
+                        result[prop.Name] = intValue;
+                    }
+                    else if (value is float floatValue)
+                    {
+                        result[prop.Name] = floatValue;
+                    }
+                    else
+                    {
+                        // 其他类型转换为字符串
+                        result[prop.Name] = value.ToString();
+                    }
                 }
-                catch
+                catch (Exception propEx)
                 {
-                    result[prop.Name] = "ERROR_GETTING_VALUE";
+                    // 记录详细的错误信息
+                    result[prop.Name] = $"ERROR: {propEx.GetType().Name}: {propEx.Message}";
                 }
             }
 
