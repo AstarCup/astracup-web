@@ -1586,8 +1586,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                 {(() => {
                                                     const val = moddedStats?.cs ?? beatmapPreview.cs;
                                                     if (selectedMods !== 'NM' && moddedStats?.cs !== undefined) {
-                                                        if (moddedStats.cs > beatmapPreview.cs + 0.01) return `${val.toFixed(1)} ▲`;
-                                                        if (moddedStats.cs < beatmapPreview.cs - 0.01) return `${val.toFixed(1)} ▼`;
+                                                        if (moddedStats.cs > beatmapPreview.cs + 0.01) return `${val.toFixed(2)} ▲`;
+                                                        if (moddedStats.cs < beatmapPreview.cs - 0.01) return `${val.toFixed(2)} ▼`;
                                                     }
                                                     return val.toFixed(1);
                                                 })()}
@@ -1596,8 +1596,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                 {(() => {
                                                     const val = moddedStats?.ar ?? beatmapPreview.ar;
                                                     if (selectedMods !== 'NM' && moddedStats?.ar !== undefined) {
-                                                        if (moddedStats.ar > beatmapPreview.ar + 0.01) return `${val.toFixed(1)} ▲`;
-                                                        if (moddedStats.ar < beatmapPreview.ar - 0.01) return `${val.toFixed(1)} ▼`;
+                                                        if (moddedStats.ar > beatmapPreview.ar + 0.01) return `${val.toFixed(2)} ▲`;
+                                                        if (moddedStats.ar < beatmapPreview.ar - 0.01) return `${val.toFixed(2)} ▼`;
                                                     }
                                                     return val.toFixed(1);
                                                 })()}
@@ -1606,8 +1606,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                 {(() => {
                                                     const val = moddedStats?.od ?? beatmapPreview.od;
                                                     if (selectedMods !== 'NM' && moddedStats?.od !== undefined) {
-                                                        if (moddedStats.od > beatmapPreview.od + 0.01) return `${val.toFixed(1)} ▲`;
-                                                        if (moddedStats.od < beatmapPreview.od - 0.01) return `${val.toFixed(1)} ▼`;
+                                                        if (moddedStats.od > beatmapPreview.od + 0.01) return `${val.toFixed(2)} ▲`;
+                                                        if (moddedStats.od < beatmapPreview.od - 0.01) return `${val.toFixed(2)} ▼`;
                                                     }
                                                     return val.toFixed(1);
                                                 })()}
@@ -1616,8 +1616,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                 {(() => {
                                                     const val = moddedStats?.hp ?? beatmapPreview.hp;
                                                     if (selectedMods !== 'NM' && moddedStats?.hp !== undefined) {
-                                                        if (moddedStats.hp > beatmapPreview.hp + 0.01) return `${val.toFixed(1)} ▲`;
-                                                        if (moddedStats.hp < beatmapPreview.hp - 0.01) return `${val.toFixed(1)} ▼`;
+                                                        if (moddedStats.hp > beatmapPreview.hp + 0.01) return `${val.toFixed(2)} ▲`;
+                                                        if (moddedStats.hp < beatmapPreview.hp - 0.01) return `${val.toFixed(2)} ▼`;
                                                     }
                                                     return val.toFixed(1);
                                                 })()}
