@@ -26,10 +26,29 @@ TEMP_BUILD_DIR="/tmp/astracup-build"
 echo "=== 创建临时构建目录: $TEMP_BUILD_DIR ==="
 mkdir -p "$TEMP_BUILD_DIR"
 
-# 复制项目文件到临时目录
-echo "=== 复制项目文件到临时目录 ==="
-cp -r osu-tools "$TEMP_BUILD_DIR/"
+# 复制OsuNodeHelper到临时目录
+echo "=== 复制OsuNodeHelper到临时目录 ==="
+if [ ! -d "OsuNodeHelper" ]; then
+    echo "错误: OsuNodeHelper目录不存在"
+    exit 1
+fi
 cp -r OsuNodeHelper "$TEMP_BUILD_DIR/"
+
+# 从GitHub获取osu-tools
+echo "=== 从GitHub获取osu-tools ==="
+cd "$TEMP_BUILD_DIR"
+if [ ! -d "osu-tools" ]; then
+    echo "克隆osu-tools仓库..."
+    git clone --depth 1 https://github.com/ppy/osu-tools.git
+else
+    echo "osu-tools目录已存在，跳过克隆"
+fi
+
+# 检查是否克隆成功
+if [ ! -d "osu-tools" ]; then
+    echo "错误: 无法获取osu-tools仓库"
+    exit 1
+fi
 
 # 在临时目录中编译PerformanceCalculator项目
 echo "=== 编译PerformanceCalculator项目 ==="
