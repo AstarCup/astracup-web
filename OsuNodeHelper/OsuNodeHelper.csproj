@@ -1,7 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework> <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PublishTrimmed>true</PublishTrimmed>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,5 +23,5 @@
     <Reference Include="ppy.osu.Game.Rulesets.Osu">
       <HintPath>../osu-tools/PerformanceCalculator/bin/Release/net8.0/linux-x64/publish/osu.Game.Rulesets.Osu.dll</HintPath>
     </Reference>
-    </ItemGroup>
+  </ItemGroup>
 </Project>

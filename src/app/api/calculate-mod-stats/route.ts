@@ -1,121 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// 使用 node-api-dotnet 加载 PerformanceCalculator.dll
-async function loadDotNetCalculator() {
-    try {
-        const fs = require('fs');
-        const path = require('path');
-
-        // 在导入node-api-dotnet之前，确保/usr/lib/dotnet存在
-        // node-api-dotnet硬编码查找/usr/lib/dotnet
-        const usrLibDotnet = '/usr/lib/dotnet';
-        const possibleDotnetPaths = [
-            '/usr/lib/dotnet',
-            '/tmp/dotnet',
-            '/opt/dotnet',
-            '/usr/share/dotnet',
-            path.join(process.cwd(), 'public', 'dotnet')
-        ];
-
-        let dotnetPath = null;
-
-        // 查找现有的.NET安装
-        for (const p of possibleDotnetPaths) {
-            try {
-                fs.accessSync(p);
-                dotnetPath = p;
-                console.log(`找到.NET安装: ${p}`);
-                break;
-            } catch {
-                // 继续尝试下一个路径
-            }
-        }
-
-        // 如果没找到，尝试创建符号链接
-        if (!dotnetPath) {
-            // 检查public/dotnet是否存在（构建脚本应该安装了.NET到这里）
-            const publicDotnet = path.join(process.cwd(), 'public', 'dotnet');
-            if (fs.existsSync(publicDotnet)) {
-                console.log(`使用public/dotnet中的.NET: ${publicDotnet}`);
-                dotnetPath = publicDotnet;
-
-                // 尝试创建符号链接/usr/lib/dotnet -> public/dotnet
-                try {
-                    // 创建/usr/lib目录（如果不存在）
-                    fs.mkdirSync('/usr/lib', { recursive: true });
-                    // 创建或更新符号链接
-                    if (fs.existsSync(usrLibDotnet)) {
-                        fs.unlinkSync(usrLibDotnet);
-                    }
-                    fs.symlinkSync(publicDotnet, usrLibDotnet);
-                    console.log(`创建符号链接 ${usrLibDotnet} -> ${publicDotnet}`);
-                } catch (symlinkError: any) {
-                    console.warn(`无法创建符号链接: ${symlinkError.message}`);
-                    // 设置环境变量作为备选方案
-                    process.env.DOTNET_ROOT = publicDotnet;
-                }
-            } else {
-                console.warn('未找到.NET安装，node-api-dotnet可能无法工作');
-            }
-        }
-
-        // 设置环境变量
-        if (dotnetPath && !process.env.DOTNET_ROOT) {
-            process.env.DOTNET_ROOT = dotnetPath;
-            console.log(`设置DOTNET_ROOT为: ${dotnetPath}`);
-        }
-
-        // 动态导入node-api-dotnet，避免在构建时打包
-        const dotnetModule = await import('node-api-dotnet');
-        const dotnet = dotnetModule.default || dotnetModule;
-
-        // 添加解析事件监听器来处理依赖
-        dotnet.addListener('resolving', (assemblyName: string, assemblyVersion: string, resolve: (path: string) => void) => {
-            console.log(`Resolving assembly: ${assemblyName}, version: ${assemblyVersion}`);
-
-            // 忽略 osu.Game 依赖，因为用户说可以不依赖它
-            if (assemblyName === 'osu.Game') {
-                console.log(`Ignoring osu.Game dependency as requested`);
-                return;
-            }
-
-            // 对于其他依赖，尝试在osu-tools项目中查找
-            const path = require('path');
-            const osuToolsPath = path.join(process.cwd(), 'osu-tools');
-            const possiblePaths = [
-                path.join(osuToolsPath, `${assemblyName}.dll`),
-                path.join(osuToolsPath, 'bin', 'Release', 'net8.0', `${assemblyName}.dll`),
-                path.join(osuToolsPath, 'bin', 'Debug', 'net8.0', `${assemblyName}.dll`),
-            ];
-
-            for (const possiblePath of possiblePaths) {
-                try {
-                    require('fs').accessSync(possiblePath);
-                    console.log(`Found ${assemblyName} at: ${possiblePath}`);
-                    resolve(possiblePath);
-                    return;
-                } catch (err) {
-                    // 继续尝试下一个路径
-                }
-            }
-
-            console.log(`Could not find ${assemblyName}, letting runtime handle it`);
-        });
-
-        return dotnet;
-    } catch (error) {
-        console.error('Failed to load node-api-dotnet:', error);
-        throw new Error('node-api-dotnet module could not be loaded');
-    }
-}
-
-// 定义难度计算结果的类型
-interface DifficultyResult {
-    starRating?: number;
-    aimDifficulty?: number;
-    speedDifficulty?: number;
-    maxCombo?: number;
-}
+import { spawn } from 'child_process';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as os from 'os';
 
 // 从osu! API获取beatmap文件内容
 async function getBeatmapFile(beatmapId: number, accessToken?: string): Promise<string> {
@@ -136,57 +23,110 @@ async function getBeatmapFile(beatmapId: number, accessToken?: string): Promise<
     return await response.text();
 }
 
-// OsuNodeHelper.dll 路径
-import * as path from 'path';
+// 调用OsuNodeHelper可执行文件计算难度
+async function calculateDifficultyWithExe(
+    beatmapId: number,
+    modsArray: string[],
+    modOptions: string[],
+    accessToken?: string
+): Promise<{ starRating: number; aimDifficulty: number; speedDifficulty: number }> {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // 获取beatmap文件内容并保存到临时文件
+            const beatmapContent = await getBeatmapFile(beatmapId, accessToken);
+            const tempDir = os.tmpdir();
+            const tempBeatmapPath = path.join(tempDir, `${beatmapId}.osu`);
 
-function getCalculatorDllPath(): string {
-    // 首先检查环境变量
-    if (process.env.OSU_CALCULATOR_DLL_PATH) {
-        return process.env.OSU_CALCULATOR_DLL_PATH;
-    }
+            fs.writeFileSync(tempBeatmapPath, beatmapContent);
+            console.log(`Beatmap saved to temporary file: ${tempBeatmapPath}`);
 
-    // 根据平台选择运行时标识符
-    const platform = process.platform;
-    const arch = process.arch;
-    let runtimeIdentifier = 'win-x64'; // 默认
+            // 准备参数
+            const args = [
+                tempBeatmapPath,
+                '0', // rulesetId: 0 表示osu!标准模式
+                modsArray.join(','),
+                modOptions.join(';')
+            ];
 
-    if (platform === 'linux') {
-        runtimeIdentifier = 'linux-x64';
-    } else if (platform === 'darwin') {
-        runtimeIdentifier = 'osx-x64';
-    } else if (platform === 'win32') {
-        runtimeIdentifier = 'win-x64';
-    }
+            // 查找可执行文件路径
+            const exePath = path.join(process.cwd(), 'public', 'OsuNodeHelper');
 
-    console.log(`Platform: ${platform}-${arch}, using runtime identifier: ${runtimeIdentifier}`);
-
-    // 开发环境：尝试多个可能的位置
-    if (process.env.NODE_ENV === 'development') {
-        const devPaths = [
-            path.join(process.cwd(), 'OsuNodeHelper', 'bin', 'Release', 'net8.0', runtimeIdentifier, 'publish', 'OsuNodeHelper.dll'),
-            path.join(process.cwd(), 'public', 'OsuNodeHelper.dll'),
-            path.join(process.cwd(), 'OsuNodeHelper.dll'),
-        ];
-
-        for (const devPath of devPaths) {
-            try {
-                require('fs').accessSync(devPath);
-                console.log(`Using DLL at: ${devPath}`);
-                return devPath;
-            } catch {
-                // 继续尝试下一个路径
+            if (!fs.existsSync(exePath)) {
+                throw new Error(`OsuNodeHelper executable not found at: ${exePath}`);
             }
+
+            console.log(`Executing: ${exePath} ${args.join(' ')}`);
+
+            // 执行可执行文件
+            const child = spawn(exePath, args, {
+                stdio: ['pipe', 'pipe', 'pipe'],
+                timeout: 30000 // 30秒超时
+            });
+
+            let stdout = '';
+            let stderr = '';
+
+            child.stdout.on('data', (data) => {
+                stdout += data.toString();
+            });
+
+            child.stderr.on('data', (data) => {
+                stderr += data.toString();
+            });
+
+            child.on('close', (code) => {
+                // 清理临时文件
+                try {
+                    fs.unlinkSync(tempBeatmapPath);
+                    console.log('Temporary beatmap file cleaned up');
+                } catch (cleanupError) {
+                    console.warn('Failed to clean up temporary file:', cleanupError);
+                }
+
+                if (code !== 0) {
+                    console.error(`OsuNodeHelper exited with code ${code}`);
+                    console.error(`stderr: ${stderr}`);
+                    reject(new Error(`OsuNodeHelper failed: ${stderr || 'Unknown error'}`));
+                    return;
+                }
+
+                try {
+                    // 解析JSON输出
+                    const result = JSON.parse(stdout.trim());
+                    console.log('Result from OsuNodeHelper:', result);
+
+                    if (result.error) {
+                        reject(new Error(`OsuNodeHelper error: ${result.error}`));
+                        return;
+                    }
+
+                    resolve({
+                        starRating: result.star_rating || 0,
+                        aimDifficulty: result.aim_difficulty || 0,
+                        speedDifficulty: result.speed_difficulty || 0
+                    });
+                } catch (parseError) {
+                    console.error('Failed to parse OsuNodeHelper output:', parseError);
+                    console.error('stdout:', stdout);
+                    reject(new Error('Failed to parse OsuNodeHelper output'));
+                }
+            });
+
+            child.on('error', (error) => {
+                // 清理临时文件
+                try {
+                    fs.unlinkSync(tempBeatmapPath);
+                } catch (cleanupError) {
+                    // 忽略清理错误
+                }
+                reject(error);
+            });
+
+        } catch (error) {
+            reject(error);
         }
-    }
-
-    // 生产环境：使用 public 目录中的 DLL
-    // 在 Vercel 上，public 目录的内容会被部署
-    const publicPath = path.join(process.cwd(), 'public', 'OsuNodeHelper.dll');
-    console.log(`Using DLL from public directory: ${publicPath}`);
-    return publicPath;
+    });
 }
-
-const CALCULATOR_DLL_PATH = getCalculatorDllPath();
 
 export async function POST(req: NextRequest) {
     try {
@@ -256,87 +196,28 @@ export async function POST(req: NextRequest) {
             customDTRate
         });
 
-        // 加载 node-api-dotnet 模块
-        const dotnet = await loadDotNetCalculator();
-
-        // 加载 OsuNodeHelper.dll
-        console.log(`Loading DLL from: ${CALCULATOR_DLL_PATH}`);
-
         // 声明结果变量
         let starRating = 0;
         let aimDifficulty = 0;
         let speedDifficulty = 0;
 
         try {
-            // 加载DLL
-            dotnet.load(CALCULATOR_DLL_PATH);
-            console.log('DLL loaded successfully');
+            // 调用可执行文件计算难度
+            const result = await calculateDifficultyWithExe(beatmapId, modsArray, modOptions, accessToken);
+            starRating = result.starRating;
+            aimDifficulty = result.aimDifficulty;
+            speedDifficulty = result.speedDifficulty;
 
-            // 获取OsuCalculator类
-            // 使用类型断言，因为OsuNodeHelper是在DLL加载后动态添加的
-            const OsuNodeHelperNamespace = (dotnet as any).OsuNodeHelper;
-
-            if (!OsuNodeHelperNamespace) {
-                throw new Error('OsuNodeHelper namespace not found after loading DLL');
-            }
-
-            const OsuCalculator = OsuNodeHelperNamespace.OsuCalculator;
-
-            if (!OsuCalculator) {
-                throw new Error('OsuCalculator class not found in OsuNodeHelper namespace');
-            }
-
-            console.log('OsuCalculator class found');
-
-            // 获取beatmap文件内容并保存到临时文件
-            const beatmapContent = await getBeatmapFile(beatmapId, accessToken);
-            const fs = require('fs');
-            const os = require('os');
-            const tempDir = os.tmpdir();
-            const tempBeatmapPath = path.join(tempDir, `${beatmapId}.osu`);
-
-            fs.writeFileSync(tempBeatmapPath, beatmapContent);
-            console.log(`Beatmap saved to temporary file: ${tempBeatmapPath}`);
-
-            try {
-                // 调用OsuCalculator.CalculateDifficulty方法
-                // rulesetId: 0 表示osu!标准模式
-                const rawResult = OsuCalculator.CalculateDifficulty(tempBeatmapPath, 0, modsArray, modOptions);
-                const jsonString = String(rawResult);
-                const result = JSON.parse(jsonString);
-
-                console.log('Raw result from OsuCalculator:', result);
-
-                // 解析结果
-                if (result.error) {
-                    throw new Error(`OsuCalculator error: ${result.error}`);
-                }
-
-                // 提取难度属性
-                starRating = result.star_rating || 0;
-                aimDifficulty = result.aim_difficulty || 0;
-                speedDifficulty = result.speed_difficulty || 0;
-
-                console.log('Parsed difficulty values:', { starRating, aimDifficulty, speedDifficulty });
-            } finally {
-                // 清理临时文件
-                try {
-                    fs.unlinkSync(tempBeatmapPath);
-                    console.log('Temporary beatmap file cleaned up');
-                } catch (cleanupError) {
-                    console.warn('Failed to clean up temporary file:', cleanupError);
-                }
-            }
+            console.log('Difficulty values:', { starRating, aimDifficulty, speedDifficulty });
         } catch (error: any) {
-            console.error('Error calling OsuCalculator:', error.message);
+            console.error('Error calling OsuNodeHelper:', error.message);
             console.log('Using simulated values due to error');
             starRating = 5.0; // 模拟值
             aimDifficulty = 3.0; // 模拟值
             speedDifficulty = 2.0; // 模拟值
         }
 
-        // 构建结果 - 注意：新API可能不提供ar, cs, od, hp等属性
-        // 我们暂时使用默认值或从customDASettings获取
+        // 构建结果
         const modStats = {
             ar: customDASettings?.ar || 0,
             cs: customDASettings?.cs || 0,
@@ -370,9 +251,8 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             modStats: modStats,
-            method: 'node-api-dotnet',
+            method: 'executable',
             debug: {
-                dllPath: CALCULATOR_DLL_PATH,
                 modsApplied: mods,
                 customModName,
                 customDASettings,

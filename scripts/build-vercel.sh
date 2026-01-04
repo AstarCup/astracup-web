@@ -7,26 +7,6 @@ echo "=== 开始构建过程 ==="
 # 保存原始工作目录
 ORIGINAL_DIR="$(pwd)"
 
-# 安装.NET到public/dotnet目录
-echo "=== 安装.NET运行时到public/dotnet目录 ==="
-DOTNET_PUBLIC_DIR="public/dotnet"
-
-# 清理旧的dotnet目录
-rm -rf "$DOTNET_PUBLIC_DIR"
-
-# 下载并安装.NET到public目录
-echo "安装.NET到$DOTNET_PUBLIC_DIR..."
-curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --install-dir "$DOTNET_PUBLIC_DIR"
-
-# 检查是否安装成功
-if [ ! -d "$DOTNET_PUBLIC_DIR" ]; then
-    echo "错误: .NET安装失败"
-    exit 1
-fi
-
-echo "=== .NET版本 ==="
-"$DOTNET_PUBLIC_DIR/dotnet" --version
-
 # 生成版本信息
 echo "=== 生成版本信息 ==="
 node scripts/generate-version.js
@@ -60,31 +40,61 @@ if [ ! -d "osu-tools" ]; then
     exit 1
 fi
 
+# 检查是否安装了dotnet
+if ! command -v dotnet &> /dev/null; then
+    echo "=== 安装.NET SDK（仅用于构建）==="
+    # 安装.NET SDK到临时目录，不包含在最终部署中
+    DOTNET_TEMP_DIR="/tmp/dotnet-sdk"
+    curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin \
+        --channel 8.0 \
+        --install-dir "$DOTNET_TEMP_DIR"
+    export PATH="$DOTNET_TEMP_DIR:$PATH"
+fi
+
+echo "=== .NET版本 ==="
+dotnet --version
+
 # 在临时目录中编译PerformanceCalculator项目
 echo "=== 编译PerformanceCalculator项目 ==="
 cd "$TEMP_BUILD_DIR/osu-tools/PerformanceCalculator"
-"$ORIGINAL_DIR/$DOTNET_PUBLIC_DIR/dotnet" publish PerformanceCalculator.csproj -c Release -r linux-x64 --self-contained false
+dotnet publish PerformanceCalculator.csproj -c Release -r linux-x64 --self-contained false
 
-# 在临时目录中编译OsuNodeHelper项目
-echo "=== 编译OsuNodeHelper项目 ==="
+# 在临时目录中编译OsuNodeHelper为自包含的可执行文件
+echo "=== 编译OsuNodeHelper为自包含可执行文件 ==="
 cd "$TEMP_BUILD_DIR/OsuNodeHelper"
-"$ORIGINAL_DIR/$DOTNET_PUBLIC_DIR/dotnet" publish OsuNodeHelper.csproj -c Release -r linux-x64 --self-contained false
+# 使用PublishTrimmed和PublishSingleFile减小大小
+dotnet publish OsuNodeHelper.csproj \
+    -c Release \
+    -r linux-x64 \
+    --self-contained true \
+    -p:PublishTrimmed=true \
+    -p:PublishSingleFile=true \
+    -p:IncludeNativeLibrariesForSelfExtract=true
 
 # 返回项目根目录
 cd "$ORIGINAL_DIR"
 
-# 检查OsuNodeHelper DLL是否生成
-echo "=== 检查OsuNodeHelper DLL ==="
-OSU_DLL_PATH="$TEMP_BUILD_DIR/OsuNodeHelper/bin/Release/net8.0/linux-x64/publish/OsuNodeHelper.dll"
-if [ ! -f "$OSU_DLL_PATH" ]; then
-    echo "错误: OsuNodeHelper.dll 未生成"
-    echo "预期路径: $OSU_DLL_PATH"
+# 检查OsuNodeHelper可执行文件是否生成
+echo "=== 检查OsuNodeHelper可执行文件 ==="
+OSU_EXE_PATH="$TEMP_BUILD_DIR/OsuNodeHelper/bin/Release/net8.0/linux-x64/publish/OsuNodeHelper"
+if [ ! -f "$OSU_EXE_PATH" ]; then
+    echo "错误: OsuNodeHelper可执行文件未生成"
+    echo "预期路径: $OSU_EXE_PATH"
+    # 列出目录内容以调试
+    ls -la "$TEMP_BUILD_DIR/OsuNodeHelper/bin/Release/net8.0/linux-x64/publish/" || true
     exit 1
 fi
 
-# 复制DLL到public目录
-echo "=== 复制DLL到public目录 ==="
-cp "$OSU_DLL_PATH" public/
+# 检查可执行文件大小
+echo "=== 可执行文件大小 ==="
+ls -lh "$OSU_EXE_PATH"
+
+# 复制可执行文件到public目录
+echo "=== 复制可执行文件到public目录 ==="
+cp "$OSU_EXE_PATH" public/OsuNodeHelper
+
+# 使可执行文件可执行
+chmod +x public/OsuNodeHelper
 
 # 构建Next.js应用
 echo "=== 构建Next.js应用 ==="
