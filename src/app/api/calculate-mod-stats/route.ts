@@ -1,16 +1,81 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { spawn } from 'child_process';
+import path from 'path';
 
-// 动态导入 osu-difficulty 模块以避免 TypeScript 类型错误
-async function loadOsuDifficulty() {
-    try {
-        // 使用 require 导入 CommonJS 模块
-        // 现在模块在 src/lib/osu-difficulty-js 目录
-        const osuDifficulty = require('../../../lib/osu-difficulty-js');
-        return osuDifficulty;
-    } catch (error) {
-        console.error('Failed to load osu-difficulty-js:', error);
-        throw new Error('osu-difficulty-js module could not be loaded');
+// 内联的 calculateDifficulty 函数，原本来自 osu-difficulty-js
+async function calculateDifficulty(options: {
+    beatmap: string | number;
+    ruleset?: number;
+    mods?: string[];
+    modOptions?: string[];
+    dotnetPath?: string;
+    calculatorDllPath: string;
+}): Promise<any> {
+    const {
+        beatmap,
+        ruleset,
+        mods = [],
+        modOptions = [],
+        dotnetPath = "dotnet",
+        calculatorDllPath,
+    } = options;
+
+    if (!calculatorDllPath) {
+        throw new Error("calculatorDllPath is required");
     }
+
+    const args = [calculatorDllPath, "difficulty"];
+
+    if (ruleset !== undefined) {
+        args.push("--ruleset", String(ruleset));
+    }
+
+    for (const mod of mods) {
+        args.push("-m", mod);
+    }
+
+    for (const opt of modOptions) {
+        args.push("-o", opt);
+    }
+
+    args.push(String(beatmap), "-j");
+
+    return new Promise((resolve, reject) => {
+        const child = spawn(dotnetPath, args, {
+            cwd: path.dirname(calculatorDllPath),
+            stdio: ["pipe", "pipe", "pipe"],
+        });
+
+        let stdout = "";
+        let stderr = "";
+
+        child.stdout.on("data", (chunk) => (stdout += chunk));
+        child.stderr.on("data", (chunk) => (stderr += chunk));
+
+        child.on("error", (err) => {
+            reject(new Error(`Failed to run dotnet: ${err.message}`));
+        });
+
+        child.on("close", (code) => {
+            if (code === 0) {
+                try {
+                    const result = JSON.parse(stdout.trim());
+                    resolve(result);
+                } catch (e) {
+                    const errorMessage = e instanceof Error ? e.message : String(e);
+                    reject(
+                        new Error(`Invalid JSON output: ${errorMessage}\nOutput: ${stdout}`)
+                    );
+                }
+            } else {
+                reject(
+                    new Error(
+                        `Command failed with code ${code}\nstderr: ${stderr}\nstdout: ${stdout}`
+                    )
+                );
+            }
+        });
+    });
 }
 
 // 定义 osu-difficulty 返回结果的类型
@@ -46,9 +111,6 @@ async function getBeatmapFile(beatmapId: number, accessToken?: string): Promise<
 }
 
 // PerformanceCalculator.dll 路径
-// 使用 public 目录中的 DLL，这样在 Vercel 部署时也会包含
-import path from 'path';
-
 function getCalculatorDllPath(): string {
     // 首先检查环境变量
     if (process.env.OSU_CALCULATOR_DLL_PATH) {
@@ -151,11 +213,8 @@ export async function POST(req: NextRequest) {
             customDTRate
         });
 
-        // 加载 osu-difficulty 模块
-        const osuDifficulty = await loadOsuDifficulty();
-
-        // 使用 osu-difficulty 计算难度
-        const result: OsuDifficultyResult = await osuDifficulty.calculateDifficulty({
+        // 使用内联的 calculateDifficulty 函数计算难度
+        const result: OsuDifficultyResult = await calculateDifficulty({
             beatmap: beatmapId,
             mods: modsArray,
             modOptions: modOptions,
