@@ -8,6 +8,8 @@ import CommentComponent from './ui/CommentComponent';
 import MapoolTable from '../ui/MapoolTable';
 import { UserSession } from '@/lib/permissions';
 
+import { ArrowDownToLine, ExternalLink, RotateCw, PencilLine, CircleArrowRight, CircleCheckBig, Trash2, LayoutGrid, LayoutList, Clipboard, MessageCircleMore, Loader2, Gamepad2 } from 'lucide-react';
+
 interface User {
     id: number;
     username: string;
@@ -834,7 +836,23 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 return;
             }
 
-            const { modStats } = await modStatsResponse.json();
+            const responseData = await modStatsResponse.json();
+            console.log('API返回的数据结构:', responseData);
+            const { modStats } = responseData;
+            console.log('modStats对象结构:', modStats);
+            console.log('modStats字段详情:', {
+                starRating: modStats?.starRating,
+                star_rating: modStats?.star_rating,
+                bpm: modStats?.bpm,
+                totalLength: modStats?.totalLength,
+                total_length: modStats?.total_length,
+                maxCombo: modStats?.maxCombo,
+                max_combo: modStats?.max_combo,
+                ar: modStats?.ar,
+                cs: modStats?.cs,
+                od: modStats?.od,
+                hp: modStats?.hp
+            });
 
             // 第三步：更新本地状态
             setSelections(prev => prev.map(s => s.id === selection.id ? ({
@@ -1589,7 +1607,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         if (moddedStats.cs > beatmapPreview.cs + 0.01) return `${val.toFixed(2)} ▲`;
                                                         if (moddedStats.cs < beatmapPreview.cs - 0.01) return `${val.toFixed(2)} ▼`;
                                                     }
-                                                    return val.toFixed(1);
+                                                    return val.toFixed(2);
                                                 })()}
                                             </div>
                                             <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.ar !== undefined ? (moddedStats.ar > beatmapPreview.ar + 0.01 ? 'text-red-500' : moddedStats.ar < beatmapPreview.ar - 0.01 ? 'text-green-500' : '') : ''}`}>
@@ -1599,7 +1617,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         if (moddedStats.ar > beatmapPreview.ar + 0.01) return `${val.toFixed(2)} ▲`;
                                                         if (moddedStats.ar < beatmapPreview.ar - 0.01) return `${val.toFixed(2)} ▼`;
                                                     }
-                                                    return val.toFixed(1);
+                                                    return val.toFixed(2);
                                                 })()}
                                             </div>
                                             <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.od !== undefined ? (moddedStats.od > beatmapPreview.od + 0.01 ? 'text-red-500' : moddedStats.od < beatmapPreview.od - 0.01 ? 'text-green-500' : '') : ''}`}>
@@ -1609,7 +1627,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         if (moddedStats.od > beatmapPreview.od + 0.01) return `${val.toFixed(2)} ▲`;
                                                         if (moddedStats.od < beatmapPreview.od - 0.01) return `${val.toFixed(2)} ▼`;
                                                     }
-                                                    return val.toFixed(1);
+                                                    return val.toFixed(2);
                                                 })()}
                                             </div>
                                             <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.hp !== undefined ? (moddedStats.hp > beatmapPreview.hp + 0.01 ? 'text-red-500' : moddedStats.hp < beatmapPreview.hp - 0.01 ? 'text-green-500' : '') : ''}`}>
@@ -1619,7 +1637,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         if (moddedStats.hp > beatmapPreview.hp + 0.01) return `${val.toFixed(2)} ▲`;
                                                         if (moddedStats.hp < beatmapPreview.hp - 0.01) return `${val.toFixed(2)} ▼`;
                                                     }
-                                                    return val.toFixed(1);
+                                                    return val.toFixed(2);
                                                 })()}
                                             </div>
 
@@ -1825,8 +1843,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                             {/* 评论和选项 */}
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    评论
+                                <label className="block text-sm font-medium text-gray-700 mb-2 flex flex-cow items-center gap-1">
+                                    <MessageCircleMore size={16} />评论
                                 </label>
                                 <textarea
                                     value={comment}
@@ -1869,24 +1887,24 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     )}
 
                     {/* Tab切换栏 */}
-                    <div className="mb-6 flex border-b border-gray-300">
+                    <div className="mb-6 flex w-max bg-gray-500 rounded-lg">
                         <button
                             onClick={() => setActiveTab('cards')}
-                            className={`px-4 py-2 font-medium text-2xl transition-colors flex ${activeTab === 'cards'
-                                ? 'border-b-4 border-pink-500 text-pink-600'
-                                : 'text-gray-500 hover:text-white'
+                            className={`px-4 py-2 rounded-lg font-medium text-2xl transition-colors flex ${activeTab === 'cards'
+                                ? 'bg-[#E93B66] text-white'
+                                : 'text-white hover:text-pink'
                                 }`}
                         >
-                            <Image src='/icons/layout-grid-fill.svg' alt='card' width={30} height={30} /> 卡片视图
+                            <LayoutGrid />
                         </button>
                         <button
                             onClick={() => setActiveTab('table')}
-                            className={`px-4 py-2 font-medium text-2xl transition-colors flex ${activeTab === 'table'
-                                ? 'border-b-4 border-pink-500 text-pink-600'
-                                : 'text-gray-500 hover:text-white'
+                            className={`px-4 py-2 rounded-lg font-medium text-2xl transition-colors flex ${activeTab === 'table'
+                                ? 'bg-[#E93B66] text-white'
+                                : 'text-white hover:text-pink'
                                 }`}
                         >
-                            <Image src='/icons/layout-3-fill.svg' alt='table' width={30} height={30} /> 表格视图
+                            <LayoutList />
                         </button>
                     </div>
 
@@ -1968,8 +1986,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                                     }
                                                                 </span>
                                                                 {selection.padding && (
-                                                                    <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded">
-                                                                        提交测图中
+                                                                    <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded flex flex-cow gap-1 items-center">
+                                                                        <CircleArrowRight size={16} />提交测图中
                                                                     </span>
                                                                 )}
                                                                 {/* 当选择"全部"时显示阶段信息 */}
@@ -1984,10 +2002,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                                 {/* 复制BID按钮 */}
                                                                 <button
                                                                     onClick={() => copyBeatmapId(selection.beatmapId)}
-                                                                    className="px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors"
+                                                                    className="px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded-full transition-colors flex flex-cow gap-1 items-center"
                                                                     title="复制Beatmap ID"
                                                                 >
-                                                                    BID {selection.beatmapId}
+                                                                    <Clipboard size={12} /> {selection.beatmapId}
                                                                 </button>
                                                                 {/* 批量选择复选框 - 仅管理员可见 */}
                                                                 {permissions.isAdmin && !selection.approved && (
@@ -2028,16 +2046,16 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         <div className="text-center font-medium">AR</div>
                                                         <div className="text-center font-medium">OD</div>
                                                         <div className="text-center font-medium">HP</div>
-                                                        <div className="text-center font-bold text-lg">{selection.cs.toFixed(1)}</div>
-                                                        <div className="text-center font-bold text-lg">{selection.ar.toFixed(1)}</div>
-                                                        <div className="text-center font-bold text-lg">{selection.od.toFixed(1)}</div>
-                                                        <div className="text-center font-bold text-lg">{selection.hp.toFixed(1)}</div>
+                                                        <div className="text-center font-bold text-lg">{selection.cs.toFixed(2)}</div>
+                                                        <div className="text-center font-bold text-lg">{selection.ar.toFixed(2)}</div>
+                                                        <div className="text-center font-bold text-lg">{selection.od.toFixed(2)}</div>
+                                                        <div className="text-center font-bold text-lg">{selection.hp.toFixed(2)}</div>
                                                         <div className="text-center font-medium">Length</div>
                                                         <div className="text-center font-medium">MaxCombo</div>
                                                         <div className="text-center font-medium">BPM</div>
                                                         <div className="text-center font-medium">★</div>
                                                         <div className="text-center font-bold text-base">{formatLength(selection.totalLength)}</div>
-                                                        <div className="text-center font-bold text-lg">{selection.maxCombo}</div>
+                                                        <div className="text-center font-bold text-base">{selection.maxCombo}</div>
                                                         <div className="text-center font-bold text-base">{selection.bpm}</div>
                                                         <div className="text-center font-bold text-base">{selection.starRating.toFixed(2)}</div>
                                                     </div>
@@ -2188,7 +2206,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                             >
-                                <Image src='/icons/link.svg' alt='viewOsu' width={30} height={30} />
+                                <ExternalLink />
                                 查看谱面
                             </button>,
                             <button
@@ -2200,7 +2218,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                             >
-                                <Image src='/icons/osu-lazer-logo-black.svg' alt='viewOsu' width={30} height={30} />
+                                <Image src='/icons/osu-lazer-logo-black.svg' alt='viewOsu' width={24} height={24} />
                                 从osu中打开
                             </button>,
 
@@ -2214,7 +2232,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                             >
-                                <Image src='/icons/download.svg' alt='download' width={30} height={30} />
+                                <ArrowDownToLine />
                                 下载谱面 (Nerinyan)
                             </button>,
                             <button
@@ -2227,7 +2245,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                             >
-                                <Image src='/icons/download.svg' alt='download' width={30} height={30} />
+                                <ArrowDownToLine />
                                 osu官方下载
                             </button>
                         ].filter(Boolean);
@@ -2243,7 +2261,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     }}
                                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                                 >
-                                    <Image src='/icons/loading-black.svg' alt='refresh map' width={30} height={30} />
+                                    <RotateCw />
                                     刷新MOD属性
                                 </button>
                             ),
@@ -2260,7 +2278,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     }}
                                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                                 >
-                                    <Image src='/icons/settings-3-black.svg' alt='edit' width={30} height={30} />
+                                    <PencilLine />
                                     修改属性
                                 </button>
                             ),
@@ -2273,7 +2291,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     }}
                                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                                 >
-                                    <Image src='/icons/auction-fill-black.svg' alt='download' width={30} height={30} />
+                                    <CircleArrowRight />
                                     {contextMenu.selection!.padding ? '取消测图' : '设为测图'}
                                 </button>
                             ),
@@ -2286,7 +2304,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     }}
                                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
                                 >
-                                    <Image src='/icons/auction-fill-black.svg' alt='download' width={30} height={30} />
+                                    <CircleCheckBig />
                                     {contextMenu.selection!.approved ? '取消过审' : '过审'}
                                 </button>
                             ),
@@ -2300,7 +2318,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     }}
                                     className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 rounded-lg text-red-600 transition-colors flex items-center gap-2 rounded-lg"
                                 >
-                                    <Image src='/icons/delete-bin-2-fill.svg' alt='delete' width={30} height={30} />
+                                    <Trash2 />
                                     删除
                                 </button>
                             )
