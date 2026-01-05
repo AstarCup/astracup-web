@@ -8,7 +8,27 @@ import CommentComponent from './ui/CommentComponent';
 import MapoolTable from '../ui/MapoolTable';
 import { UserSession } from '@/lib/permissions';
 
-import { ArrowDownToLine, ExternalLink, RotateCw, PencilLine, CircleArrowRight, CircleCheckBig, Trash2, LayoutGrid, LayoutList, Clipboard, MessageCircleMore, Loader2, Gamepad2 } from 'lucide-react';
+import {
+    ArrowDownToLine,
+    ExternalLink,
+    RotateCw,
+    PencilLine,
+    CircleArrowRight,
+    CircleCheckBig,
+    Trash2,
+    LayoutGrid,
+    LayoutList,
+    Clipboard,
+    MessageCircleMore,
+    Diameter,
+    CircleGauge,
+    Target,
+    Heart,
+    Hourglass,
+    CircleStar,
+    Music3,
+    Star
+} from 'lucide-react';
 
 interface User {
     id: number;
@@ -2042,22 +2062,19 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                 {/* 属性信息 */}
                                                 <div className="mb-3 text-xs text-gray-600">
                                                     <div className="grid grid-cols-4 gap-1">
-                                                        <div className="text-center font-medium">CS</div>
-                                                        <div className="text-center font-medium">AR</div>
-                                                        <div className="text-center font-medium">OD</div>
-                                                        <div className="text-center font-medium">HP</div>
-                                                        <div className="text-center font-bold text-lg">{selection.cs.toFixed(2)}</div>
-                                                        <div className="text-center font-bold text-lg">{selection.ar.toFixed(2)}</div>
-                                                        <div className="text-center font-bold text-lg">{selection.od.toFixed(2)}</div>
-                                                        <div className="text-center font-bold text-lg">{selection.hp.toFixed(2)}</div>
-                                                        <div className="text-center font-medium">Length</div>
-                                                        <div className="text-center font-medium">MaxCombo</div>
-                                                        <div className="text-center font-medium">BPM</div>
-                                                        <div className="text-center font-medium">★</div>
-                                                        <div className="text-center font-bold text-base">{formatLength(selection.totalLength)}</div>
-                                                        <div className="text-center font-bold text-base">{selection.maxCombo}</div>
-                                                        <div className="text-center font-bold text-base">{selection.bpm}</div>
-                                                        <div className="text-center font-bold text-base">{selection.starRating.toFixed(2)}</div>
+                                                        <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-center"><Diameter size={16} />CS</div>
+                                                        <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-center"><CircleGauge size={16} />AR</div>
+                                                        <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-center"><Target size={16} />OD</div>
+                                                        <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-center"><Heart size={16} />HP</div>
+                                                        <div className="bg-gray-100 rounded-lg text-center font-bold text-2xl">{selection.cs.toFixed(2)}</div>
+                                                        <div className="bg-gray-100 rounded-lg text-center font-bold text-2xl">{selection.ar.toFixed(2)}</div>
+                                                        <div className="bg-gray-100 rounded-lg text-center font-bold text-2xl">{selection.od.toFixed(2)}</div>
+                                                        <div className="bg-gray-100 rounded-lg text-center font-bold text-2xl">{selection.hp.toFixed(2)}</div>
+                                                        <div className="text-center font-medium flex flex-cow gap-1 items-center"><Hourglass size={16} /><div className="text-center text-base">{formatLength(selection.totalLength)}</div></div>
+                                                        <div className="text-center font-medium flex flex-cow gap-1 items-center"><CircleStar size={16} />MaxC<div className="text-center text-base">{selection.maxCombo}</div></div>
+                                                        <div className="text-center font-medium flex flex-cow gap-1 items-center"><Music3 size={16} />=<div className="text-center text-base">{selection.bpm}</div></div>
+                                                        <div className="text-center font-medium flex flex-cow gap-1 items-center"><Star size={16} /><div className="text-center text-base">{selection.starRating.toFixed(2)}</div></div>
+
                                                     </div>
                                                 </div>
 

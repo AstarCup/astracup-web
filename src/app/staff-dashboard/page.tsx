@@ -706,24 +706,7 @@ export default function AdminPage() {
             {/* 顶部导航栏 */}
             <div className="bg-[#2d2d2d] border-b border-[#404040]">
                 <div className="max-w-9xl mx-auto px-6">
-                    {/* 用户信息和登出按钮 */}
-                    <div className="flex items-center justify-between py-4">
-                        <div className="flex items-center space-x-4">
-                            <Image
-                                src={user.avatar_url}
-                                alt={user.username}
-                                width={40}
-                                height={40}
-                                className="rounded-full outline outline-2 outline-[#E93B66]"
-                                onError={(e) => {
-                                    e.currentTarget.src = '/default-avatar.png';
-                                }}
-                            />
-                            <div>
-                                <h3 className="text-white font-medium">{user.username}</h3>
-                            </div>
-                        </div>
-                    </div>
+
 
                     {/* 顶部Tab栏 */}
                     <div className="flex space-x-1 overflow-x-auto">
