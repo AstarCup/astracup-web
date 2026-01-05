@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import MapoolTable from '@/app/components/ui/MapoolTable';
 import Dropdown from '@/app/components/ui/Dropdown';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -43,6 +44,7 @@ const MOD_ORDER = ['NM', 'HD', 'HR', 'DT', 'FM', 'LZ', 'TB'];
 
 export default function Mapool() {
     usePageTitle('/mappool');
+    const searchParams = useSearchParams();
 
     const { tournamentSettings } = useConfig();
 
@@ -59,6 +61,21 @@ export default function Mapool() {
         return 's1';
     });
     const [selectedCategory, setSelectedCategory] = useState(() => {
+        // 首先检查URL参数
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const urlCategory = params.get('category');
+
+            // 验证URL参数是否有效
+            const validCategories = ['qualification', 'ro16', 'quarterfinals', 'semifinals', 'finals', 'grandfinals'];
+            if (urlCategory && validCategories.includes(urlCategory)) {
+                // 保存到localStorage
+                localStorage.setItem('mappool_category', urlCategory);
+                return urlCategory;
+            }
+        }
+
+        // 如果没有有效的URL参数，使用localStorage或默认值
         if (typeof window !== 'undefined') {
             return localStorage.getItem('mappool_category') || 'qualification';
         }
@@ -76,7 +93,13 @@ export default function Mapool() {
     const handleCategoryChange = (value: string) => {
         setSelectedCategory(value);
         if (typeof window !== 'undefined') {
+            // 保存到localStorage
             localStorage.setItem('mappool_category', value);
+
+            // 更新URL参数（不刷新页面）
+            const url = new URL(window.location.href);
+            url.searchParams.set('category', value);
+            window.history.pushState({}, '', url.toString());
         }
     };
 
@@ -275,7 +298,7 @@ export default function Mapool() {
                     minWidth="6rem"
                     darkMode={true}
                 />
-                <p className='text-white text-xl animate-bounce'>SF图池已更新</p>
+                <p className='text-white text-xl animate-bounce'>F图池已更新</p>
             </div>
 
             {mapPoolData.length === 0 ? (
