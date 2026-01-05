@@ -7,6 +7,8 @@ import { showError, showSuccess } from '../ui/Notification';
 import { UserSession } from '@/lib/permissions';
 import Image from 'next/image';
 
+import { FileDown } from 'lucide-react';
+
 interface User {
     id: number;
     username: string;
@@ -566,11 +568,28 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                             placeholder="筛选MOD"
                             minWidth="6rem"
                         />
+                        <button
+                            onClick={handleDownloadAllReplays}
+                            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center gap-2"
+                            disabled={downloadingAll}
+                        >
+                            {downloadingAll ? (
+                                <>
+                                    <Image src='/icons/loading.svg' alt='loading' width={20} height={20} className='animate-spin' />
+                                    下载中...
+                                </>
+                            ) : (
+                                <>
+                                    <FileDown size={16} />
+                                    下载全部回放
+                                </>
+                            )}
+                        </button>
                     </div>
                     {/* MapoolTable 组件 - 完全负责表格展示 */}
                     <MapoolTable
                         data={getFilteredMaps()}
-                        title="Padding状态图池"
+                        title="测图状态图池"
                         onRowRightClick={handleTableRowRightClick}
                         showUploadJump={true}
                         uploadedUsers={uploadedUsers}
@@ -726,37 +745,6 @@ export default function ReplayCollectionManagement({ user, permissions }: Replay
                         </div>
                     </div>
 
-                    {/* 下载全部回放功能 */}
-                    <div className="mt-8 border-t pt-6 bg-[#3d3d3d]">
-                        <div className="flex justify-between items-center mb-4 p-6">
-                            <h3 className="text-xl font-bold text-white">下载全部回放</h3>
-                            <button
-                                onClick={handleDownloadAllReplays}
-                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white  transition-colors flex items-center gap-2"
-                                disabled={downloadingAll}
-                            >
-                                {downloadingAll ? (
-                                    <>
-                                        <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
-                                        下载中...
-                                    </>
-                                ) : (
-                                    <>
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                        下载全部回放
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                        <div className='p-6'>
-                            <p className="text-sm text-white">
-                                下载当前页面所有已上传回放文件，文件将按mod位分类整理。
-                            </p>
-
-                        </div>
-                    </div>
                 </>
             )}
         </div>

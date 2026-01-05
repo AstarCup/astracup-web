@@ -1429,401 +1429,1212 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
     return (
         <div className="max-w-9xl mx-auto p-6">
-            {isLoading ? (
-                <div className="text-center py-8">
-                    <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
-                    <div className="text-lg text-white">正在加载...</div>
+
+            {/* 筛选和控制栏 */}
+            <div className="mb-4 flex gap-4 flex-wrap">
+                <Dropdown
+                    options={availableSeasons}
+                    value={season}
+                    onChange={handleSeasonChange}
+                    placeholder="选择赛季"
+                    minWidth="8rem"
+                />
+                <Dropdown
+                    options={CATEGORY_OPTIONS}
+                    value={category}
+                    onChange={handleCategoryChange}
+                    placeholder="选择阶段"
+                    minWidth="8rem"
+                />
+                <Dropdown
+                    options={getModFilterOptions()}
+                    value={modFilter}
+                    onChange={handleModFilterChange}
+                    placeholder="筛选MOD"
+                    minWidth="6rem"
+                />
+
+                <Dropdown
+                    options={getPaddingFilterOptions()}
+                    value={paddingFilter}
+                    onChange={handlePaddingFilterChange}
+                    placeholder="测图状态"
+                    minWidth="8rem"
+                />
+
+                {/* 搜索框 */}
+                <div className="flex-1 min-w-[200px] rounded-lg text-gray-700 bg-white">
+                    <input
+                        type="text"
+                        placeholder="搜索歌曲、艺术家、谱师... 支持osu url、BID/SID、ar9/cs5、mod"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    />
                 </div>
-            ) : (
-                <>
-                    {/* 筛选和控制栏 */}
-                    <div className="mb-4 flex gap-4 flex-wrap">
-                        <Dropdown
-                            options={availableSeasons}
-                            value={season}
-                            onChange={handleSeasonChange}
-                            placeholder="选择赛季"
-                            minWidth="8rem"
-                        />
-                        <Dropdown
-                            options={CATEGORY_OPTIONS}
-                            value={category}
-                            onChange={handleCategoryChange}
-                            placeholder="选择阶段"
-                            minWidth="8rem"
-                        />
-                        <Dropdown
-                            options={getModFilterOptions()}
-                            value={modFilter}
-                            onChange={handleModFilterChange}
-                            placeholder="筛选MOD"
-                            minWidth="6rem"
-                        />
 
-                        <Dropdown
-                            options={getPaddingFilterOptions()}
-                            value={paddingFilter}
-                            onChange={handlePaddingFilterChange}
-                            placeholder="测图状态"
-                            minWidth="8rem"
-                        />
+                {/* 一键选中当前筛选的图 - 仅管理员可见 */}
+                {(permissions.isAdmin || permissions.isMapSelector) && (
+                    <button
+                        onClick={() => {
+                            // 获取当前筛选出的未过审选图
+                            const filteredUnapproved = filteredSelections.filter(s => !s.approved);
 
-                        {/* 搜索框 */}
-                        <div className="flex-1 min-w-[200px] text-gray-700 bg-white">
-                            <input
-                                type="text"
-                                placeholder="搜索歌曲、艺术家、作者... 支持osu网址、BID/SID、ar9/cs5、mod"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            // 检查是否已经全部选中
+                            const allSelected = filteredUnapproved.length > 0 &&
+                                filteredUnapproved.every(s => tempApprovedSelections.has(s.id));
+
+                            const newSelections = new Set(tempApprovedSelections);
+
+                            if (allSelected) {
+                                // 如果已经全部选中，则取消选中所有
+                                filteredUnapproved.forEach(selection => {
+                                    newSelections.delete(selection.id);
+                                });
+                            } else {
+                                // 否则选中所有当前筛选的未过审选图
+                                filteredUnapproved.forEach(selection => {
+                                    newSelections.add(selection.id);
+                                });
+                            }
+
+                            setTempApprovedSelections(newSelections);
+                        }}
+                        className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors whitespace-nowrap"
+                    >
+                        {(() => {
+                            const filteredUnapproved = filteredSelections.filter(s => !s.approved);
+                            const allSelected = filteredUnapproved.length > 0 &&
+                                filteredUnapproved.every(s => tempApprovedSelections.has(s.id));
+
+                            if (allSelected) {
+                                return "取消全选";
+                            } else {
+                                return `一键全选 (${filteredUnapproved.length})`;
+                            }
+                        })()}
+                    </button>
+                )}
+
+                {/* 添加选图按钮 */}
+                {(permissions.isMapSelector || permissions.isAdmin) && (
+                    <button
+                        onClick={() => setShowAddForm(!showAddForm)}
+                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                    >
+                        {showAddForm ? '取消添加' : '+ 添加选图'}
+                    </button>
+                )}
+
+                {/* 批量过审按钮 */}
+                {(permissions.isAdmin || permissions.isMapSelector) && tempApprovedSelections.size > 0 && (
+                    <button
+                        onClick={() => setShowBulkApprovalModal(true)}
+                        className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors"
+                    >
+                        批量过审 ({tempApprovedSelections.size})
+                    </button>
+                )}
+            </div>
+
+            {/* 添加选图表单 */}
+            {showAddForm && (
+                <div className="mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50 max-w-5xl object-center">
+                    <h3 className="text-lg font-bold mb-4">添加新选图</h3>
+                    {/* URL输入 */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Beatmap URL
+                        </label>
+                        <input
+                            type="text"
+                            value={urlInput}
+                            onChange={handleUrlInputChange}
+                            onKeyDown={handleUrlInputKeyDown}
+                            placeholder="粘贴osu! beatmap链接或ID"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={isSubmitting}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                            支持完整的URL或beatmap ID，按回车键解析
+                        </p>
+                    </div>
+
+                    {/* Beatmap选择 */}
+                    {availableBeatmaps.length > 1 && (
+                        <div className="mb-4">
+                            <Dropdown
+                                label="选择难度"
+                                options={[
+                                    { value: '', label: '请选择难度...' },
+                                    ...availableBeatmaps.map(beatmap => ({
+                                        value: beatmap.id.toString(),
+                                        label: `${beatmap.version} (${beatmap.star_rating.toFixed(2)}★)`
+                                    }))
+                                ]}
+                                value={beatmapPreview?.id?.toString() || ''}
+                                onChange={(value) => {
+                                    const selected = availableBeatmaps.find(b => b.id.toString() === value);
+                                    setBeatmapPreview(selected || null);
+                                }}
+                                placeholder="请选择难度..."
+                                minWidth="100%"
+                            />
+                        </div>
+                    )}
+
+                    {/* Beatmap预览 */}
+                    {beatmapPreview && (
+                        <div className="mb-4 p-4 bg-white border border-gray-300 rounded-lg shadow-sm max-w-[660px]">
+                            {/* 头部：封面和基本信息 */}
+                            <div className="flex items-start gap-3 mb-3">
+                                <Image
+                                    src={beatmapPreview.cover_url}
+                                    alt="Beatmap cover"
+                                    width={512}
+                                    height={512}
+                                    className="w-28 h-19 object-cover rounded"
+                                />
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-bold text-sm truncate" title={beatmapPreview.title_unicode || beatmapPreview.title}>
+                                        {beatmapPreview.title_unicode || beatmapPreview.title}
+                                    </h3>
+                                    <p className="font-bold text-xs text-gray-600 truncate" title={beatmapPreview.artist_unicode || beatmapPreview.artist}>
+                                        {beatmapPreview.artist_unicode || beatmapPreview.artist}
+                                    </p>
+                                    <p className="font-bold text-xs text-gray-600">[{beatmapPreview.version}] by {beatmapPreview.creator}</p>
+                                </div>
+                            </div>
+
+                            {/* 属性信息 */}
+                            <div className="mb-3 text-xs text-gray-600">
+                                <div className="grid grid-cols-4 gap-1">
+                                    <div className="text-center font-medium">CS</div>
+                                    <div className="text-center font-medium">AR</div>
+                                    <div className="text-center font-medium">OD</div>
+                                    <div className="text-center font-medium">HP</div>
+
+                                    <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.cs !== undefined ? (moddedStats.cs > beatmapPreview.cs + 0.01 ? 'text-red-500' : moddedStats.cs < beatmapPreview.cs - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                        {(() => {
+                                            const val = moddedStats?.cs ?? beatmapPreview.cs;
+                                            if (selectedMods !== 'NM' && moddedStats?.cs !== undefined) {
+                                                if (moddedStats.cs > beatmapPreview.cs + 0.01) return `${val.toFixed(2)} ▲`;
+                                                if (moddedStats.cs < beatmapPreview.cs - 0.01) return `${val.toFixed(2)} ▼`;
+                                            }
+                                            return val.toFixed(2);
+                                        })()}
+                                    </div>
+                                    <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.ar !== undefined ? (moddedStats.ar > beatmapPreview.ar + 0.01 ? 'text-red-500' : moddedStats.ar < beatmapPreview.ar - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                        {(() => {
+                                            const val = moddedStats?.ar ?? beatmapPreview.ar;
+                                            if (selectedMods !== 'NM' && moddedStats?.ar !== undefined) {
+                                                if (moddedStats.ar > beatmapPreview.ar + 0.01) return `${val.toFixed(2)} ▲`;
+                                                if (moddedStats.ar < beatmapPreview.ar - 0.01) return `${val.toFixed(2)} ▼`;
+                                            }
+                                            return val.toFixed(2);
+                                        })()}
+                                    </div>
+                                    <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.od !== undefined ? (moddedStats.od > beatmapPreview.od + 0.01 ? 'text-red-500' : moddedStats.od < beatmapPreview.od - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                        {(() => {
+                                            const val = moddedStats?.od ?? beatmapPreview.od;
+                                            if (selectedMods !== 'NM' && moddedStats?.od !== undefined) {
+                                                if (moddedStats.od > beatmapPreview.od + 0.01) return `${val.toFixed(2)} ▲`;
+                                                if (moddedStats.od < beatmapPreview.od - 0.01) return `${val.toFixed(2)} ▼`;
+                                            }
+                                            return val.toFixed(2);
+                                        })()}
+                                    </div>
+                                    <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.hp !== undefined ? (moddedStats.hp > beatmapPreview.hp + 0.01 ? 'text-red-500' : moddedStats.hp < beatmapPreview.hp - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                        {(() => {
+                                            const val = moddedStats?.hp ?? beatmapPreview.hp;
+                                            if (selectedMods !== 'NM' && moddedStats?.hp !== undefined) {
+                                                if (moddedStats.hp > beatmapPreview.hp + 0.01) return `${val.toFixed(2)} ▲`;
+                                                if (moddedStats.hp < beatmapPreview.hp - 0.01) return `${val.toFixed(2)} ▼`;
+                                            }
+                                            return val.toFixed(2);
+                                        })()}
+                                    </div>
+
+                                    <div className="text-center font-medium">Length</div>
+                                    <div className="text-center font-medium">MaxC</div>
+                                    <div className="text-center font-medium">BPM</div>
+                                    <div className="text-center font-medium">★</div>
+                                    <div className={`text-center font-bold text-base ${selectedMods === 'DT' && customDTRate !== '' ? 'text-red-500' : ''}`}>
+                                        {selectedMods === 'DT' && customDTRate !== '' ?
+                                            formatLength(Math.round(beatmapPreview.total_length / (customDTRate as number))) + ' ▼' :
+                                            formatLength(beatmapPreview.total_length)
+                                        }
+                                    </div>
+                                    <div className="text-center font-bold text-base">
+                                        {beatmapPreview.max_combo || 0}
+                                    </div>
+                                    <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.bpm !== undefined ? (moddedStats.bpm > beatmapPreview.bpm + 0.01 ? 'text-red-500' : moddedStats.bpm < beatmapPreview.bpm - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                        {(() => {
+                                            const val = moddedStats?.bpm ?? beatmapPreview.bpm;
+                                            if (selectedMods !== 'NM' && moddedStats?.bpm !== undefined) {
+                                                if (moddedStats.bpm > beatmapPreview.bpm + 0.01) return `${val} ▲`;
+                                                if (moddedStats.bpm < beatmapPreview.bpm - 0.01) return `${val} ▼`;
+                                            }
+                                            return val;
+                                        })()}
+                                    </div>
+                                    <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.starRating !== undefined ? (moddedStats.starRating > beatmapPreview.star_rating + 0.01 ? 'text-red-500' : moddedStats.starRating < beatmapPreview.star_rating - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                        {(() => {
+                                            const val = moddedStats?.starRating ?? beatmapPreview.star_rating;
+                                            if (selectedMods !== 'NM' && moddedStats?.starRating !== undefined) {
+                                                if (moddedStats.starRating > beatmapPreview.star_rating + 0.01) return `${val.toFixed(2)} ▲`;
+                                                if (moddedStats.starRating < beatmapPreview.star_rating - 0.01) return `${val.toFixed(2)} ▼`;
+                                            }
+                                            return val.toFixed(2);
+                                        })()}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Mod选择 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="min-w-[220px]">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Mod
+                            </label>
+                            <Dropdown
+                                options={MOD_OPTIONS.map(mod => ({
+                                    value: mod,
+                                    label: mod
+                                }))}
+                                value={selectedMods}
+                                onChange={setSelectedMods}
+                                placeholder="选择MOD"
+                                minWidth="100%"
                             />
                         </div>
 
-                        {/* 一键选中当前筛选的图 - 仅管理员可见 */}
-                        {(permissions.isAdmin || permissions.isMapSelector) && (
-                            <button
-                                onClick={() => {
-                                    // 获取当前筛选出的未过审选图
-                                    const filteredUnapproved = filteredSelections.filter(s => !s.approved);
-
-                                    // 检查是否已经全部选中
-                                    const allSelected = filteredUnapproved.length > 0 &&
-                                        filteredUnapproved.every(s => tempApprovedSelections.has(s.id));
-
-                                    const newSelections = new Set(tempApprovedSelections);
-
-                                    if (allSelected) {
-                                        // 如果已经全部选中，则取消选中所有
-                                        filteredUnapproved.forEach(selection => {
-                                            newSelections.delete(selection.id);
-                                        });
-                                    } else {
-                                        // 否则选中所有当前筛选的未过审选图
-                                        filteredUnapproved.forEach(selection => {
-                                            newSelections.add(selection.id);
-                                        });
-                                    }
-
-                                    setTempApprovedSelections(newSelections);
-                                }}
-                                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors whitespace-nowrap"
-                            >
-                                {(() => {
-                                    const filteredUnapproved = filteredSelections.filter(s => !s.approved);
-                                    const allSelected = filteredUnapproved.length > 0 &&
-                                        filteredUnapproved.every(s => tempApprovedSelections.has(s.id));
-
-                                    if (allSelected) {
-                                        return "取消全选";
-                                    } else {
-                                        return `一键全选 (${filteredUnapproved.length})`;
-                                    }
-                                })()}
-                            </button>
-                        )}
-
-                        {/* 添加选图按钮 */}
-                        {(permissions.isMapSelector || permissions.isAdmin) && (
-                            <button
-                                onClick={() => setShowAddForm(!showAddForm)}
-                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
-                            >
-                                {showAddForm ? '取消添加' : '+ 添加选图'}
-                            </button>
-                        )}
-
-                        {/* 批量过审按钮 */}
-                        {(permissions.isAdmin || permissions.isMapSelector) && tempApprovedSelections.size > 0 && (
-                            <button
-                                onClick={() => setShowBulkApprovalModal(true)}
-                                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors"
-                            >
-                                批量过审 ({tempApprovedSelections.size})
-                            </button>
-                        )}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                位置
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                max="10"
+                                value={modPosition}
+                                onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
                     </div>
 
-                    {/* 添加选图表单 */}
-                    {showAddForm && (
-                        <div className="mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50 max-w-5xl object-center">
-                            <h3 className="text-lg font-bold mb-4">添加新选图</h3>
-                            {/* URL输入 */}
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Beatmap URL
-                                </label>
-                                <input
-                                    type="text"
-                                    value={urlInput}
-                                    onChange={handleUrlInputChange}
-                                    onKeyDown={handleUrlInputKeyDown}
-                                    placeholder="粘贴osu! beatmap链接或ID"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    disabled={isSubmitting}
-                                />
-                                <p className="text-xs text-gray-500 mt-1">
-                                    支持完整的URL或beatmap ID，按回车键解析
-                                </p>
-                            </div>
-
-                            {/* Beatmap选择 */}
-                            {availableBeatmaps.length > 1 && (
-                                <div className="mb-4">
+                    {/* Lazer特有mod设置 */}
+                    {selectedMods === 'LZ' && (
+                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                            <h4 className="font-medium text-blue-800 mb-2">Lazer特有MOD设置</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className='min-w-[300px]'>
                                     <Dropdown
-                                        label="选择难度"
+                                        label="MOD名称"
                                         options={[
-                                            { value: '', label: '请选择难度...' },
-                                            ...availableBeatmaps.map(beatmap => ({
-                                                value: beatmap.id.toString(),
-                                                label: `${beatmap.version} (${beatmap.star_rating.toFixed(2)}★)`
+                                            { value: '', label: '选择MOD...' },
+                                            ...availableLazerMods.map(mod => ({
+                                                value: mod.name,
+                                                label: `${mod.name} - ${mod.description}`
                                             }))
                                         ]}
-                                        value={beatmapPreview?.id?.toString() || ''}
-                                        onChange={(value) => {
-                                            const selected = availableBeatmaps.find(b => b.id.toString() === value);
-                                            setBeatmapPreview(selected || null);
-                                        }}
-                                        placeholder="请选择难度..."
+                                        value={customModName}
+                                        onChange={setCustomModName}
+                                        placeholder="选择MOD..."
                                         minWidth="100%"
-                                    />
-                                </div>
-                            )}
-
-                            {/* Beatmap预览 */}
-                            {beatmapPreview && (
-                                <div className="mb-4 p-4 bg-white border border-gray-300 rounded-lg shadow-sm max-w-[660px]">
-                                    {/* 头部：封面和基本信息 */}
-                                    <div className="flex items-start gap-3 mb-3">
-                                        <Image
-                                            src={beatmapPreview.cover_url}
-                                            alt="Beatmap cover"
-                                            width={512}
-                                            height={512}
-                                            className="w-28 h-19 object-cover rounded"
-                                        />
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-bold text-sm truncate" title={beatmapPreview.title_unicode || beatmapPreview.title}>
-                                                {beatmapPreview.title_unicode || beatmapPreview.title}
-                                            </h3>
-                                            <p className="font-bold text-xs text-gray-600 truncate" title={beatmapPreview.artist_unicode || beatmapPreview.artist}>
-                                                {beatmapPreview.artist_unicode || beatmapPreview.artist}
-                                            </p>
-                                            <p className="font-bold text-xs text-gray-600">[{beatmapPreview.version}] by {beatmapPreview.creator}</p>
-                                        </div>
-                                    </div>
-
-                                    {/* 属性信息 */}
-                                    <div className="mb-3 text-xs text-gray-600">
-                                        <div className="grid grid-cols-4 gap-1">
-                                            <div className="text-center font-medium">CS</div>
-                                            <div className="text-center font-medium">AR</div>
-                                            <div className="text-center font-medium">OD</div>
-                                            <div className="text-center font-medium">HP</div>
-
-                                            <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.cs !== undefined ? (moddedStats.cs > beatmapPreview.cs + 0.01 ? 'text-red-500' : moddedStats.cs < beatmapPreview.cs - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                                {(() => {
-                                                    const val = moddedStats?.cs ?? beatmapPreview.cs;
-                                                    if (selectedMods !== 'NM' && moddedStats?.cs !== undefined) {
-                                                        if (moddedStats.cs > beatmapPreview.cs + 0.01) return `${val.toFixed(2)} ▲`;
-                                                        if (moddedStats.cs < beatmapPreview.cs - 0.01) return `${val.toFixed(2)} ▼`;
-                                                    }
-                                                    return val.toFixed(2);
-                                                })()}
-                                            </div>
-                                            <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.ar !== undefined ? (moddedStats.ar > beatmapPreview.ar + 0.01 ? 'text-red-500' : moddedStats.ar < beatmapPreview.ar - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                                {(() => {
-                                                    const val = moddedStats?.ar ?? beatmapPreview.ar;
-                                                    if (selectedMods !== 'NM' && moddedStats?.ar !== undefined) {
-                                                        if (moddedStats.ar > beatmapPreview.ar + 0.01) return `${val.toFixed(2)} ▲`;
-                                                        if (moddedStats.ar < beatmapPreview.ar - 0.01) return `${val.toFixed(2)} ▼`;
-                                                    }
-                                                    return val.toFixed(2);
-                                                })()}
-                                            </div>
-                                            <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.od !== undefined ? (moddedStats.od > beatmapPreview.od + 0.01 ? 'text-red-500' : moddedStats.od < beatmapPreview.od - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                                {(() => {
-                                                    const val = moddedStats?.od ?? beatmapPreview.od;
-                                                    if (selectedMods !== 'NM' && moddedStats?.od !== undefined) {
-                                                        if (moddedStats.od > beatmapPreview.od + 0.01) return `${val.toFixed(2)} ▲`;
-                                                        if (moddedStats.od < beatmapPreview.od - 0.01) return `${val.toFixed(2)} ▼`;
-                                                    }
-                                                    return val.toFixed(2);
-                                                })()}
-                                            </div>
-                                            <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.hp !== undefined ? (moddedStats.hp > beatmapPreview.hp + 0.01 ? 'text-red-500' : moddedStats.hp < beatmapPreview.hp - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                                {(() => {
-                                                    const val = moddedStats?.hp ?? beatmapPreview.hp;
-                                                    if (selectedMods !== 'NM' && moddedStats?.hp !== undefined) {
-                                                        if (moddedStats.hp > beatmapPreview.hp + 0.01) return `${val.toFixed(2)} ▲`;
-                                                        if (moddedStats.hp < beatmapPreview.hp - 0.01) return `${val.toFixed(2)} ▼`;
-                                                    }
-                                                    return val.toFixed(2);
-                                                })()}
-                                            </div>
-
-                                            <div className="text-center font-medium">Length</div>
-                                            <div className="text-center font-medium">MaxCombo</div>
-                                            <div className="text-center font-medium">BPM</div>
-                                            <div className="text-center font-medium">★</div>
-                                            <div className={`text-center font-bold text-base ${selectedMods === 'DT' && customDTRate !== '' ? 'text-red-500' : ''}`}>
-                                                {selectedMods === 'DT' && customDTRate !== '' ?
-                                                    formatLength(Math.round(beatmapPreview.total_length / (customDTRate as number))) + ' ▼' :
-                                                    formatLength(beatmapPreview.total_length)
-                                                }
-                                            </div>
-                                            <div className="text-center font-bold text-base">
-                                                {beatmapPreview.max_combo || 0}
-                                            </div>
-                                            <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.bpm !== undefined ? (moddedStats.bpm > beatmapPreview.bpm + 0.01 ? 'text-red-500' : moddedStats.bpm < beatmapPreview.bpm - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                                {(() => {
-                                                    const val = moddedStats?.bpm ?? beatmapPreview.bpm;
-                                                    if (selectedMods !== 'NM' && moddedStats?.bpm !== undefined) {
-                                                        if (moddedStats.bpm > beatmapPreview.bpm + 0.01) return `${val} ▲`;
-                                                        if (moddedStats.bpm < beatmapPreview.bpm - 0.01) return `${val} ▼`;
-                                                    }
-                                                    return val;
-                                                })()}
-                                            </div>
-                                            <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.starRating !== undefined ? (moddedStats.starRating > beatmapPreview.star_rating + 0.01 ? 'text-red-500' : moddedStats.starRating < beatmapPreview.star_rating - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                                {(() => {
-                                                    const val = moddedStats?.starRating ?? beatmapPreview.star_rating;
-                                                    if (selectedMods !== 'NM' && moddedStats?.starRating !== undefined) {
-                                                        if (moddedStats.starRating > beatmapPreview.star_rating + 0.01) return `${val.toFixed(2)} ▲`;
-                                                        if (moddedStats.starRating < beatmapPreview.star_rating - 0.01) return `${val.toFixed(2)} ▼`;
-                                                    }
-                                                    return val.toFixed(2);
-                                                })()}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Mod选择 */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div className="min-w-[220px]">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Mod
-                                    </label>
-                                    <Dropdown
-                                        options={MOD_OPTIONS.map(mod => ({
-                                            value: mod,
-                                            label: mod
-                                        }))}
-                                        value={selectedMods}
-                                        onChange={setSelectedMods}
-                                        placeholder="选择MOD"
-                                        minWidth="100%"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        位置
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="10"
-                                        value={modPosition}
-                                        onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
                                 </div>
                             </div>
 
-                            {/* Lazer特有mod设置 */}
-                            {selectedMods === 'LZ' && (
-                                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                                    <h4 className="font-medium text-blue-800 mb-2">Lazer特有MOD设置</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className='min-w-[300px]'>
-                                            <Dropdown
-                                                label="MOD名称"
-                                                options={[
-                                                    { value: '', label: '选择MOD...' },
-                                                    ...availableLazerMods.map(mod => ({
-                                                        value: mod.name,
-                                                        label: `${mod.name} - ${mod.description}`
-                                                    }))
-                                                ]}
-                                                value={customModName}
-                                                onChange={setCustomModName}
-                                                placeholder="选择MOD..."
-                                                minWidth="100%"
+                            {/* DA mod自定义属性 */}
+                            {customModName === 'DA' && (
+                                <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                                    <h5 className="font-medium text-yellow-800 mb-2">Difficulty Adjust 设置</h5>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                        <div>
+                                            <label className="block text-xs text-gray-600 mb-1">CS</label>
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                min="0"
+                                                max="10"
+                                                value={customCS}
+                                                onChange={(e) => setCustomCS(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                                placeholder="不修改则为原值"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-600 mb-1">AR</label>
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                min="0"
+                                                max="10"
+                                                value={customAR}
+                                                onChange={(e) => setCustomAR(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                                placeholder="不修改则为原值"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-600 mb-1">OD</label>
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                min="0"
+                                                max="10"
+                                                value={customOD}
+                                                onChange={(e) => setCustomOD(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                                placeholder="不修改则为原值"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-600 mb-1">HP</label>
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                min="0"
+                                                max="10"
+                                                value={customHP}
+                                                onChange={(e) => setCustomHP(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                                placeholder="不修改则为原值"
                                             />
                                         </div>
                                     </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
-                                    {/* DA mod自定义属性 */}
-                                    {customModName === 'DA' && (
-                                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                                            <h5 className="font-medium text-yellow-800 mb-2">Difficulty Adjust 设置</h5>
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                                <div>
-                                                    <label className="block text-xs text-gray-600 mb-1">CS</label>
-                                                    <input
-                                                        type="number"
-                                                        step="0.1"
-                                                        min="0"
-                                                        max="10"
-                                                        value={customCS}
-                                                        onChange={(e) => setCustomCS(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                                                        placeholder="不修改则为原值"
+                    {/* DT自定义倍率 */}
+                    {selectedMods === 'DT' && (
+                        <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-md">
+                            <h4 className="font-medium text-purple-800 mb-2">DT 设置</h4>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    自定义倍率
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="1.0"
+                                    max="2.0"
+                                    value={customDTRate}
+                                    onChange={(e) => setCustomDTRate(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    placeholder="1.50"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    默认1.50倍，可自定义1.00-2.00之间的倍率
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+
+                    {/* 重复检查警告 */}
+                    {duplicateWarning.show && (
+                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                            <h4 className="font-medium text-yellow-800 mb-2">重复检测</h4>
+                            <p className="text-yellow-700 text-sm mb-2">
+                                此谱面已被选择 {duplicateWarning.existingSelections.length} 次：
+                            </p>
+                            <ul className="text-sm text-yellow-700 list-disc list-inside">
+                                {duplicateWarning.existingSelections.map((sel: ExistingSelection, index: number) => (
+                                    <li key={index}>
+                                        {sel.selectedMods}{sel.modPosition} - {sel.category} - {sel.selectedByUsername}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* 评论和选项 */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2 flex flex-cow items-center gap-1">
+                            <MessageCircleMore size={16} />评论
+                        </label>
+                        <textarea
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            placeholder="添加评论..."
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+
+                    <div className="flex gap-4 items-center mb-4">
+                        <label className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                checked={padding}
+                                onChange={(e) => setPadding(e.target.checked)}
+                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-700">送测该图</span>
+                        </label>
+                    </div>
+
+                    {/* 提交按钮 */}
+                    <div className="flex gap-4">
+                        <button
+                            onClick={addSelection}
+                            disabled={isSubmitting || !beatmapPreview}
+                            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 text-white rounded-md transition-colors"
+                        >
+                            {isSubmitting ? '添加中...' : '添加选图'}
+                        </button>
+                        <button
+                            onClick={() => setShowAddForm(false)}
+                            className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors"
+                        >
+                            取消
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Tab切换栏 - 带滑块动画 */}
+            <div className="mb-6 relative p-2 w-max bg-[#2d2d2d] rounded-lg">
+                <div className="flex relative">
+                    {/* 滑块 */}
+                    <div
+                        className={`absolute h-8 bg-[#E93B66] rounded-lg transition-all duration-300 ease-out ${activeTab === 'cards' ? 'left-1' : 'left-1 translate-x-full'
+                            }`}
+                        style={{
+                            width: 'calc(50% - 0.25rem)',
+                        }}
+                    />
+                </div>
+                <div className='w-max flex flex-cow bg-[#1a1a1a] rounded-lg'>
+                    <button
+                        onClick={() => setActiveTab('cards')}
+                        className={`relative px-4 py-1 rounded-lg gap-1 transition-colors duration-300 flex items-center z-10 ${activeTab === 'cards'
+                            ? 'text-white'
+                            : 'text-white hover:text-pink'
+                            }`}
+                        style={{ width: 'calc(50%)' }}
+                    >
+                        <LayoutGrid size={20} />卡片模式
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('table')}
+                        className={`relative px-4 py-1 rounded-lg gap-1 transition-colors duration-300 flex items-center z-10 ${activeTab === 'table'
+                            ? 'text-white'
+                            : 'text-white hover:text-pink'
+                            }`}
+                        style={{ width: 'calc(50%)' }}
+                    >
+                        <LayoutList size={20} />列表模式
+                    </button>
+
+                </div>
+            </div>
+
+            {/* 选图列表 - 按mod类型分类显示 */}
+            <div className="space-y-8">
+                <div className="relative overflow-hidden">
+                    {/* 卡片模式 */}
+                    <div
+                        className={`transition-all duration-300 ease-in-out ${activeTab === 'cards'
+                            ? 'opacity-100 translate-x-0'
+                            : 'opacity-80 absolute -translate-x-full'
+                            }`}
+                        style={{
+                            width: '100%',
+                            position: activeTab === 'cards' ? 'relative' : 'absolute',
+                            left: activeTab === 'cards' ? '0' : '-100%'
+                        }}
+                    >
+                        {Object.entries(getSelectionsByMod()).map(([mod, modSelections]) => (
+                            <div key={mod} className="space-y-4">
+                                {/* Mod分类标题 */}
+                                <div className="flex items-center gap-3">
+                                    <div className={`px-4 py-2 rounded-lg text-white font-bold text-lg ${getModColorClass(mod)}`}>
+                                        {mod} - {getModDisplayName(mod)}
+                                    </div>
+                                    <span className="text-gray-500 text-sm">
+                                        ({modSelections.length} 个选图)
+                                    </span>
+                                </div>
+
+                                {/* 该mod下的选图列表 */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {modSelections.map(selection => (
+                                        <div
+                                            key={selection.id}
+                                            className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${selection.approved ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'
+                                                } ${tempApprovedSelections.has(selection.id) ? 'border-blue-500 bg-blue-50' : ''}`}
+                                            onClick={(e) => {
+                                                // 检查点击目标是否为可点击元素（按钮、链接、输入框等）
+                                                const target = e.target as HTMLElement;
+                                                if (target.closest('button') || target.closest('a') || target.closest('input') || target.closest('textarea') || target.closest('select')) {
+                                                    return; // 不处理按钮、链接、表单元素的点击
+                                                }
+
+                                                // 只有管理员可以对未过审的选图进行批量选择
+                                                if (permissions.isAdmin && !selection.approved) {
+                                                    const newSelections = new Set(tempApprovedSelections);
+                                                    if (newSelections.has(selection.id)) {
+                                                        newSelections.delete(selection.id);
+                                                    } else {
+                                                        newSelections.add(selection.id);
+                                                    }
+                                                    setTempApprovedSelections(newSelections);
+                                                }
+                                            }}
+                                            onContextMenu={(e) => handleContextMenu(e, selection)}
+                                        >
+                                            {/* 头部：封面和基本信息 */}
+                                            <div className="flex items-start gap-3 mb-3">
+                                                <div className="relative">
+                                                    <Image
+                                                        src={selection.coverUrl}
+                                                        alt="Beatmap cover"
+                                                        width={512}
+                                                        height={512}
+                                                        className="w-24 h-19 object-cover rounded"
                                                     />
+                                                    {/* 过审状态指示器 */}
+                                                    {selection.approved && (
+                                                        <div className="absolute -top-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                                            <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <div>
-                                                    <label className="block text-xs text-gray-600 mb-1">AR</label>
-                                                    <input
-                                                        type="number"
-                                                        step="0.1"
-                                                        min="0"
-                                                        max="10"
-                                                        value={customAR}
-                                                        onChange={(e) => setCustomAR(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                                                        placeholder="不修改则为原值"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs text-gray-600 mb-1">OD</label>
-                                                    <input
-                                                        type="number"
-                                                        step="0.1"
-                                                        min="0"
-                                                        max="10"
-                                                        value={customOD}
-                                                        onChange={(e) => setCustomOD(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                                                        placeholder="不修改则为原值"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs text-gray-600 mb-1">HP</label>
-                                                    <input
-                                                        type="number"
-                                                        step="0.1"
-                                                        min="0"
-                                                        max="10"
-                                                        value={customHP}
-                                                        onChange={(e) => setCustomHP(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                                                        placeholder="不修改则为原值"
-                                                    />
+
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <div className="flex items-center gap-2 flex-1">
+                                                            <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
+                                                                {selection.selectedMods === 'LZ' ?
+                                                                    (selection.customModName && selection.customModName.trim() !== '' ?
+                                                                        `LZ${selection.modPosition}-${selection.customModName}` :
+                                                                        `LZ${selection.modPosition}`) :
+                                                                    selection.selectedMods === 'DT' ?
+                                                                        ((selection.customDTRate && selection.customDTRate !== 1.50) ?
+                                                                            `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}倍` :
+                                                                            `DT${selection.modPosition}`) :
+                                                                        `${selection.selectedMods}${selection.modPosition}`
+                                                                }
+                                                            </span>
+                                                            {selection.padding && (
+                                                                <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded flex flex-cow gap-1 items-center">
+                                                                    <CircleArrowRight size={16} />提交测图中
+                                                                </span>
+                                                            )}
+                                                            {/* 当选择"全部"时显示阶段信息 */}
+                                                            {category === 'all' && (
+                                                                <span className="px-2 py-1 bg-gray-600 text-white text-xs rounded">
+                                                                    {CATEGORY_OPTIONS.find(cat => cat.value === selection.category)?.label || selection.category}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {/* 右侧按钮区域 */}
+                                                        <div className="flex items-center gap-2 justify-end">
+                                                            {/* 复制BID按钮 */}
+                                                            <button
+                                                                onClick={() => copyBeatmapId(selection.beatmapId)}
+                                                                className="px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded-full transition-colors flex flex-cow gap-1 items-center"
+                                                                title="复制Beatmap ID"
+                                                            >
+                                                                <Clipboard size={12} /> {selection.beatmapId}
+                                                            </button>
+                                                            {/* 批量选择复选框 - 仅管理员可见 */}
+                                                            {permissions.isAdmin && !selection.approved && (
+                                                                <label className="flex items-center">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={tempApprovedSelections.has(selection.id)}
+                                                                        onChange={(e) => {
+                                                                            const newSelections = new Set(tempApprovedSelections);
+                                                                            if (e.target.checked) {
+                                                                                newSelections.add(selection.id);
+                                                                            } else {
+                                                                                newSelections.delete(selection.id);
+                                                                            }
+                                                                            setTempApprovedSelections(newSelections);
+                                                                        }}
+                                                                        className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                                                    />
+                                                                </label>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <h3 className="font-bold text-sm truncate" title={selection.title_unicode || selection.title}>
+                                                        {selection.title_unicode || selection.title}
+                                                    </h3>
+                                                    <p className="font-bold text-xs text-gray-600 truncate" title={selection.artist_unicode || selection.artist}>
+                                                        {selection.artist_unicode || selection.artist}
+                                                    </p>
+                                                    <p className="font-bold text-xs text-gray-600">[{selection.version}] by {selection.creator}</p>
                                                 </div>
                                             </div>
+
+                                            {/* 属性信息 */}
+                                            <div className="mb-3 text-xs text-gray-600">
+                                                <div className="grid grid-cols-4 gap-1">
+                                                    <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-center"><Diameter size={16} />CS</div>
+                                                    <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-center"><CircleGauge size={16} />AR</div>
+                                                    <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-center"><Target size={16} />OD</div>
+                                                    <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-center"><Heart size={16} />HP</div>
+                                                    <div className="bg-gray-100 rounded-lg text-center font-bold text-2xl">{selection.cs.toFixed(2)}</div>
+                                                    <div className="bg-gray-100 rounded-lg text-center font-bold text-2xl">{selection.ar.toFixed(2)}</div>
+                                                    <div className="bg-gray-100 rounded-lg text-center font-bold text-2xl">{selection.od.toFixed(2)}</div>
+                                                    <div className="bg-gray-100 rounded-lg text-center font-bold text-2xl">{selection.hp.toFixed(2)}</div>
+                                                    <div className="text-center font-medium flex flex-cow gap-1 items-center"><Hourglass size={16} /><div className="text-center text-base">{formatLength(selection.totalLength)}</div></div>
+                                                    <div className="text-center font-medium flex flex-cow gap-1 items-center"><CircleStar size={16} />MaxC<div className="text-center text-base">{selection.maxCombo}</div></div>
+                                                    <div className="text-center font-medium flex flex-cow gap-1 items-center"><Music3 size={16} />=<div className="text-center text-base">{selection.bpm}</div></div>
+                                                    <div className="text-center font-medium flex flex-cow gap-1 items-center"><Star size={16} /><div className="text-center text-base">{selection.starRating.toFixed(2)}</div></div>
+
+                                                </div>
+                                            </div>
+
+                                            {/* 提名者信息 */}
+                                            <div className="mb-3 text-xs text-gray-600">
+                                                <div className="flex items-center gap-3 w-full">
+                                                    <span className="flex items-center gap-1">提名者:<Image src={selection.selectedByAvatar || "/default-avatar.png"} alt={selection.selectedByUsername || '未知'} width={16} height={16} className="rounded-full" />{selection.selectedByUsername}</span>
+                                                    <span>•</span>
+                                                    <span>{formatDateTime(selection.selectedAt)}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* 评论 */}
+                                            {selection.comment && (
+                                                <div className="mb-3 p-2 bg-gray-50 rounded text-xs text-gray-700">
+                                                    {selection.comment}
+                                                </div>
+                                            )}
+
+                                            {/* 评论区 */}
+                                            <div className="mt-4 pt-3 border-t border-gray-300">
+                                                <CommentComponent
+                                                    mapSelectionId={selection.id}
+                                                    userId={userForState.id.toString()}
+                                                    onCommentUpdate={fetchSelections}
+                                                    compactMode={true}
+                                                    ratings={commentsByMapSelectionId[selection.id] || []}
+                                                />
+                                            </div>
                                         </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* 表格视图 */}
+                <div
+                    className={`transition-all duration-300 ease-in-out ${activeTab === 'table'
+                        ? 'opacity-100 translate-x-0'
+                        : 'opacity-80 absolute translate-x-full'
+                        }`}
+                    style={{
+                        width: '100%',
+                        position: activeTab === 'table' ? 'relative' : 'absolute',
+                        left: activeTab === 'table' ? '0' : '100%'
+                    }}
+                >
+                    <div>
+                        <MapoolTable
+                            data={convertToMapoolFormat(filteredSelections)}
+                            title={`选图列表 - ${selections.length} 个选图`}
+                            season={season}
+                            category={category}
+                        />
+                    </div>
+                </div>
+
+                {filteredSelections.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                        {selections.length === 0 ? '暂无选图' : '没有符合筛选条件的选图'}
+                    </div>
+                )}
+
+
+                {/* 批量过审弹窗 */}
+                {showBulkApprovalModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+                            <h3 className="text-xl font-bold text-gray-800 mb-4">批量过审确认</h3>
+                            <p className="text-gray-600 mb-4">
+                                以下 {tempApprovedSelections.size} 个选图将被过审并公开，请确认：
+                            </p>
+
+                            <div className="overflow-x-auto">
+                                <table className="table-auto w-full text-sm border-collapse border border-gray-300">
+                                    <thead>
+                                        <tr className="bg-gray-100">
+                                            <th className="border border-gray-300 px-3 py-2 text-left">Mod</th>
+                                            <th className="border border-gray-300 px-3 py-2 text-left">歌曲</th>
+                                            <th className="border border-gray-300 px-3 py-2 text-left">艺术家</th>
+                                            <th className="border border-gray-300 px-3 py-2 text-left">难度</th>
+                                            <th className="border border-gray-300 px-3 py-2 text-left">提名者</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {selections
+                                            .filter(selection => tempApprovedSelections.has(selection.id) && !selection.approved)
+                                            .map(selection => (
+                                                <tr key={selection.id} className="hover:bg-gray-50">
+                                                    <td className="border border-gray-300 px-3 py-2 text-left">
+                                                        <span className={`${getModColorClass(selection.selectedMods)} text-white px-2 py-1 rounded text-sm font-bold`}>
+                                                            {selection.selectedMods === 'LZ' ?
+                                                                (selection.customModName && selection.customModName.trim() !== '' ?
+                                                                    `LZ${selection.modPosition}-${selection.customModName}` :
+                                                                    `LZ${selection.modPosition}`) :
+                                                                selection.selectedMods === 'DT' ?
+                                                                    ((selection.customDTRate && selection.customDTRate !== 1.5) ?
+                                                                        `DT${selection.modPosition}-${selection.customDTRate.toFixed(1)}倍` :
+                                                                        `DT${selection.modPosition}`) :
+                                                                    `${selection.selectedMods}${selection.modPosition}`
+                                                            }
+                                                        </span>
+                                                    </td>
+                                                    <td className="border border-gray-300 px-3 py-2 text-left">{selection.title}</td>
+                                                    <td className="border border-gray-300 px-3 py-2 text-left">{selection.artist}</td>
+                                                    <td className="border border-gray-300 px-3 py-2 text-left">{selection.version}</td>
+                                                    <td className="border border-gray-300 px-3 py-2 text-left">{selection.selectedByUsername}</td>
+                                                </tr>
+                                            ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div className="flex gap-4 justify-end mt-6">
+                                <button
+                                    onClick={() => setShowBulkApprovalModal(false)}
+                                    className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+                                >
+                                    取消
+                                </button>
+                                <button
+                                    onClick={handleBulkApproval}
+                                    disabled={isBulkApproving}
+                                    className="bg-green-500 hover:bg-green-600 disabled:bg-gray-500 text-white px-4 py-2 rounded"
+                                >
+                                    {isBulkApproving ? '过审中...' : `确认过审 (${tempApprovedSelections.size} 个)`}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* 右键菜单 */}
+                {contextMenu.show && contextMenu.selection && (
+                    <div
+                        className="fixed flex flex-row gap-2 z-50"
+                        style={{
+                            left: contextMenu.x,
+                            top: contextMenu.y,
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* 判断是否在屏幕右侧，决定列顺序 */}
+                        {(() => {
+                            const isOnRightSide = contextMenu.x + 320 > window.innerWidth;
+                            const firstColumn = [
+                                <button
+                                    key="view"
+                                    onClick={() => {
+                                        window.open(contextMenu.selection!.url, '_blank');
+                                        closeContextMenu();
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                >
+                                    <ExternalLink />
+                                    查看谱面
+                                </button>,
+                                <button
+                                    key="open-in-osu"
+                                    onClick={() => {
+                                        window.open(`osu://b/${contextMenu.selection!.beatmapId}`, '_blank');
+                                        showInfo('已在osu客户端中打开谱面');
+                                        closeContextMenu();
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                >
+                                    <Image src='/icons/osu-lazer-logo-black.svg' alt='viewOsu' width={24} height={24} />
+                                    从osu中打开
+                                </button>,
+
+                                <button
+                                    key="download-nerinyan"
+                                    onClick={() => {
+                                        const downloadUrl = `https://api.nerinyan.moe/d/${contextMenu.selection!.beatmapsetId}`;
+                                        window.open(downloadUrl, '_blank');
+                                        showSuccess('已开始从Nerinyan下载');
+                                        closeContextMenu();
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                >
+                                    <ArrowDownToLine />
+                                    下载谱面 (Nerinyan)
+                                </button>,
+                                <button
+                                    key="download-official"
+                                    onClick={() => {
+                                        const downloadUrl = `https://osu.ppy.sh/beatmapsets/${contextMenu.selection!.beatmapsetId}/download`;
+                                        window.open(downloadUrl, '_blank');
+                                        showSuccess('已开始从osu官方下载');
+                                        closeContextMenu();
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                >
+                                    <ArrowDownToLine />
+                                    osu官方下载
+                                </button>
+                            ].filter(Boolean);
+
+                            const secondColumn = [
+                                (permissions.isAdmin || permissions.isMapSelector) && (
+                                    <button
+                                        key="refresh"
+                                        onClick={() => {
+                                            refreshSelection(contextMenu.selection!);
+                                            closeContextMenu();
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                    >
+                                        <RotateCw />
+                                        刷新MOD属性
+                                    </button>
+                                ),
+                                (permissions.isAdmin || permissions.isMapSelector) && (
+                                    <button
+                                        key="edit"
+                                        onClick={() => {
+                                            setEditDialog({
+                                                show: true,
+                                                selection: contextMenu.selection,
+                                                isSubmitting: false
+                                            });
+                                            closeContextMenu();
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                    >
+                                        <PencilLine />
+                                        修改属性
+                                    </button>
+                                ),
+                                (permissions.isAdmin || permissions.isMapSelector) && (
+                                    <button
+                                        key="padding"
+                                        onClick={() => {
+                                            togglePadding(contextMenu.selection!.id, contextMenu.selection!.padding || false);
+                                            closeContextMenu();
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                    >
+                                        <CircleArrowRight />
+                                        {contextMenu.selection!.padding ? '取消测图' : '设为测图'}
+                                    </button>
+                                ),
+                                (permissions.isAdmin || permissions.isMapSelector) && (
+                                    <button
+                                        key="approve"
+                                        onClick={() => {
+                                            toggleApproval(contextMenu.selection!.id, contextMenu.selection!.approved);
+                                            closeContextMenu();
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                    >
+                                        <CircleCheckBig />
+                                        {contextMenu.selection!.approved ? '取消过审' : '过审'}
+                                    </button>
+                                ),
+                                (contextMenu.selection!.selectedBy === userForState.id.toString() || permissions.isAdmin || permissions.isMapSelector) && (
+                                    <button
+                                        onClick={() => {
+                                            if (confirm('确定要删除这个选图吗？此操作不可撤销。')) {
+                                                deleteSelection(contextMenu.selection!.id);
+                                            }
+                                            closeContextMenu();
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 rounded-lg text-red-600 transition-colors flex items-center gap-2 rounded-lg"
+                                    >
+                                        <Trash2 />
+                                        删除
+                                    </button>
+                                )
+                            ].filter(Boolean);
+
+                            return (
+                                <div className="flex flex-row items-start gap-3">
+                                    {/* 根据位置决定列顺序 */}
+                                    {isOnRightSide ? (
+                                        <>
+                                            {/* 右侧放不下时：第二排在左边，第一排在右边 */}
+                                            <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[200px]">
+                                                {secondColumn}
+                                            </div>
+                                            <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[240px]">
+                                                {firstColumn}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            {/* 正常情况：第一排在左边，第二排在右边 */}
+                                            <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[240px]">
+                                                {firstColumn}
+                                            </div>
+                                            <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[200px]">
+                                                {secondColumn}
+                                            </div>
+                                        </>
                                     )}
+                                </div>
+                            );
+                        })()}
+                    </div>
+                )}
+
+                {/* 点击其他地方关闭右键菜单 */}
+                {contextMenu.show && (
+                    <div
+                        className="fixed inset-0 z-40"
+                        onClick={closeContextMenu}
+                        onContextMenu={(e) => {
+                            e.preventDefault();
+                            closeContextMenu();
+                        }}
+                    />
+                )}
+
+                {/* 编辑属性对话框 */}
+                {editDialog.show && editDialog.selection && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto rounded-lg">
+                            <h3 className="text-xl font-bold text-gray-800 mb-4">修改选图属性</h3>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                {/* 标题 */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        标题
+                                    </label>
+                                    <input
+                                        type="text"
+                                        defaultValue={editDialog.selection.title}
+                                        id="edit-title"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                {/* 难度名 */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        难度名
+                                    </label>
+                                    <input
+                                        type="text"
+                                        defaultValue={editDialog.selection.version}
+                                        id="edit-version"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                {/* AR */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        AR
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        max="10"
+                                        defaultValue={editDialog.selection.ar}
+                                        id="edit-ar"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                {/* OD */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        OD
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        max="10"
+                                        defaultValue={editDialog.selection.od}
+                                        id="edit-od"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                {/* CS */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        CS
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        max="10"
+                                        defaultValue={editDialog.selection.cs}
+                                        id="edit-cs"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                {/* HP */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        HP
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        max="10"
+                                        defaultValue={editDialog.selection.hp}
+                                        id="edit-hp"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                {/* BPM */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        BPM
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        defaultValue={editDialog.selection.bpm}
+                                        id="edit-bpm"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                {/* 星数 */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        星数 (★)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        max="20"
+                                        defaultValue={editDialog.selection.starRating}
+                                        id="edit-starRating"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                {/* 时长（秒） */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        时长（秒）
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        defaultValue={editDialog.selection.totalLength}
+                                        id="edit-totalLength"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        当前时长: {formatLength(editDialog.selection.totalLength)}
+                                    </p>
+                                </div>
+
+                                {/* 最大连击数 */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        最大连击数
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        defaultValue={editDialog.selection.maxCombo}
+                                        id="edit-maxCombo"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                {/* MOD */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        MOD
+                                    </label>
+                                    <select
+                                        id="edit-selectedMods"
+                                        defaultValue={editDialog.selection.selectedMods}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        {MOD_OPTIONS.map(mod => (
+                                            <option key={mod} value={mod}>{mod}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* 阶段 */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        阶段
+                                    </label>
+                                    <select
+                                        id="edit-category"
+                                        defaultValue={editDialog.selection.category}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        {CATEGORY_OPTIONS.map(cat => (
+                                            <option key={cat.value} value={cat.value}>{cat.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* LZ mod 自定义字段 */}
+                            {editDialog.selection.selectedMods === 'LZ' && (
+                                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                    <h4 className="font-medium text-blue-800 mb-2">Lazer MOD 设置</h4>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            MOD 名称
+                                        </label>
+                                        <select
+                                            id="edit-customModName"
+                                            defaultValue={editDialog.selection.customModName || ''}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        >
+                                            <option value="">选择 MOD...</option>
+                                            {availableLazerMods.map(mod => (
+                                                <option key={mod.name} value={mod.name}>
+                                                    {mod.name} - {mod.description}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            从可用的 Lazer 特有 MOD 中选择
+                                        </p>
+                                    </div>
                                 </div>
                             )}
 
-                            {/* DT自定义倍率 */}
-                            {selectedMods === 'DT' && (
+                            {/* DT 自定义倍率字段 */}
+                            {editDialog.selection.selectedMods === 'DT' && (
                                 <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-md">
                                     <h4 className="font-medium text-purple-800 mb-2">DT 设置</h4>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
                                             自定义倍率
                                         </label>
                                         <input
@@ -1831,888 +2642,108 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             step="0.01"
                                             min="1.0"
                                             max="2.0"
-                                            value={customDTRate}
-                                            onChange={(e) => setCustomDTRate(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                            defaultValue={editDialog.selection.customDTRate || 1.5}
+                                            id="edit-customDTRate"
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                                             placeholder="1.50"
                                         />
                                         <p className="text-xs text-gray-500 mt-1">
-                                            默认1.50倍，可自定义1.00-2.00之间的倍率
+                                            默认 1.50 倍，可自定义 1.00-2.00 之间的倍率
                                         </p>
                                     </div>
                                 </div>
                             )}
 
-
-                            {/* 重复检查警告 */}
-                            {duplicateWarning.show && (
-                                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                                    <h4 className="font-medium text-yellow-800 mb-2">重复检测</h4>
-                                    <p className="text-yellow-700 text-sm mb-2">
-                                        此谱面已被选择 {duplicateWarning.existingSelections.length} 次：
-                                    </p>
-                                    <ul className="text-sm text-yellow-700 list-disc list-inside">
-                                        {duplicateWarning.existingSelections.map((sel: ExistingSelection, index: number) => (
-                                            <li key={index}>
-                                                {sel.selectedMods}{sel.modPosition} - {sel.category} - {sel.selectedByUsername}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-
-                            {/* 评论和选项 */}
+                            {/* 备注 */}
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2 flex flex-cow items-center gap-1">
-                                    <MessageCircleMore size={16} />评论
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    备注
                                 </label>
                                 <textarea
-                                    value={comment}
-                                    onChange={(e) => setComment(e.target.value)}
-                                    placeholder="添加评论..."
+                                    defaultValue={editDialog.selection.comment}
+                                    id="edit-comment"
                                     rows={3}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
 
-                            <div className="flex gap-4 items-center mb-4">
-                                <label className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={padding}
-                                        onChange={(e) => setPadding(e.target.checked)}
-                                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                                    />
-                                    <span className="text-sm text-gray-700">送测该图</span>
-                                </label>
-                            </div>
-
-                            {/* 提交按钮 */}
-                            <div className="flex gap-4">
+                            <div className="flex gap-4 justify-end">
                                 <button
-                                    onClick={addSelection}
-                                    disabled={isSubmitting || !beatmapPreview}
-                                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 text-white rounded-md transition-colors"
-                                >
-                                    {isSubmitting ? '添加中...' : '添加选图'}
-                                </button>
-                                <button
-                                    onClick={() => setShowAddForm(false)}
-                                    className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors"
+                                    onClick={() => setEditDialog({
+                                        show: false,
+                                        selection: null,
+                                        isSubmitting: false
+                                    })}
+                                    className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors"
                                 >
                                     取消
                                 </button>
+                                <button
+                                    onClick={() => {
+                                        if (!editDialog.selection) return;
+
+                                        const updates: {
+                                            title?: string;
+                                            version?: string;
+                                            ar?: number;
+                                            od?: number;
+                                            cs?: number;
+                                            hp?: number;
+                                            bpm?: number;
+                                            starRating?: number;
+                                            totalLength?: number;
+                                            maxCombo?: number;
+                                            selectedMods?: string;
+                                            category?: string;
+                                            comment?: string;
+                                            customModName?: string;
+                                            customDTRate?: number;
+                                        } = {
+                                            title: (document.getElementById('edit-title') as HTMLInputElement)?.value,
+                                            version: (document.getElementById('edit-version') as HTMLInputElement)?.value,
+                                            ar: parseFloat((document.getElementById('edit-ar') as HTMLInputElement)?.value || '0'),
+                                            od: parseFloat((document.getElementById('edit-od') as HTMLInputElement)?.value || '0'),
+                                            cs: parseFloat((document.getElementById('edit-cs') as HTMLInputElement)?.value || '0'),
+                                            hp: parseFloat((document.getElementById('edit-hp') as HTMLInputElement)?.value || '0'),
+                                            bpm: parseFloat((document.getElementById('edit-bpm') as HTMLInputElement)?.value || '0'),
+                                            starRating: parseFloat((document.getElementById('edit-starRating') as HTMLInputElement)?.value || '0'),
+                                            totalLength: parseInt((document.getElementById('edit-totalLength') as HTMLInputElement)?.value || '0'),
+                                            maxCombo: parseInt((document.getElementById('edit-maxCombo') as HTMLInputElement)?.value || '0'),
+                                            selectedMods: (document.getElementById('edit-selectedMods') as HTMLSelectElement)?.value,
+                                            category: (document.getElementById('edit-category') as HTMLSelectElement)?.value,
+                                            comment: (document.getElementById('edit-comment') as HTMLTextAreaElement)?.value
+                                        };
+
+                                        // 添加 LZ mod 自定义字段
+                                        if (editDialog.selection.selectedMods === 'LZ') {
+                                            const customModNameInput = document.getElementById('edit-customModName') as HTMLInputElement;
+                                            if (customModNameInput) {
+                                                updates.customModName = customModNameInput.value || undefined;
+                                            }
+                                        }
+
+                                        // 添加 DT 自定义倍率字段
+                                        if (editDialog.selection.selectedMods === 'DT') {
+                                            const customDTRateInput = document.getElementById('edit-customDTRate') as HTMLInputElement;
+                                            if (customDTRateInput && customDTRateInput.value) {
+                                                updates.customDTRate = parseFloat(customDTRateInput.value);
+                                            }
+                                        }
+
+                                        updateSelectionAttributes(editDialog.selection.id, updates);
+                                    }}
+                                    disabled={editDialog.isSubmitting}
+                                    className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 text-white px-4 py-2 rounded transition-colors"
+                                >
+                                    {editDialog.isSubmitting ? '保存中...' : '保存'}
+                                </button>
                             </div>
-                        </div>
-                    )}
-
-                    {/* Tab切换栏 */}
-                    <div className="mb-6 flex w-max bg-gray-500 rounded-lg">
-                        <button
-                            onClick={() => setActiveTab('cards')}
-                            className={`px-4 py-2 rounded-lg font-medium text-2xl transition-colors flex ${activeTab === 'cards'
-                                ? 'bg-[#E93B66] text-white'
-                                : 'text-white hover:text-pink'
-                                }`}
-                        >
-                            <LayoutGrid />
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('table')}
-                            className={`px-4 py-2 rounded-lg font-medium text-2xl transition-colors flex ${activeTab === 'table'
-                                ? 'bg-[#E93B66] text-white'
-                                : 'text-white hover:text-pink'
-                                }`}
-                        >
-                            <LayoutList />
-                        </button>
-                    </div>
-
-                    {/* 选图列表 - 按mod类型分类显示 */}
-                    {activeTab === 'cards' && (
-                        <div className="space-y-8">
-                            {Object.entries(getSelectionsByMod()).map(([mod, modSelections]) => (
-                                <div key={mod} className="space-y-4">
-                                    {/* Mod分类标题 */}
-                                    <div className="flex items-center gap-3">
-                                        <div className={`px-4 py-2 rounded-lg text-white font-bold text-lg ${getModColorClass(mod)}`}>
-                                            {mod} - {getModDisplayName(mod)}
-                                        </div>
-                                        <span className="text-gray-500 text-sm">
-                                            ({modSelections.length} 个选图)
-                                        </span>
-                                    </div>
-
-                                    {/* 该mod下的选图列表 */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {modSelections.map(selection => (
-                                            <div
-                                                key={selection.id}
-                                                className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${selection.approved ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'
-                                                    } ${tempApprovedSelections.has(selection.id) ? 'border-blue-500 bg-blue-50' : ''}`}
-                                                onClick={(e) => {
-                                                    // 检查点击目标是否为可点击元素（按钮、链接、输入框等）
-                                                    const target = e.target as HTMLElement;
-                                                    if (target.closest('button') || target.closest('a') || target.closest('input') || target.closest('textarea') || target.closest('select')) {
-                                                        return; // 不处理按钮、链接、表单元素的点击
-                                                    }
-
-                                                    // 只有管理员可以对未过审的选图进行批量选择
-                                                    if (permissions.isAdmin && !selection.approved) {
-                                                        const newSelections = new Set(tempApprovedSelections);
-                                                        if (newSelections.has(selection.id)) {
-                                                            newSelections.delete(selection.id);
-                                                        } else {
-                                                            newSelections.add(selection.id);
-                                                        }
-                                                        setTempApprovedSelections(newSelections);
-                                                    }
-                                                }}
-                                                onContextMenu={(e) => handleContextMenu(e, selection)}
-                                            >
-                                                {/* 头部：封面和基本信息 */}
-                                                <div className="flex items-start gap-3 mb-3">
-                                                    <div className="relative">
-                                                        <Image
-                                                            src={selection.coverUrl}
-                                                            alt="Beatmap cover"
-                                                            width={512}
-                                                            height={512}
-                                                            className="w-24 h-19 object-cover rounded"
-                                                        />
-                                                        {/* 过审状态指示器 */}
-                                                        {selection.approved && (
-                                                            <div className="absolute -top-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                                                                <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                                </svg>
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <div className="flex items-center gap-2 flex-1">
-                                                                <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
-                                                                    {selection.selectedMods === 'LZ' ?
-                                                                        (selection.customModName && selection.customModName.trim() !== '' ?
-                                                                            `LZ${selection.modPosition}-${selection.customModName}` :
-                                                                            `LZ${selection.modPosition}`) :
-                                                                        selection.selectedMods === 'DT' ?
-                                                                            ((selection.customDTRate && selection.customDTRate !== 1.50) ?
-                                                                                `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}倍` :
-                                                                                `DT${selection.modPosition}`) :
-                                                                            `${selection.selectedMods}${selection.modPosition}`
-                                                                    }
-                                                                </span>
-                                                                {selection.padding && (
-                                                                    <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded flex flex-cow gap-1 items-center">
-                                                                        <CircleArrowRight size={16} />提交测图中
-                                                                    </span>
-                                                                )}
-                                                                {/* 当选择"全部"时显示阶段信息 */}
-                                                                {category === 'all' && (
-                                                                    <span className="px-2 py-1 bg-gray-600 text-white text-xs rounded">
-                                                                        {CATEGORY_OPTIONS.find(cat => cat.value === selection.category)?.label || selection.category}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            {/* 右侧按钮区域 */}
-                                                            <div className="flex items-center gap-2 justify-end">
-                                                                {/* 复制BID按钮 */}
-                                                                <button
-                                                                    onClick={() => copyBeatmapId(selection.beatmapId)}
-                                                                    className="px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded-full transition-colors flex flex-cow gap-1 items-center"
-                                                                    title="复制Beatmap ID"
-                                                                >
-                                                                    <Clipboard size={12} /> {selection.beatmapId}
-                                                                </button>
-                                                                {/* 批量选择复选框 - 仅管理员可见 */}
-                                                                {permissions.isAdmin && !selection.approved && (
-                                                                    <label className="flex items-center">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={tempApprovedSelections.has(selection.id)}
-                                                                            onChange={(e) => {
-                                                                                const newSelections = new Set(tempApprovedSelections);
-                                                                                if (e.target.checked) {
-                                                                                    newSelections.add(selection.id);
-                                                                                } else {
-                                                                                    newSelections.delete(selection.id);
-                                                                                }
-                                                                                setTempApprovedSelections(newSelections);
-                                                                            }}
-                                                                            className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                                                                        />
-                                                                    </label>
-                                                                )}
-                                                            </div>
-                                                        </div>
-
-                                                        <h3 className="font-bold text-sm truncate" title={selection.title_unicode || selection.title}>
-                                                            {selection.title_unicode || selection.title}
-                                                        </h3>
-                                                        <p className="font-bold text-xs text-gray-600 truncate" title={selection.artist_unicode || selection.artist}>
-                                                            {selection.artist_unicode || selection.artist}
-                                                        </p>
-                                                        <p className="font-bold text-xs text-gray-600">[{selection.version}] by {selection.creator}</p>
-                                                    </div>
-                                                </div>
-
-                                                {/* 属性信息 */}
-                                                <div className="mb-3 text-xs text-gray-600">
-                                                    <div className="grid grid-cols-4 gap-1">
-                                                        <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-center"><Diameter size={16} />CS</div>
-                                                        <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-center"><CircleGauge size={16} />AR</div>
-                                                        <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-center"><Target size={16} />OD</div>
-                                                        <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-center"><Heart size={16} />HP</div>
-                                                        <div className="bg-gray-100 rounded-lg text-center font-bold text-2xl">{selection.cs.toFixed(2)}</div>
-                                                        <div className="bg-gray-100 rounded-lg text-center font-bold text-2xl">{selection.ar.toFixed(2)}</div>
-                                                        <div className="bg-gray-100 rounded-lg text-center font-bold text-2xl">{selection.od.toFixed(2)}</div>
-                                                        <div className="bg-gray-100 rounded-lg text-center font-bold text-2xl">{selection.hp.toFixed(2)}</div>
-                                                        <div className="text-center font-medium flex flex-cow gap-1 items-center"><Hourglass size={16} /><div className="text-center text-base">{formatLength(selection.totalLength)}</div></div>
-                                                        <div className="text-center font-medium flex flex-cow gap-1 items-center"><CircleStar size={16} />MaxC<div className="text-center text-base">{selection.maxCombo}</div></div>
-                                                        <div className="text-center font-medium flex flex-cow gap-1 items-center"><Music3 size={16} />=<div className="text-center text-base">{selection.bpm}</div></div>
-                                                        <div className="text-center font-medium flex flex-cow gap-1 items-center"><Star size={16} /><div className="text-center text-base">{selection.starRating.toFixed(2)}</div></div>
-
-                                                    </div>
-                                                </div>
-
-                                                {/* 提名者信息 */}
-                                                <div className="mb-3 text-xs text-gray-600">
-                                                    <div className="flex items-center gap-3 w-full">
-                                                        <span className="flex items-center gap-1">提名者:<Image src={selection.selectedByAvatar || "/default-avatar.png"} alt={selection.selectedByUsername || '未知'} width={16} height={16} className="rounded-full" />{selection.selectedByUsername}</span>
-                                                        <span>•</span>
-                                                        <span>{formatDateTime(selection.selectedAt)}</span>
-                                                    </div>
-                                                </div>
-
-                                                {/* 评论 */}
-                                                {selection.comment && (
-                                                    <div className="mb-3 p-2 bg-gray-50 rounded text-xs text-gray-700">
-                                                        {selection.comment}
-                                                    </div>
-                                                )}
-
-                                                {/* 评论区 */}
-                                                <div className="mt-4 pt-3 border-t border-gray-300">
-                                                    <CommentComponent
-                                                        mapSelectionId={selection.id}
-                                                        userId={userForState.id.toString()}
-                                                        onCommentUpdate={fetchSelections}
-                                                        compactMode={true}
-                                                        ratings={commentsByMapSelectionId[selection.id] || []}
-                                                    />
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* 表格视图 */}
-                    {activeTab === 'table' && (
-                        <div>
-                            <MapoolTable
-                                data={convertToMapoolFormat(filteredSelections)}
-                                title={`选图列表 - ${selections.length} 个选图`}
-                                season={season}
-                                category={category}
-                            />
-                        </div>
-                    )}
-
-                    {filteredSelections.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                            {selections.length === 0 ? '暂无选图' : '没有符合筛选条件的选图'}
-                        </div>
-                    )}
-                </>
-            )}
-
-            {/* 批量过审弹窗 */}
-            {showBulkApprovalModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-                        <h3 className="text-xl font-bold text-gray-800 mb-4">批量过审确认</h3>
-                        <p className="text-gray-600 mb-4">
-                            以下 {tempApprovedSelections.size} 个选图将被过审并公开，请确认：
-                        </p>
-
-                        <div className="overflow-x-auto">
-                            <table className="table-auto w-full text-sm border-collapse border border-gray-300">
-                                <thead>
-                                    <tr className="bg-gray-100">
-                                        <th className="border border-gray-300 px-3 py-2 text-left">Mod</th>
-                                        <th className="border border-gray-300 px-3 py-2 text-left">歌曲</th>
-                                        <th className="border border-gray-300 px-3 py-2 text-left">艺术家</th>
-                                        <th className="border border-gray-300 px-3 py-2 text-left">难度</th>
-                                        <th className="border border-gray-300 px-3 py-2 text-left">提名者</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {selections
-                                        .filter(selection => tempApprovedSelections.has(selection.id) && !selection.approved)
-                                        .map(selection => (
-                                            <tr key={selection.id} className="hover:bg-gray-50">
-                                                <td className="border border-gray-300 px-3 py-2 text-left">
-                                                    <span className={`${getModColorClass(selection.selectedMods)} text-white px-2 py-1 rounded text-sm font-bold`}>
-                                                        {selection.selectedMods === 'LZ' ?
-                                                            (selection.customModName && selection.customModName.trim() !== '' ?
-                                                                `LZ${selection.modPosition}-${selection.customModName}` :
-                                                                `LZ${selection.modPosition}`) :
-                                                            selection.selectedMods === 'DT' ?
-                                                                ((selection.customDTRate && selection.customDTRate !== 1.5) ?
-                                                                    `DT${selection.modPosition}-${selection.customDTRate.toFixed(1)}倍` :
-                                                                    `DT${selection.modPosition}`) :
-                                                                `${selection.selectedMods}${selection.modPosition}`
-                                                        }
-                                                    </span>
-                                                </td>
-                                                <td className="border border-gray-300 px-3 py-2 text-left">{selection.title}</td>
-                                                <td className="border border-gray-300 px-3 py-2 text-left">{selection.artist}</td>
-                                                <td className="border border-gray-300 px-3 py-2 text-left">{selection.version}</td>
-                                                <td className="border border-gray-300 px-3 py-2 text-left">{selection.selectedByUsername}</td>
-                                            </tr>
-                                        ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div className="flex gap-4 justify-end mt-6">
-                            <button
-                                onClick={() => setShowBulkApprovalModal(false)}
-                                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
-                            >
-                                取消
-                            </button>
-                            <button
-                                onClick={handleBulkApproval}
-                                disabled={isBulkApproving}
-                                className="bg-green-500 hover:bg-green-600 disabled:bg-gray-500 text-white px-4 py-2 rounded"
-                            >
-                                {isBulkApproving ? '过审中...' : `确认过审 (${tempApprovedSelections.size} 个)`}
-                            </button>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
+            ;
 
-            {/* 右键菜单 */}
-            {contextMenu.show && contextMenu.selection && (
-                <div
-                    className="fixed flex flex-row gap-2 z-50"
-                    style={{
-                        left: contextMenu.x,
-                        top: contextMenu.y,
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    {/* 判断是否在屏幕右侧，决定列顺序 */}
-                    {(() => {
-                        const isOnRightSide = contextMenu.x + 320 > window.innerWidth;
-                        // 111111111111111111111111111111111111
-                        const firstColumn = [
-                            <button
-                                key="view"
-                                onClick={() => {
-                                    window.open(contextMenu.selection!.url, '_blank');
-                                    closeContextMenu();
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                            >
-                                <ExternalLink />
-                                查看谱面
-                            </button>,
-                            <button
-                                key="open-in-osu"
-                                onClick={() => {
-                                    window.open(`osu://b/${contextMenu.selection!.beatmapId}`, '_blank');
-                                    showInfo('已在osu客户端中打开谱面');
-                                    closeContextMenu();
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                            >
-                                <Image src='/icons/osu-lazer-logo-black.svg' alt='viewOsu' width={24} height={24} />
-                                从osu中打开
-                            </button>,
-
-                            <button
-                                key="download-nerinyan"
-                                onClick={() => {
-                                    const downloadUrl = `https://api.nerinyan.moe/d/${contextMenu.selection!.beatmapsetId}`;
-                                    window.open(downloadUrl, '_blank');
-                                    showSuccess('已开始从Nerinyan下载');
-                                    closeContextMenu();
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                            >
-                                <ArrowDownToLine />
-                                下载谱面 (Nerinyan)
-                            </button>,
-                            <button
-                                key="download-official"
-                                onClick={() => {
-                                    const downloadUrl = `https://osu.ppy.sh/beatmapsets/${contextMenu.selection!.beatmapsetId}/download`;
-                                    window.open(downloadUrl, '_blank');
-                                    showSuccess('已开始从osu官方下载');
-                                    closeContextMenu();
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                            >
-                                <ArrowDownToLine />
-                                osu官方下载
-                            </button>
-                        ].filter(Boolean);
-
-                        // 22222222222222222222222222222222
-                        const secondColumn = [
-                            (permissions.isAdmin || permissions.isMapSelector) && (
-                                <button
-                                    key="refresh"
-                                    onClick={() => {
-                                        refreshSelection(contextMenu.selection!);
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <RotateCw />
-                                    刷新MOD属性
-                                </button>
-                            ),
-                            (permissions.isAdmin || permissions.isMapSelector) && (
-                                <button
-                                    key="edit"
-                                    onClick={() => {
-                                        setEditDialog({
-                                            show: true,
-                                            selection: contextMenu.selection,
-                                            isSubmitting: false
-                                        });
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <PencilLine />
-                                    修改属性
-                                </button>
-                            ),
-                            (permissions.isAdmin || permissions.isMapSelector) && (
-                                <button
-                                    key="padding"
-                                    onClick={() => {
-                                        togglePadding(contextMenu.selection!.id, contextMenu.selection!.padding || false);
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <CircleArrowRight />
-                                    {contextMenu.selection!.padding ? '取消测图' : '设为测图'}
-                                </button>
-                            ),
-                            (permissions.isAdmin || permissions.isMapSelector) && (
-                                <button
-                                    key="approve"
-                                    onClick={() => {
-                                        toggleApproval(contextMenu.selection!.id, contextMenu.selection!.approved);
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <CircleCheckBig />
-                                    {contextMenu.selection!.approved ? '取消过审' : '过审'}
-                                </button>
-                            ),
-                            (contextMenu.selection!.selectedBy === userForState.id.toString() || permissions.isAdmin || permissions.isMapSelector) && (
-                                <button
-                                    onClick={() => {
-                                        if (confirm('确定要删除这个选图吗？此操作不可撤销。')) {
-                                            deleteSelection(contextMenu.selection!.id);
-                                        }
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 rounded-lg text-red-600 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <Trash2 />
-                                    删除
-                                </button>
-                            )
-                        ].filter(Boolean);
-
-                        return (
-                            <div className="flex flex-row items-start gap-3">
-                                {/* 根据位置决定列顺序 */}
-                                {isOnRightSide ? (
-                                    <>
-                                        {/* 右侧放不下时：第二排在左边，第一排在右边 */}
-                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[200px]">
-                                            {secondColumn}
-                                        </div>
-                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[240px]">
-                                            {firstColumn}
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        {/* 正常情况：第一排在左边，第二排在右边 */}
-                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[240px]">
-                                            {firstColumn}
-                                        </div>
-                                        <div className="space-y-2 bg-white border border-gray-300 rounded-lg p-2 shadow-lg w-[200px]">
-                                            {secondColumn}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        );
-                    })()}
-                </div>
-            )}
-
-            {/* 点击其他地方关闭右键菜单 */}
-            {contextMenu.show && (
-                <div
-                    className="fixed inset-0 z-40"
-                    onClick={closeContextMenu}
-                    onContextMenu={(e) => {
-                        e.preventDefault();
-                        closeContextMenu();
-                    }}
-                />
-            )}
-
-            {/* 编辑属性对话框 */}
-            {editDialog.show && editDialog.selection && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto rounded-lg">
-                        <h3 className="text-xl font-bold text-gray-800 mb-4">修改选图属性</h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            {/* 标题 */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    标题
-                                </label>
-                                <input
-                                    type="text"
-                                    defaultValue={editDialog.selection.title}
-                                    id="edit-title"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            {/* 难度名 */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    难度名
-                                </label>
-                                <input
-                                    type="text"
-                                    defaultValue={editDialog.selection.version}
-                                    id="edit-version"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            {/* AR */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    AR
-                                </label>
-                                <input
-                                    type="number"
-                                    step="0.1"
-                                    min="0"
-                                    max="10"
-                                    defaultValue={editDialog.selection.ar}
-                                    id="edit-ar"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            {/* OD */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    OD
-                                </label>
-                                <input
-                                    type="number"
-                                    step="0.1"
-                                    min="0"
-                                    max="10"
-                                    defaultValue={editDialog.selection.od}
-                                    id="edit-od"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            {/* CS */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    CS
-                                </label>
-                                <input
-                                    type="number"
-                                    step="0.1"
-                                    min="0"
-                                    max="10"
-                                    defaultValue={editDialog.selection.cs}
-                                    id="edit-cs"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            {/* HP */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    HP
-                                </label>
-                                <input
-                                    type="number"
-                                    step="0.1"
-                                    min="0"
-                                    max="10"
-                                    defaultValue={editDialog.selection.hp}
-                                    id="edit-hp"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            {/* BPM */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    BPM
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    defaultValue={editDialog.selection.bpm}
-                                    id="edit-bpm"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            {/* 星数 */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    星数 (★)
-                                </label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    max="20"
-                                    defaultValue={editDialog.selection.starRating}
-                                    id="edit-starRating"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            {/* 时长（秒） */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    时长（秒）
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    defaultValue={editDialog.selection.totalLength}
-                                    id="edit-totalLength"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">
-                                    当前时长: {formatLength(editDialog.selection.totalLength)}
-                                </p>
-                            </div>
-
-                            {/* 最大连击数 */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    最大连击数
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    defaultValue={editDialog.selection.maxCombo}
-                                    id="edit-maxCombo"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            {/* MOD */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    MOD
-                                </label>
-                                <select
-                                    id="edit-selectedMods"
-                                    defaultValue={editDialog.selection.selectedMods}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    {MOD_OPTIONS.map(mod => (
-                                        <option key={mod} value={mod}>{mod}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* 阶段 */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    阶段
-                                </label>
-                                <select
-                                    id="edit-category"
-                                    defaultValue={editDialog.selection.category}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    {CATEGORY_OPTIONS.map(cat => (
-                                        <option key={cat.value} value={cat.value}>{cat.label}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* LZ mod 自定义字段 */}
-                        {editDialog.selection.selectedMods === 'LZ' && (
-                            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                                <h4 className="font-medium text-blue-800 mb-2">Lazer MOD 设置</h4>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        MOD 名称
-                                    </label>
-                                    <select
-                                        id="edit-customModName"
-                                        defaultValue={editDialog.selection.customModName || ''}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="">选择 MOD...</option>
-                                        {availableLazerMods.map(mod => (
-                                            <option key={mod.name} value={mod.name}>
-                                                {mod.name} - {mod.description}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        从可用的 Lazer 特有 MOD 中选择
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* DT 自定义倍率字段 */}
-                        {editDialog.selection.selectedMods === 'DT' && (
-                            <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-md">
-                                <h4 className="font-medium text-purple-800 mb-2">DT 设置</h4>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        自定义倍率
-                                    </label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="1.0"
-                                        max="2.0"
-                                        defaultValue={editDialog.selection.customDTRate || 1.5}
-                                        id="edit-customDTRate"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                        placeholder="1.50"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        默认 1.50 倍，可自定义 1.00-2.00 之间的倍率
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 备注 */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                备注
-                            </label>
-                            <textarea
-                                defaultValue={editDialog.selection.comment}
-                                id="edit-comment"
-                                rows={3}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-
-                        <div className="flex gap-4 justify-end">
-                            <button
-                                onClick={() => setEditDialog({
-                                    show: false,
-                                    selection: null,
-                                    isSubmitting: false
-                                })}
-                                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors"
-                            >
-                                取消
-                            </button>
-                            <button
-                                onClick={() => {
-                                    if (!editDialog.selection) return;
-
-                                    const updates: {
-                                        title?: string;
-                                        version?: string;
-                                        ar?: number;
-                                        od?: number;
-                                        cs?: number;
-                                        hp?: number;
-                                        bpm?: number;
-                                        starRating?: number;
-                                        totalLength?: number;
-                                        maxCombo?: number;
-                                        selectedMods?: string;
-                                        category?: string;
-                                        comment?: string;
-                                        customModName?: string;
-                                        customDTRate?: number;
-                                    } = {
-                                        title: (document.getElementById('edit-title') as HTMLInputElement)?.value,
-                                        version: (document.getElementById('edit-version') as HTMLInputElement)?.value,
-                                        ar: parseFloat((document.getElementById('edit-ar') as HTMLInputElement)?.value || '0'),
-                                        od: parseFloat((document.getElementById('edit-od') as HTMLInputElement)?.value || '0'),
-                                        cs: parseFloat((document.getElementById('edit-cs') as HTMLInputElement)?.value || '0'),
-                                        hp: parseFloat((document.getElementById('edit-hp') as HTMLInputElement)?.value || '0'),
-                                        bpm: parseFloat((document.getElementById('edit-bpm') as HTMLInputElement)?.value || '0'),
-                                        starRating: parseFloat((document.getElementById('edit-starRating') as HTMLInputElement)?.value || '0'),
-                                        totalLength: parseInt((document.getElementById('edit-totalLength') as HTMLInputElement)?.value || '0'),
-                                        maxCombo: parseInt((document.getElementById('edit-maxCombo') as HTMLInputElement)?.value || '0'),
-                                        selectedMods: (document.getElementById('edit-selectedMods') as HTMLSelectElement)?.value,
-                                        category: (document.getElementById('edit-category') as HTMLSelectElement)?.value,
-                                        comment: (document.getElementById('edit-comment') as HTMLTextAreaElement)?.value
-                                    };
-
-                                    // 添加 LZ mod 自定义字段
-                                    if (editDialog.selection.selectedMods === 'LZ') {
-                                        const customModNameInput = document.getElementById('edit-customModName') as HTMLInputElement;
-                                        if (customModNameInput) {
-                                            updates.customModName = customModNameInput.value || undefined;
-                                        }
-                                    }
-
-                                    // 添加 DT 自定义倍率字段
-                                    if (editDialog.selection.selectedMods === 'DT') {
-                                        const customDTRateInput = document.getElementById('edit-customDTRate') as HTMLInputElement;
-                                        if (customDTRateInput && customDTRateInput.value) {
-                                            updates.customDTRate = parseFloat(customDTRateInput.value);
-                                        }
-                                    }
-
-                                    updateSelectionAttributes(editDialog.selection.id, updates);
-                                }}
-                                disabled={editDialog.isSubmitting}
-                                className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 text-white px-4 py-2 rounded transition-colors"
-                            >
-                                {editDialog.isSubmitting ? '保存中...' : '保存'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
-    );
+    )
 }

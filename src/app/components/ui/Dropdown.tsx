@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { ChevronDown } from 'lucide-react';
 
 export interface DropdownOption {
     value: string;
@@ -194,34 +195,31 @@ const Dropdown: React.FC<DropdownProps> = ({
                     <span className="truncate flex-1 text-left">
                         {getDisplayText()}
                     </span>
-                    <svg
-                        className={`w-3 h-3 ml-2 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <ChevronDown className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+
                 </button>
 
-                {isOpen && (
-                    <div
-                        className="dropdown-menu"
-                        style={{ maxHeight, minWidth }}
-                    >
-                        {/* Search input */}
-                        <div className="p-2 border-b border-gray-200">
-                            <input
-                                ref={searchInputRef}
-                                type="text"
-                                value={searchQuery}
-                                onChange={handleSearchChange}
-                                placeholder="搜索..."
-                                className={`text-black w-full px-2 py-1 border border-gray-300 ${fontSize}`}
-                            />
-                        </div>
+                <div
+                    className={`dropdown-menu transition-all duration-300 ease-out ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}
+                    style={{
+                        maxHeight: isOpen ? maxHeight : '0px',
+                        minWidth,
+                    }}
+                >
+                    {/* Search input - fixed at top */}
+                    <div className="p-2 border-b border-gray-200 bg-white sticky top-0 z-10">
+                        <input
+                            ref={searchInputRef}
+                            type="text"
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                            placeholder="搜索..."
+                            className={`text-black w-full px-2 py-1 border border-gray-300 ${fontSize}`}
+                        />
+                    </div>
 
-                        {/* Filtered options */}
+                    {/* Filtered options - scrollable area */}
+                    <div className="overflow-y-auto" style={{ maxHeight: `calc(${maxHeight} - 3.5rem)` }}>
                         {filteredOptions.length > 0 ? (
                             filteredOptions.map((option, index) => (
                                 <button
@@ -243,7 +241,7 @@ const Dropdown: React.FC<DropdownProps> = ({
                             </div>
                         )}
                     </div>
-                )}
+                </div>
             </div>
 
             {showClearButton && hasValidSelection() && (

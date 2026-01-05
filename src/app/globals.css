@@ -462,6 +462,8 @@ select:disabled {
 
 .dropdown-menu {
   @apply absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 shadow-lg z-50 overflow-y-auto;
+  transition: opacity 300ms ease-out, transform 300ms ease-out, max-height 300ms ease-out;
+  transform-origin: top;
 }
 
 .dropdown-option {
