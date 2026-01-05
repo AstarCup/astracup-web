@@ -21,6 +21,8 @@ import ReplayCollectionManagement from '@/app/components/staff/ReplayCollectionM
 import MapSelectionManagement from '@/app/components/staff/MapSelectionManagement';
 import MatchScheduleManagement from '@/app/components/staff/MatchScheduleManagement';
 
+import { Compass, LandPlot, CirclePlus, LassoSelect, Video, CalendarClock, UsersRound, UserRoundPen, Settings } from 'lucide-react';
+
 interface MatchRoom {
     id: number;
     room_name: string;
@@ -703,49 +705,32 @@ export default function AdminPage() {
         <div className="min-h-screen bg-[#1a1a1a]">
             {/* 顶部导航栏 */}
             <div className="bg-[#2d2d2d] border-b border-[#404040]">
-                <div className="max-w-7xl mx-auto px-6">
-                    {/* 用户信息和登出按钮 */}
-                    <div className="flex items-center justify-between py-4">
-                        <div className="flex items-center space-x-4">
-                            <Image
-                                src={user.avatar_url}
-                                alt={user.username}
-                                width={40}
-                                height={40}
-                                className="rounded-full outline outline-2 outline-[#E93B66]"
-                                onError={(e) => {
-                                    e.currentTarget.src = '/default-avatar.png';
-                                }}
-                            />
-                            <div>
-                                <h3 className="text-white font-medium">{user.username}</h3>
-                            </div>
-                        </div>
-                    </div>
+                <div className="max-w-9xl mx-auto px-6">
+
 
                     {/* 顶部Tab栏 */}
                     <div className="flex space-x-1 overflow-x-auto">
                         {/* 概览 - 所有工作人员都可以访问 */}
                         <button
                             onClick={() => handleTabChange('overview')}
-                            className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'overview'
+                            className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'overview'
                                 ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
                         >
-                            <Image src='/icons/table-fill.svg' alt='overview' width={20} height={20} />
+                            <Compass />
                             概览
                         </button>
 
                         {/* 比赛管理 - 所有工作人员都可以访问 */}
                         <button
                             onClick={() => handleTabChange('matches')}
-                            className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'matches'
+                            className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'matches'
                                 ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                 : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                 }`}
                         >
-                            <Image src='/icons/flag-fill.svg' alt='matches' width={20} height={20} />
+                            <LandPlot />
                             比赛预约管理
                         </button>
 
@@ -753,12 +738,12 @@ export default function AdminPage() {
                         {(permissions.isAdmin || permissions.isReferee || permissions.isStreamer) && (
                             <button
                                 onClick={() => handleTabChange('streaming')}
-                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'streaming'
+                                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'streaming'
                                     ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <Image src='/icons/home.svg' alt='streaming' width={20} height={20} />
+                                <CirclePlus />
                                 staff比赛房间加入
                             </button>
                         )}
@@ -767,12 +752,12 @@ export default function AdminPage() {
                         {(permissions.isMapSelector || permissions.isAdmin) && (
                             <button
                                 onClick={() => handleTabChange('map-selection')}
-                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'map-selection'
+                                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'map-selection'
                                     ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <Image src='/icons/mapool-sm.svg' alt='map selection' width={20} height={20} />
+                                <LassoSelect />
                                 选图管理
                             </button>
                         )}
@@ -781,12 +766,12 @@ export default function AdminPage() {
                         {(permissions.isReplayTester || permissions.isAdmin) && (
                             <button
                                 onClick={() => handleTabChange('replays')}
-                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'replays'
+                                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'replays'
                                     ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <Image src='/icons/photos.svg' alt='replays' width={20} height={20} />
+                                <Video />
                                 回放收集
                             </button>
                         )}
@@ -795,12 +780,12 @@ export default function AdminPage() {
                         {permissions.isAdmin && (
                             <button
                                 onClick={() => handleTabChange('rooms')}
-                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'rooms'
+                                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'rooms'
                                     ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <Image src='/icons/hourglass-2-fill.svg' alt='match rooms' width={20} height={20} />
+                                <CalendarClock />
                                 比赛时间房间管理
                             </button>
                         )}
@@ -809,12 +794,12 @@ export default function AdminPage() {
                         {permissions.isAdmin && (
                             <button
                                 onClick={() => handleTabChange('matchups')}
-                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'matchups'
+                                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'matchups'
                                     ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <Image src='/icons/auction-fill.svg' alt='matchups' width={20} height={20} />
+                                <UsersRound />
                                 玩家对战列表管理
                             </button>
                         )}
@@ -823,12 +808,12 @@ export default function AdminPage() {
                         {permissions.isAdmin && (
                             <button
                                 onClick={() => handleTabChange('users')}
-                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'users'
+                                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'users'
                                     ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <Image src='/icons/register.svg' alt='user management' width={20} height={20} />
+                                <UserRoundPen />
                                 用户管理
                             </button>
                         )}
@@ -837,12 +822,12 @@ export default function AdminPage() {
                         {permissions.isAdmin && (
                             <button
                                 onClick={() => handleTabChange('settings')}
-                                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'settings'
+                                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'settings'
                                     ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
                                     : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
                                     }`}
                             >
-                                <Image src='/icons/settings-3-fill.svg' alt='system settings' width={20} height={20} />
+                                <Settings />
                                 系统设置
                             </button>
                         )}

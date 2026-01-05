@@ -46,3 +46,7 @@ public/version.json
 
 OsuNodeHelper/bin/Release/net8.0/win-x64
 OsuNodeHelper/obj
+
+public/OsuNodeHelper.*
+public/OsuNodeHelper
+public/PerformanceCalculator.dll

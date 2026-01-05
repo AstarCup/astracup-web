@@ -7,6 +7,22 @@ import { useState, useRef, useEffect } from 'react';
 import localFont from "next/font/local";
 import { UserSession } from '@/lib/permissions';
 import MessageNotification from './ui/MessageNotification';
+import {
+    Home,
+    Newspaper,
+    Trophy,
+    BookOpen,
+    Calendar,
+    Map as MapIcon,
+    UserPlus,
+    MoreHorizontal,
+    Mail,
+    Image as ImageIcon,
+    Settings,
+    LayoutGrid,
+    Users,
+    Camera
+} from 'lucide-react';
 
 const audiowide = localFont({
     src: "../font/Audiowide-Regular.ttf",

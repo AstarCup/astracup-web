@@ -22,6 +22,7 @@
     "jquery": "^3.7.1",
     "jquery-bracket": "^0.11.1",
     "jszip": "^3.10.1",
+    "lucide-react": "^0.562.0",
     "mysql2": "^3.14.3",
     "next": "^16.0.7",
     "node-api-dotnet": "^0.9.18",

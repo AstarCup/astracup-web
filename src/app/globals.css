@@ -327,11 +327,7 @@ body {
 
 
 
-button {
-  box-shadow: none;
-  border-radius: 0;
-  transition: background-color 0.3s, color 0.3s;
-}
+button {}
 
 table {
   background-color: white;
@@ -466,6 +462,8 @@ select:disabled {
 
 .dropdown-menu {
   @apply absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 shadow-lg z-50 overflow-y-auto;
+  transition: opacity 300ms ease-out, transform 300ms ease-out, max-height 300ms ease-out;
+  transform-origin: top;
 }
 
 .dropdown-option {
@@ -587,42 +585,53 @@ select:disabled {
 
 /* BeatmapCard 闪光动画 */
 @keyframes flash {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
   }
+
   10% {
     opacity: 0.8;
     box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.2);
   }
+
   20% {
     opacity: 1;
     box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.4);
   }
+
   30% {
     opacity: 0.8;
     box-shadow: 0 0 0 15px rgba(255, 255, 255, 0.6);
   }
+
   40% {
     opacity: 1;
     box-shadow: 0 0 0 0px rgba(255, 255, 255, 0.8);
   }
+
   50% {
     opacity: 0.8;
     box-shadow: 0 0 0 0px rgba(255, 255, 255, 0);
   }
+
   60% {
     opacity: 1;
     box-shadow: 0 0 0 20px rgba(255, 255, 255, 0);
   }
+
   70% {
     opacity: 0.8;
     box-shadow: 0 0 0 20px rgba(255, 255, 255, 0);
   }
+
   80% {
     opacity: 1;
     box-shadow: 0 0 0 20px rgba(255, 255, 255, 0);
   }
+
   90% {
     opacity: 0.8;
     box-shadow: 0 0 0 0px rgba(255, 255, 255, 0);
