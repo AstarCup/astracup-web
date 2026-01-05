@@ -118,5 +118,13 @@
         "role": "图池策划、测试",
         "description": "图池策划 测试",
         "coverUrl": "https://assets.ppy.sh/user-cover-presets/35/e0ea464c7da58b8238961bb08b014f89d62f1ef0104fd234a9f9211206314678.jpeg"
+    },
+    {
+        "name": "Crystal",
+        "osuId": "1646397",
+        "avatarUrl": "https://a.ppy.sh/1646397",
+        "role": "图池测试",
+        "description": "图池测试",
+        "coverUrl": "https://assets.ppy.sh/user-profile-covers/1646397/494afc5c575d136c542406588bf7d50f09a92584a18209c1eb91d9168fd0d008.jpeg"
     }
 ]
