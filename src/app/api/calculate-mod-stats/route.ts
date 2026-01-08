@@ -23,22 +23,39 @@ async function getBeatmapFile(beatmapId: number, accessToken?: string): Promise<
     return await response.text();
 }
 
+// 保存.osu文件内容到临时文件
+function saveOsuFileToTemp(osuContent: string, filename: string = 'temp.osu'): string {
+    const tempDir = os.tmpdir();
+    const tempBeatmapPath = path.join(tempDir, filename);
+    fs.writeFileSync(tempBeatmapPath, osuContent);
+    console.log(`Beatmap saved to temporary file: ${tempBeatmapPath}`);
+    return tempBeatmapPath;
+}
+
 // 调用OsuNodeHelper可执行文件计算难度
 async function calculateDifficultyWithExe(
-    beatmapId: number,
+    beatmapId: number | null,
     modsArray: string[],
     modOptions: string[],
-    accessToken?: string
+    accessToken?: string,
+    osuContent?: string
 ): Promise<any> {
     return new Promise(async (resolve, reject) => {
         try {
-            // 获取beatmap文件内容并保存到临时文件
-            const beatmapContent = await getBeatmapFile(beatmapId, accessToken);
-            const tempDir = os.tmpdir();
-            const tempBeatmapPath = path.join(tempDir, `${beatmapId}.osu`);
+            let tempBeatmapPath: string | null = null;
 
-            fs.writeFileSync(tempBeatmapPath, beatmapContent);
-            console.log(`Beatmap saved to temporary file: ${tempBeatmapPath}`);
+            // 如果有.osu文件内容，直接使用
+            if (osuContent) {
+                const filename = beatmapId ? `${beatmapId}.osu` : 'temp.osu';
+                tempBeatmapPath = saveOsuFileToTemp(osuContent, filename);
+            }
+            // 否则从osu! API获取
+            else if (beatmapId) {
+                const beatmapContent = await getBeatmapFile(beatmapId, accessToken);
+                tempBeatmapPath = saveOsuFileToTemp(beatmapContent, `${beatmapId}.osu`);
+            } else {
+                throw new Error('Either beatmapId or osuContent is required');
+            }
 
             // 准备参数
             const args = [
@@ -76,11 +93,13 @@ async function calculateDifficultyWithExe(
 
             child.on('close', (code) => {
                 // 清理临时文件
-                try {
-                    fs.unlinkSync(tempBeatmapPath);
-                    console.log('Temporary beatmap file cleaned up');
-                } catch (cleanupError) {
-                    console.warn('Failed to clean up temporary file:', cleanupError);
+                if (tempBeatmapPath) {
+                    try {
+                        fs.unlinkSync(tempBeatmapPath);
+                        console.log('Temporary beatmap file cleaned up');
+                    } catch (cleanupError) {
+                        console.warn('Failed to clean up temporary file:', cleanupError);
+                    }
                 }
 
                 if (code !== 0) {
@@ -111,10 +130,12 @@ async function calculateDifficultyWithExe(
 
             child.on('error', (error) => {
                 // 清理临时文件
-                try {
-                    fs.unlinkSync(tempBeatmapPath);
-                } catch (cleanupError) {
-                    // 忽略清理错误
+                if (tempBeatmapPath) {
+                    try {
+                        fs.unlinkSync(tempBeatmapPath);
+                    } catch (cleanupError) {
+                        // 忽略清理错误
+                    }
                 }
                 reject(error);
             });
@@ -131,14 +152,16 @@ export async function POST(req: NextRequest) {
             beatmap: beatmapInfo,
             mods,
             accessToken,
-            customSettings
+            customSettings,
+            osuContent // 新增：直接传入.osu文件内容
         } = await req.json();
 
         const { customModName, customDASettings, customDTRate } = customSettings || {};
         const beatmapId = beatmapInfo?.id;
 
-        if (!beatmapId) {
-            return NextResponse.json({ error: 'beatmapId is required' }, { status: 400 });
+        // 验证：至少需要beatmapId或osuContent
+        if (!beatmapId && !osuContent) {
+            return NextResponse.json({ error: 'Either beatmapId or osuContent is required' }, { status: 400 });
         }
 
         // 准备 osu-difficulty 的参数
@@ -204,7 +227,7 @@ export async function POST(req: NextRequest) {
 
         try {
             // 调用可执行文件计算难度
-            const result = await calculateDifficultyWithExe(beatmapId, modsArray, modOptions, accessToken);
+            const result = await calculateDifficultyWithExe(beatmapId, modsArray, modOptions, accessToken, osuContent);
             starRating = result.star_rating || 0;
             aimDifficulty = result.aim_difficulty || 0;
             speedDifficulty = result.speed_difficulty || 0;
