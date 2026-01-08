@@ -330,7 +330,7 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
 
     // 生成右击菜单项
     const getContextMenuItems = (row: any, index: number) => {
-        const items = [
+        const items: any[] = [
             // 工具相关
             {
                 label: '复制谱面ID (BID)',
@@ -340,54 +340,90 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                     showInfo('BID 已复制到剪贴板');
                 },
                 type: 'item' as const
-            },
-            // 导航相关
-            {
-                label: '跳转到 osu! 谱面',
-                icon: '/icons/link.svg',
-                onClick: () => {
-                    window.open(`https://osu.ppy.sh/beatmaps/${row.BID}`, '_blank');
-                },
-                type: 'item' as const
-            },
-            {
-                label: '从osu中打开',
-                icon: '/icons/share.svg',
-                onClick: () => {
-                    window.open(`osu://b/${row.BID}`, '_blank');
-                    showInfo('已在osu客户端中打开谱面');
-                },
-                type: 'item' as const
-            },
-            // 分隔符
-            { type: 'separator' as const, label: '' },
-            // 下载相关
-            {
-                label: '下载谱面 (Nerinyan)',
-                icon: '/icons/download-sayobot.svg',
-                onClick: () => {
-                    const downloadUrl = `https://api.nerinyan.moe/d/${row.SID}`;
-
-                    // 直接跳转到Nerinyan下载链接，让浏览器处理下载
-                    window.open(downloadUrl, '_blank');
-                    showSuccess('已开始从Nerinyan下载');
-                },
-                type: 'item' as const
-            },
-            {
-                label: 'osu官方下载',
-                icon: '/icons/download.svg',
-                onClick: () => {
-                    const downloadUrl = `https://osu.ppy.sh/beatmapsets/${row.SID}/download`;
-                    // 跳转到osu官方下载链接
-                    window.open(downloadUrl, '_blank');
-                    showSuccess('已开始从osu官方下载');
-                },
-                type: 'item' as const
             }
-            // 分隔符
-
         ];
+
+        // 检查是否为负数bid（原创/定制图）
+        const isCustomMap = parseInt(row.BID) < 0;
+
+        if (isCustomMap) {
+            // 原创/定制图：只显示blob下载
+            items.push(
+                // 分隔符
+                { type: 'separator' as const, label: '' },
+                // 下载相关
+                {
+                    label: '下载谱面 (Blob)',
+                    icon: '/icons/download.svg',
+                    onClick: () => {
+                        // 构建blob文件路径
+                        const season = row.season || 's1';
+                        const category = row.category || 'qualification';
+                        const selectedMods = row.selectedMods || 'NM';
+                        const modPosition = row.modPosition || 1;
+                        const beatmapId = parseInt(row.BID);
+
+                        // 生成blob路径（与parse-osz API中的逻辑一致）
+                        const bidStr = beatmapId < 0 ? `-${Math.abs(beatmapId)}` : beatmapId.toString();
+                        const blobPath = `/custom/${season}_${category}_${selectedMods}${modPosition}_${bidStr}.osz`;
+
+                        // 使用新的API下载blob文件
+                        const downloadUrl = `/api/download-blob?path=${encodeURIComponent(blobPath)}`;
+                        window.open(downloadUrl, '_blank');
+                        showInfo('开始从Blob下载原创/定制谱面');
+                    },
+                    type: 'item' as const
+                }
+            );
+        } else {
+            // 普通图：显示所有下载方式
+            items.push(
+                // 导航相关
+                {
+                    label: '跳转到 osu! 谱面',
+                    icon: '/icons/link.svg',
+                    onClick: () => {
+                        window.open(`https://osu.ppy.sh/beatmaps/${row.BID}`, '_blank');
+                    },
+                    type: 'item' as const
+                },
+                {
+                    label: '从osu中打开',
+                    icon: '/icons/share.svg',
+                    onClick: () => {
+                        window.open(`osu://b/${row.BID}`, '_blank');
+                        showInfo('已在osu客户端中打开谱面');
+                    },
+                    type: 'item' as const
+                },
+                // 分隔符
+                { type: 'separator' as const, label: '' },
+                // 下载相关
+                {
+                    label: '下载谱面 (Nerinyan)',
+                    icon: '/icons/download-sayobot.svg',
+                    onClick: () => {
+                        const downloadUrl = `https://api.nerinyan.moe/d/${row.SID}`;
+
+                        // 直接跳转到Nerinyan下载链接，让浏览器处理下载
+                        window.open(downloadUrl, '_blank');
+                        showSuccess('已开始从Nerinyan下载');
+                    },
+                    type: 'item' as const
+                },
+                {
+                    label: 'osu官方下载',
+                    icon: '/icons/download.svg',
+                    onClick: () => {
+                        const downloadUrl = `https://osu.ppy.sh/beatmapsets/${row.SID}/download`;
+                        // 跳转到osu官方下载链接
+                        window.open(downloadUrl, '_blank');
+                        showSuccess('已开始从osu官方下载');
+                    },
+                    type: 'item' as const
+                }
+            );
+        }
 
         // 如果是测图页面，添加跳转到上传区域的选项
         if (showUploadJump && onRowRightClick) {
@@ -551,26 +587,46 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                         </span>
                                     </td>
                                     <td className="overflow-hidden">
-                                        <Image
-                                            src={`https://assets.ppy.sh/beatmaps/${row.SID}/covers/cover.jpg`}
-                                            alt="Cover"
-                                            width={75}
-                                            height={48}
-                                            className="w-19 h-12 object-cover"
-                                            unoptimized
-                                        />
+                                        {parseInt(row.SID) < 0 ? (
+                                            // 负数SID（原创/定制图）：显示默认封面
+                                            <div className="w-19 h-12 bg-gradient-to-r from-purple-100 to-pink-100 flex items-center justify-center">
+                                                <span className="text-pink-600 text-xs font-bold">原创/定制</span>
+                                            </div>
+                                        ) : (
+                                            // 正数SID：显示osu封面
+                                            <Image
+                                                src={`https://assets.ppy.sh/beatmaps/${row.SID}/covers/cover.jpg`}
+                                                alt="Cover"
+                                                width={75}
+                                                height={48}
+                                                className="w-19 h-12 object-cover"
+                                                unoptimized
+                                            />
+                                        )}
                                     </td>
-                                    <td><a
-                                        href={`https://osu.ppy.sh/beatmaps/${row.BID}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-left hover:underline"
-                                        title={row.MapInfo} // 保持tooltip显示完整信息
-                                    >
-                                        {showOriginalTitle && row.title_unicode
-                                            ? `${row.artist_unicode || row.artist} - ${row.title_unicode} [${row.version}]`
-                                            : row.MapInfo}
-                                    </a></td>
+                                    <td>
+                                        {parseInt(row.BID) < 0 ? (
+                                            // 负数bid（原创/定制图）：不显示链接，只显示文本
+                                            <span className="text-left" title={row.MapInfo}>
+                                                {showOriginalTitle && row.title_unicode
+                                                    ? `${row.artist_unicode || row.artist} - ${row.title_unicode} [${row.version}]`
+                                                    : row.MapInfo}
+                                            </span>
+                                        ) : (
+                                            // 正数bid：显示osu链接
+                                            <a
+                                                href={`https://osu.ppy.sh/beatmaps/${row.BID}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-left hover:underline"
+                                                title={row.MapInfo}
+                                            >
+                                                {showOriginalTitle && row.title_unicode
+                                                    ? `${row.artist_unicode || row.artist} - ${row.title_unicode} [${row.version}]`
+                                                    : row.MapInfo}
+                                            </a>
+                                        )}
+                                    </td>
                                     <td>{row._Creator}</td>
                                     <td title="Star 星数">{row.SR}★</td>
                                     <td title={`原生CS: ${row._CS}`}>{row.CS}</td>
@@ -622,14 +678,22 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                         {/* 头部：封面和基本信息 */}
                         <div className="flex items-start gap-3 mb-3">
                             <div className="relative">
-                                <Image
-                                    src={`https://assets.ppy.sh/beatmaps/${detailCard.row.SID}/covers/cover.jpg`}
-                                    alt="Beatmap cover"
-                                    width={512}
-                                    height={512}
-                                    className="w-24 h-19 object-cover rounded"
-                                    unoptimized
-                                />
+                                {parseInt(detailCard.row.SID) < 0 ? (
+                                    // 负数SID（原创/定制图）：显示默认封面
+                                    <div className="w-24 h-19 bg-gradient-to-r from-purple-100 to-pink-100 flex items-center justify-center rounded">
+                                        <span className="text-pink-600 text-sm font-bold">原创/定制</span>
+                                    </div>
+                                ) : (
+                                    // 正数SID：显示osu封面
+                                    <Image
+                                        src={`https://assets.ppy.sh/beatmaps/${detailCard.row.SID}/covers/cover.jpg`}
+                                        alt="Beatmap cover"
+                                        width={512}
+                                        height={512}
+                                        className="w-24 h-19 object-cover rounded"
+                                        unoptimized
+                                    />
+                                )}
                             </div>
 
                             <div className="flex-1 min-w-0">

@@ -27,7 +27,8 @@ import {
     Hourglass,
     CircleStar,
     Music3,
-    Star
+    Star,
+    CloudUpload
 } from 'lucide-react';
 
 interface User {
@@ -215,6 +216,33 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     const [beatmapPreview, setBeatmapPreview] = useState<BeatmapInfo | null>(null);
     const [availableBeatmaps, setAvailableBeatmaps] = useState<BeatmapInfo[]>([]);
     const [moddedStats, setModdedStats] = useState<ModdedStats | null>(null);
+
+    // 自定图池表单状态
+    const [customTitle, setCustomTitle] = useState('');
+    const [customTitleUnicode, setCustomTitleUnicode] = useState('');
+    const [customArtist, setCustomArtist] = useState('');
+    const [customArtistUnicode, setCustomArtistUnicode] = useState('');
+    const [customVersion, setCustomVersion] = useState('');
+    const [customCreator, setCustomCreator] = useState('');
+    const [customStarRating, setCustomStarRating] = useState<number | ''>('');
+    const [customBPM, setCustomBPM] = useState<number | ''>('');
+    const [customTotalLength, setCustomTotalLength] = useState<number | ''>('');
+    const [customMaxCombo, setCustomMaxCombo] = useState<number | ''>('');
+    const [customPoolCS, setCustomPoolCS] = useState<number | ''>('');
+    const [customPoolAR, setCustomPoolAR] = useState<number | ''>('');
+    const [customPoolOD, setCustomPoolOD] = useState<number | ''>('');
+    const [customPoolHP, setCustomPoolHP] = useState<number | ''>('');
+    const [customPoolType, setCustomPoolType] = useState<'original' | 'custom'>('original');
+
+    // osz文件上传状态
+    const [oszFile, setOszFile] = useState<File | null>(null);
+    const [isUploadingOsz, setIsUploadingOsz] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [oszUploadError, setOszUploadError] = useState<string | null>(null);
+    const [oszUploadSuccess, setOszUploadSuccess] = useState(false);
+    const [oszBeatmapInfos, setOszBeatmapInfos] = useState<any[]>([]);
+    const [selectedDifficultyIndex, setSelectedDifficultyIndex] = useState<number>(0);
+    const [showDifficultySelector, setShowDifficultySelector] = useState(false);
 
     // 重复检查状态
     const [duplicateWarning, setDuplicateWarning] = useState<{
@@ -774,6 +802,373 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         } catch (error) {
             console.error('Add selection error:', error);
             showError('添加选图时出错');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // 处理osz文件上传
+    const handleOszUpload = async () => {
+        if (!oszFile) {
+            showError('请选择.osz文件');
+            return;
+        }
+        if (!userForState?.id) {
+            showError('请先登录');
+            return;
+        }
+
+        setIsUploadingOsz(true);
+        setOszUploadError(null);
+        setOszUploadSuccess(false);
+        setUploadProgress(0);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', oszFile);
+            formData.append('userId', userForState.id.toString());
+            formData.append('season', season);
+            formData.append('category', category);
+            formData.append('selectedMods', selectedMods);
+            formData.append('modPosition', modPosition.toString());
+
+            const response = await fetch('/api/parse-osz', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setOszUploadSuccess(true);
+                showSuccess('osz文件解析成功');
+
+                // 存储所有难度信息
+                setOszBeatmapInfos(data.beatmapInfos || []);
+
+                if (data.hasMultipleDifficulties && data.beatmapInfos.length > 1) {
+                    // 如果有多个难度，显示选择器
+                    setShowDifficultySelector(true);
+                    setSelectedDifficultyIndex(0);
+                } else {
+                    // 如果只有一个难度，直接填充表单
+                    const beatmapInfo = data.beatmapInfos[0];
+                    fillFormWithBeatmapInfo(beatmapInfo);
+                    // 重置文件状态
+                    setOszFile(null);
+                }
+            } else {
+                setOszUploadError(data.error || '上传失败');
+                showError(data.error || 'osz文件解析失败');
+            }
+        } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : '上传失败';
+            setOszUploadError(errorMsg);
+            showError(`上传失败: ${errorMsg}`);
+        } finally {
+            setIsUploadingOsz(false);
+            setUploadProgress(100);
+        }
+    };
+
+    // 重新计算mod后的属性
+    const recalculateModStats = async (beatmapInfo: any, newMods: string) => {
+        try {
+            // 调用calculate-mod-stats API重新计算
+            const response = await fetch('/api/calculate-mod-stats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    beatmap: {
+                        id: beatmapInfo.beatmapId,
+                        title: beatmapInfo.title,
+                        artist: beatmapInfo.artist,
+                        creator: beatmapInfo.creator,
+                        bpm: beatmapInfo.bpm,
+                        totalLength: beatmapInfo.totalLength
+                    },
+                    mods: newMods,
+                    customSettings: {
+                        customModName: '',
+                        customDASettings: null,
+                        customDTRate: null
+                    },
+                    osuContent: beatmapInfo.osuContent // 注意：这里需要.osu文件内容
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const modStats = data.modStats;
+
+                // 更新表单字段，计算后的时长单位是毫秒，需要转换为秒
+                setCustomPoolCS(modStats.cs || '');
+                setCustomPoolAR(modStats.ar || '');
+                setCustomPoolOD(modStats.od || '');
+                setCustomPoolHP(modStats.hp || '');
+                setCustomBPM(modStats.bpm || '');
+                const totalLengthInSeconds = modStats.totalLength ? Math.round(modStats.totalLength / 1000) : '';
+                setCustomTotalLength(totalLengthInSeconds);
+                setCustomStarRating(modStats.starRating || '');
+                setCustomMaxCombo(modStats.maxCombo || '');
+
+                showSuccess(`已重新计算 ${newMods} 后的属性`);
+            } else {
+                showError('重新计算属性失败');
+            }
+        } catch (error) {
+            console.error('Error recalculating mod stats:', error);
+            showError('重新计算属性时出错');
+        }
+    };
+
+    // 用beatmap信息填充表单
+    const fillFormWithBeatmapInfo = (beatmapInfo: any) => {
+        setCustomTitle(beatmapInfo.title || '');
+        setCustomTitleUnicode(beatmapInfo.titleUnicode || '');
+        setCustomArtist(beatmapInfo.artist || '');
+        setCustomArtistUnicode(beatmapInfo.artistUnicode || '');
+        setCustomVersion(beatmapInfo.version || '');
+        setCustomCreator(beatmapInfo.creator || '');
+        setCustomPoolCS(beatmapInfo.cs ? parseFloat(beatmapInfo.cs.toFixed(2)) : '');
+        setCustomPoolAR(beatmapInfo.ar ? parseFloat(beatmapInfo.ar.toFixed(2)) : '');
+        setCustomPoolOD(beatmapInfo.od ? parseFloat(beatmapInfo.od.toFixed(2)) : '');
+        setCustomPoolHP(beatmapInfo.hp ? parseFloat(beatmapInfo.hp.toFixed(2)) : '');
+        setCustomBPM(beatmapInfo.bpm ? parseFloat(beatmapInfo.bpm.toFixed(2)) : '');
+        // osz解析出的时长单位是毫秒，需要转换为秒
+        const totalLengthInSeconds = beatmapInfo.totalLength ? Math.round(beatmapInfo.totalLength / 1000) : '';
+        setCustomTotalLength(totalLengthInSeconds);
+        setCustomStarRating(beatmapInfo.starRating ? parseFloat(beatmapInfo.starRating.toFixed(2)) : '');
+        setCustomMaxCombo(beatmapInfo.maxCombo || '');
+    };
+
+    // 处理难度选择
+    const handleDifficultySelect = (index: number) => {
+        setSelectedDifficultyIndex(index);
+        const beatmapInfo = oszBeatmapInfos[index];
+        fillFormWithBeatmapInfo(beatmapInfo);
+        setShowDifficultySelector(false);
+        // 重置文件状态
+        setOszFile(null);
+    };
+
+    // 当selectedMods变化时，如果有oszBeatmapInfos，重新计算属性
+    useEffect(() => {
+        const recalculateOnModChange = async () => {
+            if (oszBeatmapInfos.length > 0 && selectedDifficultyIndex >= 0 && selectedDifficultyIndex < oszBeatmapInfos.length) {
+                const beatmapInfo = oszBeatmapInfos[selectedDifficultyIndex];
+                if (beatmapInfo && beatmapInfo.osuContent) {
+                    try {
+                        // 调用calculate-mod-stats API重新计算
+                        const response = await fetch('/api/calculate-mod-stats', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                beatmap: {
+                                    id: beatmapInfo.beatmapId,
+                                    title: beatmapInfo.title,
+                                    artist: beatmapInfo.artist,
+                                    creator: beatmapInfo.creator,
+                                    bpm: beatmapInfo.bpm,
+                                    totalLength: beatmapInfo.totalLength
+                                },
+                                mods: selectedMods,
+                                customSettings: {
+                                    customModName: '',
+                                    customDASettings: null,
+                                    customDTRate: null
+                                },
+                                osuContent: beatmapInfo.osuContent
+                            })
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            const modStats = data.modStats;
+
+                            // 更新表单字段，保留2位小数，计算后的时长单位是毫秒，需要转换为秒
+                            setCustomPoolCS(modStats.cs ? parseFloat(modStats.cs.toFixed(2)) : '');
+                            setCustomPoolAR(modStats.ar ? parseFloat(modStats.ar.toFixed(2)) : '');
+                            setCustomPoolOD(modStats.od ? parseFloat(modStats.od.toFixed(2)) : '');
+                            setCustomPoolHP(modStats.hp ? parseFloat(modStats.hp.toFixed(2)) : '');
+                            setCustomBPM(modStats.bpm ? parseFloat(modStats.bpm.toFixed(2)) : '');
+                            const totalLengthInSeconds = modStats.totalLength ? Math.round(modStats.totalLength / 1000) : '';
+                            setCustomTotalLength(totalLengthInSeconds);
+                            setCustomStarRating(modStats.starRating ? parseFloat(modStats.starRating.toFixed(2)) : '');
+                            setCustomMaxCombo(modStats.maxCombo || '');
+                        }
+                    } catch (error) {
+                        console.error('Error recalculating mod stats on mod change:', error);
+                    }
+                }
+            }
+        };
+
+        // 延迟执行，避免频繁调用
+        const timeoutId = setTimeout(recalculateOnModChange, 500);
+        return () => clearTimeout(timeoutId);
+    }, [selectedMods, oszBeatmapInfos, selectedDifficultyIndex]);
+
+    // 处理文件选择
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // 验证文件类型
+        if (!file.name.toLowerCase().endsWith('.osz')) {
+            showError('只支持.osz文件格式');
+            return;
+        }
+
+        // 验证文件大小（50MB限制）
+        if (file.size > 50 * 1024 * 1024) {
+            showError('文件大小不能超过50MB');
+            return;
+        }
+
+        setOszFile(file);
+        setOszUploadError(null);
+        setOszUploadSuccess(false);
+    };
+
+    // 添加自定图池
+    const addCustomPool = async () => {
+        // 验证必填字段
+        if (!customTitle.trim()) {
+            showError('请输入歌曲名');
+            return;
+        }
+        if (!customArtist.trim()) {
+            showError('请输入艺术家');
+            return;
+        }
+        if (!customVersion.trim()) {
+            showError('请输入难度名');
+            return;
+        }
+        if (!customCreator.trim()) {
+            showError('请输入谱师');
+            return;
+        }
+        if (!userForState?.id) {
+            showError('请先登录');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            // 生成虚拟ID（使用负数避免与真实beatmap ID冲突）
+            const virtualBeatmapId = -Math.floor(Date.now() / 1000);
+            const virtualBeatmapsetId = -Math.floor(Date.now() / 1000) - 1;
+
+            // 根据选择设置customModName
+            const customModNameValue = customPoolType === 'original' ? '原创' : '定制';
+
+            // 如果有osz文件，使用负数bid重新上传
+            if (oszFile && oszUploadSuccess) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', oszFile);
+                    formData.append('userId', userForState.id.toString());
+                    formData.append('season', season);
+                    formData.append('category', category);
+                    formData.append('selectedMods', selectedMods);
+                    formData.append('modPosition', modPosition.toString());
+                    formData.append('customBeatmapId', virtualBeatmapId.toString()); // 传递负数bid
+
+                    const uploadResponse = await fetch('/api/parse-osz', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const uploadData = await uploadResponse.json();
+                    if (!uploadData.success) {
+                        console.warn('重新上传osz文件失败，但继续提交自定图池:', uploadData.error);
+                    }
+                } catch (uploadError) {
+                    console.warn('重新上传osz文件时出错，但继续提交自定图池:', uploadError);
+                }
+            }
+
+            const response = await fetch('/api/map-selections', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    beatmapId: virtualBeatmapId,
+                    beatmapsetId: virtualBeatmapsetId,
+                    title: customTitle,
+                    title_unicode: customTitleUnicode || customTitle,
+                    artist: customArtist,
+                    artist_unicode: customArtistUnicode || customArtist,
+                    version: customVersion,
+                    creator: customCreator,
+                    starRating: customStarRating !== '' ? customStarRating : 5.0,
+                    bpm: customBPM !== '' ? customBPM : 180,
+                    totalLength: customTotalLength !== '' ? customTotalLength : 120,
+                    maxCombo: customMaxCombo !== '' ? customMaxCombo : 1000,
+                    ar: customPoolAR !== '' ? customPoolAR : 9.0,
+                    cs: customPoolCS !== '' ? customPoolCS : 4.0,
+                    od: customPoolOD !== '' ? customPoolOD : 8.0,
+                    hp: customPoolHP !== '' ? customPoolHP : 6.0,
+                    selectedMods,
+                    modPosition,
+                    comment,
+                    approved,
+                    padding,
+                    season,
+                    category,
+                    url: `custom://pool/${virtualBeatmapId}`,
+                    coverUrl: '', // 自定图池没有封面
+                    selectedBy: userForState.id.toString(),
+                    selectedByUsername: userForState.username,
+                    selectedByAvatar: userForState.avatar_url,
+                    customModName: customModNameValue,
+                    customDTRate: selectedMods === 'DT' && customDTRate !== '' ? customDTRate : null,
+                    isCustomPool: true // 标记为自定图池
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                showSuccess('自定图池添加成功');
+                // 重置表单
+                setCustomTitle('');
+                setCustomTitleUnicode('');
+                setCustomArtist('');
+                setCustomArtistUnicode('');
+                setCustomVersion('');
+                setCustomCreator('');
+                setCustomStarRating('');
+                setCustomBPM('');
+                setCustomTotalLength('');
+                setCustomMaxCombo('');
+                setCustomPoolCS('');
+                setCustomPoolAR('');
+                setCustomPoolOD('');
+                setCustomPoolHP('');
+                setCustomPoolType('original');
+                setComment('');
+                setApproved(false);
+                setPadding(false);
+                setSelectedMods('NM');
+                setModPosition(1);
+                setOszFile(null);
+                setOszUploadSuccess(false);
+
+                // 刷新选图列表
+                await fetchSelections();
+            } else {
+                showError(data.error || '添加自定图池失败');
+            }
+        } catch (error) {
+            console.error('Add custom pool error:', error);
+            showError('添加自定图池时出错');
         } finally {
             setIsSubmitting(false);
         }
@@ -1519,12 +1914,15 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 {/* 添加选图按钮 */}
                 {(permissions.isMapSelector || permissions.isAdmin) && (
                     <button
-                        onClick={() => setShowAddForm(!showAddForm)}
+                        onClick={() => {
+                            setShowAddForm(!showAddForm);
+                        }}
                         className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
                     >
                         {showAddForm ? '取消添加' : '+ 添加选图'}
                     </button>
                 )}
+
 
                 {/* 批量过审按钮 */}
                 {(permissions.isAdmin || permissions.isMapSelector) && tempApprovedSelections.size > 0 && (
@@ -1539,366 +1937,763 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
             {/* 添加选图表单 */}
             {showAddForm && (
-                <div className="mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50 max-w-5xl object-center">
-                    <h3 className="text-lg font-bold mb-4">添加新选图</h3>
-                    {/* URL输入 */}
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Beatmap URL
-                        </label>
-                        <input
-                            type="text"
-                            value={urlInput}
-                            onChange={handleUrlInputChange}
-                            onKeyDown={handleUrlInputKeyDown}
-                            placeholder="粘贴osu! beatmap链接或ID"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            disabled={isSubmitting}
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                            支持完整的URL或beatmap ID，按回车键解析
-                        </p>
-                    </div>
-
-                    {/* Beatmap选择 */}
-                    {availableBeatmaps.length > 1 && (
+                <div className='grid gap-2 grid-cols-1 md:grid-cols-2'>
+                    <div className="mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50 object-center">
+                        <h3 className="text-lg font-bold mb-4">添加新选图</h3>
+                        {/* URL输入 */}
                         <div className="mb-4">
-                            <Dropdown
-                                label="选择难度"
-                                options={[
-                                    { value: '', label: '请选择难度...' },
-                                    ...availableBeatmaps.map(beatmap => ({
-                                        value: beatmap.id.toString(),
-                                        label: `${beatmap.version} (${beatmap.star_rating.toFixed(2)}★)`
-                                    }))
-                                ]}
-                                value={beatmapPreview?.id?.toString() || ''}
-                                onChange={(value) => {
-                                    const selected = availableBeatmaps.find(b => b.id.toString() === value);
-                                    setBeatmapPreview(selected || null);
-                                }}
-                                placeholder="请选择难度..."
-                                minWidth="100%"
-                            />
-                        </div>
-                    )}
-
-                    {/* Beatmap预览 */}
-                    {beatmapPreview && (
-                        <div className="mb-4 p-4 bg-white border border-gray-300 rounded-lg shadow-sm max-w-[660px]">
-                            {/* 头部：封面和基本信息 */}
-                            <div className="flex items-start gap-3 mb-3">
-                                <Image
-                                    src={beatmapPreview.cover_url}
-                                    alt="Beatmap cover"
-                                    width={512}
-                                    height={512}
-                                    className="w-28 h-19 object-cover rounded"
-                                />
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="font-bold text-sm truncate" title={beatmapPreview.title_unicode || beatmapPreview.title}>
-                                        {beatmapPreview.title_unicode || beatmapPreview.title}
-                                    </h3>
-                                    <p className="font-bold text-xs text-gray-600 truncate" title={beatmapPreview.artist_unicode || beatmapPreview.artist}>
-                                        {beatmapPreview.artist_unicode || beatmapPreview.artist}
-                                    </p>
-                                    <p className="font-bold text-xs text-gray-600">[{beatmapPreview.version}] by {beatmapPreview.creator}</p>
-                                </div>
-                            </div>
-
-                            {/* 属性信息 */}
-                            <div className="mb-3 text-xs text-gray-600">
-                                <div className="grid grid-cols-4 gap-1">
-                                    <div className="text-center font-medium">CS</div>
-                                    <div className="text-center font-medium">AR</div>
-                                    <div className="text-center font-medium">OD</div>
-                                    <div className="text-center font-medium">HP</div>
-
-                                    <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.cs !== undefined ? (moddedStats.cs > beatmapPreview.cs + 0.01 ? 'text-red-500' : moddedStats.cs < beatmapPreview.cs - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                        {(() => {
-                                            const val = moddedStats?.cs ?? beatmapPreview.cs;
-                                            if (selectedMods !== 'NM' && moddedStats?.cs !== undefined) {
-                                                if (moddedStats.cs > beatmapPreview.cs + 0.01) return `${val.toFixed(2)} ▲`;
-                                                if (moddedStats.cs < beatmapPreview.cs - 0.01) return `${val.toFixed(2)} ▼`;
-                                            }
-                                            return val.toFixed(2);
-                                        })()}
-                                    </div>
-                                    <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.ar !== undefined ? (moddedStats.ar > beatmapPreview.ar + 0.01 ? 'text-red-500' : moddedStats.ar < beatmapPreview.ar - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                        {(() => {
-                                            const val = moddedStats?.ar ?? beatmapPreview.ar;
-                                            if (selectedMods !== 'NM' && moddedStats?.ar !== undefined) {
-                                                if (moddedStats.ar > beatmapPreview.ar + 0.01) return `${val.toFixed(2)} ▲`;
-                                                if (moddedStats.ar < beatmapPreview.ar - 0.01) return `${val.toFixed(2)} ▼`;
-                                            }
-                                            return val.toFixed(2);
-                                        })()}
-                                    </div>
-                                    <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.od !== undefined ? (moddedStats.od > beatmapPreview.od + 0.01 ? 'text-red-500' : moddedStats.od < beatmapPreview.od - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                        {(() => {
-                                            const val = moddedStats?.od ?? beatmapPreview.od;
-                                            if (selectedMods !== 'NM' && moddedStats?.od !== undefined) {
-                                                if (moddedStats.od > beatmapPreview.od + 0.01) return `${val.toFixed(2)} ▲`;
-                                                if (moddedStats.od < beatmapPreview.od - 0.01) return `${val.toFixed(2)} ▼`;
-                                            }
-                                            return val.toFixed(2);
-                                        })()}
-                                    </div>
-                                    <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.hp !== undefined ? (moddedStats.hp > beatmapPreview.hp + 0.01 ? 'text-red-500' : moddedStats.hp < beatmapPreview.hp - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                        {(() => {
-                                            const val = moddedStats?.hp ?? beatmapPreview.hp;
-                                            if (selectedMods !== 'NM' && moddedStats?.hp !== undefined) {
-                                                if (moddedStats.hp > beatmapPreview.hp + 0.01) return `${val.toFixed(2)} ▲`;
-                                                if (moddedStats.hp < beatmapPreview.hp - 0.01) return `${val.toFixed(2)} ▼`;
-                                            }
-                                            return val.toFixed(2);
-                                        })()}
-                                    </div>
-
-                                    <div className="text-center font-medium">Length</div>
-                                    <div className="text-center font-medium">MaxC</div>
-                                    <div className="text-center font-medium">BPM</div>
-                                    <div className="text-center font-medium">★</div>
-                                    <div className={`text-center font-bold text-base ${selectedMods === 'DT' && customDTRate !== '' ? 'text-red-500' : ''}`}>
-                                        {selectedMods === 'DT' && customDTRate !== '' ?
-                                            formatLength(Math.round(beatmapPreview.total_length / (customDTRate as number))) + ' ▼' :
-                                            formatLength(beatmapPreview.total_length)
-                                        }
-                                    </div>
-                                    <div className="text-center font-bold text-base">
-                                        {beatmapPreview.max_combo || 0}
-                                    </div>
-                                    <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.bpm !== undefined ? (moddedStats.bpm > beatmapPreview.bpm + 0.01 ? 'text-red-500' : moddedStats.bpm < beatmapPreview.bpm - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                        {(() => {
-                                            const val = moddedStats?.bpm ?? beatmapPreview.bpm;
-                                            if (selectedMods !== 'NM' && moddedStats?.bpm !== undefined) {
-                                                if (moddedStats.bpm > beatmapPreview.bpm + 0.01) return `${val} ▲`;
-                                                if (moddedStats.bpm < beatmapPreview.bpm - 0.01) return `${val} ▼`;
-                                            }
-                                            return val;
-                                        })()}
-                                    </div>
-                                    <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.starRating !== undefined ? (moddedStats.starRating > beatmapPreview.star_rating + 0.01 ? 'text-red-500' : moddedStats.starRating < beatmapPreview.star_rating - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                        {(() => {
-                                            const val = moddedStats?.starRating ?? beatmapPreview.star_rating;
-                                            if (selectedMods !== 'NM' && moddedStats?.starRating !== undefined) {
-                                                if (moddedStats.starRating > beatmapPreview.star_rating + 0.01) return `${val.toFixed(2)} ▲`;
-                                                if (moddedStats.starRating < beatmapPreview.star_rating - 0.01) return `${val.toFixed(2)} ▼`;
-                                            }
-                                            return val.toFixed(2);
-                                        })()}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Mod选择 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div className="min-w-[220px]">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Mod
-                            </label>
-                            <Dropdown
-                                options={MOD_OPTIONS.map(mod => ({
-                                    value: mod,
-                                    label: mod
-                                }))}
-                                value={selectedMods}
-                                onChange={setSelectedMods}
-                                placeholder="选择MOD"
-                                minWidth="100%"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                位置
+                                Beatmap URL
                             </label>
                             <input
-                                type="number"
-                                min="1"
-                                max="10"
-                                value={modPosition}
-                                onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
+                                type="text"
+                                value={urlInput}
+                                onChange={handleUrlInputChange}
+                                onKeyDown={handleUrlInputKeyDown}
+                                placeholder="粘贴osu! beatmap链接或ID"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                disabled={isSubmitting}
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                                支持完整的URL或beatmap ID，按回车键解析
+                            </p>
+                        </div>
+
+                        {/* Beatmap选择 */}
+                        {availableBeatmaps.length > 1 && (
+                            <div className="mb-4">
+                                <Dropdown
+                                    label="选择难度"
+                                    options={[
+                                        { value: '', label: '请选择难度...' },
+                                        ...availableBeatmaps.map(beatmap => ({
+                                            value: beatmap.id.toString(),
+                                            label: `${beatmap.version} (${beatmap.star_rating.toFixed(2)}★)`
+                                        }))
+                                    ]}
+                                    value={beatmapPreview?.id?.toString() || ''}
+                                    onChange={(value) => {
+                                        const selected = availableBeatmaps.find(b => b.id.toString() === value);
+                                        setBeatmapPreview(selected || null);
+                                    }}
+                                    placeholder="请选择难度..."
+                                    minWidth="100%"
+                                />
+                            </div>
+                        )}
+
+                        {/* Beatmap预览 */}
+                        {beatmapPreview && (
+                            <div className="mb-4 p-4 bg-white border border-gray-300 rounded-lg shadow-sm max-w-[660px]">
+                                {/* 头部：封面和基本信息 */}
+                                <div className="flex items-start gap-3 mb-3">
+                                    <Image
+                                        src={beatmapPreview.cover_url}
+                                        alt="Beatmap cover"
+                                        width={512}
+                                        height={512}
+                                        className="w-28 h-19 object-cover rounded"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-sm truncate" title={beatmapPreview.title_unicode || beatmapPreview.title}>
+                                            {beatmapPreview.title_unicode || beatmapPreview.title}
+                                        </h3>
+                                        <p className="font-bold text-xs text-gray-600 truncate" title={beatmapPreview.artist_unicode || beatmapPreview.artist}>
+                                            {beatmapPreview.artist_unicode || beatmapPreview.artist}
+                                        </p>
+                                        <p className="font-bold text-xs text-gray-600">[{beatmapPreview.version}] by {beatmapPreview.creator}</p>
+                                    </div>
+                                </div>
+
+                                {/* 属性信息 */}
+                                <div className="mb-3 text-xs text-gray-600">
+                                    <div className="grid grid-cols-4 gap-1">
+                                        <div className="text-center font-medium">CS</div>
+                                        <div className="text-center font-medium">AR</div>
+                                        <div className="text-center font-medium">OD</div>
+                                        <div className="text-center font-medium">HP</div>
+
+                                        <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.cs !== undefined ? (moddedStats.cs > beatmapPreview.cs + 0.01 ? 'text-red-500' : moddedStats.cs < beatmapPreview.cs - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                            {(() => {
+                                                const val = moddedStats?.cs ?? beatmapPreview.cs;
+                                                if (selectedMods !== 'NM' && moddedStats?.cs !== undefined) {
+                                                    if (moddedStats.cs > beatmapPreview.cs + 0.01) return `${val.toFixed(2)} ▲`;
+                                                    if (moddedStats.cs < beatmapPreview.cs - 0.01) return `${val.toFixed(2)} ▼`;
+                                                }
+                                                return val.toFixed(2);
+                                            })()}
+                                        </div>
+                                        <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.ar !== undefined ? (moddedStats.ar > beatmapPreview.ar + 0.01 ? 'text-red-500' : moddedStats.ar < beatmapPreview.ar - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                            {(() => {
+                                                const val = moddedStats?.ar ?? beatmapPreview.ar;
+                                                if (selectedMods !== 'NM' && moddedStats?.ar !== undefined) {
+                                                    if (moddedStats.ar > beatmapPreview.ar + 0.01) return `${val.toFixed(2)} ▲`;
+                                                    if (moddedStats.ar < beatmapPreview.ar - 0.01) return `${val.toFixed(2)} ▼`;
+                                                }
+                                                return val.toFixed(2);
+                                            })()}
+                                        </div>
+                                        <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.od !== undefined ? (moddedStats.od > beatmapPreview.od + 0.01 ? 'text-red-500' : moddedStats.od < beatmapPreview.od - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                            {(() => {
+                                                const val = moddedStats?.od ?? beatmapPreview.od;
+                                                if (selectedMods !== 'NM' && moddedStats?.od !== undefined) {
+                                                    if (moddedStats.od > beatmapPreview.od + 0.01) return `${val.toFixed(2)} ▲`;
+                                                    if (moddedStats.od < beatmapPreview.od - 0.01) return `${val.toFixed(2)} ▼`;
+                                                }
+                                                return val.toFixed(2);
+                                            })()}
+                                        </div>
+                                        <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.hp !== undefined ? (moddedStats.hp > beatmapPreview.hp + 0.01 ? 'text-red-500' : moddedStats.hp < beatmapPreview.hp - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                            {(() => {
+                                                const val = moddedStats?.hp ?? beatmapPreview.hp;
+                                                if (selectedMods !== 'NM' && moddedStats?.hp !== undefined) {
+                                                    if (moddedStats.hp > beatmapPreview.hp + 0.01) return `${val.toFixed(2)} ▲`;
+                                                    if (moddedStats.hp < beatmapPreview.hp - 0.01) return `${val.toFixed(2)} ▼`;
+                                                }
+                                                return val.toFixed(2);
+                                            })()}
+                                        </div>
+
+                                        <div className="text-center font-medium">Length</div>
+                                        <div className="text-center font-medium">MaxC</div>
+                                        <div className="text-center font-medium">BPM</div>
+                                        <div className="text-center font-medium">★</div>
+                                        <div className={`text-center font-bold text-base ${selectedMods === 'DT' && customDTRate !== '' ? 'text-red-500' : ''}`}>
+                                            {selectedMods === 'DT' && customDTRate !== '' ?
+                                                formatLength(Math.round(beatmapPreview.total_length / (customDTRate as number))) + ' ▼' :
+                                                formatLength(beatmapPreview.total_length)
+                                            }
+                                        </div>
+                                        <div className="text-center font-bold text-base">
+                                            {beatmapPreview.max_combo || 0}
+                                        </div>
+                                        <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.bpm !== undefined ? (moddedStats.bpm > beatmapPreview.bpm + 0.01 ? 'text-red-500' : moddedStats.bpm < beatmapPreview.bpm - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                            {(() => {
+                                                const val = moddedStats?.bpm ?? beatmapPreview.bpm;
+                                                if (selectedMods !== 'NM' && moddedStats?.bpm !== undefined) {
+                                                    if (moddedStats.bpm > beatmapPreview.bpm + 0.01) return `${val} ▲`;
+                                                    if (moddedStats.bpm < beatmapPreview.bpm - 0.01) return `${val} ▼`;
+                                                }
+                                                return val;
+                                            })()}
+                                        </div>
+                                        <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.starRating !== undefined ? (moddedStats.starRating > beatmapPreview.star_rating + 0.01 ? 'text-red-500' : moddedStats.starRating < beatmapPreview.star_rating - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                            {(() => {
+                                                const val = moddedStats?.starRating ?? beatmapPreview.star_rating;
+                                                if (selectedMods !== 'NM' && moddedStats?.starRating !== undefined) {
+                                                    if (moddedStats.starRating > beatmapPreview.star_rating + 0.01) return `${val.toFixed(2)} ▲`;
+                                                    if (moddedStats.starRating < beatmapPreview.star_rating - 0.01) return `${val.toFixed(2)} ▼`;
+                                                }
+                                                return val.toFixed(2);
+                                            })()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Mod选择 */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div className="min-w-[220px]">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Mod
+                                </label>
+                                <Dropdown
+                                    options={MOD_OPTIONS.map(mod => ({
+                                        value: mod,
+                                        label: mod
+                                    }))}
+                                    value={selectedMods}
+                                    onChange={setSelectedMods}
+                                    placeholder="选择MOD"
+                                    minWidth="100%"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    位置
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="10"
+                                    value={modPosition}
+                                    onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Lazer特有mod设置 */}
+                        {selectedMods === 'LZ' && (
+                            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                <h4 className="font-medium text-blue-800 mb-2">Lazer特有MOD设置</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className='min-w-[300px]'>
+                                        <Dropdown
+                                            label="MOD名称"
+                                            options={[
+                                                { value: '', label: '选择MOD...' },
+                                                ...availableLazerMods.map(mod => ({
+                                                    value: mod.name,
+                                                    label: `${mod.name} - ${mod.description}`
+                                                }))
+                                            ]}
+                                            value={customModName}
+                                            onChange={setCustomModName}
+                                            placeholder="选择MOD..."
+                                            minWidth="100%"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* DA mod自定义属性 */}
+                                {customModName === 'DA' && (
+                                    <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                                        <h5 className="font-medium text-yellow-800 mb-2">Difficulty Adjust 设置</h5>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                            <div>
+                                                <label className="block text-xs text-gray-600 mb-1">CS</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.1"
+                                                    min="0"
+                                                    max="10"
+                                                    value={customCS}
+                                                    onChange={(e) => setCustomCS(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                                    placeholder="不修改则为原值"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-600 mb-1">AR</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.1"
+                                                    min="0"
+                                                    max="10"
+                                                    value={customAR}
+                                                    onChange={(e) => setCustomAR(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                                    placeholder="不修改则为原值"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-600 mb-1">OD</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.1"
+                                                    min="0"
+                                                    max="10"
+                                                    value={customOD}
+                                                    onChange={(e) => setCustomOD(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                                    placeholder="不修改则为原值"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-600 mb-1">HP</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.1"
+                                                    min="0"
+                                                    max="10"
+                                                    value={customHP}
+                                                    onChange={(e) => setCustomHP(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                                    placeholder="不修改则为原值"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* DT自定义倍率 */}
+                        {selectedMods === 'DT' && (
+                            <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-md">
+                                <h4 className="font-medium text-purple-800 mb-2">DT 设置</h4>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        自定义倍率
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="1.0"
+                                        max="2.0"
+                                        value={customDTRate}
+                                        onChange={(e) => setCustomDTRate(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        placeholder="1.50"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        默认1.50倍，可自定义1.00-2.00之间的倍率
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+
+                        {/* 重复检查警告 */}
+                        {duplicateWarning.show && (
+                            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                                <h4 className="font-medium text-yellow-800 mb-2">重复检测</h4>
+                                <p className="text-yellow-700 text-sm mb-2">
+                                    此谱面已被选择 {duplicateWarning.existingSelections.length} 次：
+                                </p>
+                                <ul className="text-sm text-yellow-700 list-disc list-inside">
+                                    {duplicateWarning.existingSelections.map((sel: ExistingSelection, index: number) => (
+                                        <li key={index}>
+                                            {sel.selectedMods}{sel.modPosition} - {sel.category} - {sel.selectedByUsername}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        {/* 评论和选项 */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2 flex flex-cow items-center gap-1">
+                                <MessageCircleMore size={16} />评论
+                            </label>
+                            <textarea
+                                value={comment}
+                                onChange={(e) => setComment(e.target.value)}
+                                placeholder="添加评论..."
+                                rows={3}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
-                    </div>
 
-                    {/* Lazer特有mod设置 */}
-                    {selectedMods === 'LZ' && (
+                        <div className="flex gap-4 items-center mb-4">
+                            <label className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={padding}
+                                    onChange={(e) => setPadding(e.target.checked)}
+                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-gray-700">送测该图</span>
+                            </label>
+                        </div>
+
+                        {/* 提交按钮 */}
+                        <div className="flex gap-4">
+                            <button
+                                onClick={addSelection}
+                                disabled={isSubmitting || !beatmapPreview}
+                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 text-white rounded-md transition-colors"
+                            >
+                                {isSubmitting ? '添加中...' : '添加选图'}
+                            </button>
+                            <button
+                                onClick={() => setShowAddForm(false)}
+                                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors"
+                            >
+                                取消
+                            </button>
+                        </div>
+                    </div>
+                    <div className="mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50 object-center">
+                        <h3 className="text-lg font-bold mb-4">添加自定图池</h3>
+                        {/* osz文件上传区域 */}
+                        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                            <h4 className="font-medium text-green-800 mb-2">osz文件上传</h4>
+                            <p className="text-sm text-gray-600 mb-3">
+                                上传.osz文件自动解析并填充表单信息，文件将存储为：{season}_{category}_{selectedMods}{modPosition}_[BID].osz
+                            </p>
+
+                            <div className="space-y-3">
+                                {/* 文件选择区域 */}
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-green-500 transition-colors">
+                                    <input
+                                        type="file"
+                                        id="osz-file"
+                                        accept=".osz"
+                                        onChange={handleFileSelect}
+                                        className="hidden"
+                                    />
+                                    <label htmlFor="osz-file" className="cursor-pointer block">
+                                        <div className="flex flex-col items-center justify-center">
+                                            <CloudUpload />
+                                            <span className="text-sm font-medium text-gray-700">
+                                                {oszFile ? `已选择: ${oszFile.name}` : '点击选择.osz文件或拖放至此'}
+                                            </span>
+                                            <span className="text-xs text-gray-500 mt-1">
+                                                支持.osz格式，最大50MB
+                                            </span>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                {/* 文件信息和上传按钮 */}
+                                {oszFile && (
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-700">{oszFile.name}</span>
+                                            <span className="text-gray-500">{(oszFile.size / 1024 / 1024).toFixed(2)} MB</span>
+                                        </div>
+
+                                        {/* 上传进度 */}
+                                        {isUploadingOsz && (
+                                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                                <div
+                                                    className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                                                    style={{ width: `${uploadProgress}%` }}
+                                                ></div>
+                                            </div>
+                                        )}
+
+                                        {/* 上传按钮 */}
+                                        <button
+                                            onClick={handleOszUpload}
+                                            disabled={isUploadingOsz || !oszFile}
+                                            className="w-full px-4 py-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white rounded-md transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            {isUploadingOsz ? (
+                                                <>
+                                                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                    上传中...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CloudUpload />
+                                                    上传并解析osz文件
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 难度选择器 */}
+                        {showDifficultySelector && oszBeatmapInfos.length > 1 && (
+                            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                <h4 className="font-medium text-blue-800 mb-2">选择难度</h4>
+                                <p className="text-sm text-gray-600 mb-3">
+                                    检测到 {oszBeatmapInfos.length} 个难度，请选择要使用的难度：
+                                </p>
+
+                                <div className="space-y-2 max-h-60 overflow-y-auto">
+                                    {oszBeatmapInfos.map((beatmapInfo, index) => (
+                                        <div
+                                            key={index}
+                                            className={`p-3 border rounded-lg cursor-pointer transition-colors ${selectedDifficultyIndex === index ? 'bg-blue-100 border-blue-500' : 'bg-white border-gray-300 hover:bg-gray-50'}`}
+                                            onClick={() => handleDifficultySelect(index)}
+                                        >
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <div className="font-medium text-gray-800">
+                                                        {beatmapInfo.version}
+                                                    </div>
+                                                    <div className="text-xs text-gray-600">
+                                                        CS: {beatmapInfo.cs.toFixed(1)} | AR: {beatmapInfo.ar.toFixed(1)} | OD: {beatmapInfo.od.toFixed(1)} | HP: {beatmapInfo.hp.toFixed(1)}
+                                                    </div>
+                                                </div>
+                                                <div className="text-sm text-gray-700">
+                                                    {beatmapInfo.starRating ? `${beatmapInfo.starRating.toFixed(2)}★` : 'N/A'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="mt-3 flex justify-between items-center">
+                                    <span className="text-sm text-gray-600">
+                                        已选择: {oszBeatmapInfos[selectedDifficultyIndex]?.version}
+                                    </span>
+                                    <button
+                                        onClick={() => handleDifficultySelect(selectedDifficultyIndex)}
+                                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                                    >
+                                        确认选择
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        {/* 原创/定制选择 */}
                         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                            <h4 className="font-medium text-blue-800 mb-2">Lazer特有MOD设置</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className='min-w-[300px]'>
-                                    <Dropdown
-                                        label="MOD名称"
-                                        options={[
-                                            { value: '', label: '选择MOD...' },
-                                            ...availableLazerMods.map(mod => ({
-                                                value: mod.name,
-                                                label: `${mod.name} - ${mod.description}`
-                                            }))
-                                        ]}
-                                        value={customModName}
-                                        onChange={setCustomModName}
-                                        placeholder="选择MOD..."
-                                        minWidth="100%"
+                            <h4 className="font-medium text-blue-800 mb-2">图池类型</h4>
+                            <div className="flex gap-4">
+                                <label className="flex items-center gap-2">
+                                    <input
+                                        type="radio"
+                                        name="customPoolType"
+                                        value="original"
+                                        checked={customPoolType === 'original'}
+                                        onChange={(e) => setCustomPoolType(e.target.value as 'original' | 'custom')}
+                                        className="w-4 h-4 text-blue-600"
+                                    />
+                                    <span className="text-sm text-gray-700">原创</span>
+                                </label>
+                                <label className="flex items-center gap-2">
+                                    <input
+                                        type="radio"
+                                        name="customPoolType"
+                                        value="custom"
+                                        checked={customPoolType === 'custom'}
+                                        onChange={(e) => setCustomPoolType(e.target.value as 'original' | 'custom')}
+                                        className="w-4 h-4 text-purple-600"
+                                    />
+                                    <span className="text-sm text-gray-700">定制</span>
+                                </label>
+                            </div>
+                        </div>
+                        {/* 基本信息 */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    歌曲名 *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={customTitle}
+                                    onChange={(e) => setCustomTitle(e.target.value)}
+                                    placeholder="歌曲名"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    艺术家 *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={customArtist}
+                                    onChange={(e) => setCustomArtist(e.target.value)}
+                                    placeholder="艺术家"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    难度名 *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={customVersion}
+                                    onChange={(e) => setCustomVersion(e.target.value)}
+                                    placeholder="难度名"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    谱师 *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={customCreator}
+                                    onChange={(e) => setCustomCreator(e.target.value)}
+                                    placeholder="谱师"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
+                        </div>
+
+                        {/* 难度属性 */}
+                        <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-md">
+                            <h4 className="font-medium text-purple-800 mb-2">难度属性</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        CS (0-10)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        max="10"
+                                        value={customPoolCS}
+                                        onChange={(e) => setCustomPoolCS(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        placeholder="4.0"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        AR (0-10)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        max="10"
+                                        value={customPoolAR}
+                                        onChange={(e) => setCustomPoolAR(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        placeholder="9.0"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        OD (0-10)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        max="10"
+                                        value={customPoolOD}
+                                        onChange={(e) => setCustomPoolOD(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        placeholder="8.0"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        HP (0-10)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        max="10"
+                                        value={customPoolHP}
+                                        onChange={(e) => setCustomPoolHP(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        placeholder="6.0"
                                     />
                                 </div>
                             </div>
-
-                            {/* DA mod自定义属性 */}
-                            {customModName === 'DA' && (
-                                <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                                    <h5 className="font-medium text-yellow-800 mb-2">Difficulty Adjust 设置</h5>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                        <div>
-                                            <label className="block text-xs text-gray-600 mb-1">CS</label>
-                                            <input
-                                                type="number"
-                                                step="0.1"
-                                                min="0"
-                                                max="10"
-                                                value={customCS}
-                                                onChange={(e) => setCustomCS(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                                                placeholder="不修改则为原值"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-gray-600 mb-1">AR</label>
-                                            <input
-                                                type="number"
-                                                step="0.1"
-                                                min="0"
-                                                max="10"
-                                                value={customAR}
-                                                onChange={(e) => setCustomAR(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                                                placeholder="不修改则为原值"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-gray-600 mb-1">OD</label>
-                                            <input
-                                                type="number"
-                                                step="0.1"
-                                                min="0"
-                                                max="10"
-                                                value={customOD}
-                                                onChange={(e) => setCustomOD(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                                                placeholder="不修改则为原值"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-gray-600 mb-1">HP</label>
-                                            <input
-                                                type="number"
-                                                step="0.1"
-                                                min="0"
-                                                max="10"
-                                                value={customHP}
-                                                onChange={(e) => setCustomHP(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                                                placeholder="不修改则为原值"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                         </div>
-                    )}
 
-                    {/* DT自定义倍率 */}
-                    {selectedMods === 'DT' && (
-                        <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-md">
-                            <h4 className="font-medium text-purple-800 mb-2">DT 设置</h4>
+                        {/* 其他属性 */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    自定义倍率
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    星数 (★)
                                 </label>
                                 <input
                                     type="number"
                                     step="0.01"
-                                    min="1.0"
-                                    max="2.0"
-                                    value={customDTRate}
-                                    onChange={(e) => setCustomDTRate(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                    min="0"
+                                    max="20"
+                                    value={customStarRating}
+                                    onChange={(e) => setCustomStarRating(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    placeholder="1.50"
+                                    placeholder="5.00"
                                 />
-                                <p className="text-xs text-gray-500 mt-1">
-                                    默认1.50倍，可自定义1.00-2.00之间的倍率
-                                </p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    BPM
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={customBPM}
+                                    onChange={(e) => setCustomBPM(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    placeholder="180"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    长度 (秒)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={customTotalLength}
+                                    onChange={(e) => setCustomTotalLength(e.target.value === '' ? '' : parseInt(e.target.value))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    placeholder="120"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    最大连击数
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={customMaxCombo}
+                                    onChange={(e) => setCustomMaxCombo(e.target.value === '' ? '' : parseInt(e.target.value))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    placeholder="1000"
+                                />
                             </div>
                         </div>
-                    )}
 
+                        {/* Mod选择 */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div className="min-w-[220px]">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Mod
+                                </label>
+                                <Dropdown
+                                    options={MOD_OPTIONS.map(mod => ({
+                                        value: mod,
+                                        label: mod
+                                    }))}
+                                    value={selectedMods}
+                                    onChange={setSelectedMods}
+                                    placeholder="选择MOD"
+                                    minWidth="100%"
+                                />
+                            </div>
 
-                    {/* 重复检查警告 */}
-                    {duplicateWarning.show && (
-                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                            <h4 className="font-medium text-yellow-800 mb-2">重复检测</h4>
-                            <p className="text-yellow-700 text-sm mb-2">
-                                此谱面已被选择 {duplicateWarning.existingSelections.length} 次：
-                            </p>
-                            <ul className="text-sm text-yellow-700 list-disc list-inside">
-                                {duplicateWarning.existingSelections.map((sel: ExistingSelection, index: number) => (
-                                    <li key={index}>
-                                        {sel.selectedMods}{sel.modPosition} - {sel.category} - {sel.selectedByUsername}
-                                    </li>
-                                ))}
-                            </ul>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    位置
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="10"
+                                    value={modPosition}
+                                    onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
                         </div>
-                    )}
 
-                    {/* 评论和选项 */}
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2 flex flex-cow items-center gap-1">
-                            <MessageCircleMore size={16} />评论
-                        </label>
-                        <textarea
-                            value={comment}
-                            onChange={(e) => setComment(e.target.value)}
-                            placeholder="添加评论..."
-                            rows={3}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
 
-                    <div className="flex gap-4 items-center mb-4">
-                        <label className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                checked={padding}
-                                onChange={(e) => setPadding(e.target.checked)}
-                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+
+
+
+                        {/* 评论 */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                评论
+                            </label>
+                            <textarea
+                                value={comment}
+                                onChange={(e) => setComment(e.target.value)}
+                                placeholder="添加评论..."
+                                rows={3}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
-                            <span className="text-sm text-gray-700">送测该图</span>
-                        </label>
-                    </div>
+                        </div>
 
-                    {/* 提交按钮 */}
-                    <div className="flex gap-4">
-                        <button
-                            onClick={addSelection}
-                            disabled={isSubmitting || !beatmapPreview}
-                            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 text-white rounded-md transition-colors"
-                        >
-                            {isSubmitting ? '添加中...' : '添加选图'}
-                        </button>
-                        <button
-                            onClick={() => setShowAddForm(false)}
-                            className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors"
-                        >
-                            取消
-                        </button>
+                        {/* 提交按钮 */}
+                        <div className="flex gap-4">
+                            <button
+                                onClick={addCustomPool}
+                                disabled={isSubmitting}
+                                className="px-4 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-gray-500 text-white rounded-md transition-colors"
+                            >
+                                {isSubmitting ? '添加中...' : '添加自定图池'}
+                            </button>
+                            <button
+                                onClick={() => setShowAddForm(false)}
+                                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors"
+                            >
+                                取消
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
+
 
             {/* Tab切换栏 - 带滑块动画 */}
             <div className="mb-6 relative p-2 w-max bg-[#2d2d2d] rounded-lg">
@@ -2233,58 +3028,93 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         {/* 判断是否在屏幕右侧，决定列顺序 */}
                         {(() => {
                             const isOnRightSide = contextMenu.x + 320 > window.innerWidth;
-                            const firstColumn = [
-                                <button
-                                    key="view"
-                                    onClick={() => {
-                                        window.open(contextMenu.selection!.url, '_blank');
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <ExternalLink />
-                                    查看谱面
-                                </button>,
-                                <button
-                                    key="open-in-osu"
-                                    onClick={() => {
-                                        window.open(`osu://b/${contextMenu.selection!.beatmapId}`, '_blank');
-                                        showInfo('已在osu客户端中打开谱面');
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <Image src='/icons/osu-lazer-logo-black.svg' alt='viewOsu' width={24} height={24} />
-                                    从osu中打开
-                                </button>,
+                            const isCustomMap = contextMenu.selection.beatmapId < 0; // 检查是否为负数bid（原创/定制图）
 
-                                <button
-                                    key="download-nerinyan"
-                                    onClick={() => {
-                                        const downloadUrl = `https://api.nerinyan.moe/d/${contextMenu.selection!.beatmapsetId}`;
-                                        window.open(downloadUrl, '_blank');
-                                        showSuccess('已开始从Nerinyan下载');
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <ArrowDownToLine />
-                                    下载谱面 (Nerinyan)
-                                </button>,
-                                <button
-                                    key="download-official"
-                                    onClick={() => {
-                                        const downloadUrl = `https://osu.ppy.sh/beatmapsets/${contextMenu.selection!.beatmapsetId}/download`;
-                                        window.open(downloadUrl, '_blank');
-                                        showSuccess('已开始从osu官方下载');
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <ArrowDownToLine />
-                                    osu官方下载
-                                </button>
-                            ].filter(Boolean);
+                            const firstColumn = [];
+
+                            if (isCustomMap) {
+                                // 原创/定制图：只显示blob下载
+                                firstColumn.push(
+                                    <button
+                                        key="download-blob"
+                                        onClick={() => {
+                                            // 构建blob文件路径
+                                            const season = contextMenu.selection!.season || 's1';
+                                            const category = contextMenu.selection!.category || 'qualification';
+                                            const selectedMods = contextMenu.selection!.selectedMods || 'NM';
+                                            const modPosition = contextMenu.selection!.modPosition || 1;
+                                            const beatmapId = contextMenu.selection!.beatmapId;
+
+                                            // 生成blob路径（与parse-osz API中的逻辑一致）
+                                            const bidStr = beatmapId < 0 ? `-${Math.abs(beatmapId)}` : beatmapId.toString();
+                                            const blobPath = `/custom/${season}_${category}_${selectedMods}${modPosition}_${bidStr}.osz`;
+
+                                            // 使用新的API下载blob文件
+                                            const downloadUrl = `/api/download-blob?path=${encodeURIComponent(blobPath)}`;
+                                            window.open(downloadUrl, '_blank');
+                                            showSuccess('开始从Blob下载原创/定制谱面');
+                                            closeContextMenu();
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                    >
+                                        <ArrowDownToLine />
+                                        下载谱面 (Blob)
+                                    </button>
+                                );
+                            } else {
+                                // 普通图：显示所有下载方式
+                                firstColumn.push(
+                                    <button
+                                        key="view"
+                                        onClick={() => {
+                                            window.open(contextMenu.selection!.url, '_blank');
+                                            closeContextMenu();
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                    >
+                                        <ExternalLink />
+                                        查看谱面
+                                    </button>,
+                                    <button
+                                        key="open-in-osu"
+                                        onClick={() => {
+                                            window.open(`osu://b/${contextMenu.selection!.beatmapId}`, '_blank');
+                                            showInfo('已在osu客户端中打开谱面');
+                                            closeContextMenu();
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                    >
+                                        <Image src='/icons/osu-lazer-logo-black.svg' alt='viewOsu' width={24} height={24} />
+                                        从osu中打开
+                                    </button>,
+                                    <button
+                                        key="download-nerinyan"
+                                        onClick={() => {
+                                            const downloadUrl = `https://api.nerinyan.moe/d/${contextMenu.selection!.beatmapsetId}`;
+                                            window.open(downloadUrl, '_blank');
+                                            showSuccess('已开始从Nerinyan下载');
+                                            closeContextMenu();
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                    >
+                                        <ArrowDownToLine />
+                                        下载谱面 (Nerinyan)
+                                    </button>,
+                                    <button
+                                        key="download-official"
+                                        onClick={() => {
+                                            const downloadUrl = `https://osu.ppy.sh/beatmapsets/${contextMenu.selection!.beatmapsetId}/download`;
+                                            window.open(downloadUrl, '_blank');
+                                            showSuccess('已开始从osu官方下载');
+                                            closeContextMenu();
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                    >
+                                        <ArrowDownToLine />
+                                        osu官方下载
+                                    </button>
+                                );
+                            }
 
                             const secondColumn = [
                                 (permissions.isAdmin || permissions.isMapSelector) && (

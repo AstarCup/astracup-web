@@ -103,12 +103,31 @@ export async function POST(request: NextRequest) {
             selectedByAvatar,
             season = 's1',
             category = 'qualification',
-            moddedStats
+            moddedStats,
+            // 自定图池相关字段
+            isCustomPool = false,
+            beatmapId,
+            beatmapsetId,
+            title,
+            title_unicode,
+            artist,
+            artist_unicode,
+            version,
+            creator,
+            starRating,
+            bpm,
+            totalLength,
+            maxCombo,
+            ar,
+            cs,
+            od,
+            hp,
+            coverUrl = ''
         } = await request.json();
 
-        if (!url || !selectedBy) {
+        if (!selectedBy) {
             return NextResponse.json(
-                { error: '缺少必要参数：url 和 selectedBy' },
+                { error: '缺少必要参数：selectedBy' },
                 { status: 400 }
             );
         }
@@ -125,90 +144,146 @@ export async function POST(request: NextRequest) {
         // 初始化数据库
         // 数据库已初始化，跳过此步骤
 
-        // 解析URL
-        const parsedUrl = parseBeatmapUrl(url);
-        if (!parsedUrl.beatmapId && !parsedUrl.beatmapsetId) {
-            return NextResponse.json(
-                { error: '无效的osu! beatmap URL' },
-                { status: 400 }
-            );
-        }
+        let selectionData;
 
-        let beatmapInfo;
-
-        try {
-            if (parsedUrl.beatmapId) {
-                // 如果有具体的beatmap ID，直接获取
-                beatmapInfo = await getBeatmapInfo(parsedUrl.beatmapId);
-            } else if (parsedUrl.beatmapsetId) {
-                // 如果只有beatmapset ID，获取所有难度并让用户选择第一个
-                const beatmaps = await getBeatmapsetInfo(parsedUrl.beatmapsetId);
-                if (beatmaps.length === 0) {
-                    throw new Error('该beatmapset中没有找到任何beatmap');
-                }
-                beatmapInfo = beatmaps[0]; // 使用第一个难度
-            } else {
-                throw new Error('无法解析beatmap信息');
+        if (isCustomPool) {
+            // 处理自定图池（手动输入）
+            if (!title || !artist || !version || !creator) {
+                return NextResponse.json(
+                    { error: '自定图池缺少必要参数：title, artist, version, creator' },
+                    { status: 400 }
+                );
             }
-        } catch (apiError) {
-            console.error('Error fetching beatmap info:', apiError);
-            return NextResponse.json(
-                { error: `获取beatmap信息失败: ${apiError instanceof Error ? apiError.message : '未知错误'}` },
-                { status: 400 }
-            );
+
+            // 使用提供的虚拟ID或生成默认值
+            const finalBeatmapId = beatmapId || -Math.floor(Date.now() / 1000);
+            const finalBeatmapsetId = beatmapsetId || -Math.floor(Date.now() / 1000) - 1;
+
+            selectionData = {
+                beatmapId: finalBeatmapId,
+                beatmapsetId: finalBeatmapsetId,
+                title: title,
+                title_unicode: title_unicode || title,
+                artist: artist,
+                artist_unicode: artist_unicode || artist,
+                version: version,
+                creator: creator,
+                starRating: starRating || 5.0,
+                bpm: bpm || 180,
+                totalLength: totalLength || 120,
+                maxCombo: maxCombo || 1000,
+                ar: ar || 9.0,
+                cs: cs || 4.0,
+                od: od || 8.0,
+                hp: hp || 6.0,
+                selectedMods: selectedMods || 'NM',
+                modPosition: modPosition || 1,
+                customDTRate: customDTRate !== undefined ? customDTRate : null,
+                customModName: customModName !== undefined ? customModName : null,
+                comment: comment || '',
+                selectedBy,
+                selectedByUsername: selectedByUsername !== undefined ? selectedByUsername : null,
+                selectedByAvatar: selectedByAvatar !== undefined ? selectedByAvatar : null,
+                season,
+                category,
+                url: url || `custom://pool/${finalBeatmapId}`,
+                coverUrl: coverUrl || '',
+                approved: approved || false,
+                padding: false // 默认值为false
+            };
+        } else {
+            // 处理普通选图（通过URL解析）
+            if (!url) {
+                return NextResponse.json(
+                    { error: '缺少必要参数：url' },
+                    { status: 400 }
+                );
+            }
+
+            // 解析URL
+            const parsedUrl = parseBeatmapUrl(url);
+            if (!parsedUrl.beatmapId && !parsedUrl.beatmapsetId) {
+                return NextResponse.json(
+                    { error: '无效的osu! beatmap URL' },
+                    { status: 400 }
+                );
+            }
+
+            let beatmapInfo;
+
+            try {
+                if (parsedUrl.beatmapId) {
+                    // 如果有具体的beatmap ID，直接获取
+                    beatmapInfo = await getBeatmapInfo(parsedUrl.beatmapId);
+                } else if (parsedUrl.beatmapsetId) {
+                    // 如果只有beatmapset ID，获取所有难度并让用户选择第一个
+                    const beatmaps = await getBeatmapsetInfo(parsedUrl.beatmapsetId);
+                    if (beatmaps.length === 0) {
+                        throw new Error('该beatmapset中没有找到任何beatmap');
+                    }
+                    beatmapInfo = beatmaps[0]; // 使用第一个难度
+                } else {
+                    throw new Error('无法解析beatmap信息');
+                }
+            } catch (apiError) {
+                console.error('Error fetching beatmap info:', apiError);
+                return NextResponse.json(
+                    { error: `获取beatmap信息失败: ${apiError instanceof Error ? apiError.message : '未知错误'}` },
+                    { status: 400 }
+                );
+            }
+
+            if (!beatmapInfo) {
+                return NextResponse.json(
+                    { error: '无法获取beatmap信息' },
+                    { status: 400 }
+                );
+            }
+
+            // 使用mod计算后的参数（如果提供）或原参数
+            const finalStats = moddedStats || {
+                ar: beatmapInfo.ar,
+                cs: beatmapInfo.cs,
+                od: beatmapInfo.od,
+                hp: beatmapInfo.hp,
+                star_rating: beatmapInfo.star_rating,
+                bpm: beatmapInfo.bpm,
+                max_combo: beatmapInfo.max_combo || 0
+            };
+
+            selectionData = {
+                beatmapId: beatmapInfo.id,
+                beatmapsetId: beatmapInfo.beatmapset_id,
+                title: beatmapInfo.title,
+                title_unicode: beatmapInfo.title_unicode,
+                artist: beatmapInfo.artist,
+                artist_unicode: beatmapInfo.artist_unicode,
+                version: beatmapInfo.version,
+                creator: beatmapInfo.creator,
+                starRating: finalStats.star_rating,
+                bpm: finalStats.bpm,
+                totalLength: beatmapInfo.total_length,
+                maxCombo: finalStats.max_combo || 0,
+                ar: finalStats.ar,
+                cs: finalStats.cs,
+                od: finalStats.od,
+                hp: finalStats.hp,
+                selectedMods: selectedMods || 'NM',
+                modPosition: modPosition || 1,
+                customDTRate: customDTRate !== undefined ? customDTRate : null,
+                customModName: customModName !== undefined ? customModName : null,
+                comment: comment || '',
+                selectedBy,
+                selectedByUsername: selectedByUsername !== undefined ? selectedByUsername : null,
+                selectedByAvatar: selectedByAvatar !== undefined ? selectedByAvatar : null,
+                season,
+                category,
+                url: beatmapInfo.url,
+                coverUrl: beatmapInfo.cover_url || '',
+                approved: approved || false,
+                padding: false // 默认值为false
+            };
         }
-
-        if (!beatmapInfo) {
-            return NextResponse.json(
-                { error: '无法获取beatmap信息' },
-                { status: 400 }
-            );
-        }
-
-        // 使用mod计算后的参数（如果提供）或原参数
-        const finalStats = moddedStats || {
-            ar: beatmapInfo.ar,
-            cs: beatmapInfo.cs,
-            od: beatmapInfo.od,
-            hp: beatmapInfo.hp,
-            star_rating: beatmapInfo.star_rating,
-            bpm: beatmapInfo.bpm,
-            max_combo: beatmapInfo.max_combo || 0
-        };
-
-        // 确保所有参数都有有效值，将 undefined 转换为 null 或默认值
-        const selectionData = {
-            beatmapId: beatmapInfo.id,
-            beatmapsetId: beatmapInfo.beatmapset_id,
-            title: beatmapInfo.title,
-            title_unicode: beatmapInfo.title_unicode,
-            artist: beatmapInfo.artist,
-            artist_unicode: beatmapInfo.artist_unicode,
-            version: beatmapInfo.version,
-            creator: beatmapInfo.creator,
-            starRating: finalStats.star_rating,
-            bpm: finalStats.bpm,
-            totalLength: beatmapInfo.total_length,
-            maxCombo: finalStats.max_combo || 0,
-            ar: finalStats.ar,
-            cs: finalStats.cs,
-            od: finalStats.od,
-            hp: finalStats.hp,
-            selectedMods: selectedMods || 'NM',
-            modPosition: modPosition || 1,
-            customDTRate: customDTRate !== undefined ? customDTRate : null,
-            customModName: customModName !== undefined ? customModName : null,
-            comment: comment || '',
-            selectedBy,
-            selectedByUsername: selectedByUsername !== undefined ? selectedByUsername : null,
-            selectedByAvatar: selectedByAvatar !== undefined ? selectedByAvatar : null,
-            season,
-            category,
-            url: beatmapInfo.url,
-            coverUrl: beatmapInfo.cover_url || '',
-            approved: approved || false,
-            padding: false // 默认值为false
-        };
 
         console.log('Adding map selection with data:', selectionData);
 
@@ -224,8 +299,8 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            message: '选图添加成功',
-            beatmapInfo
+            message: isCustomPool ? '自定图池添加成功' : '选图添加成功',
+            selection: selectionData
         });
 
     } catch (error) {
