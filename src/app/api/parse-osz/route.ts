@@ -44,9 +44,16 @@ function generateBlobPath(
     season: string,
     category: string,
     selectedMods: string,
-    modPosition: number
+    modPosition: number,
+    beatmapId?: number
 ): string {
-    // 格式: 赛季_阶段_mod_mod位.osz
+    // 格式: 赛季_阶段_mod_mod位_bid.osz
+    if (beatmapId !== undefined && beatmapId !== null) {
+        // 对于负数bid，使用绝对值并添加负号前缀
+        const bidStr = beatmapId < 0 ? `-${Math.abs(beatmapId)}` : beatmapId.toString();
+        return `/custom/${season}_${category}_${selectedMods}${modPosition}_${bidStr}.osz`;
+    }
+    // 如果没有beatmapId，使用旧格式
     return `/custom/${season}_${category}_${selectedMods}${modPosition}.osz`;
 }
 
@@ -59,6 +66,7 @@ export async function POST(request: NextRequest) {
         const category = formData.get('category') as string || 'qualification';
         const selectedMods = formData.get('selectedMods') as string || 'NM';
         const modPosition = formData.get('modPosition') as string || '1';
+        const customBeatmapId = formData.get('customBeatmapId') as string; // 新增：自定义负数bid
 
         if (!file || !userId) {
             return NextResponse.json(
@@ -245,11 +253,30 @@ export async function POST(request: NextRequest) {
             }
 
             // 生成存储路径
+            let finalBeatmapId: number | undefined = undefined;
+
+
+            if (customBeatmapId) {
+                const customId = parseInt(customBeatmapId);
+                if (customId < 0) { // 确保是负数
+                    finalBeatmapId = customId;
+                }
+            }
+
+
+            if (!finalBeatmapId && beatmapInfosWithModStats.length > 0) {
+                const firstBeatmap = beatmapInfosWithModStats[0];
+                if (firstBeatmap.beatmapId && firstBeatmap.beatmapId > 0) {
+                    finalBeatmapId = firstBeatmap.beatmapId;
+                }
+            }
+
             const blobPath = generateBlobPath(
                 season,
                 category,
                 selectedMods,
-                parseInt(modPosition)
+                parseInt(modPosition),
+                finalBeatmapId
             );
 
             // 上传到Vercel Blob

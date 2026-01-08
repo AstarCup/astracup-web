@@ -1064,6 +1064,32 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             // 根据选择设置customModName
             const customModNameValue = customPoolType === 'original' ? '原创' : '定制';
 
+            // 如果有osz文件，使用负数bid重新上传
+            if (oszFile && oszUploadSuccess) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', oszFile);
+                    formData.append('userId', userForState.id.toString());
+                    formData.append('season', season);
+                    formData.append('category', category);
+                    formData.append('selectedMods', selectedMods);
+                    formData.append('modPosition', modPosition.toString());
+                    formData.append('customBeatmapId', virtualBeatmapId.toString()); // 传递负数bid
+
+                    const uploadResponse = await fetch('/api/parse-osz', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const uploadData = await uploadResponse.json();
+                    if (!uploadData.success) {
+                        console.warn('重新上传osz文件失败，但继续提交自定图池:', uploadData.error);
+                    }
+                } catch (uploadError) {
+                    console.warn('重新上传osz文件时出错，但继续提交自定图池:', uploadError);
+                }
+            }
+
             const response = await fetch('/api/map-selections', {
                 method: 'POST',
                 headers: {
@@ -2273,7 +2299,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
                             <h4 className="font-medium text-green-800 mb-2">osz文件上传</h4>
                             <p className="text-sm text-gray-600 mb-3">
-                                上传.osz文件自动解析并填充表单信息，文件将存储为：{season}_{category}_{selectedMods}{modPosition}.osz
+                                上传.osz文件自动解析并填充表单信息，文件将存储为：{season}_{category}_{selectedMods}{modPosition}_[BID].osz
                             </p>
 
                             <div className="space-y-3">
@@ -2998,58 +3024,95 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         {/* 判断是否在屏幕右侧，决定列顺序 */}
                         {(() => {
                             const isOnRightSide = contextMenu.x + 320 > window.innerWidth;
-                            const firstColumn = [
-                                <button
-                                    key="view"
-                                    onClick={() => {
-                                        window.open(contextMenu.selection!.url, '_blank');
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <ExternalLink />
-                                    查看谱面
-                                </button>,
-                                <button
-                                    key="open-in-osu"
-                                    onClick={() => {
-                                        window.open(`osu://b/${contextMenu.selection!.beatmapId}`, '_blank');
-                                        showInfo('已在osu客户端中打开谱面');
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <Image src='/icons/osu-lazer-logo-black.svg' alt='viewOsu' width={24} height={24} />
-                                    从osu中打开
-                                </button>,
+                            const isCustomMap = contextMenu.selection.beatmapId < 0; // 检查是否为负数bid（原创/定制图）
 
-                                <button
-                                    key="download-nerinyan"
-                                    onClick={() => {
-                                        const downloadUrl = `https://api.nerinyan.moe/d/${contextMenu.selection!.beatmapsetId}`;
-                                        window.open(downloadUrl, '_blank');
-                                        showSuccess('已开始从Nerinyan下载');
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <ArrowDownToLine />
-                                    下载谱面 (Nerinyan)
-                                </button>,
-                                <button
-                                    key="download-official"
-                                    onClick={() => {
-                                        const downloadUrl = `https://osu.ppy.sh/beatmapsets/${contextMenu.selection!.beatmapsetId}/download`;
-                                        window.open(downloadUrl, '_blank');
-                                        showSuccess('已开始从osu官方下载');
-                                        closeContextMenu();
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
-                                >
-                                    <ArrowDownToLine />
-                                    osu官方下载
-                                </button>
-                            ].filter(Boolean);
+                            const firstColumn = [];
+
+                            if (isCustomMap) {
+                                // 原创/定制图：只显示blob下载
+                                firstColumn.push(
+                                    <button
+                                        key="download-blob"
+                                        onClick={() => {
+                                            // 构建blob文件路径
+                                            const season = contextMenu.selection!.season || 's1';
+                                            const category = contextMenu.selection!.category || 'qualification';
+                                            const selectedMods = contextMenu.selection!.selectedMods || 'NM';
+                                            const modPosition = contextMenu.selection!.modPosition || 1;
+                                            const beatmapId = contextMenu.selection!.beatmapId;
+
+                                            // 生成blob路径（与parse-osz API中的逻辑一致）
+                                            const bidStr = beatmapId < 0 ? `-${Math.abs(beatmapId)}` : beatmapId.toString();
+                                            const blobPath = `/custom/${season}_${category}_${selectedMods}${modPosition}_${bidStr}.osz`;
+
+                                            // 构建blob下载URL
+                                            const downloadUrl = `https://pub-${process.env.NEXT_PUBLIC_BLOB_ACCOUNT_ID}.r2.dev${blobPath}`;
+
+                                            // 直接打开下载链接
+                                            window.open(downloadUrl, '_blank');
+                                            showSuccess('开始从Blob下载原创/定制谱面');
+                                            closeContextMenu();
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                    >
+                                        <ArrowDownToLine />
+                                        下载谱面 (Blob)
+                                    </button>
+                                );
+                            } else {
+                                // 普通图：显示所有下载方式
+                                firstColumn.push(
+                                    <button
+                                        key="view"
+                                        onClick={() => {
+                                            window.open(contextMenu.selection!.url, '_blank');
+                                            closeContextMenu();
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                    >
+                                        <ExternalLink />
+                                        查看谱面
+                                    </button>,
+                                    <button
+                                        key="open-in-osu"
+                                        onClick={() => {
+                                            window.open(`osu://b/${contextMenu.selection!.beatmapId}`, '_blank');
+                                            showInfo('已在osu客户端中打开谱面');
+                                            closeContextMenu();
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                    >
+                                        <Image src='/icons/osu-lazer-logo-black.svg' alt='viewOsu' width={24} height={24} />
+                                        从osu中打开
+                                    </button>,
+                                    <button
+                                        key="download-nerinyan"
+                                        onClick={() => {
+                                            const downloadUrl = `https://api.nerinyan.moe/d/${contextMenu.selection!.beatmapsetId}`;
+                                            window.open(downloadUrl, '_blank');
+                                            showSuccess('已开始从Nerinyan下载');
+                                            closeContextMenu();
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                    >
+                                        <ArrowDownToLine />
+                                        下载谱面 (Nerinyan)
+                                    </button>,
+                                    <button
+                                        key="download-official"
+                                        onClick={() => {
+                                            const downloadUrl = `https://osu.ppy.sh/beatmapsets/${contextMenu.selection!.beatmapsetId}/download`;
+                                            window.open(downloadUrl, '_blank');
+                                            showSuccess('已开始从osu官方下载');
+                                            closeContextMenu();
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 rounded-lg"
+                                    >
+                                        <ArrowDownToLine />
+                                        osu官方下载
+                                    </button>
+                                );
+                            }
 
                             const secondColumn = [
                                 (permissions.isAdmin || permissions.isMapSelector) && (
