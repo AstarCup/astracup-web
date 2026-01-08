@@ -367,12 +367,10 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                         const bidStr = beatmapId < 0 ? `-${Math.abs(beatmapId)}` : beatmapId.toString();
                         const blobPath = `/custom/${season}_${category}_${selectedMods}${modPosition}_${bidStr}.osz`;
 
-                        // 构建blob下载URL
-                        const downloadUrl = `https://pub-${process.env.NEXT_PUBLIC_BLOB_ACCOUNT_ID}.r2.dev${blobPath}`;
-
-                        // 直接打开下载链接
+                        // 使用新的API下载blob文件
+                        const downloadUrl = `/api/download-blob?path=${encodeURIComponent(blobPath)}`;
                         window.open(downloadUrl, '_blank');
-                        showSuccess('已开始从Blob下载原创/定制谱面');
+                        showInfo('开始从Blob下载原创/定制谱面');
                     },
                     type: 'item' as const
                 }

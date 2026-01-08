@@ -903,13 +903,14 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 const data = await response.json();
                 const modStats = data.modStats;
 
-                // 更新表单字段
+                // 更新表单字段，计算后的时长单位是毫秒，需要转换为秒
                 setCustomPoolCS(modStats.cs || '');
                 setCustomPoolAR(modStats.ar || '');
                 setCustomPoolOD(modStats.od || '');
                 setCustomPoolHP(modStats.hp || '');
                 setCustomBPM(modStats.bpm || '');
-                setCustomTotalLength(modStats.totalLength || '');
+                const totalLengthInSeconds = modStats.totalLength ? Math.round(modStats.totalLength / 1000) : '';
+                setCustomTotalLength(totalLengthInSeconds);
                 setCustomStarRating(modStats.starRating || '');
                 setCustomMaxCombo(modStats.maxCombo || '');
 
@@ -936,7 +937,9 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         setCustomPoolOD(beatmapInfo.od ? parseFloat(beatmapInfo.od.toFixed(2)) : '');
         setCustomPoolHP(beatmapInfo.hp ? parseFloat(beatmapInfo.hp.toFixed(2)) : '');
         setCustomBPM(beatmapInfo.bpm ? parseFloat(beatmapInfo.bpm.toFixed(2)) : '');
-        setCustomTotalLength(beatmapInfo.totalLength || '');
+        // osz解析出的时长单位是毫秒，需要转换为秒
+        const totalLengthInSeconds = beatmapInfo.totalLength ? Math.round(beatmapInfo.totalLength / 1000) : '';
+        setCustomTotalLength(totalLengthInSeconds);
         setCustomStarRating(beatmapInfo.starRating ? parseFloat(beatmapInfo.starRating.toFixed(2)) : '');
         setCustomMaxCombo(beatmapInfo.maxCombo || '');
     };
@@ -987,13 +990,14 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             const data = await response.json();
                             const modStats = data.modStats;
 
-                            // 更新表单字段，保留2位小数
+                            // 更新表单字段，保留2位小数，计算后的时长单位是毫秒，需要转换为秒
                             setCustomPoolCS(modStats.cs ? parseFloat(modStats.cs.toFixed(2)) : '');
                             setCustomPoolAR(modStats.ar ? parseFloat(modStats.ar.toFixed(2)) : '');
                             setCustomPoolOD(modStats.od ? parseFloat(modStats.od.toFixed(2)) : '');
                             setCustomPoolHP(modStats.hp ? parseFloat(modStats.hp.toFixed(2)) : '');
                             setCustomBPM(modStats.bpm ? parseFloat(modStats.bpm.toFixed(2)) : '');
-                            setCustomTotalLength(modStats.totalLength || '');
+                            const totalLengthInSeconds = modStats.totalLength ? Math.round(modStats.totalLength / 1000) : '';
+                            setCustomTotalLength(totalLengthInSeconds);
                             setCustomStarRating(modStats.starRating ? parseFloat(modStats.starRating.toFixed(2)) : '');
                             setCustomMaxCombo(modStats.maxCombo || '');
                         }
@@ -3045,10 +3049,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             const bidStr = beatmapId < 0 ? `-${Math.abs(beatmapId)}` : beatmapId.toString();
                                             const blobPath = `/custom/${season}_${category}_${selectedMods}${modPosition}_${bidStr}.osz`;
 
-                                            // 构建blob下载URL
-                                            const downloadUrl = `https://pub-${process.env.NEXT_PUBLIC_BLOB_ACCOUNT_ID}.r2.dev${blobPath}`;
-
-                                            // 直接打开下载链接
+                                            // 使用新的API下载blob文件
+                                            const downloadUrl = `/api/download-blob?path=${encodeURIComponent(blobPath)}`;
                                             window.open(downloadUrl, '_blank');
                                             showSuccess('开始从Blob下载原创/定制谱面');
                                             closeContextMenu();
