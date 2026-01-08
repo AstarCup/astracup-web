@@ -59,18 +59,69 @@ function generateBlobPath(
 
 export async function POST(request: NextRequest) {
     try {
-        const formData = await request.formData();
-        const file = formData.get('file') as File;
-        const userId = formData.get('userId') as string;
-        const season = formData.get('season') as string || 's1';
-        const category = formData.get('category') as string || 'qualification';
-        const selectedMods = formData.get('selectedMods') as string || 'NM';
-        const modPosition = formData.get('modPosition') as string || '1';
-        const customBeatmapId = formData.get('customBeatmapId') as string; // 新增：自定义负数bid
+        let file: File;
+        let userId: string;
+        let season: string = 's1';
+        let category: string = 'qualification';
+        let selectedMods: string = 'NM';
+        let modPosition: string = '1';
+        let customBeatmapId: string | null = null;
+        let fileUrl: string | null = null;
+
+        // 检查Content-Type，支持两种方式：FormData和JSON
+        const contentType = request.headers.get('content-type') || '';
+
+        if (contentType.includes('multipart/form-data')) {
+            // 传统方式：FormData上传
+            const formData = await request.formData();
+            file = formData.get('file') as File;
+            userId = formData.get('userId') as string;
+            season = formData.get('season') as string || season;
+            category = formData.get('category') as string || category;
+            selectedMods = formData.get('selectedMods') as string || selectedMods;
+            modPosition = formData.get('modPosition') as string || modPosition;
+            customBeatmapId = formData.get('customBeatmapId') as string;
+        } else {
+            // 新方式：JSON请求体，包含文件URL
+            const body = await request.json();
+            fileUrl = body.fileUrl;
+            userId = body.userId;
+            season = body.season || season;
+            category = body.category || category;
+            selectedMods = body.selectedMods || selectedMods;
+            modPosition = body.modPosition || modPosition;
+            customBeatmapId = body.customBeatmapId;
+
+            if (!fileUrl || !userId) {
+                return NextResponse.json(
+                    { error: '缺少必要参数：fileUrl 和 userId' },
+                    { status: 400 }
+                );
+            }
+
+            // 从URL下载文件
+            try {
+                const fileResponse = await fetch(fileUrl);
+                if (!fileResponse.ok) {
+                    throw new Error(`下载文件失败: ${fileResponse.status}`);
+                }
+                const arrayBuffer = await fileResponse.arrayBuffer();
+                // 从URL中提取文件名
+                const urlObj = new URL(fileUrl);
+                const filename = urlObj.pathname.split('/').pop() || 'uploaded.osz';
+                file = new File([arrayBuffer], filename, { type: 'application/octet-stream' });
+            } catch (downloadError) {
+                console.error('Error downloading file from URL:', downloadError);
+                return NextResponse.json(
+                    { error: `从URL下载文件失败: ${downloadError instanceof Error ? downloadError.message : '未知错误'}` },
+                    { status: 400 }
+                );
+            }
+        }
 
         if (!file || !userId) {
             return NextResponse.json(
-                { error: '缺少必要参数：file 和 userId' },
+                { error: '缺少必要参数：file/fileUrl 和 userId' },
                 { status: 400 }
             );
         }

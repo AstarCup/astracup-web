@@ -807,7 +807,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
     };
 
-    // 处理osz文件上传
+    // 处理osz文件上传 - 使用Vercel Blob客户端直接上传
     const handleOszUpload = async () => {
         if (!oszFile) {
             showError('请选择.osz文件');
@@ -824,21 +824,56 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         setUploadProgress(0);
 
         try {
-            const formData = new FormData();
-            formData.append('file', oszFile);
-            formData.append('userId', userForState.id.toString());
-            formData.append('season', season);
-            formData.append('category', category);
-            formData.append('selectedMods', selectedMods);
-            formData.append('modPosition', modPosition.toString());
+            // 1. 获取上传URL
             setUploadProgress(10);
-            // console.log('formData', formData);
-            const response = await fetch('/api/parse-osz', {
+            const urlResponse = await fetch('/api/upload-url', {
                 method: 'POST',
-                body: formData
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: oszFile.name,
+                    contentType: 'application/octet-stream',
+                    userId: userForState.id.toString()
+                })
             });
-            setUploadProgress(50);
-            const data = await response.json();
+
+            const urlData = await urlResponse.json();
+            if (!urlData.success) {
+                throw new Error(urlData.error || '获取上传URL失败');
+            }
+
+            const { url: uploadUrl } = urlData;
+            setUploadProgress(30);
+
+            // 2. 直接上传到Vercel Blob
+            const uploadResponse = await fetch(uploadUrl, {
+                method: 'PUT',
+                body: oszFile,
+                headers: {
+                    'Content-Type': oszFile.type || 'application/octet-stream'
+                }
+            });
+
+            if (!uploadResponse.ok) {
+                throw new Error('上传到Blob失败');
+            }
+            setUploadProgress(60);
+
+            // 3. 调用parse-osz API处理文件
+            const parseResponse = await fetch('/api/parse-osz', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    fileUrl: uploadUrl,
+                    userId: userForState.id.toString(),
+                    season,
+                    category,
+                    selectedMods,
+                    modPosition: modPosition.toString()
+                })
+            });
+            setUploadProgress(80);
+
+            const data = await parseResponse.json();
 
             if (data.success) {
                 setUploadProgress(100);
