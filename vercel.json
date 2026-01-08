@@ -6,6 +6,11 @@
     "functions": {
         "src/app/api/**/*.ts": {
             "maxDuration": 30
+        },
+        "src/app/api/parse-osz/route.ts": {
+            "maxDuration": 30,
+            "memory": 3008,
+            "maxRequestBodySize": "50mb"
         }
     },
     "env": {

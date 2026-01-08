@@ -832,7 +832,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             formData.append('selectedMods', selectedMods);
             formData.append('modPosition', modPosition.toString());
             setUploadProgress(10);
-            console.log('formData', formData);
+            // console.log('formData', formData);
             const response = await fetch('/api/parse-osz', {
                 method: 'POST',
                 body: formData
