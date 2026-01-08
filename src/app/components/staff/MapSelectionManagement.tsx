@@ -900,40 +900,28 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             beatmapInfos.sort((a, b) => a.version.localeCompare(b.version));
             setUploadProgress(40);
 
-            // 2. 获取上传URL
-            showInfo('正在获取上传URL...');
-            const urlResponse = await fetch('/api/upload-url', {
+            // 2. 直接上传osz文件到upload-url API
+            showInfo('正在上传osz文件...');
+            const formData = new FormData();
+            formData.append('file', oszFile);
+            formData.append('userId', userForState.id.toString());
+            formData.append('season', season);
+            formData.append('category', category);
+            formData.append('selectedMods', selectedMods);
+            formData.append('modPosition', modPosition.toString());
+
+            const uploadResponse = await fetch('/api/upload-url', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    filename: oszFile.name,
-                    contentType: 'application/octet-stream',
-                    userId: userForState.id.toString()
-                })
+                body: formData
             });
 
-            const urlData = await urlResponse.json();
-            if (!urlData.success) {
-                throw new Error(urlData.error || '获取上传URL失败');
+            const uploadData = await uploadResponse.json();
+            if (!uploadData.success) {
+                throw new Error(uploadData.error || '上传osz文件失败');
             }
 
-            const { url: uploadUrl } = urlData;
+            const { url: uploadUrl } = uploadData;
             setUploadProgress(60);
-
-            // 3. 直接上传到Vercel Blob
-            showInfo('正在上传文件到Blob...');
-            const uploadResponse = await fetch(uploadUrl, {
-                method: 'PUT',
-                body: oszFile,
-                headers: {
-                    'Content-Type': oszFile.type || 'application/octet-stream'
-                }
-            });
-
-            if (!uploadResponse.ok) {
-                throw new Error('上传到Blob失败');
-            }
-            setUploadProgress(80);
 
             // 4. 调用parse-osz API处理解析后的数据
             showInfo('正在提交解析数据...');
@@ -958,7 +946,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             if (data.success) {
                 setUploadProgress(100);
                 setOszUploadSuccess(true);
-                showSuccess('osz文件解析成功');
+                showSuccess('osu文件解析成功');
                 // 存储所有难度信息（使用API返回的完整数据，包含mod计算后的属性）
                 setOszBeatmapInfos(data.beatmapInfos || []);
 
