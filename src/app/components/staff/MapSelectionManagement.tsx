@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { showSuccess, showError, showInfo } from '../ui/Notification';
 import Dropdown from '../ui/Dropdown';
 import CommentComponent from './ui/CommentComponent';
 import MapoolTable from '../ui/MapoolTable';
 import { UserSession } from '@/lib/permissions';
+import { animate, createScope } from 'animejs';
 
 import {
     ArrowDownToLine,
@@ -286,6 +287,66 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         selection: null
     });
 
+    // 右键菜单引用
+    const contextMenuRef = useRef<HTMLDivElement>(null);
+
+    // 右键菜单动画效果
+    useEffect(() => {
+        if (!contextMenuRef.current) return;
+
+        let animation: any = null;
+
+        if (contextMenu.show) {
+            // 确保菜单可见
+            contextMenuRef.current.style.display = 'flex';
+
+            // 打开动画
+            animation = animate(contextMenuRef.current, {
+                opacity: [0.6, 1],
+                scale: [
+                    { to: 1.1, ease: 'inOut(3)', duration: 200 },
+                    { to: 1 }
+                ],
+                translateX: [100, 0],
+                translateY: [80, 0],
+                duration: 200,
+            });
+        } else if (contextMenuRef.current.style.display !== 'none') {
+            // 关闭动画
+            animation = animate(contextMenuRef.current, {
+                opacity: [1, 0],
+                scale: [1, 0.8],
+                translateX: [0, 100],
+                translateY: [0, 80],
+                duration: 150,
+                easing: 'easeInCubic',
+                complete: () => {
+                    // 动画完成后清理
+                    if (animation) {
+                        animation.pause();
+                    }
+                }
+            });
+        }
+
+        // 清理函数
+        return () => {
+            if (animation) {
+                animation.pause();
+            }
+        };
+    }, [contextMenu.show]);
+
+    const closeContextMenu = () => {
+        if (contextMenu.show) {
+            // 触发关闭动画
+            setContextMenu(prev => ({
+                ...prev,
+                show: false
+            }));
+        }
+    };
+
     // 编辑对话框状态
     const [editDialog, setEditDialog] = useState<{
         show: boolean;
@@ -517,8 +578,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         e.preventDefault();
 
         // 计算菜单位置
-        const menuWidth = 480; // 双排菜单宽度
-        const menuHeight = 400; // 预估菜单高度
+        const menuWidth = 450; // 双排菜单宽度
+        const menuHeight = 250; // 预估菜单高度
 
         let left = e.clientX;
         let top = e.clientY;
@@ -553,14 +614,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         });
     };
 
-    const closeContextMenu = () => {
-        setContextMenu({
-            show: false,
-            x: 0,
-            y: 0,
-            selection: null
-        });
-    };
+
 
     // 复制BID到剪贴板
     const copyBeatmapId = async (beatmapId: number) => {
@@ -2555,10 +2609,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             {/* osz文件上传区域 */}
                             <p>2.上传.osz文件自动解析并填充表单信息，文件将存储为：{season}_{category}_{selectedMods}{modPosition}_[生成的负数bid].osz</p>
                             <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
-                                <p className="text-sm text-gray-600 mb-3">
-                                </p>
                                 <h4 className="font-medium text-green-800 mb-2">osz文件上传</h4>
-
                                 <div className="space-y-3">
                                     {/* 文件选择区域 */}
                                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-green-500 transition-colors">
@@ -3229,7 +3280,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 {/* 右键菜单 */}
                 {contextMenu.show && contextMenu.selection && (
                     <div
-                        className="fixed flex flex-row gap-2 z-50"
+                        ref={contextMenuRef}
+                        className="fixed flex flex-row gap-2 z-50 animate-in fade-in-0 zoom-in-95 duration-200"
                         style={{
                             left: contextMenu.x,
                             top: contextMenu.y,
@@ -3238,7 +3290,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     >
                         {/* 判断是否在屏幕右侧，决定列顺序 */}
                         {(() => {
-                            const isOnRightSide = contextMenu.x + 320 > window.innerWidth;
+                            const isOnRightSide = contextMenu.x + 450 > window.innerWidth;
                             const isCustomMap = contextMenu.selection.beatmapId < 0; // 检查是否为负数bid（原创/定制图）
 
                             const firstColumn = [];
@@ -3773,7 +3825,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     </div>
                 )}
             </div>
-            ;
 
         </div>
     )
