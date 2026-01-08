@@ -180,7 +180,6 @@ export async function POST(request: NextRequest) {
                 try {
                     // 获取.osu文件内容
                     const osuContent = await zip.file(beatmapInfo.osuFilename)?.async('text');
-
                     if (osuContent) {
                         // 调用calculate-mod-stats API计算mod后的属性
                         const modStatsResponse = await fetch(`${request.nextUrl.origin}/api/calculate-mod-stats`, {

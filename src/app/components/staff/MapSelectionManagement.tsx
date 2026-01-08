@@ -831,18 +831,19 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             formData.append('category', category);
             formData.append('selectedMods', selectedMods);
             formData.append('modPosition', modPosition.toString());
-
+            setUploadProgress(10);
+            console.log('formData', formData);
             const response = await fetch('/api/parse-osz', {
                 method: 'POST',
                 body: formData
             });
-
+            setUploadProgress(50);
             const data = await response.json();
 
             if (data.success) {
+                setUploadProgress(100);
                 setOszUploadSuccess(true);
                 showSuccess('osz文件解析成功');
-
                 // 存储所有难度信息
                 setOszBeatmapInfos(data.beatmapInfos || []);
 
@@ -937,7 +938,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         setCustomPoolOD(beatmapInfo.od ? parseFloat(beatmapInfo.od.toFixed(2)) : '');
         setCustomPoolHP(beatmapInfo.hp ? parseFloat(beatmapInfo.hp.toFixed(2)) : '');
         setCustomBPM(beatmapInfo.bpm ? parseFloat(beatmapInfo.bpm.toFixed(2)) : '');
-        // osz解析出的时长单位是毫秒，需要转换为秒
         const totalLengthInSeconds = beatmapInfo.totalLength ? Math.round(beatmapInfo.totalLength / 1000) : '';
         setCustomTotalLength(totalLengthInSeconds);
         setCustomStarRating(beatmapInfo.starRating ? parseFloat(beatmapInfo.starRating.toFixed(2)) : '');
@@ -951,7 +951,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         fillFormWithBeatmapInfo(beatmapInfo);
         setShowDifficultySelector(false);
         // 重置文件状态
-        setOszFile(null);
     };
 
     // 当selectedMods变化时，如果有oszBeatmapInfos，重新计算属性
