@@ -900,27 +900,33 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             beatmapInfos.sort((a, b) => a.version.localeCompare(b.version));
             setUploadProgress(40);
 
-            // 2. 直接上传osz文件到upload-url API
+            // 2. 使用客户端直接上传到Vercel Blob
             showInfo('正在上传osz文件...');
-            const formData = new FormData();
-            formData.append('file', oszFile);
-            formData.append('userId', userForState.id.toString());
-            formData.append('season', season);
-            formData.append('category', category);
-            formData.append('selectedMods', selectedMods);
-            formData.append('modPosition', modPosition.toString());
 
-            const uploadResponse = await fetch('/api/upload-url', {
-                method: 'POST',
-                body: formData
+            // 动态导入@vercel/blob/client
+            const { upload } = await import('@vercel/blob/client');
+
+            // 生成负数bid（使用时间戳作为负数bid）
+            const negativeBeatmapId = -Math.floor(Date.now() / 1000);
+
+            // 生成存储路径
+            const blobPath = `/custom/${season}_${category}_${selectedMods}${modPosition}_${negativeBeatmapId}.osz`;
+
+            // 客户端直接上传
+            const newBlob = await upload(blobPath, oszFile, {
+                access: 'public',
+                handleUploadUrl: '/api/upload-url',
+                clientPayload: JSON.stringify({
+                    userId: userForState.id.toString(),
+                    season,
+                    category,
+                    selectedMods,
+                    modPosition: modPosition.toString(),
+                    customBeatmapId: null
+                })
             });
 
-            const uploadData = await uploadResponse.json();
-            if (!uploadData.success) {
-                throw new Error(uploadData.error || '上传osz文件失败');
-            }
-
-            const { url: uploadUrl } = uploadData;
+            const uploadUrl = newBlob.url;
             setUploadProgress(60);
 
             // 4. 调用parse-osz API处理解析后的数据
