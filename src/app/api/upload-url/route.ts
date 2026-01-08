@@ -2,6 +2,19 @@ import { put } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMapSelectionAuth } from '@/lib/permissions';
 
+// 处理OPTIONS预检请求
+export async function OPTIONS(request: NextRequest) {
+    return new NextResponse(null, {
+        status: 200,
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'Access-Control-Max-Age': '86400',
+        },
+    });
+}
+
 export async function POST(request: NextRequest) {
     try {
         const { filename, contentType, userId } = await request.json();
@@ -25,11 +38,12 @@ export async function POST(request: NextRequest) {
         // 生成安全的文件名（防止路径遍历攻击）
         const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
 
-        // 生成上传URL - 使用空字符串作为内容，因为我们只需要URL
-        const { url } = await put(safeFilename, '', {
+        // 生成上传URL - 使用一个小的占位符内容，允许覆盖
+        const { url } = await put(safeFilename, new Blob(['placeholder'], { type: contentType || 'application/octet-stream' }), {
             access: 'public',
             contentType: contentType || 'application/octet-stream',
-            token: process.env.BLOB_READ_WRITE_TOKEN
+            token: process.env.BLOB_READ_WRITE_TOKEN,
+            allowOverwrite: true
         });
 
         return NextResponse.json({

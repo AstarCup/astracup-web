@@ -807,7 +807,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
     };
 
-    // 处理osz文件上传 - 使用Vercel Blob客户端直接上传
+    // 处理osz文件上传 - 浏览器端解析后上传
     const handleOszUpload = async () => {
         if (!oszFile) {
             showError('请选择.osz文件');
@@ -824,8 +824,84 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         setUploadProgress(0);
 
         try {
-            // 1. 获取上传URL
+            // 1. 在浏览器中解析osz文件
             setUploadProgress(10);
+            showInfo('正在解析osz文件...');
+
+            // 动态导入JSZip库
+            const JSZip = (await import('jszip')).default;
+
+            // 读取文件内容
+            const arrayBuffer = await oszFile.arrayBuffer();
+
+            // 解压osz文件
+            const zip = await JSZip.loadAsync(arrayBuffer);
+
+            // 查找.osu文件
+            const osuFiles = Object.keys(zip.files).filter(name => name.toLowerCase().endsWith('.osu'));
+
+            if (osuFiles.length === 0) {
+                throw new Error('在osz文件中未找到.osu文件');
+            }
+
+            // 解析所有.osu文件
+            const beatmapInfos = [];
+
+            for (const osuFile of osuFiles) {
+                try {
+                    const osuContent = await zip.file(osuFile)?.async('text');
+
+                    if (!osuContent) {
+                        continue;
+                    }
+
+                    // 解析.osu文件内容
+                    const parsedData = parseOsuFileContent(osuContent);
+
+                    beatmapInfos.push({
+                        // 元数据
+                        title: parsedData['Title'] || '',
+                        titleUnicode: parsedData['TitleUnicode'] || parsedData['Title'] || '',
+                        artist: parsedData['Artist'] || '',
+                        artistUnicode: parsedData['ArtistUnicode'] || parsedData['Artist'] || '',
+                        version: parsedData['Version'] || '',
+                        creator: parsedData['Creator'] || '',
+                        beatmapId: parseInt(parsedData['BeatmapID'] || '-1'),
+                        beatmapsetId: parseInt(parsedData['BeatmapSetID'] || '-1'),
+
+                        // 难度数据
+                        cs: parseFloat(parsedData['CircleSize'] || '4'),
+                        ar: parseFloat(parsedData['ApproachRate'] || '9'),
+                        od: parseFloat(parsedData['OverallDifficulty'] || '8'),
+                        hp: parseFloat(parsedData['HPDrainRate'] || '6'),
+
+                        // 其他信息
+                        bpm: parseFloat(parsedData['PreviewTime'] || '180'),
+                        totalLength: parseInt(parsedData['AudioLeadIn'] || '0') + 120,
+                        tags: parsedData['Tags'] || '',
+                        source: parsedData['Source'] || '',
+
+                        // 文件名信息
+                        osuFilename: osuFile,
+                        osuContent: osuContent, // 保存.osu文件内容用于后续计算
+                        index: beatmapInfos.length
+                    });
+                } catch (error) {
+                    console.error(`解析.osu文件 ${osuFile} 失败:`, error);
+                    // 继续解析其他文件
+                }
+            }
+
+            if (beatmapInfos.length === 0) {
+                throw new Error('无法解析任何.osu文件');
+            }
+
+            // 按难度名排序
+            beatmapInfos.sort((a, b) => a.version.localeCompare(b.version));
+            setUploadProgress(40);
+
+            // 2. 获取上传URL
+            showInfo('正在获取上传URL...');
             const urlResponse = await fetch('/api/upload-url', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -842,9 +918,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             }
 
             const { url: uploadUrl } = urlData;
-            setUploadProgress(30);
+            setUploadProgress(60);
 
-            // 2. 直接上传到Vercel Blob
+            // 3. 直接上传到Vercel Blob
+            showInfo('正在上传文件到Blob...');
             const uploadResponse = await fetch(uploadUrl, {
                 method: 'PUT',
                 body: oszFile,
@@ -856,9 +933,10 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             if (!uploadResponse.ok) {
                 throw new Error('上传到Blob失败');
             }
-            setUploadProgress(60);
+            setUploadProgress(80);
 
-            // 3. 调用parse-osz API处理文件
+            // 4. 调用parse-osz API处理解析后的数据
+            showInfo('正在提交解析数据...');
             const parseResponse = await fetch('/api/parse-osz', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -868,10 +946,12 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     season,
                     category,
                     selectedMods,
-                    modPosition: modPosition.toString()
+                    modPosition: modPosition.toString(),
+                    beatmapInfos: beatmapInfos, // 传递浏览器端解析的数据
+                    parsedInBrowser: true // 标记为浏览器端解析
                 })
             });
-            setUploadProgress(80);
+            setUploadProgress(90);
 
             const data = await parseResponse.json();
 
@@ -879,7 +959,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 setUploadProgress(100);
                 setOszUploadSuccess(true);
                 showSuccess('osz文件解析成功');
-                // 存储所有难度信息
+                // 存储所有难度信息（使用API返回的完整数据，包含mod计算后的属性）
                 setOszBeatmapInfos(data.beatmapInfos || []);
 
                 if (data.hasMultipleDifficulties && data.beatmapInfos.length > 1) {
@@ -905,6 +985,42 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             setIsUploadingOsz(false);
             setUploadProgress(100);
         }
+    };
+
+    // 解析.osu文件内容的辅助函数
+    const parseOsuFileContent = (content: string): Record<string, string> => {
+        const result: Record<string, string> = {};
+        const lines = content.split('\n');
+        let currentSection = '';
+
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+
+            // 跳过空行和注释
+            if (!trimmedLine || trimmedLine.startsWith('//')) {
+                continue;
+            }
+
+            // 检查是否是节标题
+            if (trimmedLine.startsWith('[') && trimmedLine.endsWith(']')) {
+                currentSection = trimmedLine.slice(1, -1);
+                continue;
+            }
+
+            // 解析键值对
+            const separatorIndex = trimmedLine.indexOf(':');
+            if (separatorIndex > 0) {
+                const key = trimmedLine.substring(0, separatorIndex).trim();
+                const value = trimmedLine.substring(separatorIndex + 1).trim();
+
+                // 只存储特定节的关键字段
+                if (currentSection === 'Metadata' || currentSection === 'Difficulty' || currentSection === 'General') {
+                    result[key] = value;
+                }
+            }
+        }
+
+        return result;
     };
 
     // 重新计算mod后的属性
