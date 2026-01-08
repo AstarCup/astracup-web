@@ -2001,7 +2001,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 />
 
                 {/* 搜索框 */}
-                <div className="flex-1 min-w-[200px] rounded-lg text-gray-700 bg-white">
+                <div className="hover:scale-[1.01] transition-all  flex-1 min-w-[200px] rounded-lg text-gray-700 bg-white">
                     <input
                         type="text"
                         placeholder="搜索歌曲、艺术家、谱师... 支持osu url、BID/SID、ar9/cs5、mod"
@@ -2038,7 +2038,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                             setTempApprovedSelections(newSelections);
                         }}
-                        className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors whitespace-nowrap"
+                        className="hover:scale-[1.05] transition-all px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md whitespace-nowrap"
                     >
                         {(() => {
                             const filteredUnapproved = filteredSelections.filter(s => !s.approved);
@@ -2060,7 +2060,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         onClick={() => {
                             setShowAddForm(!showAddForm);
                         }}
-                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                        className="hover:scale-[1.05] transition-all px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md"
                     >
                         {showAddForm ? '取消添加' : '+ 添加选图'}
                     </button>
@@ -2916,7 +2916,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
 
             {/* Tab切换栏 - 带滑块动画 */}
-            <div className="mb-6 relative p-2 w-max bg-[#2d2d2d] rounded-lg">
+            <div className="mb-6 relative p-2 w-max bg-[#2d2d2d] rounded-lg hover:scale-[1.01] transition-all">
                 <div className="flex relative">
                     {/* 滑块 */}
                     <div
@@ -2930,7 +2930,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                 <div className='w-max flex flex-cow bg-[#1a1a1a] rounded-lg'>
                     <button
                         onClick={() => setActiveTab('cards')}
-                        className={`relative px-4 py-1 rounded-lg gap-1 transition-colors duration-300 flex items-center z-10 ${activeTab === 'cards'
+                        className={`hover:scale-[1.05] transition-all relative px-4 py-1 rounded-lg gap-1 duration-300 flex items-center z-10 ${activeTab === 'cards'
                             ? 'text-white'
                             : 'text-white hover:text-pink'
                             }`}
@@ -2940,7 +2940,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     </button>
                     <button
                         onClick={() => setActiveTab('table')}
-                        className={`relative px-4 py-1 rounded-lg gap-1 transition-colors duration-300 flex items-center z-10 ${activeTab === 'table'
+                        className={`hover:scale-[1.05] transition-all relative px-4 py-1 rounded-lg gap-1 duration-300 flex items-center z-10 ${activeTab === 'table'
                             ? 'text-white'
                             : 'text-white hover:text-pink'
                             }`}
@@ -2965,13 +2965,12 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     {Object.entries(getSelectionsByMod()).map(([mod, modSelections]) => (
                         <div key={mod} className="space-y-4">
                             {/* Mod分类标题 */}
-                            <div className="flex items-end gap-3">
-                                <div className={`px-2 mt-4 py-1 rounded-lg text-white font-bold text-lg ${getModColorClass(mod)}`}>
-                                    {mod} - {getModDisplayName(mod)}
+                            <div className="flex items-end gap-3 ">
+                                <div className={`hover:scale-x-[1.05] transition-all h-8 px-2 mt-4 py-1 rounded-lg text-white font-bold text-lg ${getModColorClass(mod)}`}>
+                                    <span className="text-xl">
+                                        {getModDisplayName(mod)} {modSelections.length}x
+                                    </span>
                                 </div>
-                                <span className="text-gray-200 text-xl">
-                                    {modSelections.length} 个
-                                </span>
                             </div>
 
                             {/* 该mod下的选图列表 */}
@@ -2979,7 +2978,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 {modSelections.map(selection => (
                                     <div
                                         key={selection.id}
-                                        className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${selection.approved ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'
+                                        className={`border rounded-lg p-4 shadow-sm hover:shadow-md hover:scale-x-[1.01] transition-all duration-200 cursor-pointer ${selection.approved ? 'border-green-300 border-l-10 bg-white' : 'border-gray-300 bg-white'
                                             } ${tempApprovedSelections.has(selection.id) ? 'border-blue-500 bg-blue-50' : ''}`}
                                         onClick={(e) => {
                                             // 检查点击目标是否为可点击元素（按钮、链接、输入框等）
@@ -3009,22 +3008,20 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                     alt="Beatmap cover"
                                                     width={512}
                                                     height={512}
-                                                    className="w-24 h-19 object-cover rounded"
+                                                    className="w-24 h-19 object-cover rounded hover:scale-[1.05] transition-all "
                                                 />
                                                 {/* 过审状态指示器 */}
                                                 {selection.approved && (
-                                                    <div className="absolute -top-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                                                        <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                        </svg>
+                                                    <div className="absolute -top-1 -left-5 w-8 h-8">
+                                                        <p className='font-bold text-4xl text-green-300'>过审</p>
                                                     </div>
                                                 )}
                                             </div>
 
-                                            <div className="flex-1  min-w-0">
+                                            <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <div className="flex items-center gap-2 flex-1">
-                                                        <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
+                                                        <span className={`hover:scale-[1.05] transition-all px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
                                                             {selection.selectedMods === 'LZ' ?
                                                                 (selection.customModName && selection.customModName.trim() !== '' ?
                                                                     `LZ${selection.modPosition}-${selection.customModName}` :
@@ -3037,13 +3034,13 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                             }
                                                         </span>
                                                         {selection.padding && (
-                                                            <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded flex flex-cow gap-1 items-center">
+                                                            <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded flex flex-cow gap-1 items-center hover:scale-[1.05] transition-all">
                                                                 <CircleArrowRight size={16} />
                                                             </span>
                                                         )}
                                                         {/* 当选择"全部"时显示阶段信息 */}
                                                         {category === 'all' && (
-                                                            <span className="px-2 py-1 bg-gray-600 text-white text-xs rounded">
+                                                            <span className="px-2 py-1 bg-gray-600 text-white text-xs rounded hover:scale-[1.05] transition-all">
                                                                 {CATEGORY_OPTIONS.find(cat => cat.value === selection.category)?.label || selection.category}
                                                             </span>
                                                         )}
@@ -3053,7 +3050,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         {/* 复制BID按钮 */}
                                                         <button
                                                             onClick={() => copyBeatmapId(selection.beatmapId)}
-                                                            className="px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded-full transition-colors flex flex-cow gap-1 items-center"
+                                                            className="px-2 py-1 bg-gray-500 hover:scale-[1.1] hover:bg-gray-600 text-white text-xs rounded-full transition-all flex flex-cow gap-1 items-center"
                                                             title="复制Beatmap ID"
                                                         >
                                                             <Clipboard size={12} /> {selection.beatmapId}
@@ -3073,7 +3070,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                                         }
                                                                         setTempApprovedSelections(newSelections);
                                                                     }}
-                                                                    className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                                                    className="hover:scale-[1.05] transition-all w-6 h-6 text-blue-600 bg-gray-100 border-gray-300 rounded-full focus:ring-blue-500"
                                                                 />
                                                             </label>
                                                         )}
@@ -3093,14 +3090,14 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         {/* 属性信息 */}
                                         <div className="mb-3 text-xs text-gray-600">
                                             <div className="grid grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-                                                <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><Diameter size={16} />CS<div className="font-bold text-2xl">{selection.cs.toFixed(2)}</div></div>
-                                                <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><CircleGauge size={16} />AR<div className="font-bold text-2xl">{selection.ar.toFixed(2)}</div></div>
-                                                <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><Target size={16} />OD<div className="font-bold text-2xl">{selection.od.toFixed(2)}</div></div>
-                                                <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><Heart size={16} />HP<div className="font-bold text-2xl">{selection.hp.toFixed(2)}</div></div>
-                                                <div className="text-center font-medium flex flex-cow gap-1 items-center"><Hourglass size={16} /><div className="text-center text-base">{formatLength(selection.totalLength)}</div></div>
-                                                <div className="text-center font-medium flex flex-cow gap-1 items-center"><CircleStar size={16} />MaxC<div className="text-center text-base">{selection.maxCombo}</div></div>
-                                                <div className="text-center font-medium flex flex-cow gap-1 items-center"><Music3 size={16} /><div className="text-center text-base">{selection.bpm}</div></div>
-                                                <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><Star size={16} />Star<div className="text-center text-xl font-bold">{selection.starRating.toFixed(2)}</div></div>
+                                                <div className="hover:scale-[1.05] transition-all bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><Diameter size={16} />CS<div className="font-bold text-2xl">{selection.cs.toFixed(2)}</div></div>
+                                                <div className="hover:scale-[1.05] transition-all bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><CircleGauge size={16} />AR<div className="font-bold text-2xl">{selection.ar.toFixed(2)}</div></div>
+                                                <div className="hover:scale-[1.05] transition-all bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><Target size={16} />OD<div className="font-bold text-2xl">{selection.od.toFixed(2)}</div></div>
+                                                <div className="hover:scale-[1.05] transition-all bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><Heart size={16} />HP<div className="font-bold text-2xl">{selection.hp.toFixed(2)}</div></div>
+                                                <div className="text-center font-medium flex flex-cow gap-1 items-center items-center p-1"><Hourglass size={16} /><div className="text-center text-base">{formatLength(selection.totalLength)}</div></div>
+                                                <div className="text-center font-medium flex flex-cow gap-1 items-center items-center p-1"><CircleStar size={16} /><div className="text-center text-base">{selection.maxCombo}</div></div>
+                                                <div className="text-center font-medium flex flex-cow gap-1 items-center items-center p-1"><Music3 size={16} /><div className="text-center text-base">{selection.bpm}</div></div>
+                                                <div className="hover:scale-[1.05] transition-all bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><Star size={16} />Star<div className="text-center text-xl font-bold">{selection.starRating.toFixed(2)}</div></div>
 
                                             </div>
                                         </div>
@@ -3108,15 +3105,13 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         {/* 提名者信息 */}
                                         <div className="mb-3 text-xs text-gray-600">
                                             <div className="flex items-center gap-3 w-full">
-                                                <span className="flex items-center gap-1">提名者:<Image src={selection.selectedByAvatar || "/default-avatar.png"} alt={selection.selectedByUsername || '未知'} width={16} height={16} className="rounded-full" />{selection.selectedByUsername}</span>
-                                                <span>•</span>
-                                                <span>{formatDateTime(selection.selectedAt)}</span>
+                                                <span className="flex items-center gap-1"><Image src={selection.selectedByAvatar || "/default-avatar.png"} alt={selection.selectedByUsername || '未知'} width={16} height={16} className="rounded-full" />{selection.selectedByUsername}</span>
                                             </div>
                                         </div>
 
                                         {/* 评论 */}
                                         {selection.comment && (
-                                            <div className="mb-3 p-2 bg-gray-50 rounded text-xs text-gray-700">
+                                            <div className="hover:scale-[1.01] transition-all mb-3 p-2 bg-gray-50 rounded text-xs text-gray-700">
                                                 {selection.comment}
                                             </div>
                                         )}
