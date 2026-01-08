@@ -1952,7 +1952,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             BPM: map.bpm,
             HitLength: formatLength(map.totalLength),
             Notes: map.comment || '-',
-            // 添加自定义mod字段
             customModName: map.customModName,
             customDTRate: map.customDTRate,
             selectedMods: map.selectedMods,
@@ -1961,8 +1960,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             selectedAt: map.selectedAt || new Date().toISOString(),
             starRating: map.starRating,
             approved: map.approved || false,
-            // 添加maxCombo字段
-            maxCombo: map.maxCombo || 0
+            maxCombo: map.maxCombo || 0,
+            category: map.category
         }));
     };
 
@@ -2654,7 +2653,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         type="number"
                                         step="0.1"
                                         min="0"
-                                        max="10"
+                                        max="11"
                                         value={customPoolCS}
                                         onChange={(e) => setCustomPoolCS(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -2669,7 +2668,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         type="number"
                                         step="0.1"
                                         min="0"
-                                        max="10"
+                                        max="11"
                                         value={customPoolAR}
                                         onChange={(e) => setCustomPoolAR(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -2684,7 +2683,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         type="number"
                                         step="0.1"
                                         min="0"
-                                        max="10"
+                                        max="11"
                                         value={customPoolOD}
                                         onChange={(e) => setCustomPoolOD(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -2699,7 +2698,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         type="number"
                                         step="0.1"
                                         min="0"
-                                        max="10"
+                                        max="11"
                                         value={customPoolHP}
                                         onChange={(e) => setCustomPoolHP(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -2719,7 +2718,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     type="number"
                                     step="0.01"
                                     min="0"
-                                    max="20"
+                                    max="100"
                                     value={customStarRating}
                                     onChange={(e) => setCustomStarRating(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -2762,7 +2761,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                     value={customMaxCombo}
                                     onChange={(e) => setCustomMaxCombo(e.target.value === '' ? '' : parseInt(e.target.value))}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    placeholder="1000"
+                                    placeholder="0"
                                 />
                             </div>
                         </div>
