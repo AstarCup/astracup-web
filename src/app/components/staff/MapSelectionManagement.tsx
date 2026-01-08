@@ -2081,757 +2081,834 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             {/* 添加选图表单 */}
             {showAddForm && (
                 <div className='grid gap-2 grid-cols-1 md:grid-cols-2'>
-                    <div className="mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50 object-center">
-                        <h3 className="text-lg font-bold mb-4">添加新选图</h3>
-                        {/* URL输入 */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Beatmap URL
-                            </label>
-                            <input
-                                type="text"
-                                value={urlInput}
-                                onChange={handleUrlInputChange}
-                                onKeyDown={handleUrlInputKeyDown}
-                                placeholder="粘贴osu! beatmap链接或ID"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                disabled={isSubmitting}
-                            />
-                            <p className="text-xs text-gray-500 mt-1">
-                                支持完整的URL或beatmap ID，按回车键解析
-                            </p>
-                        </div>
-
-                        {/* Beatmap选择 */}
-                        {availableBeatmaps.length > 1 && (
+                    {/* 左边表单 */}
+                    <div>
+                        <div className="mb-2 p-4 border border-gray-300 rounded-lg bg-gray-50 object-center">
+                            <h3 className="text-lg font-bold mb-4">添加新选图</h3>
+                            {/* URL输入 */}
                             <div className="mb-4">
-                                <Dropdown
-                                    label="选择难度"
-                                    options={[
-                                        { value: '', label: '请选择难度...' },
-                                        ...availableBeatmaps.map(beatmap => ({
-                                            value: beatmap.id.toString(),
-                                            label: `${beatmap.version} (${beatmap.star_rating.toFixed(2)}★)`
-                                        }))
-                                    ]}
-                                    value={beatmapPreview?.id?.toString() || ''}
-                                    onChange={(value) => {
-                                        const selected = availableBeatmaps.find(b => b.id.toString() === value);
-                                        setBeatmapPreview(selected || null);
-                                    }}
-                                    placeholder="请选择难度..."
-                                    minWidth="100%"
-                                />
-                            </div>
-                        )}
-
-                        {/* Beatmap预览 */}
-                        {beatmapPreview && (
-                            <div className="mb-4 p-4 bg-white border border-gray-300 rounded-lg shadow-sm max-w-[660px]">
-                                {/* 头部：封面和基本信息 */}
-                                <div className="flex items-start gap-3 mb-3">
-                                    <Image
-                                        src={beatmapPreview.cover_url}
-                                        alt="Beatmap cover"
-                                        width={512}
-                                        height={512}
-                                        className="w-28 h-19 object-cover rounded"
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-sm truncate" title={beatmapPreview.title_unicode || beatmapPreview.title}>
-                                            {beatmapPreview.title_unicode || beatmapPreview.title}
-                                        </h3>
-                                        <p className="font-bold text-xs text-gray-600 truncate" title={beatmapPreview.artist_unicode || beatmapPreview.artist}>
-                                            {beatmapPreview.artist_unicode || beatmapPreview.artist}
-                                        </p>
-                                        <p className="font-bold text-xs text-gray-600">[{beatmapPreview.version}] by {beatmapPreview.creator}</p>
-                                    </div>
-                                </div>
-
-                                {/* 属性信息 */}
-                                <div className="mb-3 text-xs text-gray-600">
-                                    <div className="grid grid-cols-4 gap-1">
-                                        <div className="text-center font-medium">CS</div>
-                                        <div className="text-center font-medium">AR</div>
-                                        <div className="text-center font-medium">OD</div>
-                                        <div className="text-center font-medium">HP</div>
-
-                                        <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.cs !== undefined ? (moddedStats.cs > beatmapPreview.cs + 0.01 ? 'text-red-500' : moddedStats.cs < beatmapPreview.cs - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                            {(() => {
-                                                const val = moddedStats?.cs ?? beatmapPreview.cs;
-                                                if (selectedMods !== 'NM' && moddedStats?.cs !== undefined) {
-                                                    if (moddedStats.cs > beatmapPreview.cs + 0.01) return `${val.toFixed(2)} ▲`;
-                                                    if (moddedStats.cs < beatmapPreview.cs - 0.01) return `${val.toFixed(2)} ▼`;
-                                                }
-                                                return val.toFixed(2);
-                                            })()}
-                                        </div>
-                                        <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.ar !== undefined ? (moddedStats.ar > beatmapPreview.ar + 0.01 ? 'text-red-500' : moddedStats.ar < beatmapPreview.ar - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                            {(() => {
-                                                const val = moddedStats?.ar ?? beatmapPreview.ar;
-                                                if (selectedMods !== 'NM' && moddedStats?.ar !== undefined) {
-                                                    if (moddedStats.ar > beatmapPreview.ar + 0.01) return `${val.toFixed(2)} ▲`;
-                                                    if (moddedStats.ar < beatmapPreview.ar - 0.01) return `${val.toFixed(2)} ▼`;
-                                                }
-                                                return val.toFixed(2);
-                                            })()}
-                                        </div>
-                                        <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.od !== undefined ? (moddedStats.od > beatmapPreview.od + 0.01 ? 'text-red-500' : moddedStats.od < beatmapPreview.od - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                            {(() => {
-                                                const val = moddedStats?.od ?? beatmapPreview.od;
-                                                if (selectedMods !== 'NM' && moddedStats?.od !== undefined) {
-                                                    if (moddedStats.od > beatmapPreview.od + 0.01) return `${val.toFixed(2)} ▲`;
-                                                    if (moddedStats.od < beatmapPreview.od - 0.01) return `${val.toFixed(2)} ▼`;
-                                                }
-                                                return val.toFixed(2);
-                                            })()}
-                                        </div>
-                                        <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.hp !== undefined ? (moddedStats.hp > beatmapPreview.hp + 0.01 ? 'text-red-500' : moddedStats.hp < beatmapPreview.hp - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                            {(() => {
-                                                const val = moddedStats?.hp ?? beatmapPreview.hp;
-                                                if (selectedMods !== 'NM' && moddedStats?.hp !== undefined) {
-                                                    if (moddedStats.hp > beatmapPreview.hp + 0.01) return `${val.toFixed(2)} ▲`;
-                                                    if (moddedStats.hp < beatmapPreview.hp - 0.01) return `${val.toFixed(2)} ▼`;
-                                                }
-                                                return val.toFixed(2);
-                                            })()}
-                                        </div>
-
-                                        <div className="text-center font-medium">Length</div>
-                                        <div className="text-center font-medium">MaxC</div>
-                                        <div className="text-center font-medium">BPM</div>
-                                        <div className="text-center font-medium">★</div>
-                                        <div className={`text-center font-bold text-base ${selectedMods === 'DT' && customDTRate !== '' ? 'text-red-500' : ''}`}>
-                                            {selectedMods === 'DT' && customDTRate !== '' ?
-                                                formatLength(Math.round(beatmapPreview.total_length / (customDTRate as number))) + ' ▼' :
-                                                formatLength(beatmapPreview.total_length)
-                                            }
-                                        </div>
-                                        <div className="text-center font-bold text-base">
-                                            {beatmapPreview.max_combo || 0}
-                                        </div>
-                                        <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.bpm !== undefined ? (moddedStats.bpm > beatmapPreview.bpm + 0.01 ? 'text-red-500' : moddedStats.bpm < beatmapPreview.bpm - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                            {(() => {
-                                                const val = moddedStats?.bpm ?? beatmapPreview.bpm;
-                                                if (selectedMods !== 'NM' && moddedStats?.bpm !== undefined) {
-                                                    if (moddedStats.bpm > beatmapPreview.bpm + 0.01) return `${val} ▲`;
-                                                    if (moddedStats.bpm < beatmapPreview.bpm - 0.01) return `${val} ▼`;
-                                                }
-                                                return val;
-                                            })()}
-                                        </div>
-                                        <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.starRating !== undefined ? (moddedStats.starRating > beatmapPreview.star_rating + 0.01 ? 'text-red-500' : moddedStats.starRating < beatmapPreview.star_rating - 0.01 ? 'text-green-500' : '') : ''}`}>
-                                            {(() => {
-                                                const val = moddedStats?.starRating ?? beatmapPreview.star_rating;
-                                                if (selectedMods !== 'NM' && moddedStats?.starRating !== undefined) {
-                                                    if (moddedStats.starRating > beatmapPreview.star_rating + 0.01) return `${val.toFixed(2)} ▲`;
-                                                    if (moddedStats.starRating < beatmapPreview.star_rating - 0.01) return `${val.toFixed(2)} ▼`;
-                                                }
-                                                return val.toFixed(2);
-                                            })()}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Mod选择 */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div className="min-w-[220px]">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Mod
-                                </label>
-                                <Dropdown
-                                    options={MOD_OPTIONS.map(mod => ({
-                                        value: mod,
-                                        label: mod
-                                    }))}
-                                    value={selectedMods}
-                                    onChange={setSelectedMods}
-                                    placeholder="选择MOD"
-                                    minWidth="100%"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    位置
+                                    Beatmap URL
                                 </label>
                                 <input
-                                    type="number"
-                                    min="1"
-                                    max="10"
-                                    value={modPosition}
-                                    onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
+                                    type="text"
+                                    value={urlInput}
+                                    onChange={handleUrlInputChange}
+                                    onKeyDown={handleUrlInputKeyDown}
+                                    placeholder="粘贴osu! beatmap链接或ID"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    disabled={isSubmitting}
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    支持完整的URL或beatmap ID，按回车键解析
+                                </p>
+                            </div>
+
+                            {/* Beatmap选择 */}
+                            {availableBeatmaps.length > 1 && (
+                                <div className="mb-4">
+                                    <Dropdown
+                                        label="选择难度"
+                                        options={[
+                                            { value: '', label: '请选择难度...' },
+                                            ...availableBeatmaps.map(beatmap => ({
+                                                value: beatmap.id.toString(),
+                                                label: `${beatmap.version} (${beatmap.star_rating.toFixed(2)}★)`
+                                            }))
+                                        ]}
+                                        value={beatmapPreview?.id?.toString() || ''}
+                                        onChange={(value) => {
+                                            const selected = availableBeatmaps.find(b => b.id.toString() === value);
+                                            setBeatmapPreview(selected || null);
+                                        }}
+                                        placeholder="请选择难度..."
+                                        minWidth="100%"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Beatmap预览 */}
+                            {beatmapPreview && (
+                                <div className="mb-4 p-4 bg-white border border-gray-300 rounded-lg shadow-sm max-w-[660px]">
+                                    {/* 头部：封面和基本信息 */}
+                                    <div className="flex items-start gap-3 mb-3">
+                                        <Image
+                                            src={beatmapPreview.cover_url}
+                                            alt="Beatmap cover"
+                                            width={512}
+                                            height={512}
+                                            className="w-28 h-19 object-cover rounded"
+                                        />
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-bold text-sm truncate" title={beatmapPreview.title_unicode || beatmapPreview.title}>
+                                                {beatmapPreview.title_unicode || beatmapPreview.title}
+                                            </h3>
+                                            <p className="font-bold text-xs text-gray-600 truncate" title={beatmapPreview.artist_unicode || beatmapPreview.artist}>
+                                                {beatmapPreview.artist_unicode || beatmapPreview.artist}
+                                            </p>
+                                            <p className="font-bold text-xs text-gray-600">[{beatmapPreview.version}] by {beatmapPreview.creator}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* 属性信息 */}
+                                    <div className="mb-3 text-xs text-gray-600">
+                                        <div className="grid grid-cols-4 gap-1">
+                                            <div className="text-center font-medium">CS</div>
+                                            <div className="text-center font-medium">AR</div>
+                                            <div className="text-center font-medium">OD</div>
+                                            <div className="text-center font-medium">HP</div>
+
+                                            <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.cs !== undefined ? (moddedStats.cs > beatmapPreview.cs + 0.01 ? 'text-red-500' : moddedStats.cs < beatmapPreview.cs - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.cs ?? beatmapPreview.cs;
+                                                    if (selectedMods !== 'NM' && moddedStats?.cs !== undefined) {
+                                                        if (moddedStats.cs > beatmapPreview.cs + 0.01) return `${val.toFixed(2)} ▲`;
+                                                        if (moddedStats.cs < beatmapPreview.cs - 0.01) return `${val.toFixed(2)} ▼`;
+                                                    }
+                                                    return val.toFixed(2);
+                                                })()}
+                                            </div>
+                                            <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.ar !== undefined ? (moddedStats.ar > beatmapPreview.ar + 0.01 ? 'text-red-500' : moddedStats.ar < beatmapPreview.ar - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.ar ?? beatmapPreview.ar;
+                                                    if (selectedMods !== 'NM' && moddedStats?.ar !== undefined) {
+                                                        if (moddedStats.ar > beatmapPreview.ar + 0.01) return `${val.toFixed(2)} ▲`;
+                                                        if (moddedStats.ar < beatmapPreview.ar - 0.01) return `${val.toFixed(2)} ▼`;
+                                                    }
+                                                    return val.toFixed(2);
+                                                })()}
+                                            </div>
+                                            <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.od !== undefined ? (moddedStats.od > beatmapPreview.od + 0.01 ? 'text-red-500' : moddedStats.od < beatmapPreview.od - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.od ?? beatmapPreview.od;
+                                                    if (selectedMods !== 'NM' && moddedStats?.od !== undefined) {
+                                                        if (moddedStats.od > beatmapPreview.od + 0.01) return `${val.toFixed(2)} ▲`;
+                                                        if (moddedStats.od < beatmapPreview.od - 0.01) return `${val.toFixed(2)} ▼`;
+                                                    }
+                                                    return val.toFixed(2);
+                                                })()}
+                                            </div>
+                                            <div className={`text-center font-bold text-lg ${selectedMods !== 'NM' && moddedStats?.hp !== undefined ? (moddedStats.hp > beatmapPreview.hp + 0.01 ? 'text-red-500' : moddedStats.hp < beatmapPreview.hp - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.hp ?? beatmapPreview.hp;
+                                                    if (selectedMods !== 'NM' && moddedStats?.hp !== undefined) {
+                                                        if (moddedStats.hp > beatmapPreview.hp + 0.01) return `${val.toFixed(2)} ▲`;
+                                                        if (moddedStats.hp < beatmapPreview.hp - 0.01) return `${val.toFixed(2)} ▼`;
+                                                    }
+                                                    return val.toFixed(2);
+                                                })()}
+                                            </div>
+
+                                            <div className="text-center font-medium">Length</div>
+                                            <div className="text-center font-medium">MaxC</div>
+                                            <div className="text-center font-medium">BPM</div>
+                                            <div className="text-center font-medium">★</div>
+                                            <div className={`text-center font-bold text-base ${selectedMods === 'DT' && customDTRate !== '' ? 'text-red-500' : ''}`}>
+                                                {selectedMods === 'DT' && customDTRate !== '' ?
+                                                    formatLength(Math.round(beatmapPreview.total_length / (customDTRate as number))) + ' ▼' :
+                                                    formatLength(beatmapPreview.total_length)
+                                                }
+                                            </div>
+                                            <div className="text-center font-bold text-base">
+                                                {beatmapPreview.max_combo || 0}
+                                            </div>
+                                            <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.bpm !== undefined ? (moddedStats.bpm > beatmapPreview.bpm + 0.01 ? 'text-red-500' : moddedStats.bpm < beatmapPreview.bpm - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.bpm ?? beatmapPreview.bpm;
+                                                    if (selectedMods !== 'NM' && moddedStats?.bpm !== undefined) {
+                                                        if (moddedStats.bpm > beatmapPreview.bpm + 0.01) return `${val} ▲`;
+                                                        if (moddedStats.bpm < beatmapPreview.bpm - 0.01) return `${val} ▼`;
+                                                    }
+                                                    return val;
+                                                })()}
+                                            </div>
+                                            <div className={`text-center font-bold text-base ${selectedMods !== 'NM' && moddedStats?.starRating !== undefined ? (moddedStats.starRating > beatmapPreview.star_rating + 0.01 ? 'text-red-500' : moddedStats.starRating < beatmapPreview.star_rating - 0.01 ? 'text-green-500' : '') : ''}`}>
+                                                {(() => {
+                                                    const val = moddedStats?.starRating ?? beatmapPreview.star_rating;
+                                                    if (selectedMods !== 'NM' && moddedStats?.starRating !== undefined) {
+                                                        if (moddedStats.starRating > beatmapPreview.star_rating + 0.01) return `${val.toFixed(2)} ▲`;
+                                                        if (moddedStats.starRating < beatmapPreview.star_rating - 0.01) return `${val.toFixed(2)} ▼`;
+                                                    }
+                                                    return val.toFixed(2);
+                                                })()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Mod选择 */}
+                            <div className="flex flex-cow gap-2 mb-4">
+                                <div className="">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Mod
+                                    </label>
+                                    <Dropdown
+                                        options={MOD_OPTIONS.map(mod => ({
+                                            value: mod,
+                                            label: mod
+                                        }))}
+                                        value={selectedMods}
+                                        onChange={setSelectedMods}
+                                        placeholder="选择MOD"
+                                        minWidth="100%"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        位置
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="10"
+                                        value={modPosition}
+                                        onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Lazer特有mod设置 */}
+                            {selectedMods === 'LZ' && (
+                                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                    <h4 className="font-medium text-blue-800 mb-2">Lazer特有MOD设置</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className='min-w-[300px]'>
+                                            <Dropdown
+                                                label="MOD名称"
+                                                options={[
+                                                    { value: '', label: '选择MOD...' },
+                                                    ...availableLazerMods.map(mod => ({
+                                                        value: mod.name,
+                                                        label: `${mod.name} - ${mod.description}`
+                                                    }))
+                                                ]}
+                                                value={customModName}
+                                                onChange={setCustomModName}
+                                                placeholder="选择MOD..."
+                                                minWidth="100%"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* DA mod自定义属性 */}
+                                    {customModName === 'DA' && (
+                                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                                            <h5 className="font-medium text-yellow-800 mb-2">Difficulty Adjust 设置</h5>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                                <div>
+                                                    <label className="block text-xs text-gray-600 mb-1">CS</label>
+                                                    <input
+                                                        type="number"
+                                                        step="0.1"
+                                                        min="0"
+                                                        max="10"
+                                                        value={customCS}
+                                                        onChange={(e) => setCustomCS(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                                        placeholder="不修改则为原值"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-gray-600 mb-1">AR</label>
+                                                    <input
+                                                        type="number"
+                                                        step="0.1"
+                                                        min="0"
+                                                        max="10"
+                                                        value={customAR}
+                                                        onChange={(e) => setCustomAR(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                                        placeholder="不修改则为原值"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-gray-600 mb-1">OD</label>
+                                                    <input
+                                                        type="number"
+                                                        step="0.1"
+                                                        min="0"
+                                                        max="10"
+                                                        value={customOD}
+                                                        onChange={(e) => setCustomOD(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                                        placeholder="不修改则为原值"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-gray-600 mb-1">HP</label>
+                                                    <input
+                                                        type="number"
+                                                        step="0.1"
+                                                        min="0"
+                                                        max="10"
+                                                        value={customHP}
+                                                        onChange={(e) => setCustomHP(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                                        placeholder="不修改则为原值"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* DT自定义倍率 */}
+                            {selectedMods === 'DT' && (
+                                <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-md">
+                                    <h4 className="font-medium text-purple-800 mb-2">DT 设置</h4>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            自定义倍率
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="1.0"
+                                            max="2.0"
+                                            value={customDTRate}
+                                            onChange={(e) => setCustomDTRate(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            placeholder="1.50"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            默认1.50倍，可自定义1.00-2.00之间的倍率
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+
+                            {/* 重复检查警告 */}
+                            {duplicateWarning.show && (
+                                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                                    <h4 className="font-medium text-yellow-800 mb-2">重复检测</h4>
+                                    <p className="text-yellow-700 text-sm mb-2">
+                                        此谱面已被选择 {duplicateWarning.existingSelections.length} 次：
+                                    </p>
+                                    <ul className="text-sm text-yellow-700 list-disc list-inside">
+                                        {duplicateWarning.existingSelections.map((sel: ExistingSelection, index: number) => (
+                                            <li key={index}>
+                                                {sel.selectedMods}{sel.modPosition} - {sel.category} - {sel.selectedByUsername}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
+                            {/* 评论和选项 */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 flex flex-cow items-center gap-1">
+                                    <MessageCircleMore size={16} />评论
+                                </label>
+                                <textarea
+                                    value={comment}
+                                    onChange={(e) => setComment(e.target.value)}
+                                    placeholder="添加评论..."
+                                    rows={3}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
-                        </div>
 
-                        {/* Lazer特有mod设置 */}
-                        {selectedMods === 'LZ' && (
+                            <div className="flex gap-4 items-center mb-4">
+                                <label className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={padding}
+                                        onChange={(e) => setPadding(e.target.checked)}
+                                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                    />
+                                    <span className="text-sm text-gray-700">送测该图</span>
+                                </label>
+                            </div>
+
+                            {/* 提交按钮 */}
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={addSelection}
+                                    disabled={isSubmitting || !beatmapPreview}
+                                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 text-white rounded-md transition-colors"
+                                >
+                                    {isSubmitting ? '添加中...' : '添加选图'}
+                                </button>
+                                <button
+                                    onClick={() => setShowAddForm(false)}
+                                    className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors"
+                                >
+                                    取消
+                                </button>
+                            </div>
+                        </div>
+                        <div className='mb-2 p-4 border border-gray-300 rounded-lg bg-gray-50 object-center'>
+                            <table className='table-auto md:table-fixed text-center'>
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>NM</th>
+                                        <th>HD</th>
+                                        <th>HR</th>
+                                        <th>DT</th>
+                                        <th>LZ</th>
+                                        <th>TB</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>QUA</td>
+                                        <td>4</td>
+                                        <td>2</td>
+                                        <td>2</td>
+                                        <td>2</td>
+                                        <td>0</td>
+                                        <td>0</td>
+                                    </tr>
+                                    <tr>
+                                        <td>RO16</td>
+                                        <td>5</td>
+                                        <td>3</td>
+                                        <td>2</td>
+                                        <td>2</td>
+                                        <td>1</td>
+                                        <td>1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>QF</td>
+                                        <td>5</td>
+                                        <td>3</td>
+                                        <td>2</td>
+                                        <td>3</td>
+                                        <td>1</td>
+                                        <td>1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>SF</td>
+                                        <td>5</td>
+                                        <td>3</td>
+                                        <td>3</td>
+                                        <td>3</td>
+                                        <td>1</td>
+                                        <td>1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>F</td>
+                                        <td>6</td>
+                                        <td>3</td>
+                                        <td>3</td>
+                                        <td>3</td>
+                                        <td>1</td>
+                                        <td>1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>GF</td>
+                                        <td>6</td>
+                                        <td>3</td>
+                                        <td>3</td>
+                                        <td>4</td>
+                                        <td>2</td>
+                                        <td>1</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <img src="/info3.svg" alt="Map Selection" className="mt-4 mx-auto" />
+                        </div>
+                    </div>
+                    {/* 右边表单 */}
+                    <div className="mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50 object-center">
+                        <h3 className="text-lg font-bold mb-4">添加自定图池</h3>
+                        <div>
+                            {/* Mod选择 */}
+                            <p>1.先确定好mod和mod位，上传的时候会锁定文件名</p>
+                            <div className="flex flex-cow w-max gap-2 mb-4">
+                                <div className="">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Mod
+                                    </label>
+                                    <Dropdown
+                                        options={MOD_OPTIONS.map(mod => ({
+                                            value: mod,
+                                            label: mod
+                                        }))}
+                                        value={selectedMods}
+                                        onChange={setSelectedMods}
+                                        placeholder="选择MOD"
+                                        minWidth="100%"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        位置
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="10"
+                                        value={modPosition}
+                                        onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    />
+                                </div>
+                            </div>
+                            {/* osz文件上传区域 */}
+                            <p>2.上传.osz文件自动解析并填充表单信息，文件将存储为：{season}_{category}_{selectedMods}{modPosition}_[生成的负数bid].osz</p>
+                            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                                <p className="text-sm text-gray-600 mb-3">
+                                </p>
+                                <h4 className="font-medium text-green-800 mb-2">osz文件上传</h4>
+
+                                <div className="space-y-3">
+                                    {/* 文件选择区域 */}
+                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-green-500 transition-colors">
+                                        <input
+                                            type="file"
+                                            id="osz-file"
+                                            accept=".osz"
+                                            onChange={handleFileSelect}
+                                            className="hidden"
+                                        />
+                                        <label htmlFor="osz-file" className="cursor-pointer block">
+                                            <div className="flex flex-col items-center justify-center">
+                                                <CloudUpload />
+                                                <span className="text-sm font-medium text-gray-700">
+                                                    {oszFile ? `已选择: ${oszFile.name}` : '点击选择.osz文件或拖放至此'}
+                                                </span>
+                                                <span className="text-xs text-gray-500 mt-1">
+                                                    支持.osz格式，最大50MB
+                                                </span>
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    {/* 文件信息和上传按钮 */}
+                                    {oszFile && (
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-gray-700">{oszFile.name}</span>
+                                                <span className="text-gray-500">{(oszFile.size / 1024 / 1024).toFixed(2)} MB</span>
+                                            </div>
+
+                                            {/* 上传进度 */}
+                                            {isUploadingOsz && (
+                                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                                    <div
+                                                        className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                                                        style={{ width: `${uploadProgress}%` }}
+                                                    ></div>
+                                                </div>
+                                            )}
+
+                                            {/* 上传按钮 */}
+                                            <button
+                                                onClick={handleOszUpload}
+                                                disabled={isUploadingOsz || !oszFile}
+                                                className="w-full px-4 py-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white rounded-md transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                {isUploadingOsz ? (
+                                                    <>
+                                                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                        </svg>
+                                                        上传中...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <CloudUpload />
+                                                        上传并解析osz文件
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* 难度选择器 */}
+                            {showDifficultySelector && oszBeatmapInfos.length > 1 && (
+                                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                    <h4 className="font-medium text-blue-800 mb-2">选择难度</h4>
+                                    <p className="text-sm text-gray-600 mb-3">
+                                        检测到 {oszBeatmapInfos.length} 个难度，请选择要使用的难度：
+                                    </p>
+
+                                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                                        {oszBeatmapInfos.map((beatmapInfo, index) => (
+                                            <div
+                                                key={index}
+                                                className={`p-3 border rounded-lg cursor-pointer transition-colors ${selectedDifficultyIndex === index ? 'bg-blue-100 border-blue-500' : 'bg-white border-gray-300 hover:bg-gray-50'}`}
+                                                onClick={() => handleDifficultySelect(index)}
+                                            >
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <div className="font-medium text-gray-800">
+                                                            {beatmapInfo.version}
+                                                        </div>
+                                                        <div className="text-xs text-gray-600">
+                                                            CS: {beatmapInfo.cs.toFixed(1)} | AR: {beatmapInfo.ar.toFixed(1)} | OD: {beatmapInfo.od.toFixed(1)} | HP: {beatmapInfo.hp.toFixed(1)}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-sm text-gray-700">
+                                                        {beatmapInfo.starRating ? `${beatmapInfo.starRating.toFixed(2)}★` : 'N/A'}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="mt-3 flex justify-between items-center">
+                                        <span className="text-sm text-gray-600">
+                                            已选择: {oszBeatmapInfos[selectedDifficultyIndex]?.version}
+                                        </span>
+                                        <button
+                                            onClick={() => handleDifficultySelect(selectedDifficultyIndex)}
+                                            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                                        >
+                                            确认选择
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                            {/* 原创/定制选择 */}
+                            <p>3.选择类型</p>
                             <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                                <h4 className="font-medium text-blue-800 mb-2">Lazer特有MOD设置</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className='min-w-[300px]'>
-                                        <Dropdown
-                                            label="MOD名称"
-                                            options={[
-                                                { value: '', label: '选择MOD...' },
-                                                ...availableLazerMods.map(mod => ({
-                                                    value: mod.name,
-                                                    label: `${mod.name} - ${mod.description}`
-                                                }))
-                                            ]}
-                                            value={customModName}
-                                            onChange={setCustomModName}
-                                            placeholder="选择MOD..."
-                                            minWidth="100%"
+                                <h4 className="font-medium text-blue-800 mb-2">图池类型</h4>
+                                <div className="flex gap-4">
+                                    <label className="flex items-center gap-2">
+                                        <input
+                                            type="radio"
+                                            name="customPoolType"
+                                            value="original"
+                                            checked={customPoolType === 'original'}
+                                            onChange={(e) => setCustomPoolType(e.target.value as 'original' | 'custom')}
+                                            className="w-4 h-4 text-blue-600"
+                                        />
+                                        <span className="text-sm text-gray-700">原创</span>
+                                    </label>
+                                    <label className="flex items-center gap-2">
+                                        <input
+                                            type="radio"
+                                            name="customPoolType"
+                                            value="custom"
+                                            checked={customPoolType === 'custom'}
+                                            onChange={(e) => setCustomPoolType(e.target.value as 'original' | 'custom')}
+                                            className="w-4 h-4 text-purple-600"
+                                        />
+                                        <span className="text-sm text-gray-700">定制</span>
+                                    </label>
+                                </div>
+                            </div>
+                            {/* 基本信息 */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        歌曲名 *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={customTitle}
+                                        onChange={(e) => setCustomTitle(e.target.value)}
+                                        placeholder="歌曲名"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        艺术家 *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={customArtist}
+                                        onChange={(e) => setCustomArtist(e.target.value)}
+                                        placeholder="艺术家"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        难度名 *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={customVersion}
+                                        onChange={(e) => setCustomVersion(e.target.value)}
+                                        placeholder="难度名"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        谱师 *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={customCreator}
+                                        onChange={(e) => setCustomCreator(e.target.value)}
+                                        placeholder="谱师"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* 难度属性 */}
+                            <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-md">
+                                <h4 className="font-medium text-purple-800 mb-2">难度属性</h4>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            CS (0-10)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            min="0"
+                                            max="11"
+                                            value={customPoolCS}
+                                            onChange={(e) => setCustomPoolCS(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            placeholder="4.0"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            AR (0-10)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            min="0"
+                                            max="11"
+                                            value={customPoolAR}
+                                            onChange={(e) => setCustomPoolAR(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            placeholder="9.0"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            OD (0-10)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            min="0"
+                                            max="11"
+                                            value={customPoolOD}
+                                            onChange={(e) => setCustomPoolOD(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            placeholder="8.0"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            HP (0-10)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            min="0"
+                                            max="11"
+                                            value={customPoolHP}
+                                            onChange={(e) => setCustomPoolHP(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            placeholder="6.0"
                                         />
                                     </div>
                                 </div>
-
-                                {/* DA mod自定义属性 */}
-                                {customModName === 'DA' && (
-                                    <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                                        <h5 className="font-medium text-yellow-800 mb-2">Difficulty Adjust 设置</h5>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                            <div>
-                                                <label className="block text-xs text-gray-600 mb-1">CS</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.1"
-                                                    min="0"
-                                                    max="10"
-                                                    value={customCS}
-                                                    onChange={(e) => setCustomCS(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                                                    placeholder="不修改则为原值"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs text-gray-600 mb-1">AR</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.1"
-                                                    min="0"
-                                                    max="10"
-                                                    value={customAR}
-                                                    onChange={(e) => setCustomAR(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                                                    placeholder="不修改则为原值"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs text-gray-600 mb-1">OD</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.1"
-                                                    min="0"
-                                                    max="10"
-                                                    value={customOD}
-                                                    onChange={(e) => setCustomOD(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                                                    placeholder="不修改则为原值"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs text-gray-600 mb-1">HP</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.1"
-                                                    min="0"
-                                                    max="10"
-                                                    value={customHP}
-                                                    onChange={(e) => setCustomHP(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
-                                                    placeholder="不修改则为原值"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
-                        )}
 
-                        {/* DT自定义倍率 */}
-                        {selectedMods === 'DT' && (
-                            <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-md">
-                                <h4 className="font-medium text-purple-800 mb-2">DT 设置</h4>
+                            {/* 其他属性 */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        自定义倍率
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        星数 (★)
                                     </label>
                                     <input
                                         type="number"
                                         step="0.01"
-                                        min="1.0"
-                                        max="2.0"
-                                        value={customDTRate}
-                                        onChange={(e) => setCustomDTRate(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                        min="0"
+                                        max="100"
+                                        value={customStarRating}
+                                        onChange={(e) => setCustomStarRating(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                        placeholder="1.50"
+                                        placeholder="5.00"
                                     />
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        默认1.50倍，可自定义1.00-2.00之间的倍率
-                                    </p>
                                 </div>
-                            </div>
-                        )}
-
-
-                        {/* 重复检查警告 */}
-                        {duplicateWarning.show && (
-                            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                                <h4 className="font-medium text-yellow-800 mb-2">重复检测</h4>
-                                <p className="text-yellow-700 text-sm mb-2">
-                                    此谱面已被选择 {duplicateWarning.existingSelections.length} 次：
-                                </p>
-                                <ul className="text-sm text-yellow-700 list-disc list-inside">
-                                    {duplicateWarning.existingSelections.map((sel: ExistingSelection, index: number) => (
-                                        <li key={index}>
-                                            {sel.selectedMods}{sel.modPosition} - {sel.category} - {sel.selectedByUsername}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-
-                        {/* 评论和选项 */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2 flex flex-cow items-center gap-1">
-                                <MessageCircleMore size={16} />评论
-                            </label>
-                            <textarea
-                                value={comment}
-                                onChange={(e) => setComment(e.target.value)}
-                                placeholder="添加评论..."
-                                rows={3}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-
-                        <div className="flex gap-4 items-center mb-4">
-                            <label className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    checked={padding}
-                                    onChange={(e) => setPadding(e.target.checked)}
-                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                                />
-                                <span className="text-sm text-gray-700">送测该图</span>
-                            </label>
-                        </div>
-
-                        {/* 提交按钮 */}
-                        <div className="flex gap-4">
-                            <button
-                                onClick={addSelection}
-                                disabled={isSubmitting || !beatmapPreview}
-                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 text-white rounded-md transition-colors"
-                            >
-                                {isSubmitting ? '添加中...' : '添加选图'}
-                            </button>
-                            <button
-                                onClick={() => setShowAddForm(false)}
-                                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors"
-                            >
-                                取消
-                            </button>
-                        </div>
-                    </div>
-                    <div className="mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50 object-center">
-                        <h3 className="text-lg font-bold mb-4">添加自定图池</h3>
-                        {/* osz文件上传区域 */}
-                        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
-                            <h4 className="font-medium text-green-800 mb-2">osz文件上传</h4>
-                            <p className="text-sm text-gray-600 mb-3">
-                                上传.osz文件自动解析并填充表单信息，文件将存储为：{season}_{category}_{selectedMods}{modPosition}_[BID].osz
-                            </p>
-
-                            <div className="space-y-3">
-                                {/* 文件选择区域 */}
-                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-green-500 transition-colors">
-                                    <input
-                                        type="file"
-                                        id="osz-file"
-                                        accept=".osz"
-                                        onChange={handleFileSelect}
-                                        className="hidden"
-                                    />
-                                    <label htmlFor="osz-file" className="cursor-pointer block">
-                                        <div className="flex flex-col items-center justify-center">
-                                            <CloudUpload />
-                                            <span className="text-sm font-medium text-gray-700">
-                                                {oszFile ? `已选择: ${oszFile.name}` : '点击选择.osz文件或拖放至此'}
-                                            </span>
-                                            <span className="text-xs text-gray-500 mt-1">
-                                                支持.osz格式，最大50MB
-                                            </span>
-                                        </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        BPM
                                     </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={customBPM}
+                                        onChange={(e) => setCustomBPM(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        placeholder="180"
+                                    />
                                 </div>
-
-                                {/* 文件信息和上传按钮 */}
-                                {oszFile && (
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-700">{oszFile.name}</span>
-                                            <span className="text-gray-500">{(oszFile.size / 1024 / 1024).toFixed(2)} MB</span>
-                                        </div>
-
-                                        {/* 上传进度 */}
-                                        {isUploadingOsz && (
-                                            <div className="w-full bg-gray-200 rounded-full h-2">
-                                                <div
-                                                    className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                                                    style={{ width: `${uploadProgress}%` }}
-                                                ></div>
-                                            </div>
-                                        )}
-
-                                        {/* 上传按钮 */}
-                                        <button
-                                            onClick={handleOszUpload}
-                                            disabled={isUploadingOsz || !oszFile}
-                                            className="w-full px-4 py-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white rounded-md transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            {isUploadingOsz ? (
-                                                <>
-                                                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                    </svg>
-                                                    上传中...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <CloudUpload />
-                                                    上传并解析osz文件
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* 难度选择器 */}
-                        {showDifficultySelector && oszBeatmapInfos.length > 1 && (
-                            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                                <h4 className="font-medium text-blue-800 mb-2">选择难度</h4>
-                                <p className="text-sm text-gray-600 mb-3">
-                                    检测到 {oszBeatmapInfos.length} 个难度，请选择要使用的难度：
-                                </p>
-
-                                <div className="space-y-2 max-h-60 overflow-y-auto">
-                                    {oszBeatmapInfos.map((beatmapInfo, index) => (
-                                        <div
-                                            key={index}
-                                            className={`p-3 border rounded-lg cursor-pointer transition-colors ${selectedDifficultyIndex === index ? 'bg-blue-100 border-blue-500' : 'bg-white border-gray-300 hover:bg-gray-50'}`}
-                                            onClick={() => handleDifficultySelect(index)}
-                                        >
-                                            <div className="flex justify-between items-center">
-                                                <div>
-                                                    <div className="font-medium text-gray-800">
-                                                        {beatmapInfo.version}
-                                                    </div>
-                                                    <div className="text-xs text-gray-600">
-                                                        CS: {beatmapInfo.cs.toFixed(1)} | AR: {beatmapInfo.ar.toFixed(1)} | OD: {beatmapInfo.od.toFixed(1)} | HP: {beatmapInfo.hp.toFixed(1)}
-                                                    </div>
-                                                </div>
-                                                <div className="text-sm text-gray-700">
-                                                    {beatmapInfo.starRating ? `${beatmapInfo.starRating.toFixed(2)}★` : 'N/A'}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        长度 (秒)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={customTotalLength}
+                                        onChange={(e) => setCustomTotalLength(e.target.value === '' ? '' : parseInt(e.target.value))}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        placeholder="120"
+                                    />
                                 </div>
-
-                                <div className="mt-3 flex justify-between items-center">
-                                    <span className="text-sm text-gray-600">
-                                        已选择: {oszBeatmapInfos[selectedDifficultyIndex]?.version}
-                                    </span>
-                                    <button
-                                        onClick={() => handleDifficultySelect(selectedDifficultyIndex)}
-                                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
-                                    >
-                                        确认选择
-                                    </button>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        最大连击数
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={customMaxCombo}
+                                        onChange={(e) => setCustomMaxCombo(e.target.value === '' ? '' : parseInt(e.target.value))}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        placeholder="0"
+                                    />
                                 </div>
                             </div>
-                        )}
-                        {/* 原创/定制选择 */}
-                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                            <h4 className="font-medium text-blue-800 mb-2">图池类型</h4>
+
+
+
+                            {/* 评论 */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    评论
+                                </label>
+                                <textarea
+                                    value={comment}
+                                    onChange={(e) => setComment(e.target.value)}
+                                    placeholder="添加评论..."
+                                    rows={3}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
+
+                            {/* 提交按钮 */}
                             <div className="flex gap-4">
-                                <label className="flex items-center gap-2">
-                                    <input
-                                        type="radio"
-                                        name="customPoolType"
-                                        value="original"
-                                        checked={customPoolType === 'original'}
-                                        onChange={(e) => setCustomPoolType(e.target.value as 'original' | 'custom')}
-                                        className="w-4 h-4 text-blue-600"
-                                    />
-                                    <span className="text-sm text-gray-700">原创</span>
-                                </label>
-                                <label className="flex items-center gap-2">
-                                    <input
-                                        type="radio"
-                                        name="customPoolType"
-                                        value="custom"
-                                        checked={customPoolType === 'custom'}
-                                        onChange={(e) => setCustomPoolType(e.target.value as 'original' | 'custom')}
-                                        className="w-4 h-4 text-purple-600"
-                                    />
-                                    <span className="text-sm text-gray-700">定制</span>
-                                </label>
+                                <button
+                                    onClick={addCustomPool}
+                                    disabled={isSubmitting}
+                                    className="px-4 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-gray-500 text-white rounded-md transition-colors"
+                                >
+                                    {isSubmitting ? '添加中...' : '添加自定图池'}
+                                </button>
+                                <button
+                                    onClick={() => setShowAddForm(false)}
+                                    className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors"
+                                >
+                                    取消
+                                </button>
                             </div>
-                        </div>
-                        {/* 基本信息 */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    歌曲名 *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={customTitle}
-                                    onChange={(e) => setCustomTitle(e.target.value)}
-                                    placeholder="歌曲名"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    艺术家 *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={customArtist}
-                                    onChange={(e) => setCustomArtist(e.target.value)}
-                                    placeholder="艺术家"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    难度名 *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={customVersion}
-                                    onChange={(e) => setCustomVersion(e.target.value)}
-                                    placeholder="难度名"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    谱师 *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={customCreator}
-                                    onChange={(e) => setCustomCreator(e.target.value)}
-                                    placeholder="谱师"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                />
-                            </div>
-                        </div>
-
-                        {/* 难度属性 */}
-                        <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-md">
-                            <h4 className="font-medium text-purple-800 mb-2">难度属性</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        CS (0-10)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        min="0"
-                                        max="11"
-                                        value={customPoolCS}
-                                        onChange={(e) => setCustomPoolCS(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                        placeholder="4.0"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        AR (0-10)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        min="0"
-                                        max="11"
-                                        value={customPoolAR}
-                                        onChange={(e) => setCustomPoolAR(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                        placeholder="9.0"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        OD (0-10)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        min="0"
-                                        max="11"
-                                        value={customPoolOD}
-                                        onChange={(e) => setCustomPoolOD(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                        placeholder="8.0"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        HP (0-10)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        min="0"
-                                        max="11"
-                                        value={customPoolHP}
-                                        onChange={(e) => setCustomPoolHP(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                        placeholder="6.0"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 其他属性 */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    星数 (★)
-                                </label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    max="100"
-                                    value={customStarRating}
-                                    onChange={(e) => setCustomStarRating(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    placeholder="5.00"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    BPM
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={customBPM}
-                                    onChange={(e) => setCustomBPM(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    placeholder="180"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    长度 (秒)
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={customTotalLength}
-                                    onChange={(e) => setCustomTotalLength(e.target.value === '' ? '' : parseInt(e.target.value))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    placeholder="120"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    最大连击数
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={customMaxCombo}
-                                    onChange={(e) => setCustomMaxCombo(e.target.value === '' ? '' : parseInt(e.target.value))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    placeholder="0"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Mod选择 */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div className="min-w-[220px]">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Mod
-                                </label>
-                                <Dropdown
-                                    options={MOD_OPTIONS.map(mod => ({
-                                        value: mod,
-                                        label: mod
-                                    }))}
-                                    value={selectedMods}
-                                    onChange={setSelectedMods}
-                                    placeholder="选择MOD"
-                                    minWidth="100%"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    位置
-                                </label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="10"
-                                    value={modPosition}
-                                    onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                />
-                            </div>
-                        </div>
-
-
-
-
-
-                        {/* 评论 */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                评论
-                            </label>
-                            <textarea
-                                value={comment}
-                                onChange={(e) => setComment(e.target.value)}
-                                placeholder="添加评论..."
-                                rows={3}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            />
-                        </div>
-
-                        {/* 提交按钮 */}
-                        <div className="flex gap-4">
-                            <button
-                                onClick={addCustomPool}
-                                disabled={isSubmitting}
-                                className="px-4 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-gray-500 text-white rounded-md transition-colors"
-                            >
-                                {isSubmitting ? '添加中...' : '添加自定图池'}
-                            </button>
-                            <button
-                                onClick={() => setShowAddForm(false)}
-                                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors"
-                            >
-                                取消
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -2888,12 +2965,12 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     {Object.entries(getSelectionsByMod()).map(([mod, modSelections]) => (
                         <div key={mod} className="space-y-4">
                             {/* Mod分类标题 */}
-                            <div className="flex items-center gap-3">
-                                <div className={`px-4 mt-4 py-2 rounded-lg text-white font-bold text-lg ${getModColorClass(mod)}`}>
+                            <div className="flex items-end gap-3">
+                                <div className={`px-2 mt-4 py-1 rounded-lg text-white font-bold text-lg ${getModColorClass(mod)}`}>
                                     {mod} - {getModDisplayName(mod)}
                                 </div>
-                                <span className="text-gray-500 text-sm">
-                                    ({modSelections.length} 个选图)
+                                <span className="text-gray-200 text-xl">
+                                    {modSelections.length} 个
                                 </span>
                             </div>
 
@@ -2944,7 +3021,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                 )}
                                             </div>
 
-                                            <div className="flex-1 min-w-0">
+                                            <div className="flex-1  min-w-0">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <div className="flex items-center gap-2 flex-1">
                                                         <span className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
@@ -2961,7 +3038,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         </span>
                                                         {selection.padding && (
                                                             <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded flex flex-cow gap-1 items-center">
-                                                                <CircleArrowRight size={16} />提交测图中
+                                                                <CircleArrowRight size={16} />
                                                             </span>
                                                         )}
                                                         {/* 当选择"全部"时显示阶段信息 */}
@@ -3015,19 +3092,15 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                                         {/* 属性信息 */}
                                         <div className="mb-3 text-xs text-gray-600">
-                                            <div className="grid grid-cols-4 gap-1">
-                                                <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-center"><Diameter size={16} />CS</div>
-                                                <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-center"><CircleGauge size={16} />AR</div>
-                                                <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-center"><Target size={16} />OD</div>
-                                                <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-center"><Heart size={16} />HP</div>
-                                                <div className="bg-gray-100 rounded-lg text-center font-bold text-2xl">{selection.cs.toFixed(2)}</div>
-                                                <div className="bg-gray-100 rounded-lg text-center font-bold text-2xl">{selection.ar.toFixed(2)}</div>
-                                                <div className="bg-gray-100 rounded-lg text-center font-bold text-2xl">{selection.od.toFixed(2)}</div>
-                                                <div className="bg-gray-100 rounded-lg text-center font-bold text-2xl">{selection.hp.toFixed(2)}</div>
+                                            <div className="grid grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                                                <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><Diameter size={16} />CS<div className="font-bold text-2xl">{selection.cs.toFixed(2)}</div></div>
+                                                <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><CircleGauge size={16} />AR<div className="font-bold text-2xl">{selection.ar.toFixed(2)}</div></div>
+                                                <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><Target size={16} />OD<div className="font-bold text-2xl">{selection.od.toFixed(2)}</div></div>
+                                                <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><Heart size={16} />HP<div className="font-bold text-2xl">{selection.hp.toFixed(2)}</div></div>
                                                 <div className="text-center font-medium flex flex-cow gap-1 items-center"><Hourglass size={16} /><div className="text-center text-base">{formatLength(selection.totalLength)}</div></div>
                                                 <div className="text-center font-medium flex flex-cow gap-1 items-center"><CircleStar size={16} />MaxC<div className="text-center text-base">{selection.maxCombo}</div></div>
-                                                <div className="text-center font-medium flex flex-cow gap-1 items-center"><Music3 size={16} />=<div className="text-center text-base">{selection.bpm}</div></div>
-                                                <div className="text-center font-medium flex flex-cow gap-1 items-center"><Star size={16} /><div className="text-center text-base">{selection.starRating.toFixed(2)}</div></div>
+                                                <div className="text-center font-medium flex flex-cow gap-1 items-center"><Music3 size={16} /><div className="text-center text-base">{selection.bpm}</div></div>
+                                                <div className="bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><Star size={16} />Star<div className="text-center text-xl font-bold">{selection.starRating.toFixed(2)}</div></div>
 
                                             </div>
                                         </div>
