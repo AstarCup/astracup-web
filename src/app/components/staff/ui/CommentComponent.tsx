@@ -5,6 +5,11 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { showSuccess, showError } from '../../ui/Notification';
 
+import {
+    MessageCirclePlus,
+    MessageCircleDashed
+} from 'lucide-react';
+
 interface CommentComponentProps {
     mapSelectionId: number;
     userId: string | null;
@@ -94,21 +99,21 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
             {compactMode ? (
                 // 紧凑模式：横向显示评论
                 <div>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-end justify-end mb-2">
                     </div>
                     {comments.length === 0 ? (
                         <div className="">
                             <button
                                 onClick={() => setShowCommentBox(!showCommentBox)}
-                                className="text-blue-500 hover:text-blue-600 text-sm font-medium"
+                                className="hover:scale-[1.05] transition-all text-blue-400 hover:text-blue-600 text-sm font-medium"
                             >
-                                {showCommentBox ? '收起' : '+ 添加评论'}
+                                {showCommentBox ? <MessageCircleDashed size={20} /> : <MessageCirclePlus size={20} />}
                             </button>
                         </div>
                     ) : (
                         <div className="flex flex-wrap gap-2">
                             {comments.map((c) => (
-                                <div key={c.id} className="rounded-full relative group inline-flex items-center gap-2 pr-4 bg-[#E93B66]  max-w-xs hover:bg-[#E93B66]/90 transition-colors">
+                                <div key={c.id} className="hover:scale-[1.05] transition-all rounded-full relative group inline-flex items-center gap-2 pr-4 bg-[#E93B66] max-w-xs hover:bg-[#E93B66]/90">
                                     {/* 头像 */}
                                     <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-300 flex-shrink-0 relative">
                                         <Image
@@ -146,18 +151,17 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                                     </div>
 
                                     {/* Hover弹窗 */}
-                                    <div className="absolute top-full left-0 mt-1 bg-gray-900 text-white text-xs rounded shadow-lg p-2 z-20 min-w-[150px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                    <div className="absolute bottom-full left-4 mb-2 bg-gray-900 text-white text-xs rounded shadow-lg p-2 z-999999 min-w-[150px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                         <div className="font-semibold mb-1">{c.username}</div>
-                                        <div className="text-gray-300 text-xs mb-1">{new Date(c.createdAt).toLocaleString()}</div>
                                         <div className="text-gray-100">{c.comment}</div>
                                     </div>
                                 </div>
                             ))}
                             <button
                                 onClick={() => setShowCommentBox(!showCommentBox)}
-                                className="text-blue-500 hover:text-blue-600 text-sm font-medium"
+                                className="text-blue-500 hover:text-blue-600 text-sm font-medium hover:scale-[1.05] transition-all"
                             >
-                                {showCommentBox ? '收起' : '+ 添加评论'}
+                                {showCommentBox ? <MessageCircleDashed size={20} /> : <MessageCirclePlus size={20} />}
                             </button>
                         </div>
                     )}
@@ -174,14 +178,14 @@ export default function CommentComponent({ mapSelectionId, userId, onCommentUpda
                             <div className="flex gap-2 justify-end">
                                 <button
                                     onClick={() => setShowCommentBox(false)}
-                                    className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
+                                    className="hover:scale-[1.05] transition-all bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm"
                                 >
                                     取消
                                 </button>
                                 <button
                                     onClick={handleCommentSubmit}
                                     disabled={isSubmitting}
-                                    className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm"
+                                    className="hover:scale-[1.05] transition-all bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm"
                                 >
                                     {isSubmitting ? '提交中...' : '提交'}
                                 </button>

@@ -1,7 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { put, head } from '@vercel/blob';
 import JSZip from 'jszip';
 import { verifyMapSelectionAuth } from '@/lib/permissions';
+
+// 处理OPTIONS预检请求
+export async function OPTIONS(request: NextRequest) {
+    return new NextResponse(null, {
+        status: 200,
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'Access-Control-Max-Age': '86400',
+        },
+    });
+}
 
 // 解析.osu文件内容
 function parseOsuFile(content: string): Record<string, string> {
@@ -59,18 +72,245 @@ function generateBlobPath(
 
 export async function POST(request: NextRequest) {
     try {
-        const formData = await request.formData();
-        const file = formData.get('file') as File;
-        const userId = formData.get('userId') as string;
-        const season = formData.get('season') as string || 's1';
-        const category = formData.get('category') as string || 'qualification';
-        const selectedMods = formData.get('selectedMods') as string || 'NM';
-        const modPosition = formData.get('modPosition') as string || '1';
-        const customBeatmapId = formData.get('customBeatmapId') as string; // 新增：自定义负数bid
+        let file: File | null = null;
+        let userId: string;
+        let season: string = 's1';
+        let category: string = 'qualification';
+        let selectedMods: string = 'NM';
+        let modPosition: string = '1';
+        let customBeatmapId: string | null = null;
+        let fileUrl: string | null = null;
+        let parsedInBrowser = false;
+        let browserBeatmapInfos: any[] = [];
 
-        if (!file || !userId) {
+        // 检查Content-Type，支持两种方式：FormData和JSON
+        const contentType = request.headers.get('content-type') || '';
+
+        if (contentType.includes('multipart/form-data')) {
+            // 传统方式：FormData上传
+            const formData = await request.formData();
+            file = formData.get('file') as File;
+            userId = formData.get('userId') as string;
+            season = formData.get('season') as string || season;
+            category = formData.get('category') as string || category;
+            selectedMods = formData.get('selectedMods') as string || selectedMods;
+            modPosition = formData.get('modPosition') as string || modPosition;
+            customBeatmapId = formData.get('customBeatmapId') as string;
+        } else {
+            // 新方式：JSON请求体
+            const body = await request.json();
+            fileUrl = body.fileUrl;
+            userId = body.userId;
+            season = body.season || season;
+            category = body.category || category;
+            selectedMods = body.selectedMods || selectedMods;
+            modPosition = body.modPosition || modPosition;
+            customBeatmapId = body.customBeatmapId;
+            parsedInBrowser = body.parsedInBrowser || false;
+            browserBeatmapInfos = body.beatmapInfos || [];
+
+            if (!userId) {
+                return NextResponse.json(
+                    { error: '缺少必要参数：userId' },
+                    { status: 400 }
+                );
+            }
+
+            // 如果浏览器端已经解析了数据，跳过文件下载
+            if (parsedInBrowser && browserBeatmapInfos.length > 0) {
+                // 不需要文件对象，直接使用浏览器端数据
+                file = null;
+            } else if (fileUrl) {
+                // 传统方式：从URL下载文件
+                try {
+                    const blobInfo = await head(fileUrl, {
+                        token: process.env.BLOB_READ_WRITE_TOKEN
+                    });
+
+                    if (!blobInfo) {
+                        throw new Error('文件不存在于Blob存储中');
+                    }
+
+                    const fileResponse = await fetch(fileUrl, {
+                        headers: {
+                            'Authorization': `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}`
+                        }
+                    });
+
+                    if (!fileResponse.ok) {
+                        throw new Error(`下载文件失败: ${fileResponse.status}`);
+                    }
+
+                    const arrayBuffer = await fileResponse.arrayBuffer();
+                    const urlObj = new URL(fileUrl);
+                    const filename = urlObj.pathname.split('/').pop() || 'uploaded.osz';
+                    file = new File([arrayBuffer], filename, { type: 'application/octet-stream' });
+                } catch (downloadError) {
+                    console.error('Error downloading file from Blob URL:', downloadError);
+                    return NextResponse.json(
+                        { error: `从Blob下载文件失败: ${downloadError instanceof Error ? downloadError.message : '未知错误'}` },
+                        { status: 400 }
+                    );
+                }
+            } else {
+                return NextResponse.json(
+                    { error: '缺少必要参数：fileUrl 或 beatmapInfos' },
+                    { status: 400 }
+                );
+            }
+        }
+
+        // 验证权限
+        const isAuthorized = await verifyMapSelectionAuth(userId);
+        if (!isAuthorized) {
             return NextResponse.json(
-                { error: '缺少必要参数：file 和 userId' },
+                { error: '您没有权限访问选图系统' },
+                { status: 403 }
+            );
+        }
+
+        // 处理浏览器端解析的数据
+        if (parsedInBrowser && browserBeatmapInfos.length > 0) {
+            // 使用浏览器端解析的数据，跳过文件处理
+            const beatmapInfosWithModStats = [];
+
+            for (const beatmapInfo of browserBeatmapInfos) {
+                try {
+                    if (beatmapInfo.osuContent) {
+                        // 调用calculate-mod-stats API计算mod后的属性
+                        const modStatsResponse = await fetch(`${request.nextUrl.origin}/api/calculate-mod-stats`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                beatmap: {
+                                    id: beatmapInfo.beatmapId,
+                                    title: beatmapInfo.title,
+                                    artist: beatmapInfo.artist,
+                                    creator: beatmapInfo.creator,
+                                    bpm: beatmapInfo.bpm,
+                                    totalLength: beatmapInfo.totalLength
+                                },
+                                mods: selectedMods,
+                                customSettings: {
+                                    customModName: '',
+                                    customDASettings: null,
+                                    customDTRate: null
+                                },
+                                osuContent: beatmapInfo.osuContent
+                            })
+                        });
+
+                        if (modStatsResponse.ok) {
+                            const modStatsData = await modStatsResponse.json();
+                            const modStats = modStatsData.modStats;
+
+                            // 合并原始信息和mod后的属性
+                            beatmapInfosWithModStats.push({
+                                ...beatmapInfo,
+                                cs: modStats.cs || beatmapInfo.cs,
+                                ar: modStats.ar || beatmapInfo.ar,
+                                od: modStats.od || beatmapInfo.od,
+                                hp: modStats.hp || beatmapInfo.hp,
+                                bpm: modStats.bpm || beatmapInfo.bpm,
+                                totalLength: modStats.totalLength || beatmapInfo.totalLength,
+                                maxCombo: modStats.maxCombo || 0,
+                                starRating: modStats.starRating || 5.0,
+                                modStats: modStats,
+                                osuContent: beatmapInfo.osuContent
+                            });
+                        } else {
+                            // 如果计算失败，使用原始信息
+                            beatmapInfosWithModStats.push({
+                                ...beatmapInfo,
+                                starRating: 5.0,
+                                maxCombo: 0
+                            });
+                        }
+                    } else {
+                        // 如果没有.osu文件内容，使用原始信息
+                        beatmapInfosWithModStats.push({
+                            ...beatmapInfo,
+                            starRating: 5.0,
+                            maxCombo: 0
+                        });
+                    }
+                } catch (error) {
+                    console.error(`Error calculating mod stats for ${beatmapInfo.osuFilename}:`, error);
+                    // 出错时使用原始信息
+                    beatmapInfosWithModStats.push({
+                        ...beatmapInfo,
+                        starRating: 5.0,
+                        maxCombo: 0
+                    });
+                }
+            }
+
+            // 按难度名排序
+            beatmapInfosWithModStats.sort((a, b) => a.version.localeCompare(b.version));
+
+            // 生成存储路径
+            let finalBeatmapId: number | undefined = undefined;
+
+            if (customBeatmapId) {
+                const customId = parseInt(customBeatmapId);
+                if (customId < 0) { // 确保是负数
+                    finalBeatmapId = customId;
+                }
+            }
+
+            if (!finalBeatmapId && beatmapInfosWithModStats.length > 0) {
+                const firstBeatmap = beatmapInfosWithModStats[0];
+                if (firstBeatmap.beatmapId && firstBeatmap.beatmapId > 0) {
+                    finalBeatmapId = firstBeatmap.beatmapId;
+                }
+            }
+
+            const blobPath = generateBlobPath(
+                season,
+                category,
+                selectedMods,
+                parseInt(modPosition),
+                finalBeatmapId
+            );
+
+            // 上传到Vercel Blob（如果有文件）
+            let blobUrl = '';
+            if (file) {
+                try {
+                    const blob = await put(blobPath, file, {
+                        access: 'public',
+                        contentType: 'application/octet-stream',
+                        token: process.env.BLOB_READ_WRITE_TOKEN
+                    });
+                    blobUrl = blob.url;
+                } catch (blobError) {
+                    console.error('Blob upload error:', blobError);
+                    // 如果blob上传失败，仍然返回解析的数据
+                }
+            }
+
+            return NextResponse.json({
+                success: true,
+                message: 'osz文件解析成功',
+                beatmapInfos: beatmapInfosWithModStats,
+                fileInfo: {
+                    originalName: file ? file.name : 'browser-parsed.osz',
+                    size: file ? file.size : 0,
+                    blobPath,
+                    blobUrl,
+                    uploaded: !!blobUrl
+                },
+                hasMultipleDifficulties: beatmapInfosWithModStats.length > 1,
+                totalDifficulties: beatmapInfosWithModStats.length
+            });
+        }
+
+        // 传统方式：处理文件上传
+        if (!file) {
+            return NextResponse.json(
+                { error: '缺少文件' },
                 { status: 400 }
             );
         }
@@ -80,15 +320,6 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 { error: '只支持.osz文件格式' },
                 { status: 400 }
-            );
-        }
-
-        // 验证权限
-        const isAuthorized = await verifyMapSelectionAuth(userId);
-        if (!isAuthorized) {
-            return NextResponse.json(
-                { error: '您没有权限访问选图系统' },
-                { status: 403 }
             );
         }
 
@@ -148,8 +379,8 @@ export async function POST(request: NextRequest) {
                         hp: parseFloat(parsedData['HPDrainRate'] || '6'),
 
                         // 其他信息
-                        bpm: parseFloat(parsedData['PreviewTime'] || '180'), // 注意：这里需要实际解析BPM
-                        totalLength: parseInt(parsedData['AudioLeadIn'] || '0') + 120, // 简化处理
+                        bpm: parseFloat(parsedData['PreviewTime'] || '180'),
+                        totalLength: parseInt(parsedData['AudioLeadIn'] || '0') + 120,
                         tags: parsedData['Tags'] || '',
                         source: parsedData['Source'] || '',
 
@@ -180,7 +411,6 @@ export async function POST(request: NextRequest) {
                 try {
                     // 获取.osu文件内容
                     const osuContent = await zip.file(beatmapInfo.osuFilename)?.async('text');
-
                     if (osuContent) {
                         // 调用calculate-mod-stats API计算mod后的属性
                         const modStatsResponse = await fetch(`${request.nextUrl.origin}/api/calculate-mod-stats`, {
@@ -222,8 +452,8 @@ export async function POST(request: NextRequest) {
                                 totalLength: modStats.totalLength || beatmapInfo.totalLength,
                                 maxCombo: modStats.maxCombo || 0,
                                 starRating: modStats.starRating || 5.0,
-                                modStats: modStats, // 保存完整的modStats信息
-                                osuContent: osuContent // 保存.osu文件内容，用于后续重新计算
+                                modStats: modStats,
+                                osuContent: osuContent
                             });
                         } else {
                             // 如果计算失败，使用原始信息
@@ -255,14 +485,12 @@ export async function POST(request: NextRequest) {
             // 生成存储路径
             let finalBeatmapId: number | undefined = undefined;
 
-
             if (customBeatmapId) {
                 const customId = parseInt(customBeatmapId);
                 if (customId < 0) { // 确保是负数
                     finalBeatmapId = customId;
                 }
             }
-
 
             if (!finalBeatmapId && beatmapInfosWithModStats.length > 0) {
                 const firstBeatmap = beatmapInfosWithModStats[0];
@@ -307,7 +535,6 @@ export async function POST(request: NextRequest) {
                 hasMultipleDifficulties: beatmapInfosWithModStats.length > 1,
                 totalDifficulties: beatmapInfosWithModStats.length
             });
-
         } catch (zipError) {
             console.error('Error processing zip file:', zipError);
             return NextResponse.json(
@@ -315,7 +542,6 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
-
     } catch (error) {
         console.error('Error in parse-osz API:', error);
         return NextResponse.json(
