@@ -2986,7 +2986,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         <div key={mod} className="space-y-4">
                             {/* Mod分类标题 */}
                             <div className="flex items-end gap-3 ">
-                                <div className={`hover:scale-x-[1.05] transition-all h-8 px-2 mt-4 py-1 rounded-lg text-white font-bold text-lg ${getModColorClass(mod)}`}>
+                                <div className={`hover:scale-x-[1.05] transition-all h-8 px-2 mt-4 py-1 rounded-lg font-bold text-lg ${getModColorTextClass(mod)}`}>
                                     <span className="text-xl">
                                         {getModDisplayName(mod)} {modSelections.length}x
                                     </span>
