@@ -3000,11 +3000,12 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
                                         /> */}
                                         <Image
-                                            src={selection.coverUrl}
+                                            src={selection.coverUrl || "/noCover.svg"}
                                             alt="No Beatmap cover"
                                             width={512}
                                             height={1024}
                                             className="absolute inset-0 w-full h-32 object-cover -z-2"
+                                            loading='lazy'
 
                                         />
                                         <div className="absolute inset-0 h-32 bg-gradient-to-t from-black/70 via-black/20 to-transparent -z-1"></div>
