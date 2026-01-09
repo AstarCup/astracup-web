@@ -1642,21 +1642,35 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     // 根据mod名返回对应的颜色class
     const getModColorClass = (mod: string): string => {
         switch (mod) {
-            case 'NM': return 'bg-gray-500';
+            case 'NM': return 'bg-blue-500';
             case 'HD': return 'bg-yellow-500';
             case 'HR': return 'bg-red-500';
             case 'DT': return 'bg-purple-500';
             case 'EZ': return 'bg-green-500';
-            case 'LZ': return 'bg-gray-600';
+            case 'LZ': return 'bg-pink-600';
             case 'TB': return 'bg-black';
             case 'FM': return 'bg-blue-500';
             default: return 'bg-blue-500';
         }
     };
 
+    const getModColorTextClass = (mod: string): string => {
+        switch (mod) {
+            case 'NM': return 'text-blue-400';
+            case 'HD': return 'text-yellow-400';
+            case 'HR': return 'text-red-400';
+            case 'DT': return 'text-purple-400';
+            case 'EZ': return 'text-green-400';
+            case 'LZ': return 'text-pink-400';
+            case 'TB': return 'text-black-400';
+            case 'FM': return 'text-blue-400';
+            default: return 'text-blue-400';
+        }
+    };
+
     const getModColorBorderClass = (mod: string): string => {
         switch (mod) {
-            case 'NM': return 'border-b-4 border-b-gray-500 text-gray-500';
+            case 'NM': return 'border-b-4 border-b-blue-500 text-blue-500';
             case 'HD': return 'border-b-4 border-b-yellow-500 text-yellow-500';
             case 'HR': return 'border-b-4 border-b-red-500 text-red-500';
             case 'DT': return 'border-b-4 border-b-purple-500 text-purple-500';
@@ -2972,7 +2986,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                         <div key={mod} className="space-y-4">
                             {/* Mod分类标题 */}
                             <div className="flex items-end gap-3 ">
-                                <div className={`hover:scale-x-[1.05] transition-all h-8 px-2 mt-4 py-1 rounded-lg text-white font-bold text-lg ${getModColorClass(mod)}`}>
+                                <div className={`hover:scale-x-[1.05] transition-all h-8 px-2 mt-4 py-1 rounded-lg font-bold text-lg ${getModColorTextClass(mod)}`}>
                                     <span className="text-xl">
                                         {getModDisplayName(mod)} {modSelections.length}x
                                     </span>
@@ -3028,8 +3042,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         <div className="relative">
                                             {/* 过审状态指示器 */}
                                             {selection.approved && (
-                                                <div className="absolute top-32 -left-10 w-18 -z-1">
-                                                    <p className='font-bold text-4xl text-green-300 rotate-90'>过审</p>
+                                                <div className="absolute top-65 -left-77 w-full -z-1">
+                                                    <p className='font-bold text-4xl text-green-300 rotate-90'>过审APPROVED</p>
                                                 </div>
                                             )}
                                         </div>
@@ -3038,14 +3052,14 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             <div className="flex flex-col flex-col-1 w-full">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <div className="flex items-center gap-2 flex-1">
-                                                        <span className={`hover:scale-[1.05] transition-all px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
+                                                        <span className={`absolute -bottom-3 -right-3 -z-1 hover:scale-[1.05] transition-all px-2 py-1 rounded text-6xl font-bold ${getModColorTextClass(selection.selectedMods)}`}>
                                                             {selection.selectedMods === 'LZ' ?
                                                                 (selection.customModName && selection.customModName.trim() !== '' ?
                                                                     `LZ${selection.modPosition}-${selection.customModName}` :
                                                                     `LZ${selection.modPosition}`) :
                                                                 selection.selectedMods === 'DT' ?
                                                                     ((selection.customDTRate && selection.customDTRate !== 1.50) ?
-                                                                        `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}倍` :
+                                                                        `DT${selection.modPosition}-${selection.customDTRate.toFixed(2)}x` :
                                                                         `DT${selection.modPosition}`) :
                                                                     `${selection.selectedMods}${selection.modPosition}`
                                                             }
