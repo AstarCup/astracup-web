@@ -16,6 +16,7 @@
     "@vercel/blob": "^1.1.1",
     "@vercel/edge-config": "^1.4.0",
     "@vercel/speed-insights": "^1.2.0",
+    "animejs": "^4.2.2",
     "datatables.net-dt": "^2.3.3",
     "dotenv": "^17.2.2",
     "gray-matter": "^4.0.3",
