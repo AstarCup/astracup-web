@@ -2968,7 +2968,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 {modSelections.map(selection => (
                                     <div
                                         key={selection.id}
-                                        className={`border z-0 rounded-lg p-4 shadow-sm hover:shadow-md hover:scale-x-[1.01] transition-all duration-200 cursor-pointer ${selection.approved ? 'border-green-300 border-l-10 bg-white' : 'border-gray-300 bg-white'
+                                        className={`border z-0 relative overflow-hidden rounded-lg p-4 shadow-sm hover:shadow-md hover:scale-x-[1.01] transition-all duration-200 cursor-pointer ${selection.approved ? 'border-green-300 border-l-10 bg-white' : 'border-gray-300 bg-white'
                                             } ${tempApprovedSelections.has(selection.id) ? 'border-blue-500 bg-blue-50' : ''}`}
                                         onClick={(e) => {
                                             // 检查点击目标是否为可点击元素（按钮、链接、输入框等）
@@ -2991,18 +2991,35 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         onContextMenu={(e) => handleContextMenu(e, selection)}
                                     >
                                         {/* 头部：封面和基本信息 */}
+                                        {/* <Image
+                                            src={selection.coverUrl}
+                                            alt="Beatmap cover"
+                                            width={512}
+                                            height={1024}
+                                            className="absolute inset-0 w-full h-full object-cover -z-3 opacity-5"
+
+                                        /> */}
+                                        <Image
+                                            src={selection.coverUrl}
+                                            alt="No Beatmap cover"
+                                            width={512}
+                                            height={1024}
+                                            className="absolute inset-0 w-full h-32 object-cover -z-2"
+
+                                        />
+                                        <div className="absolute inset-0 h-32 bg-gradient-to-t from-black/70 via-black/20 to-transparent -z-1"></div>
+
+                                        <div className="relative">
+                                            {/* 过审状态指示器 */}
+                                            {selection.approved && (
+                                                <div className="absolute top-32 -left-10 w-18 -z-1">
+                                                    <p className='font-bold text-4xl text-green-300 rotate-90'>过审</p>
+                                                </div>
+                                            )}
+                                        </div>
 
                                         <div className="flex items-start gap-3 mb-3 z-2">
-                                            <div className="relative">
-                                                {/* 过审状态指示器 */}
-                                                {selection.approved && (
-                                                    <div className="absolute -top-1 -left-5 w-8 h-8">
-                                                        <p className='font-bold text-4xl text-green-300'>过审</p>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="flex-1 min-w-0">
+                                            <div className="flex flex-col flex-col-1 w-full">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <div className="flex items-center gap-2 flex-1">
                                                         <span className={`hover:scale-[1.05] transition-all px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(selection.selectedMods)}`}>
@@ -3060,23 +3077,19 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                         )}
                                                     </div>
                                                 </div>
-
-                                                <h3 className="font-bold text-sm truncate" title={selection.title_unicode || selection.title}>
-                                                    {selection.title_unicode || selection.title}
-                                                </h3>
-                                                <p className="font-bold text-xs text-gray-600 truncate" title={selection.artist_unicode || selection.artist}>
-                                                    {selection.artist_unicode || selection.artist}
-                                                </p>
-                                                <p className="font-bold text-xs text-gray-600">[{selection.version}] by {selection.creator}</p>
                                             </div>
                                         </div>
-                                        <Image
-                                            src={selection.coverUrl}
-                                            alt="Beatmap cover"
-                                            width={512}
-                                            height={512}
-                                            className="absolute -top-0 -left-0 w-24 h-full object-cover transition-all z-1"
-                                        />
+                                        {/* 歌名 艺术家 难度 */}
+
+                                        <p className="font-bold text-xs text-gray-200">[{selection.version}] by {selection.creator}</p>
+                                        <div className='flex flex-row gap-0 content-end items-end'>
+                                            <h3 className="font-bold text-white text-2xl truncate" title={selection.title_unicode || selection.title}>
+                                                {selection.title_unicode || selection.title}
+                                            </h3>
+                                            <p className="font-bold text-xs text-gray-200 truncate" title={selection.artist_unicode || selection.artist}>
+                                                - {selection.artist_unicode || selection.artist}
+                                            </p>
+                                        </div>
                                         {/* 属性信息 */}
                                         <div className="mb-3 text-xs text-gray-600">
                                             <div className="grid grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
