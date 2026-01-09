@@ -8,6 +8,7 @@ import CommentComponent from './ui/CommentComponent';
 import MapoolTable from '../ui/MapoolTable';
 import { UserSession } from '@/lib/permissions';
 import { animate, spring } from 'animejs';
+import { getDifficultyColorClass, getDifficultyStyle } from '@/lib/difficulty-colors';
 
 import {
     ArrowDownToLine,
@@ -1653,6 +1654,21 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         }
     };
 
+    const getModColorBorderClass = (mod: string): string => {
+        switch (mod) {
+            case 'NM': return 'border-b-4 border-b-gray-500 text-gray-500';
+            case 'HD': return 'border-b-4 border-b-yellow-500 text-yellow-500';
+            case 'HR': return 'border-b-4 border-b-red-500 text-red-500';
+            case 'DT': return 'border-b-4 border-b-purple-500 text-purple-500';
+            case 'EZ': return 'border-b-4 border-b-green-500 text-green-500';
+            case 'LZ': return 'border-b-4 border-b-pink-600 text-pink-600';
+            case 'TB': return 'border-b-4 border-b-black text-black';
+            case 'FM': return 'border-b-4 border-b-blue-500 text-blue-500';
+            default: return 'border-b-4 border-b-blue-500 text-blue-500';
+        }
+    };
+
+
     // 格式化时间长度
     const formatLength = (seconds: number): string => {
         const minutes = Math.floor(seconds / 60);
@@ -2964,14 +2980,13 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             </div>
 
                             {/* 该mod下的选图列表 */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-flow-row-dense row-auto grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
                                 {modSelections.map(selection => (
                                     <div
                                         key={selection.id}
-                                        className={`border z-0 relative overflow-hidden rounded-lg p-4 shadow-sm hover:shadow-md hover:scale-x-[1.01] transition-all duration-200 cursor-pointer ${selection.approved ? 'border-green-300 border-l-10 bg-white' : 'border-gray-300 bg-white'
+                                        className={`border object-center z-0 relative h-full overflow-hidden rounded-lg p-4 shadow-sm hover:shadow-md hover:scale-x-[1.01] transition-all duration-200 cursor-pointer ${selection.approved ? 'border-green-300 border-l-10 bg-white' : 'border-gray-300 bg-white'
                                             } ${tempApprovedSelections.has(selection.id) ? 'border-blue-500 bg-blue-50' : ''}`}
                                         onClick={(e) => {
-                                            // 检查点击目标是否为可点击元素（按钮、链接、输入框等）
                                             const target = e.target as HTMLElement;
                                             if (target.closest('button') || target.closest('a') || target.closest('input') || target.closest('textarea') || target.closest('select')) {
                                                 return; // 不处理按钮、链接、表单元素的点击
@@ -2991,17 +3006,17 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         onContextMenu={(e) => handleContextMenu(e, selection)}
                                     >
                                         {/* 头部：封面和基本信息 */}
-                                        {/* <Image
+                                        <Image
                                             src={selection.coverUrl}
                                             alt="Beatmap cover"
                                             width={512}
                                             height={1024}
                                             className="absolute inset-0 w-full h-full object-cover -z-3 opacity-5"
 
-                                        /> */}
+                                        />
                                         <Image
                                             src={selection.coverUrl || "/noCover.svg"}
-                                            alt="No Beatmap cover"
+                                            alt="No Beatmap cover / 可能是被ppy限制了,或者是你的梯子没关。请稍后再刷新"
                                             width={512}
                                             height={1024}
                                             className="absolute inset-0 w-full h-32 object-cover -z-2"
@@ -3094,15 +3109,16 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                         {/* 属性信息 */}
                                         <div className="mb-3 text-xs text-gray-600">
                                             <div className="grid grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-                                                <div className="hover:scale-[1.05] transition-all bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><Diameter size={16} />CS<div className="font-bold text-2xl">{selection.cs.toFixed(2)}</div></div>
-                                                <div className="hover:scale-[1.05] transition-all bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><CircleGauge size={16} />AR<div className="font-bold text-2xl">{selection.ar.toFixed(2)}</div></div>
-                                                <div className="hover:scale-[1.05] transition-all bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><Target size={16} />OD<div className="font-bold text-2xl">{selection.od.toFixed(2)}</div></div>
-                                                <div className="hover:scale-[1.05] transition-all bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><Heart size={16} />HP<div className="font-bold text-2xl">{selection.hp.toFixed(2)}</div></div>
+                                                <div className={`hover:scale-[1.05] transition-all bg-white rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1 ${getModColorBorderClass(selection.selectedMods)}`}><Diameter size={16} />CS<div className="font-bold text-gray-600 text-2xl">{selection.cs}</div></div>
+                                                <div className={`hover:scale-[1.05] transition-all bg-white rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1 ${getModColorBorderClass(selection.selectedMods)}`}><CircleGauge size={16} />AR<div className="font-bold text-gray-600 text-2xl">{selection.ar}</div></div>
+                                                <div className={`hover:scale-[1.05] transition-all bg-white rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1 ${getModColorBorderClass(selection.selectedMods)}`}><Target size={16} />OD<div className="font-bold text-gray-600 text-2xl">{selection.od}</div></div>
+                                                <div className={`hover:scale-[1.05] transition-all bg-white rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1 ${getModColorBorderClass(selection.selectedMods)}`}><Heart size={16} />HP<div className="font-bold text-gray-600 text-2xl">{selection.hp}</div></div>
                                                 <div className="text-center font-medium flex flex-cow gap-1 items-center items-center p-1"><Hourglass size={16} /><div className="text-center text-base">{formatLength(selection.totalLength)}</div></div>
                                                 <div className="text-center font-medium flex flex-cow gap-1 items-center items-center p-1"><CircleStar size={16} /><div className="text-center text-base">{selection.maxCombo}</div></div>
                                                 <div className="text-center font-medium flex flex-cow gap-1 items-center items-center p-1"><Music3 size={16} /><div className="text-center text-base">{selection.bpm}</div></div>
-                                                <div className="hover:scale-[1.05] transition-all bg-gray-100 rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1"><Star size={16} />Star<div className="text-center text-xl font-bold">{selection.starRating.toFixed(2)}</div></div>
-
+                                                <div
+                                                    style={getDifficultyStyle(selection.starRating)}
+                                                    className={`hover:scale-[1.05] transition-all bg-white rounded-lg text-center font-medium flex flex-cow gap-1 items-start p-1`}><Star size={16} />Star<div className="text-center text-xl font-bold">{selection.starRating}</div></div>
                                             </div>
                                         </div>
 
@@ -3270,7 +3286,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             showSuccess('开始从Blob下载原创/定制谱面');
                                             closeContextMenu();
                                         }}
-                                        className="hover:scale-[1.01] transition-all w-full text-left px-4 py-2 hover:bg-gray-200 flex items-center gap-2 rounded-lg"
+                                        className="hover:scale-[1.01] transition-all w-full hover:border-b-4 border-gray-400 text-left px-4 py-2 hover:bg-gray-200 flex items-center gap-2 rounded-lg"
                                     >
                                         <ArrowDownToLine />
                                         下载谱面 (Blob)
@@ -3285,7 +3301,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             window.open(contextMenu.selection!.url, '_blank');
                                             closeContextMenu();
                                         }}
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-200 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
+                                        className="w-full text-left px-4 py-2 text-sm hover:border-b-4 border-gray-400 hover:bg-gray-200 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
                                     >
                                         <ExternalLink />
                                         查看谱面
@@ -3297,7 +3313,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             showInfo('已在osu客户端中打开谱面');
                                             closeContextMenu();
                                         }}
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-200 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
+                                        className="w-full text-left px-4 py-2 text-sm hover:border-b-4 border-gray-400 hover:bg-gray-200 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
                                     >
                                         <Image src='/icons/osu-lazer-logo-black.svg' alt='viewOsu' width={24} height={24} />
                                         从osu中打开
@@ -3310,7 +3326,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             showSuccess('已开始从Nerinyan下载');
                                             closeContextMenu();
                                         }}
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-200 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
+                                        className="w-full text-left px-4 py-2 text-sm hover:border-b-4 border-gray-400 hover:bg-gray-200 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
                                     >
                                         <ArrowDownToLine />
                                         下载谱面 (Nerinyan)
@@ -3323,7 +3339,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             showSuccess('已开始从osu官方下载');
                                             closeContextMenu();
                                         }}
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-200 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
+                                        className="w-full text-left px-4 py-2 text-sm hover:border-b-4 border-gray-400 hover:bg-gray-200 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
                                     >
                                         <ArrowDownToLine />
                                         osu官方下载
@@ -3339,7 +3355,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             refreshSelection(contextMenu.selection!);
                                             closeContextMenu();
                                         }}
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-200 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
+                                        className="w-full text-left px-4 py-2 text-sm hover:border-b-4 border-gray-400 hover:bg-gray-200 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
                                     >
                                         <RotateCw />
                                         刷新MOD属性
@@ -3356,7 +3372,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             });
                                             closeContextMenu();
                                         }}
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-200 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
+                                        className="w-full text-left px-4 py-2 text-sm hover:border-b-4 border-gray-400 hover:bg-gray-200 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
                                     >
                                         <PencilLine />
                                         修改属性
@@ -3369,7 +3385,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             togglePadding(contextMenu.selection!.id, contextMenu.selection!.padding || false);
                                             closeContextMenu();
                                         }}
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-200 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
+                                        className="w-full text-left px-4 py-2 text-sm hover:border-b-4 border-gray-400 hover:bg-gray-200 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
                                     >
                                         <CircleArrowRight />
                                         {contextMenu.selection!.padding ? '取消测图' : '设为测图'}
@@ -3382,7 +3398,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             toggleApproval(contextMenu.selection!.id, contextMenu.selection!.approved);
                                             closeContextMenu();
                                         }}
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-200 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
+                                        className="w-full text-left px-4 py-2 text-sm hover:border-b-4 border-gray-400 hover:bg-gray-200 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
                                     >
                                         <CircleCheckBig />
                                         {contextMenu.selection!.approved ? '取消过审' : '过审'}
@@ -3396,7 +3412,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             }
                                             closeContextMenu();
                                         }}
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 rounded-lg text-red-600 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
+                                        className="w-full text-left px-4 py-2 text-sm hover:border-b-4 border-red-400 hover:bg-red-50 rounded-lg text-red-600 hover:scale-[1.01] transition-all flex items-center gap-2 rounded-lg"
                                     >
                                         <Trash2 />
                                         删除
