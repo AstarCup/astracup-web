@@ -71,43 +71,53 @@ export default function RegistrationButton({ user }: RegistrationButtonProps) {
 
     if (isLoading) {
         return (
-            <div className="mt-6">
-                <button
-                    disabled
-                    className="text-2xl px-10 py-3 bg-gray-400 text-white cursor-not-allowed"
-                >
-                    检查报名状态...
-                </button>
-            </div>
+            <a
+                className="p-9 col-span-2 flex flex-col rounded-lg bg-white items-left justify-end transition-all group relative border-b-4 border-pink-600 hover:border-gray-600 hover:bg-gray-200 active:scale-[0.99] hover:scale-[1.01]"
+            >
+                <span className="">
+
+                </span>
+                <span
+                    className="text-3xl font-bold text-gray-600 absolute right-2 bottom-2 pointer-events-none"
+                    style={{ zIndex: 2 }}
+                >检查报名状态</span>
+
+            </a>
         );
     }
 
     if (isRegistered) {
         return (
-            <div className="mt-6 text-center">
-                <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-3 mb-4">
-                    <p className="text-lg font-semibold">您已成功报名！</p>
-                    <p className="text-sm">感谢您报名参加 AstraCup 比赛</p>
-                    <a href='https://vip.123pan.cn/1818470319/yk6baz03t0n000d7w33hec1n2seihzd9DIYPBdF0DdDPBGxPDwivDa==.jpg'>点击领取主办女装照</a>
-                </div>
-            </div>
+            <a
+                href="/register"
+                className="p-9 col-span-2 flex flex-col rounded-lg bg-white items-left justify-end transition-all group relative border-b-4 border-pink-600 hover:border-gray-600 hover:bg-gray-200 active:scale-[0.99] hover:scale-[1.01]"
+            >
+                <span className="">
+
+                </span>
+                <span
+                    className="text-3xl font-bold text-gray-600 absolute right-2 bottom-2 pointer-events-none"
+                    style={{ zIndex: 2 }}
+                >您已成功报名！</span>
+
+            </a>
         );
     }
 
     return (
-        <>
-            <div className="mt-6 text-center">
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="text-2xl px-10 py-3 bg-[#E93B66] text-white hover:bg-[#95E1D3] transition"
-                >
-                    立即报名参赛
-                </button>
-                <p className="text-sm text-gray-600 mt-2">
-                    点击按钮查看报名手册并完成报名
-                </p>
-            </div>
+        <><button
+            onClick={() => setIsModalOpen(true)}
+            className="p-9 col-span-2 flex flex-col rounded-lg bg-white items-left justify-end transition-all group relative border-b-4 border-pink-600 hover:border-gray-600 hover:bg-gray-200 active:scale-[0.99] hover:scale-[1.01]"
+        >
+            <span className="">
 
+            </span>
+            <span
+                className="text-3xl font-bold text-gray-600 absolute right-2 bottom-2 pointer-events-none"
+                style={{ zIndex: 2 }}
+            >立即报名参赛</span>
+
+        </button>
             <RegistrationModal
                 user={user}
                 isOpen={isModalOpen}

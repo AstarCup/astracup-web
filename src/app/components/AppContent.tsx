@@ -50,7 +50,9 @@ export function AppContent({ children }: { children: React.ReactNode }) {
         '/obs-overlay',
     ];
 
-    // 检查当前页面是否需要隐藏组件
+    const isHomePage = pathname === '/';
+    const bannerHeight = isHomePage ? 'h-240' : 'h-120';
+
     const shouldHideComponents = HIDE_COMPONENTS_PAGES.some(page =>
         pathname?.startsWith(page)
     );
@@ -62,21 +64,27 @@ export function AppContent({ children }: { children: React.ReactNode }) {
                 <>
                     {!shouldHideComponents && (
                         <>
-                            <NoiseBackground />
-                            <ParallaxBackground />
-                            <Image
-                                src="/background-top.svg"
-                                alt="Background"
-                                className="object-cover object-center z-0 select-none pointer-events-none opacity-50"
-                                style={{ position: 'fixed', zIndex: -9999, width: '100%', height: '100%', top: 0, left: 0 }}
-                                width={1000}
-                                height={500}
-                            />
                             <Navbar />
                         </>
                     )}
-                    <main className={`${!shouldHideComponents ? 'pt-30' : ''}`}>
-                        {children}
+                    <main className={`${!shouldHideComponents ? 'pt-10' : ''}`}>
+                        <div className="items-center justify-center">
+                            {/* Banner - 高度根据页面变化 */}
+                            <div className="absolute -top-20 -z-10 w-full">
+                                <div className={`sticky w-full ${bannerHeight} transition-all duration-300`}>
+                                    <Image
+                                        src="/banner.png"
+                                        alt="Banner"
+                                        fill
+                                        className="object-cover"
+                                        sizes="100vw"
+                                        priority
+                                    />
+                                </div>
+                            </div>
+
+                            {children}
+                        </div>
                     </main>
                     {!shouldHideComponents && (
                         <>

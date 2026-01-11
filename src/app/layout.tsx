@@ -26,8 +26,8 @@ export default function RootLayout({
   return (
     <html lang="zh">
       <head>
-        <meta name="theme-color" content="#3d3d3d" />
-        <meta name="msapplication-TileColor" content="#3d3d3d" />
+        <meta name="theme-color" content="#ffffff" />
+        <meta name="msapplication-TileColor" content="#ffffff" />
       </head>
       <body className={`antialiased`}>
         <ConfigProvider>

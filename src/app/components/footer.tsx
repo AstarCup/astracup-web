@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import Image from 'next/image';
+import { ArrowBigUpDash } from 'lucide-react';
 
 export default function Footer() {
     const [version, setVersion] = useState('loading...');
@@ -53,11 +54,11 @@ export default function Footer() {
                     position: "fixed",
                     right: 20,
                     bottom: 20,
-                    padding: "0px 10px 0px 10px",
+                    padding: "20px",
                     background: "#E93B66",
                     color: "#fff",
                     border: "none",
-                    borderRadius: "0px",
+                    borderRadius: "100px",
                     cursor: "pointer",
                     fontSize: "1rem",
                     opacity: isVisible ? 1 : 0,
@@ -67,10 +68,10 @@ export default function Footer() {
                     pointerEvents: isVisible ? 'auto' : 'none',
                 }}
                 className="return-top-btn"
-                onMouseOver={e => (e.currentTarget.style.background = '#3BE9D8')}
+                onMouseOver={e => (e.currentTarget.style.background = '#5b5b5b')}
                 onMouseOut={e => (e.currentTarget.style.background = '#E93B66')}
             >
-                <Image src="/icons/returnTop.svg" alt="返回顶部" width={60} height={60} />
+                <ArrowBigUpDash />
             </button>
 
             <footer
@@ -80,35 +81,25 @@ export default function Footer() {
                     minHeight: "300px",
                     background: "url('/footer.svg') no-repeat center/contain",
                     backgroundPosition: "center bottom",
-                    color: "#fff",
+                    color: "#686868",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "flex-start",
                     letterSpacing: "1px",
                     position: "relative",
                     padding: "20px",
                     gap: "20px",
-                    // 允许图片溢出footer区域
                     overflow: "visible",
                 }}
-                className="footer-responsive"
+                className="footer-responsive font-bold items-center justify-center"
             >
                 {/* 版权声明 */}
-                <div style={{
-                    position: 'relative',
-                    zIndex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start'
-                }}>
-                    <span style={{ fontSize: '1rem', marginBottom: '8px' }}>
-                        © {new Date().getFullYear()} AstarCup. All rights reserved.
-                    </span>
-                    <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-                        <p>Ciallo～ (∠・ω&lt; )⌒☆</p>
-                        <p>{version}</p>
-                    </span>
-                </div>
+                <span style={{ fontSize: '1rem', marginBottom: '8px' }}>
+                    © {new Date().getFullYear()} AstarCup. All rights reserved.
+                    <p>Ciallo～ (∠・ω&lt; )⌒☆</p>
+                    <p>version_{version}</p>
+                </span>
+                <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+                </span>
 
                 {/* 友情链接 */}
                 <div style={{
@@ -124,21 +115,12 @@ export default function Footer() {
                         gap: '12px',
                         alignItems: 'flex-start'
                     }}>
-                        <span style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '8px' }}>
-                            友情链接
-                        </span>
+
                         <a
                             href="https://osu.ppy.sh/"
                             target="_blank"
                             rel="noopener noreferrer"
-                            style={{
-                                color: '#fff',
-                                textDecoration: 'none',
-                                fontSize: '0.95rem',
-                                transition: 'color 0.3s'
-                            }}
-                            onMouseOver={e => (e.currentTarget.style.color = '#3BE9D8')}
-                            onMouseOut={e => (e.currentTarget.style.color = '#fff')}
+                            className="text-bold text-gray-400 hover:text-white hover:bg-pink-300 rounded-lg px-2 py-1 transition-all"
                         >
                             osu! 官网
                         </a>
@@ -146,14 +128,7 @@ export default function Footer() {
                             href="https://lazer.g0v0.top"
                             target="_blank"
                             rel="noopener noreferrer"
-                            style={{
-                                color: '#fff',
-                                textDecoration: 'none',
-                                fontSize: '0.95rem',
-                                transition: 'color 0.3s'
-                            }}
-                            onMouseOver={e => (e.currentTarget.style.color = '#3BE9D8')}
-                            onMouseOut={e => (e.currentTarget.style.color = '#fff')}
+                            className="text-bold text-gray-400 hover:text-white hover:bg-pink-300 rounded-lg px-2 py-1 transition-all"
                         >
                             osu!lazer 咕哦服
                         </a>
@@ -162,28 +137,7 @@ export default function Footer() {
                 </div>
             </footer>
 
-            <style jsx>{`
-                @media (min-width: 768px) {
-                    .return-top-btn {
-                        right: 40px !important;
-                        bottom: 30px !important;
-                    }
-                    .return-top-btn img {
-                        width: 80px !important;
-                        height: 80px !important;
-                    }
-                }
-                @media (max-width: 640px) {
-                    .return-top-btn {
-                        right: 15px !important;
-                        bottom: 15px !important;
-                    }
-                    .return-top-btn img {
-                        width: 50px !important;
-                        height: 50px !important;
-                    }
-                }
-            `}</style>
+
         </>
     );
 }

@@ -32,9 +32,9 @@ export default async function NewsList() {
     });
 
     return (
-        <div className="max-w-5xl mx-auto pt-10 ">
+        <div className="max-w-5xl mx-auto mt-40 ">
             <header className="mb-8">
-                <h1 className="text-4xl font-bold mb-4 text-white">新闻中心</h1>
+                <h1 className="text-4xl font-bold mb-4 text-gray-600">新闻中心</h1>
                 <p className="text-gray-400">了解 AstraCup 星域杯的最新动态</p>
             </header>
 
@@ -45,15 +45,15 @@ export default async function NewsList() {
                         <Link
                             key={news.slug}
                             href={link}
-                            className="border-b-4 border-[#E93B66] block bg-[#3D3D3D] p-6 hover:border-[#3BE9D8] transition-colors group"
+                            className="border-b-4 border-blue-400 block bg-white p-6 hover:border-blue-600 hover:bg-gray-200 hover:scale-[1.01] active:scale-[0.98] rounded-lg transition-all group"
                             style={{ textDecoration: 'none' }}
                         >
                             <article>
                                 <header className="mb-3">
-                                    <h2 className="text-xl font-semibold mb-2 text-white group-hover:text-[#3BE9D8] transition-colors">
+                                    <h2 className="text-xl font-semibold mb-2 text-gray-800 group-hover:font-bold">
                                         {news.frontmatter.title}
                                     </h2>
-                                    <div className="flex items-center space-x-4 text-sm text-gray-400">
+                                    <div className="flex items-center space-x-4 text-sm text-gray-600">
                                         {news.frontmatter.date && (
                                             <time>
                                                 {new Date(news.frontmatter.date).toLocaleDateString('zh-CN')}
@@ -63,7 +63,7 @@ export default async function NewsList() {
                                     </div>
                                 </header>
                                 {news.frontmatter.description && (
-                                    <p className="text-gray-300 mb-3 leading-relaxed">
+                                    <p className="text-gray-500 mb-3 leading-relaxed">
                                         {news.frontmatter.description}
                                     </p>
                                 )}

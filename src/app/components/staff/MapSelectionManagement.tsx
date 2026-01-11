@@ -8,7 +8,7 @@ import CommentComponent from './ui/CommentComponent';
 import MapoolTable from '../ui/MapoolTable';
 import { UserSession } from '@/lib/permissions';
 import { animate, spring } from 'animejs';
-import { getDifficultyColorClass, getDifficultyStyle } from '@/lib/difficulty-colors';
+import { getDifficultyStyle } from '@/lib/difficulty-colors';
 
 import {
     ArrowDownToLine,
@@ -3026,7 +3026,6 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             width={512}
                                             height={1024}
                                             className="absolute inset-0 w-full h-full object-cover -z-3 opacity-5"
-
                                         />
                                         <Image
                                             src={selection.coverUrl || "/noCover.svg"}
@@ -3101,7 +3100,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                                                         }
                                                                         setTempApprovedSelections(newSelections);
                                                                     }}
-                                                                    className="hover:scale-[1.05] transition-all w-6 h-6 text-blue-600 bg-gray-100 border-gray-300 rounded-full focus:ring-blue-500"
+                                                                    className="hover:scale-[1.05] transition-all w-6 h-6 text-blue-600 bg-pink-100 border-gray-300 rounded-full focus:ring-pink-500"
                                                                 />
                                                             </label>
                                                         )}
@@ -3116,8 +3115,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                             <h3 className="font-bold text-white text-2xl truncate" title={selection.title_unicode || selection.title}>
                                                 {selection.title_unicode || selection.title}
                                             </h3>
-                                            <p className="font-bold text-xs text-gray-200 truncate" title={selection.artist_unicode || selection.artist}>
-                                                - {selection.artist_unicode || selection.artist}
+                                            <p className="font-bold text-xs relative bottom-1 text-gray-200 truncate" title={selection.artist_unicode || selection.artist}>
+                                                {selection.artist_unicode || selection.artist}
                                             </p>
                                         </div>
                                         {/* 属性信息 */}
