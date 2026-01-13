@@ -298,7 +298,7 @@ export default function Mapool() {
                     minWidth="6rem"
                     darkMode={true}
                 />
-                <p className='text-white text-xl animate-bounce'>F图池已更新</p>
+                <p className='text-white text-xl animate-bounce'>GF图池已更新</p>
             </div>
 
             {mapPoolData.length === 0 ? (
