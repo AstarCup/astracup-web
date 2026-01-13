@@ -551,9 +551,9 @@ export default function MapoolTable({ data, title, downloadUrl, onRowRightClick,
                                         <a className={slotClass}>{row.Slot}</a>
                                         {/* 自定义mod名称气泡 - 显示在右上角 */}
                                         {(row.customModName || (row.customDTRate && row.customDTRate !== 1.5)) && (
-                                            <div className={`absolute -top-1 left-10 text-xs px-3 py-1 rounded-full flex items-center justify-center font-bold shadow-md whitespace-nowrap ${row.customModName === "原创"
+                                            <div className={`absolute -top-1 left-10 text-xs px-3 py-1 rounded-full flex items-center justify-center font-bold shadow-md whitespace-nowrap ${row.customModName.includes("原创")
                                                 ? "bg-gradient-to-r from-red-500 to-pink-300 text-white text-shadow-lg text-blob skew-x-12 rounded-none"
-                                                : row.customModName === "定制"
+                                                : row.customModName.includes("定制")
                                                     ? "bg-gradient-to-r from-cyan-500 to-teal-300 text-white text-shadow-lg text-blob skew-x-12 rounded-none"
                                                     : "bg-[#e93b66]/80 text-white"
                                                 }`}>
