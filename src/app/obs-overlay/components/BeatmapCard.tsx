@@ -55,7 +55,7 @@ export default function BeatmapCard({ beatmap, onLeftClick, onRightClick, onTime
         const baseClass = "w-full h-24 flex rounded-lg overflow-hidden cursor-pointer transition-all duration-300 relative";
 
         // 添加 hover 放大效果
-        const hoverClass = "hover:scale-110 hover:z-10 hover:shadow-2xl";
+        const hoverClass = "hover:scale-105 hover:z-10 hover:shadow-2xl";
 
         // 添加闪光动画
         const flashClass = isAnimating ? "animate-flash" : "";
