@@ -103,7 +103,7 @@ export default function TimerDisplay({ timerState, eventName = "", mapPoolVisibl
                     fontWeight: 'bold',
                     color: getDisplayColor(),
                     textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                    fontFamily: 'Audiowide, monospace',
+                    // fontFamily: 'Audiowide, monospace',
                     minHeight: '70px', // 确保高度一致
                     display: 'flex',
                     alignItems: 'center',
@@ -113,7 +113,7 @@ export default function TimerDisplay({ timerState, eventName = "", mapPoolVisibl
                 </div>
 
                 {/* 图片显示 - 只在30秒以下显示 */}
-                {shouldShowImage && TIMER_IMAGE_URL && (
+                {/* {shouldShowImage && TIMER_IMAGE_URL && (
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -132,7 +132,7 @@ export default function TimerDisplay({ timerState, eventName = "", mapPoolVisibl
                             unoptimized={TIMER_IMAGE_URL.startsWith('http')}
                         />
                     </div>
-                )}
+                )} */}
 
                 {/* 暂停标志 */}
                 {!isRunning && remainingTime > 0 && (
@@ -141,7 +141,7 @@ export default function TimerDisplay({ timerState, eventName = "", mapPoolVisibl
                         fontWeight: 'bold',
                         color: '#FFAA00',
                         textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                        fontFamily: 'Audiowide, monospace',
+                        // fontFamily: 'Audiowide, monospace',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center'
@@ -152,7 +152,7 @@ export default function TimerDisplay({ timerState, eventName = "", mapPoolVisibl
             </div>
 
             {/* 使用CSS @font-face加载本地字体 */}
-            <style jsx>{`
+            {/* <style jsx>{`
                 @font-face {
                     font-family: 'Audiowide';
                     src: url('/font/Audiowide-Regular.ttf') format('truetype');
@@ -160,7 +160,7 @@ export default function TimerDisplay({ timerState, eventName = "", mapPoolVisibl
                     font-style: normal;
                     font-display: swap;
                 }
-            `}</style>
+            `}</style> */}
         </div>
     );
 }

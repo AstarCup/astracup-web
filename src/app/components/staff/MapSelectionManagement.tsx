@@ -32,7 +32,6 @@ import {
     Star,
     CloudUpload
 } from 'lucide-react';
-import ContextMenu from '../ui/ContextMenu';
 
 interface User {
     id: number;
@@ -154,7 +153,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
     // Season configuration
     const [availableSeasons, setAvailableSeasons] = useState([
-        { value: 's1', label: '第一赛季' }
+        { value: 's1', label: '第一赛季' },
+        { value: 'otc1', label: 'OTC#1' }
     ]);
 
     // Map selection data

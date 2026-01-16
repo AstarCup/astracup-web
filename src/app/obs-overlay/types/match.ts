@@ -19,6 +19,8 @@ export interface Team {
   player?: Player;
 }
 
+export type MatchMode = '1v1' | 'teamvs';
+
 export interface MatchSettings {
   matchInfo: string;
   boFormat: 'BO3' | 'BO5' | 'BO7' | 'BO9' | 'BO11' | 'BO13';
@@ -26,6 +28,14 @@ export interface MatchSettings {
   blueTeamName: string;
   redPlayer?: Player;
   bluePlayer?: Player;
+  matchMode: MatchMode;
+  showAvatars: boolean;
+  redTeamAvatarUrl?: string;
+  blueTeamAvatarUrl?: string;
+  currencyEnabled: boolean;
+  currencyName: string;
+  redCurrency: number;
+  blueCurrency: number;
 }
 
 export interface TimerState {
@@ -79,18 +89,18 @@ export interface RefereeState {
 }
 
 export interface VictoryState {
-    isVisible: boolean;
-    winner: 'red' | 'blue' | null;
-    hideScorePanel: boolean;
+  isVisible: boolean;
+  winner: 'red' | 'blue' | null;
+  hideScorePanel: boolean;
 }
 
 export interface OBSState {
-    isConnected: boolean;
-    scenes: string[];
-    sceneMappings: {
-        main: string;
-        mapPool: string;
-        victory: string;
-    };
-    currentScene: string;
+  isConnected: boolean;
+  scenes: string[];
+  sceneMappings: {
+    main: string;
+    mapPool: string;
+    victory: string;
+  };
+  currentScene: string;
 }

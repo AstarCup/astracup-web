@@ -7,9 +7,13 @@ interface TeamDisplayProps {
     team: Team;
     onScoreChange: (teamId: 'red' | 'blue', newScore: number) => void;
     winScore: number;
+    showAvatar?: boolean;
+    currencyEnabled?: boolean;
+    currencyValue?: number;
+    currencyName?: string;
 }
 
-export default function TeamDisplay({ team, onScoreChange, winScore }: TeamDisplayProps) {
+export default function TeamDisplay({ team, onScoreChange, winScore, showAvatar = true, currencyEnabled = false, currencyValue = 0, currencyName = '金币' }: TeamDisplayProps) {
     const handleScoreClick = (event: React.MouseEvent) => {
         event.preventDefault(); // 防止右键菜单
 
@@ -45,7 +49,7 @@ export default function TeamDisplay({ team, onScoreChange, winScore }: TeamDispl
                 {team.id === 'red' && (
                     <>
                         {/* 头像 */}
-                        {team.avatarUrl && (
+                        {showAvatar && team.avatarUrl && (
                             <div className="w-32 h-32 border-4 overflow-hidden"
                                 style={{ borderColor: getTeamColor(team.id) }}>
                                 <img
@@ -101,6 +105,16 @@ export default function TeamDisplay({ team, onScoreChange, winScore }: TeamDispl
                                     ))}
                                 </div>
                             </div>
+                            {/* 货币显示 - 在比分下方 */}
+                            {currencyEnabled && (
+                                <div className="flex justify-start items-center mt-2">
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-2xl font-bold text-white bg-black/70 px-2 py-1 rounded">
+                                            {currencyName} {currencyValue}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         {/* 比分 */}
                         <div>
@@ -175,9 +189,19 @@ export default function TeamDisplay({ team, onScoreChange, winScore }: TeamDispl
                                     </span>
                                 </div>
                             </div>
+                            {/* 货币显示 - 在比分下方 */}
+                            {currencyEnabled && (
+                                <div className="flex justify-end items-center mt-2">
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-2xl font-bold text-white bg-black/70 px-2 py-1 rounded">
+                                            {currencyValue} {currencyName}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         {/* 头像 */}
-                        {team.avatarUrl && (
+                        {showAvatar && team.avatarUrl && (
                             <div className="w-32 h-32 border-4 overflow-hidden"
                                 style={{ borderColor: getTeamColor(team.id) }}>
                                 <img
