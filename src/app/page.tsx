@@ -50,10 +50,10 @@ export default function Home() {
     <div>
       <div className="flex flex-col items-center justify-center">
         <div className="relative w-full max-w-7xl flex flex-col items-left justify-center px-4 sm:px-6 mt-4">
-          <div className="relative w-full flex flex-col items-left justify-center px-4 sm:px-6" style={{ minHeight: '400px' }}>
-            <div className="relative w-full flex justify-end items-right mt-100">
+          <div className="relative w-full flex flex-col items-left justify-center px-4 sm:px-6">
+            <div className="relative w-full flex justify-end items-right mt-40">
               {/* <Image src={'/newLogo.svg'} width={420} height={200} alt="AstarLogo" className="bottom-0" /> */}
-              <NewStyleLogo />
+              <NewStyleLogo className="scale-75 bottom-0" />
             </div>
           </div>
           <div>

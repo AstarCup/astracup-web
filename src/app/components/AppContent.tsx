@@ -70,14 +70,14 @@ export function AppContent({ children }: { children: React.ReactNode }) {
                             {/* Banner - 高度根据页面变化 */}
                             <div className="absolute -top-20 -z-10 w-full">
                                 <div className={`sticky w-full ${bannerHeight} transition-all duration-300`}>
-                                    {/* <Image
+                                    <Image
                                         src="/banner.png"
                                         alt="Banner"
                                         fill
                                         className="object-cover"
                                         sizes="100vw"
                                         priority
-                                    /> */}
+                                    />
                                 </div>
                             </div>
 

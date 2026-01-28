@@ -28,6 +28,27 @@ pnpm dev
 bun dev
 ```
 
+## get svg poz
+```js
+const element = document.querySelector('.text-yu');
+
+// 方法1: 使用 getBoundingClientRect()
+const rect = element.getBoundingClientRect();
+console.log('元素边界:', rect);
+console.log('中心点 x:', rect.left + rect.width / 2);
+console.log('中心点 y:', rect.top + rect.height / 2);
+console.log('相对中心点 x:', rect.width / 2);
+console.log('相对中心点 y:', rect.height / 2);
+
+// 方法2: 对于 SVG 元素，使用 getBBox()
+if (element.getBBox) {
+    const bbox = element.getBBox();
+    console.log('SVG BBox:', bbox);
+    console.log('中心点 x:', bbox.x + bbox.width / 2);
+    console.log('中心点 y:', bbox.y + bbox.height / 2);
+}
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
