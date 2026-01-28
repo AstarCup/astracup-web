@@ -5,8 +5,6 @@ import { usePathname } from 'next/navigation';
 import Image from "next/image";
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/footer';
-import NoiseBackground from '../components/ui/NoiseBackground';
-import ParallaxBackground from '../components/ui/ParallaxBackground';
 import { NotificationContainer } from '../components/ui/Notification';
 
 // Loading组件
@@ -72,14 +70,14 @@ export function AppContent({ children }: { children: React.ReactNode }) {
                             {/* Banner - 高度根据页面变化 */}
                             <div className="absolute -top-20 -z-10 w-full">
                                 <div className={`sticky w-full ${bannerHeight} transition-all duration-300`}>
-                                    <Image
+                                    {/* <Image
                                         src="/banner.png"
                                         alt="Banner"
                                         fill
                                         className="object-cover"
                                         sizes="100vw"
                                         priority
-                                    />
+                                    /> */}
                                 </div>
                             </div>
 

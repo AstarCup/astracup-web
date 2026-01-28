@@ -10,7 +10,7 @@ import ContactIcon from './components/icons/ContactIcon';
 import UserProfile from './components/ui/UserProfile';
 import RegistrationButton from './components/ui/RegistrationButton';
 import NewsListWithPagination from "./components/ui/NewsListWithPagination";
-import AnimatedLogo from './components/ui/AnimatedLogo';
+import NewStyleLogo from "./components/icons/NewStyleLogo";
 import { useConfig } from './components/ConfigProvider';
 import { BookMarked, CalendarDays, Table2, Contact } from 'lucide-react';
 
@@ -52,7 +52,8 @@ export default function Home() {
         <div className="relative w-full max-w-7xl flex flex-col items-left justify-center px-4 sm:px-6 mt-4">
           <div className="relative w-full flex flex-col items-left justify-center px-4 sm:px-6" style={{ minHeight: '400px' }}>
             <div className="relative w-full flex justify-end items-right mt-100">
-              <Image src={'/newLogo.svg'} width={420} height={200} alt="AstarLogo" className="bottom-0" />
+              {/* <Image src={'/newLogo.svg'} width={420} height={200} alt="AstarLogo" className="bottom-0" /> */}
+              <NewStyleLogo />
             </div>
           </div>
           <div>
