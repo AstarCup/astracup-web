@@ -14,7 +14,7 @@ function LoadingScreen({ isLoading }: { isLoading: boolean }) {
             }`}>
             <div className="relative w-full h-full">
                 {/* 下边图片（原来右边的）- 全屏显示 */}
-                <div className={`absolute inset-0 transition-transform duration-1000 ${isLoading ? 'translate-x-0' : 'translate-x-full'
+                {/* <div className={`absolute inset-0 transition-transform duration-1000 ${isLoading ? 'translate-x-0' : 'translate-x-full'
                     }`}>
                     <Image
                         src="/loading-right.svg"
@@ -22,9 +22,9 @@ function LoadingScreen({ isLoading }: { isLoading: boolean }) {
                         fill
                         className="object-cover"
                     />
-                </div>
+                </div> */}
                 {/* 上边图片（原来左边的）- 全屏显示 */}
-                <div className={`absolute inset-0 transition-transform duration-1000 ${isLoading ? 'translate-x-0' : '-translate-x-full'
+                {/* <div className={`absolute inset-0 transition-transform duration-1000 ${isLoading ? 'translate-x-0' : '-translate-x-full'
                     }`}>
                     <Image
                         src="/loading-left.svg"
@@ -32,7 +32,7 @@ function LoadingScreen({ isLoading }: { isLoading: boolean }) {
                         fill
                         className="object-cover"
                     />
-                </div>
+                </div> */}
             </div>
         </div>
     );
