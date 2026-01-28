@@ -66,6 +66,12 @@ export default function MatchSettings({
         currentScene: ''
     });
 
+    // Season配置状态
+    const [seasonOptions, setSeasonOptions] = useState<DropdownOption[]>([
+        { value: 's1', label: '第1赛季' }
+    ]);
+    const [seasonLoading, setSeasonLoading] = useState(false);
+
     // 加载保存的比赛编号
     useEffect(() => {
         const savedMatchNumber = localStorage.getItem('matchNumber');
@@ -238,6 +244,33 @@ export default function MatchSettings({
         fetchPlayers();
     }, []);
 
+    // 获取season配置
+    useEffect(() => {
+        const fetchSeasonConfig = async () => {
+            setSeasonLoading(true);
+            try {
+                const response = await fetch('/api/season-config');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.availableSeasons) {
+                        // 转换API返回的season选项格式
+                        const options = data.availableSeasons.map((season: any) => ({
+                            value: season.value,
+                            label: season.label
+                        }));
+                        setSeasonOptions(options);
+                    }
+                }
+            } catch (error) {
+                console.error('获取season配置失败:', error);
+            } finally {
+                setSeasonLoading(false);
+            }
+        };
+
+        fetchSeasonConfig();
+    }, []);
+
     // 计时器逻辑
     useEffect(() => {
         let interval: NodeJS.Timeout | null = null;
@@ -312,7 +345,13 @@ export default function MatchSettings({
                 redTeamName: '',
                 blueTeamName: '',
                 redPlayer: undefined,
-                bluePlayer: undefined
+                bluePlayer: undefined,
+                matchMode: '1v1',
+                showAvatars: true,
+                currencyEnabled: false,
+                currencyName: '金币',
+                redCurrency: 0,
+                blueCurrency: 0
             });
             // 重置计时器
             onTimerStateChange({
@@ -590,11 +629,27 @@ export default function MatchSettings({
 
     // 生成比赛信息文本
     const generateMatchInfo = () => {
-        const redPlayerName = settings.redPlayer?.inGameName || '红队玩家';
-        const bluePlayerName = settings.bluePlayer?.inGameName || '蓝队玩家';
+        let redName: string;
+        let blueName: string;
+
+        if (settings.matchMode === 'teamvs') {
+            // teamvs模式：使用队伍名称
+            redName = settings.redTeamName || '红队';
+            blueName = settings.blueTeamName || '蓝队';
+        } else {
+            // 1v1模式：使用玩家名称
+            redName = settings.redPlayer?.inGameName || '红队玩家';
+            blueName = settings.bluePlayer?.inGameName || '蓝队玩家';
+        }
+
         const category = mapPoolSettings.category ? mapPoolSettings.category.toUpperCase() : 'RO16';
 
-        return `星域杯S1 | ${category} #${matchNumber} | ${redPlayerName} vs ${bluePlayerName}`;
+        // 如果比赛编号为空，则不显示#符号
+        if (!matchNumber || matchNumber.trim() === '') {
+            return `${category} | ${redName} vs ${blueName}`;
+        } else {
+            return `${category} #${matchNumber} | ${redName} vs ${blueName}`;
+        }
     };
 
     // 处理比赛编号变化
@@ -603,7 +658,29 @@ export default function MatchSettings({
         // 保存到本地存储
         localStorage.setItem('matchNumber', number);
         // 自动更新比赛信息 - 使用新的编号值直接生成
-        const newMatchInfo = `星域杯S1 | ${mapPoolSettings.category ? mapPoolSettings.category.toUpperCase() : 'RO16'} #${number} | ${settings.redPlayer?.inGameName || '红队玩家'} vs ${settings.bluePlayer?.inGameName || '蓝队玩家'}`;
+        let redName: string;
+        let blueName: string;
+
+        if (settings.matchMode === 'teamvs') {
+            // teamvs模式：使用队伍名称
+            redName = settings.redTeamName || '红队';
+            blueName = settings.blueTeamName || '蓝队';
+        } else {
+            // 1v1模式：使用玩家名称
+            redName = settings.redPlayer?.inGameName || '红队玩家';
+            blueName = settings.bluePlayer?.inGameName || '蓝队玩家';
+        }
+
+        const category = mapPoolSettings.category ? mapPoolSettings.category.toUpperCase() : 'RO16';
+
+        // 如果比赛编号为空，则不显示#符号
+        let newMatchInfo: string;
+        if (!number || number.trim() === '') {
+            newMatchInfo = `${category} | ${redName} vs ${blueName}`;
+        } else {
+            newMatchInfo = `${category} #${number} | ${redName} vs ${blueName}`;
+        }
+
         onSettingsChange({
             ...settings,
             matchInfo: newMatchInfo
@@ -725,6 +802,7 @@ export default function MatchSettings({
                                     <label className="text-2xl text-gray-200 mb-2 font-medium">图池类别</label>
                                     <Dropdown
                                         options={[
+                                            { value: 'qualification', label: 'QUA' },
                                             { value: 'ro16', label: 'RO16' },
                                             { value: 'quarterfinals', label: 'QF' },
                                             { value: 'semifinals', label: 'SF' },
@@ -759,159 +837,303 @@ export default function MatchSettings({
                                 fontSize={"text-4xl"}
                             />
                         </div>
+
+                        {/* 比赛模式选择 */}
+                        <div className="flex flex-col">
+                            <label className="text-2xl text-gray-200 mb-2 font-medium">比赛模式</label>
+                            <Dropdown
+                                options={[
+                                    { value: "1v1", label: "1v1 (单人对抗)" },
+                                    { value: "teamvs", label: "Team vs Team (团队对抗)" },
+                                ]}
+                                value={settings.matchMode}
+                                onChange={(value) => onSettingsChange({ ...settings, matchMode: value as '1v1' | 'teamvs' })}
+                                darkMode={true}
+                                minWidth="20rem"
+                                fontSize={"text-4xl"}
+                            />
+                        </div>
+
+                        {/* 头像显示开关 */}
+                        <div className="flex flex-col">
+                            <label className="text-2xl text-gray-200 mb-2 font-medium">头像显示</label>
+                            <div className="flex items-center h-full">
+                                <button
+                                    onClick={() => onSettingsChange({ ...settings, showAvatars: !settings.showAvatars })}
+                                    className={`px-6 py-3 rounded-lg text-2xl font-bold transition-colors ${settings.showAvatars
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    {settings.showAvatars ? '显示头像' : '隐藏头像'}
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
-                    {/* 玩家选择区域 */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* 红队玩家选择 */}
+                    {/* 货币系统设置 */}
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6 p-4 rounded-lg bg-gray-700/50">
+                        {/* 货币显示开关 */}
+                        <div className="flex flex-col">
+                            <label className="text-2xl text-gray-200 mb-2 font-medium">货币显示</label>
+                            <div className="flex items-center h-full">
+                                <button
+                                    onClick={() => onSettingsChange({ ...settings, currencyEnabled: !settings.currencyEnabled })}
+                                    className={`px-6 py-3 rounded-lg text-2xl font-bold transition-colors ${settings.currencyEnabled
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
+                                >
+                                    {settings.currencyEnabled ? '显示货币' : '隐藏货币'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 货币名称 */}
+                        <div className="flex flex-col">
+                            <label className="text-2xl text-gray-200 mb-2 font-medium">货币名称</label>
+                            <input
+                                type="text"
+                                value={settings.currencyName}
+                                onChange={(e) => onSettingsChange({ ...settings, currencyName: e.target.value })}
+                                className="w-full bg-[#2D2D2D] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-[#E93B66] transition-colors text-2xl"
+                                placeholder="输入货币名称"
+                            />
+                        </div>
+
+                        {/* 红队货币 */}
                         <div className="flex flex-col">
                             <label className="text-2xl text-gray-200 mb-2 font-medium" style={{ color: getTeamColor('red') }}>
-                                红队玩家
+                                红队货币
                             </label>
-                            <div className="flex gap-3 text-2xl">
-                                <Dropdown
-                                    options={loading ? [] : [
-                                        { value: "", label: "选择红队玩家..." },
-                                        ...players.map(player => ({
-                                            value: player.osuId,
-                                            label: `${player.inGameName}`
-                                        }))
-                                    ]}
-                                    value={settings.redPlayer?.osuId || ""}
-                                    onChange={(value) => handlePlayerDropdownChange('red', value)}
-                                    placeholder={loading ? "加载中..." : "选择红队玩家..."}
-                                    darkMode={true}
-                                    minWidth="35rem"
-                                    maxHeight="30rem"
-                                    disabled={loading}
-                                    fontSize={"text-4xl"}
-                                />
-                            </div>
+                            <input
+                                type="number"
+                                value={settings.redCurrency}
+                                onChange={(e) => onSettingsChange({ ...settings, redCurrency: parseInt(e.target.value) || 0 })}
+                                className="w-full bg-[#2D2D2D] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-[#E93B66] transition-colors text-2xl"
+                                placeholder="红队货币值"
+                                min="0"
+                            />
                         </div>
 
-                        {/* 蓝队玩家选择 */}
+                        {/* 蓝队货币 */}
                         <div className="flex flex-col">
                             <label className="text-2xl text-gray-200 mb-2 font-medium" style={{ color: getTeamColor('blue') }}>
-                                蓝队玩家
+                                蓝队货币
                             </label>
-                            <div className="flex gap-3">
-                                <Dropdown
-                                    options={loading ? [] : [
-                                        { value: "", label: "选择蓝队玩家..." },
-                                        ...players.map(player => ({
-                                            value: player.osuId,
-                                            label: `${player.inGameName}`
-                                        }))
-                                    ]}
-                                    value={settings.bluePlayer?.osuId || ""}
-                                    onChange={(value) => handlePlayerDropdownChange('blue', value)}
-                                    placeholder={loading ? "加载中..." : "选择蓝队玩家..."}
-                                    darkMode={true}
-                                    minWidth="35rem"
-                                    maxHeight="30rem"
-                                    disabled={loading}
-                                    fontSize={"text-4xl"}
+                            <input
+                                type="number"
+                                value={settings.blueCurrency}
+                                onChange={(e) => onSettingsChange({ ...settings, blueCurrency: parseInt(e.target.value) || 0 })}
+                                className="w-full bg-[#2D2D2D] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-[#3b5be9ff] transition-colors text-2xl"
+                                placeholder="蓝队货币值"
+                                min="0"
+                            />
+                        </div>
+                    </div>
+
+                    {/* 根据比赛模式显示不同的输入区域 */}
+                    {settings.matchMode === 'teamvs' ? (
+                        /* teamvs模式：显示队伍名称和头像URL输入，隐藏玩家选择 */
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 p-4 rounded-lg bg-gray-700/50">
+                            <div className="flex flex-col">
+                                <label className="text-2xl text-gray-200 mb-2 font-medium" style={{ color: getTeamColor('red') }}>
+                                    红队名称
+                                </label>
+                                <input
+                                    type="text"
+                                    value={settings.redTeamName}
+                                    onChange={(e) => handleTeamNameChange('red', e.target.value)}
+                                    className="w-full bg-[#2D2D2D] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-[#E93B66] transition-colors text-2xl"
+                                    placeholder="输入红队名称"
+                                />
+                                <label className="text-2xl text-gray-200 mb-2 font-medium mt-4" style={{ color: getTeamColor('red') }}>
+                                    红队头像URL
+                                </label>
+                                <input
+                                    type="text"
+                                    value={settings.redTeamAvatarUrl || ''}
+                                    onChange={(e) => onSettingsChange({ ...settings, redTeamAvatarUrl: e.target.value })}
+                                    className="w-full bg-[#2D2D2D] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-[#E93B66] transition-colors text-2xl"
+                                    placeholder="输入红队头像URL (可选)"
+                                />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="text-2xl text-gray-200 mb-2 font-medium" style={{ color: getTeamColor('blue') }}>
+                                    蓝队名称
+                                </label>
+                                <input
+                                    type="text"
+                                    value={settings.blueTeamName}
+                                    onChange={(e) => handleTeamNameChange('blue', e.target.value)}
+                                    className="w-full bg-[#2D2D2D] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-[#3b5be9ff] transition-colors text-2xl"
+                                    placeholder="输入蓝队名称"
+                                />
+                                <label className="text-2xl text-gray-200 mb-2 font-medium mt-4" style={{ color: getTeamColor('blue') }}>
+                                    蓝队头像URL
+                                </label>
+                                <input
+                                    type="text"
+                                    value={settings.blueTeamAvatarUrl || ''}
+                                    onChange={(e) => onSettingsChange({ ...settings, blueTeamAvatarUrl: e.target.value })}
+                                    className="w-full bg-[#2D2D2D] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-[#3b5be9ff] transition-colors text-2xl"
+                                    placeholder="输入蓝队头像URL (可选)"
                                 />
                             </div>
                         </div>
-                        <div className="col-span-2">
-                            {/* OBS场景控制 */}
-                            <div className="bg-gray-700/50 p-4 rounded-lg">
-                                <label className="text-2xl text-gray-200 mb-3 font-medium">OBS场景控制</label>
-                                <div className="text-gray-300 text-xl mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className={`w-3 h-3 rounded-full ${window.obsstudio ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                        <span>OBS状态: {window.obsstudio ? '已连接' : '未连接'}</span>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="flex flex-col">
-                                        <label className="text-xl text-gray-200 mb-2">主场景</label>
-                                        <Dropdown
-                                            options={[
-                                                { value: "", label: "选择主场景" },
-                                                ...obsState.scenes.map(scene => ({
-                                                    value: scene,
-                                                    label: scene
-                                                }))
-                                            ]}
-                                            value={obsState.sceneMappings.main}
-                                            onChange={(value) => handleSceneMappingChange('main', value)}
-                                            darkMode={true}
-                                            minWidth="15rem"
-                                            fontSize={"text-xl"}
-                                        />
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <label className="text-xl text-gray-200 mb-2">图池场景</label>
-                                        <Dropdown
-                                            options={[
-                                                { value: "", label: "选择图池场景" },
-                                                ...obsState.scenes.map(scene => ({
-                                                    value: scene,
-                                                    label: scene
-                                                }))
-                                            ]}
-                                            value={obsState.sceneMappings.mapPool}
-                                            onChange={(value) => handleSceneMappingChange('mapPool', value)}
-                                            darkMode={true}
-                                            minWidth="15rem"
-                                            fontSize={"text-xl"}
-                                        />
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <label className="text-xl text-gray-200 mb-2">胜利场景</label>
-                                        <Dropdown
-                                            options={[
-                                                { value: "", label: "选择胜利场景" },
-                                                ...obsState.scenes.map(scene => ({
-                                                    value: scene,
-                                                    label: scene
-                                                }))
-                                            ]}
-                                            value={obsState.sceneMappings.victory}
-                                            onChange={(value) => handleSceneMappingChange('victory', value)}
-                                            darkMode={true}
-                                            minWidth="15rem"
-                                            fontSize={"text-xl"}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="mt-4 flex gap-2">
-                                    <button
-                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-lg transition-colors"
-                                        onClick={() => {
-                                            if (window.obsstudio && window.obsstudio.getScenes && typeof window.obsstudio.getScenes === 'function') {
-                                                window.obsstudio.getScenes((scenes: string[]) => {
-                                                    console.log('可用场景:', scenes);
-                                                    alert(`可用场景: ${scenes.join(', ')}`);
-                                                });
-                                            } else {
-                                                alert('OBS未连接或API不可用，请在OBS浏览器源中启用访问权限');
-                                            }
-                                        }}
-                                    >
-                                        获取场景列表
-                                    </button>
-                                    <button
-                                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-lg transition-colors"
-                                        onClick={() => {
-                                            if (window.obsstudio && window.obsstudio.getCurrentScene && typeof window.obsstudio.getCurrentScene === 'function') {
-                                                window.obsstudio.getCurrentScene((scene: { name: string }) => {
-                                                    console.log('当前场景:', scene.name);
-                                                    alert(`当前场景: ${scene.name}`);
-                                                });
-                                            } else {
-                                                alert('OBS未连接或API不可用');
-                                            }
-                                        }}
-                                    >
-                                        获取当前场景
-                                    </button>
+                    ) : (
+                        /* 1v1模式：显示玩家选择，隐藏队伍名称输入 */
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                            {/* 红队玩家选择 */}
+                            <div className="flex flex-col">
+                                <label className="text-2xl text-gray-200 mb-2 font-medium" style={{ color: getTeamColor('red') }}>
+                                    红队玩家
+                                </label>
+                                <div className="flex gap-3 text-2xl">
+                                    <Dropdown
+                                        options={loading ? [] : [
+                                            { value: "", label: "选择红队玩家..." },
+                                            ...players.map(player => ({
+                                                value: player.osuId,
+                                                label: `${player.inGameName}`
+                                            }))
+                                        ]}
+                                        value={settings.redPlayer?.osuId || ""}
+                                        onChange={(value) => handlePlayerDropdownChange('red', value)}
+                                        placeholder={loading ? "加载中..." : "选择红队玩家..."}
+                                        darkMode={true}
+                                        minWidth="35rem"
+                                        maxHeight="30rem"
+                                        disabled={loading}
+                                        fontSize={"text-4xl"}
+                                    />
                                 </div>
                             </div>
+
+                            {/* 蓝队玩家选择 */}
+                            <div className="flex flex-col">
+                                <label className="text-2xl text-gray-200 mb-2 font-medium" style={{ color: getTeamColor('blue') }}>
+                                    蓝队玩家
+                                </label>
+                                <div className="flex gap-3">
+                                    <Dropdown
+                                        options={loading ? [] : [
+                                            { value: "", label: "选择蓝队玩家..." },
+                                            ...players.map(player => ({
+                                                value: player.osuId,
+                                                label: `${player.inGameName}`
+                                            }))
+                                        ]}
+                                        value={settings.bluePlayer?.osuId || ""}
+                                        onChange={(value) => handlePlayerDropdownChange('blue', value)}
+                                        placeholder={loading ? "加载中..." : "选择蓝队玩家..."}
+                                        darkMode={true}
+                                        minWidth="35rem"
+                                        maxHeight="30rem"
+                                        disabled={loading}
+                                        fontSize={"text-4xl"}
+                                    />
+                                </div>
+
+                            </div>
+                        </div>
+                    )}
+
+                    {/* OBS场景控制 */}
+                    <div className="bg-gray-700/50 p-4 rounded-lg">
+                        <label className="text-2xl text-gray-200 mb-3 font-medium">OBS场景控制</label>
+                        <div className="text-gray-300 text-xl mb-4">
+                            <div className="flex items-center gap-2">
+                                <div className={`w-3 h-3 rounded-full ${window.obsstudio ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                <span>OBS状态: {window.obsstudio ? '已连接' : '未连接'}</span>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="flex flex-col">
+                                <label className="text-xl text-gray-200 mb-2">主场景</label>
+                                <Dropdown
+                                    options={[
+                                        { value: "", label: "选择主场景" },
+                                        ...obsState.scenes.map(scene => ({
+                                            value: scene,
+                                            label: scene
+                                        }))
+                                    ]}
+                                    value={obsState.sceneMappings.main}
+                                    onChange={(value) => handleSceneMappingChange('main', value)}
+                                    darkMode={true}
+                                    minWidth="15rem"
+                                    fontSize={"text-xl"}
+                                />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="text-xl text-gray-200 mb-2">图池场景</label>
+                                <Dropdown
+                                    options={[
+                                        { value: "", label: "选择图池场景" },
+                                        ...obsState.scenes.map(scene => ({
+                                            value: scene,
+                                            label: scene
+                                        }))
+                                    ]}
+                                    value={obsState.sceneMappings.mapPool}
+                                    onChange={(value) => handleSceneMappingChange('mapPool', value)}
+                                    darkMode={true}
+                                    minWidth="15rem"
+                                    fontSize={"text-xl"}
+                                />
+                            </div>
+                            <div className="flex flex-col">
+                                <label className="text-xl text-gray-200 mb-2">胜利场景</label>
+                                <Dropdown
+                                    options={[
+                                        { value: "", label: "选择胜利场景" },
+                                        ...obsState.scenes.map(scene => ({
+                                            value: scene,
+                                            label: scene
+                                        }))
+                                    ]}
+                                    value={obsState.sceneMappings.victory}
+                                    onChange={(value) => handleSceneMappingChange('victory', value)}
+                                    darkMode={true}
+                                    minWidth="15rem"
+                                    fontSize={"text-xl"}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="mt-4 flex gap-2">
+                            <button
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-lg transition-colors"
+                                onClick={() => {
+                                    if (window.obsstudio && window.obsstudio.getScenes && typeof window.obsstudio.getScenes === 'function') {
+                                        window.obsstudio.getScenes((scenes: string[]) => {
+                                            console.log('可用场景:', scenes);
+                                            alert(`可用场景: ${scenes.join(', ')}`);
+                                        });
+                                    } else {
+                                        alert('OBS未连接或API不可用，请在OBS浏览器源中启用访问权限');
+                                    }
+                                }}
+                            >
+                                获取场景列表
+                            </button>
+                            <button
+                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-lg transition-colors"
+                                onClick={() => {
+                                    if (window.obsstudio && window.obsstudio.getCurrentScene && typeof window.obsstudio.getCurrentScene === 'function') {
+                                        window.obsstudio.getCurrentScene((scene: { name: string }) => {
+                                            console.log('当前场景:', scene.name);
+                                            alert(`当前场景: ${scene.name}`);
+                                        });
+                                    } else {
+                                        alert('OBS未连接或API不可用');
+                                    }
+                                }}
+                            >
+                                获取当前场景
+                            </button>
                         </div>
                     </div>
                     {/* 清除存储按钮 */}
@@ -957,14 +1179,32 @@ export default function MatchSettings({
                             }}
                             className="px-6 py-4 bg-green-600 hover:bg-green-700 text-white rounded text-5xl transition-colors font-bold"
                         >
-                            选择图池 120秒
+                            选择图池 120秒 并打开图池显示
                         </button>
                         <button
                             onClick={() => startTimer(180, "申请延时")}
                             className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded text-5xl transition-colors font-bold"
                         >
-                            申请延时 3分钟
+                            设置延时 3分钟
                         </button>
+                    </div>
+
+                    {/* 直接添加3分钟暂停时长 */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <button
+                            onClick={() => {
+                                // 直接在当前剩余时间上增加3分钟（180秒）
+                                const newRemainingTime = timerState.remainingTime + 180;
+                                onTimerStateChange({
+                                    ...timerState,
+                                    remainingTime: newRemainingTime
+                                });
+                            }}
+                            className="px-6 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded text-5xl transition-colors font-bold"
+                        >
+                            直接添加3分钟暂停时长
+                        </button>
+
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -1212,6 +1452,109 @@ export default function MatchSettings({
                                     className="flex-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded text-4xl font-bold transition-colors"
                                 >
                                     +1
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 货币控制 */}
+                    <div className="grid grid-cols-2 gap-6 mb-6">
+                        {/* 红队货币控制 */}
+                        <div className="flex flex-col">
+                            <label className="text-4xl text-gray-200 mb-3 font-medium" style={{ color: getTeamColor('red') }}>
+                                红队货币
+                            </label>
+                            <div className="flex gap-2 mb-2">
+                                <button
+                                    onClick={() => onSettingsChange({ ...settings, redCurrency: Math.max(0, settings.redCurrency - 150) })}
+                                    className="flex-1 px-4 py-3 bg-red-700 hover:bg-red-800 text-white rounded text-2xl font-bold transition-colors"
+                                >
+                                    -150
+                                </button>
+                                <button
+                                    onClick={() => onSettingsChange({ ...settings, redCurrency: Math.max(0, settings.redCurrency - 100) })}
+                                    className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded text-2xl font-bold transition-colors"
+                                >
+                                    -100
+                                </button>
+                                <button
+                                    onClick={() => onSettingsChange({ ...settings, redCurrency: Math.max(0, settings.redCurrency - 50) })}
+                                    className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded text-2xl font-bold transition-colors"
+                                >
+                                    -50
+                                </button>
+                            </div>
+                            <div className="text-center bg-gray-700 text-white text-4xl font-bold py-3 rounded mb-2">
+                                {settings.redCurrency} {settings.currencyName}
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => onSettingsChange({ ...settings, redCurrency: settings.redCurrency + 50 })}
+                                    className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded text-2xl font-bold transition-colors"
+                                >
+                                    +50
+                                </button>
+                                <button
+                                    onClick={() => onSettingsChange({ ...settings, redCurrency: settings.redCurrency + 100 })}
+                                    className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded text-2xl font-bold transition-colors"
+                                >
+                                    +100
+                                </button>
+                                <button
+                                    onClick={() => onSettingsChange({ ...settings, redCurrency: settings.redCurrency + 150 })}
+                                    className="flex-1 px-4 py-3 bg-red-700 hover:bg-red-800 text-white rounded text-2xl font-bold transition-colors"
+                                >
+                                    +150
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 蓝队货币控制 */}
+                        <div className="flex flex-col">
+                            <label className="text-4xl text-gray-200 mb-3 font-medium" style={{ color: getTeamColor('blue') }}>
+                                蓝队货币
+                            </label>
+                            <div className="flex gap-2 mb-2">
+                                <button
+                                    onClick={() => onSettingsChange({ ...settings, blueCurrency: Math.max(0, settings.blueCurrency - 150) })}
+                                    className="flex-1 px-4 py-3 bg-blue-700 hover:bg-blue-800 text-white rounded text-2xl font-bold transition-colors"
+                                >
+                                    -150
+                                </button>
+                                <button
+                                    onClick={() => onSettingsChange({ ...settings, blueCurrency: Math.max(0, settings.blueCurrency - 100) })}
+                                    className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded text-2xl font-bold transition-colors"
+                                >
+                                    -100
+                                </button>
+                                <button
+                                    onClick={() => onSettingsChange({ ...settings, blueCurrency: Math.max(0, settings.blueCurrency - 50) })}
+                                    className="flex-1 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded text-2xl font-bold transition-colors"
+                                >
+                                    -50
+                                </button>
+                            </div>
+                            <div className="text-center bg-gray-700 text-white text-4xl font-bold py-3 rounded mb-2">
+                                {settings.blueCurrency} {settings.currencyName}
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => onSettingsChange({ ...settings, blueCurrency: settings.blueCurrency + 50 })}
+                                    className="flex-1 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded text-2xl font-bold transition-colors"
+                                >
+                                    +50
+                                </button>
+                                <button
+                                    onClick={() => onSettingsChange({ ...settings, blueCurrency: settings.blueCurrency + 100 })}
+                                    className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded text-2xl font-bold transition-colors"
+                                >
+                                    +100
+                                </button>
+                                <button
+                                    onClick={() => onSettingsChange({ ...settings, blueCurrency: settings.blueCurrency + 150 })}
+                                    className="flex-1 px-4 py-3 bg-blue-700 hover:bg-blue-800 text-white rounded text-2xl font-bold transition-colors"
+                                >
+                                    +150
                                 </button>
                             </div>
                         </div>
@@ -1544,14 +1887,13 @@ export default function MatchSettings({
                         <div className="flex flex-col">
                             <label className="text-4xl text-gray-200 mb-2 font-medium">赛季</label>
                             <Dropdown
-                                options={[
-                                    { value: 's1', label: '第1赛季' }
-                                ]}
+                                options={seasonLoading ? [{ value: '', label: '加载中...' }] : seasonOptions}
                                 value={mapPoolSettings.season}
                                 onChange={(value) => onMapPoolSettingsChange({ ...mapPoolSettings, season: value })}
                                 darkMode={true}
                                 minWidth="25rem"
                                 fontSize={"text-4xl"}
+                                disabled={seasonLoading}
                             />
                         </div>
 
@@ -1560,6 +1902,7 @@ export default function MatchSettings({
                             <label className="text-4xl text-gray-200 mb-2 font-medium">类别</label>
                             <Dropdown
                                 options={[
+                                    { value: 'qualification', label: 'QUA' },
                                     { value: 'ro16', label: 'RO16' },
                                     { value: 'quarterfinals', label: 'QF' },
                                     { value: 'semifinals', label: 'SF' },

@@ -32,7 +32,6 @@ import {
     Star,
     CloudUpload
 } from 'lucide-react';
-import ContextMenu from '../ui/ContextMenu';
 
 interface User {
     id: number;
@@ -154,7 +153,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
 
     // Season configuration
     const [availableSeasons, setAvailableSeasons] = useState([
-        { value: 's1', label: '第一赛季' }
+        { value: 's1', label: '第一赛季' },
+        { value: 'otc1', label: 'OTC#1' }
     ]);
 
     // Map selection data
@@ -210,6 +210,11 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     const [beatmapPreview, setBeatmapPreview] = useState<BeatmapInfo | null>(null);
     const [availableBeatmaps, setAvailableBeatmaps] = useState<BeatmapInfo[]>([]);
     const [moddedStats, setModdedStats] = useState<ModdedStats | null>(null);
+
+    // 新增：自定义mod模式相关状态
+    const [isCustomMode, setIsCustomMode] = useState(false); // 是否为自定义模式
+    const [customModInput, setCustomModInput] = useState(''); // 自定义mod输入框内容
+    const [calculationMod, setCalculationMod] = useState('NM'); // 用于参数计算的mod值
 
     // 自定图池表单状态
     const [customTitle, setCustomTitle] = useState('');
@@ -495,17 +500,20 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
     useEffect(() => {
         const updateModdedStats = async () => {
             if (beatmapPreview && user) {
+                // 根据模式决定使用哪个mod值进行计算
+                const modForCalculation = isCustomMode ? calculationMod : selectedMods;
+
                 const customSettings = {
-                    customModName: selectedMods === 'LZ' ? customModName : undefined,
-                    customDASettings: customModName === 'DA' && selectedMods === 'LZ' ? {
+                    customModName: modForCalculation === 'LZ' ? customModName : undefined,
+                    customDASettings: customModName === 'DA' && modForCalculation === 'LZ' ? {
                         cs: customCS !== '' ? customCS : null,
                         ar: customAR !== '' ? customAR : null,
                         od: customOD !== '' ? customOD : null,
                         hp: customHP !== '' ? customHP : null,
                     } : null,
-                    customDTRate: selectedMods === 'DT' && customDTRate !== '' ? customDTRate : null,
+                    customDTRate: modForCalculation === 'DT' && customDTRate !== '' ? customDTRate : null,
                 };
-                const stats = await calculateModdedStatsAPI(beatmapPreview, selectedMods, customSettings);
+                const stats = await calculateModdedStatsAPI(beatmapPreview, modForCalculation, customSettings);
                 setModdedStats(stats);
             } else {
                 setModdedStats(null);
@@ -513,7 +521,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
         };
 
         updateModdedStats();
-    }, [beatmapPreview, selectedMods, customModName, customCS, customAR, customOD, customHP, customDTRate, user, calculateModdedStatsAPI]);
+    }, [beatmapPreview, selectedMods, calculationMod, isCustomMode, customModName, customCS, customAR, customOD, customHP, customDTRate, user, calculateModdedStatsAPI]);
 
     // 初始化
     useEffect(() => {
@@ -749,17 +757,27 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             return;
         }
 
+        // 根据模式决定提交的mod值和计算用的mod值
+        const modToSubmit = isCustomMode ? customModInput : selectedMods;
+        const modForCalculation = isCustomMode ? calculationMod : selectedMods;
+
+        // 验证自定义模式下输入框不能为空
+        if (isCustomMode && !customModInput.trim()) {
+            showError('请输入自定义MOD名');
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             const customSettings = {
-                customModName: selectedMods === 'LZ' ? customModName : null,
-                customDASettings: customModName === 'DA' && selectedMods === 'LZ' ? {
+                customModName: modForCalculation === 'LZ' ? customModName : null,
+                customDASettings: customModName === 'DA' && modForCalculation === 'LZ' ? {
                     cs: customCS !== '' ? customCS : null,
                     ar: customAR !== '' ? customAR : null,
                     od: customOD !== '' ? customOD : null,
                     hp: customHP !== '' ? customHP : null,
                 } : null,
-                customDTRate: selectedMods === 'DT' && customDTRate !== '' ? customDTRate : null,
+                customDTRate: modForCalculation === 'DT' && customDTRate !== '' ? customDTRate : null,
             };
 
             const response = await fetch('/api/map-selections', {
@@ -779,7 +797,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     // Use modded stats if available, otherwise original
                     starRating: moddedStats?.starRating ?? beatmapPreview.star_rating,
                     bpm: moddedStats?.bpm ?? beatmapPreview.bpm,
-                    totalLength: selectedMods === 'DT' && customDTRate !== '' ?
+                    totalLength: modForCalculation === 'DT' && customDTRate !== '' ?
                         Math.round(beatmapPreview.total_length / (customDTRate as number)) :
                         beatmapPreview.total_length,
                     maxCombo: beatmapPreview.max_combo || 0,
@@ -787,7 +805,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     cs: moddedStats?.cs ?? beatmapPreview.cs,
                     od: moddedStats?.od ?? beatmapPreview.od,
                     hp: moddedStats?.hp ?? beatmapPreview.hp,
-                    selectedMods,
+                    selectedMods: modToSubmit, // 提交的mod值
                     modPosition,
                     comment,
                     approved,
@@ -799,10 +817,11 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     selectedBy: userForState.id.toString(),
                     selectedByUsername: userForState.username,
                     selectedByAvatar: userForState.avatar_url,
-                    customModName: selectedMods === 'LZ' ? customModName : null,
-                    customDTRate: selectedMods === 'DT' && customDTRate !== '' ? customDTRate : null,
-                    customSettings
-                    ,
+                    customModName: modForCalculation === 'LZ' ? customModName : null,
+                    customDTRate: modForCalculation === 'DT' && customDTRate !== '' ? customDTRate : null,
+                    customSettings,
+                    // 新增字段：保存计算用的mod值
+                    calculationMod: isCustomMode ? modForCalculation : null,
                     // send computed modded stats for backend
                     moddedStats: moddedStats
                         ? {
@@ -812,7 +831,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                             hp: moddedStats.hp,
                             star_rating: moddedStats.starRating,
                             bpm: moddedStats.bpm,
-                            totalLength: selectedMods === 'DT' && customDTRate !== '' ?
+                            totalLength: modForCalculation === 'DT' && customDTRate !== '' ?
                                 Math.round(beatmapPreview.total_length / (customDTRate as number)) :
                                 beatmapPreview.total_length,
                             max_combo: beatmapPreview.max_combo || 0
@@ -1197,6 +1216,16 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
             return;
         }
 
+        // 根据模式决定提交的mod值和计算用的mod值
+        const modToSubmit = isCustomMode ? customModInput : selectedMods;
+        const modForCalculation = isCustomMode ? calculationMod : selectedMods;
+
+        // 验证自定义模式下输入框不能为空
+        if (isCustomMode && !customModInput.trim()) {
+            showError('请输入自定义MOD名');
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             // 生成虚拟ID（使用负数避免与真实beatmap ID冲突）
@@ -1214,7 +1243,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     formData.append('userId', userForState.id.toString());
                     formData.append('season', season);
                     formData.append('category', category);
-                    formData.append('selectedMods', selectedMods);
+                    formData.append('selectedMods', modToSubmit); // 使用提交的mod值
                     formData.append('modPosition', modPosition.toString());
                     formData.append('customBeatmapId', virtualBeatmapId.toString()); // 传递负数bid
 
@@ -1254,7 +1283,7 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     cs: customPoolCS !== '' ? customPoolCS : 4.0,
                     od: customPoolOD !== '' ? customPoolOD : 8.0,
                     hp: customPoolHP !== '' ? customPoolHP : 6.0,
-                    selectedMods,
+                    selectedMods: modToSubmit, // 使用提交的mod值
                     modPosition,
                     comment,
                     approved,
@@ -1267,7 +1296,8 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     selectedByUsername: userForState.username,
                     selectedByAvatar: userForState.avatar_url,
                     customModName: customModNameValue,
-                    customDTRate: selectedMods === 'DT' && customDTRate !== '' ? customDTRate : null,
+                    customDTRate: modForCalculation === 'DT' && customDTRate !== '' ? customDTRate : null,
+                    calculationMod: isCustomMode ? modForCalculation : null, // 保存计算用的mod值
                     isCustomPool: true // 标记为自定图池
                 })
             });
@@ -2260,38 +2290,121 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                                 </div>
                             )}
 
-                            {/* Mod选择 */}
-                            <div className="flex flex-cow gap-2 mb-4">
-                                <div className="">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Mod
-                                    </label>
-                                    <Dropdown
-                                        options={MOD_OPTIONS.map(mod => ({
-                                            value: mod,
-                                            label: mod
-                                        }))}
-                                        value={selectedMods}
-                                        onChange={setSelectedMods}
-                                        placeholder="选择MOD"
-                                        minWidth="100%"
-                                    />
+                            {/* 模式切换开关 */}
+                            <div className="mb-4">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <span className="text-sm font-medium text-gray-700">标准模式</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newMode = !isCustomMode;
+                                            setIsCustomMode(newMode);
+                                            // 切换模式时重置相关状态
+                                            if (newMode) {
+                                                // 切换到自定义模式：设置计算mod为默认值"NM"
+                                                setCalculationMod('NM');
+                                                setCustomModInput('');
+                                            } else {
+                                                // 切换回标准模式：确保selectedMods有值
+                                                if (!selectedMods) {
+                                                    setSelectedMods('NM');
+                                                }
+                                            }
+                                        }}
+                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${isCustomMode ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                    >
+                                        <span
+                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isCustomMode ? 'translate-x-6' : 'translate-x-1'}`}
+                                        />
+                                    </button>
+                                    <span className="text-sm font-medium text-gray-700">自定义模式</span>
                                 </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        位置
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="10"
-                                        value={modPosition}
-                                        onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    />
-                                </div>
+                                <p className="text-xs text-gray-500 mb-3">
+                                    {isCustomMode
+                                        ? '自定义模式下，输入框内容将作为提交的mod名，右侧下拉框mod用于参数计算'
+                                        : '标准模式下，使用标准mod选择'}
+                                </p>
                             </div>
+
+                            {/* Mod选择区域 - 根据模式显示不同内容 */}
+                            {isCustomMode ? (
+                                // 自定义模式：显示输入框 + 计算mod下拉框
+                                <div className="flex flex-cow gap-2 mb-4">
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            自定义MOD名
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={customModInput}
+                                            onChange={(e) => setCustomModInput(e.target.value)}
+                                            placeholder="输入自定义MOD名"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div className="">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            计算用MOD
+                                        </label>
+                                        <Dropdown
+                                            options={MOD_OPTIONS.map(mod => ({
+                                                value: mod,
+                                                label: mod
+                                            }))}
+                                            value={calculationMod}
+                                            onChange={setCalculationMod}
+                                            placeholder="选择计算MOD"
+                                            minWidth="100%"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            位置
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="10"
+                                            value={modPosition}
+                                            onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                // 标准模式：显示原有的单个mod下拉框
+                                <div className="flex flex-cow gap-2 mb-4">
+                                    <div className="">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Mod
+                                        </label>
+                                        <Dropdown
+                                            options={MOD_OPTIONS.map(mod => ({
+                                                value: mod,
+                                                label: mod
+                                            }))}
+                                            value={selectedMods}
+                                            onChange={setSelectedMods}
+                                            placeholder="选择MOD"
+                                            minWidth="100%"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            位置
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="10"
+                                            value={modPosition}
+                                            onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Lazer特有mod设置 */}
                             {selectedMods === 'LZ' && (
@@ -2542,39 +2655,122 @@ export default function MapSelectionManagement({ user, permissions }: MapSelecti
                     <div className="mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50 object-center">
                         <h3 className="text-lg font-bold mb-4">添加自定图池</h3>
                         <div>
-                            {/* Mod选择 */}
-                            <p>1.先确定好mod和mod位，上传的时候会锁定文件名</p>
-                            <div className="flex flex-cow w-max gap-2 mb-4">
-                                <div className="">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Mod
-                                    </label>
-                                    <Dropdown
-                                        options={MOD_OPTIONS.map(mod => ({
-                                            value: mod,
-                                            label: mod
-                                        }))}
-                                        value={selectedMods}
-                                        onChange={setSelectedMods}
-                                        placeholder="选择MOD"
-                                        minWidth="100%"
-                                    />
+                            {/* 模式切换开关 - 自定图池部分 */}
+                            <div className="mb-4">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <span className="text-sm font-medium text-gray-700">标准模式</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newMode = !isCustomMode;
+                                            setIsCustomMode(newMode);
+                                            // 切换模式时重置相关状态
+                                            if (newMode) {
+                                                // 切换到自定义模式：设置计算mod为默认值"NM"
+                                                setCalculationMod('NM');
+                                                setCustomModInput('');
+                                            } else {
+                                                // 切换回标准模式：确保selectedMods有值
+                                                if (!selectedMods) {
+                                                    setSelectedMods('NM');
+                                                }
+                                            }
+                                        }}
+                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${isCustomMode ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                    >
+                                        <span
+                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isCustomMode ? 'translate-x-6' : 'translate-x-1'}`}
+                                        />
+                                    </button>
+                                    <span className="text-sm font-medium text-gray-700">自定义模式</span>
                                 </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        位置
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="10"
-                                        value={modPosition}
-                                        onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    />
-                                </div>
+                                <p className="text-xs text-gray-500 mb-3">
+                                    {isCustomMode
+                                        ? '自定义模式下，输入框内容将作为提交的mod名，右侧下拉框mod用于参数计算'
+                                        : '标准模式下，使用标准mod选择'}
+                                </p>
                             </div>
+
+                            {/* Mod选择 - 自定图池部分 */}
+                            <p>1.先确定好mod和mod位，上传的时候会锁定文件名</p>
+                            {isCustomMode ? (
+                                // 自定义模式：显示输入框 + 计算mod下拉框
+                                <div className="flex flex-cow w-max gap-2 mb-4">
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            自定义MOD名
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={customModInput}
+                                            onChange={(e) => setCustomModInput(e.target.value)}
+                                            placeholder="输入自定义MOD名"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        />
+                                    </div>
+                                    <div className="">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            计算用MOD
+                                        </label>
+                                        <Dropdown
+                                            options={MOD_OPTIONS.map(mod => ({
+                                                value: mod,
+                                                label: mod
+                                            }))}
+                                            value={calculationMod}
+                                            onChange={setCalculationMod}
+                                            placeholder="选择计算MOD"
+                                            minWidth="100%"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            位置
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="10"
+                                            value={modPosition}
+                                            onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                // 标准模式：显示原有的单个mod下拉框
+                                <div className="flex flex-cow w-max gap-2 mb-4">
+                                    <div className="">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Mod
+                                        </label>
+                                        <Dropdown
+                                            options={MOD_OPTIONS.map(mod => ({
+                                                value: mod,
+                                                label: mod
+                                            }))}
+                                            value={selectedMods}
+                                            onChange={setSelectedMods}
+                                            placeholder="选择MOD"
+                                            minWidth="100%"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            位置
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="10"
+                                            value={modPosition}
+                                            onChange={(e) => setModPosition(parseInt(e.target.value) || 1)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        />
+                                    </div>
+                                </div>
+                            )}
                             {/* osz文件上传区域 */}
                             <p>2.上传.osz文件自动解析并填充表单信息，文件将存储为：{season}_{category}_{selectedMods}{modPosition}_[生成的负数bid].osz</p>
                             <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">

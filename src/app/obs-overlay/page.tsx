@@ -19,7 +19,15 @@ export default function ObsOverlay() {
             if (savedSettings) {
                 const parsedSettings = JSON.parse(savedSettings);
                 // console.log('初始化设置数据:', parsedSettings);
-                return parsedSettings;
+                return {
+                    ...parsedSettings,
+                    matchMode: parsedSettings.matchMode || '1v1',
+                    showAvatars: parsedSettings.showAvatars !== undefined ? parsedSettings.showAvatars : true,
+                    currencyEnabled: parsedSettings.currencyEnabled !== undefined ? parsedSettings.currencyEnabled : false,
+                    currencyName: parsedSettings.currencyName || '金币',
+                    redCurrency: parsedSettings.redCurrency !== undefined ? parsedSettings.redCurrency : 0,
+                    blueCurrency: parsedSettings.blueCurrency !== undefined ? parsedSettings.blueCurrency : 0
+                };
             }
         } catch (error) {
             console.error('初始化设置数据失败:', error);
@@ -29,7 +37,13 @@ export default function ObsOverlay() {
             matchInfo: '',
             boFormat: 'BO9',
             redTeamName: '红队',
-            blueTeamName: '蓝队'
+            blueTeamName: '蓝队',
+            matchMode: '1v1',
+            showAvatars: true,
+            currencyEnabled: false,
+            currencyName: '金币',
+            redCurrency: 0,
+            blueCurrency: 0
         };
     });
 
@@ -113,7 +127,6 @@ export default function ObsOverlay() {
             const savedMapPoolSettings = localStorage.getItem('mapPoolSettings');
             if (savedMapPoolSettings) {
                 const parsedSettings = JSON.parse(savedMapPoolSettings);
-                // console.log('初始化图池设置:', parsedSettings);
                 return parsedSettings;
             }
         } catch (error) {
@@ -126,6 +139,30 @@ export default function ObsOverlay() {
             visible: false
         };
     });
+
+    // 在组件加载时获取season配置
+    useEffect(() => {
+        const fetchSeasonConfig = async () => {
+            try {
+                const response = await fetch('/api/season-config');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        if (mapPoolSettings.season === 's1' && data.defaultSeason) {
+                            setMapPoolSettings(prev => ({
+                                ...prev,
+                                season: data.defaultSeason
+                            }));
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('获取season配置失败:', error);
+            }
+        };
+
+        fetchSeasonConfig();
+    }, []);
 
     // Roll点状态
     const [rollState, setRollState] = useState<RollState>(() => {
@@ -326,15 +363,30 @@ export default function ObsOverlay() {
         setTeams(prev => prev.map(team => {
             const isRed = team.id === 'red';
             const player = isRed ? settings.redPlayer : settings.bluePlayer;
+
+            // 根据比赛模式决定显示什么名称
+            let displayName: string;
+            let avatarUrl: string | undefined;
+
+            if (settings.matchMode === 'teamvs') {
+                // teamvs模式：使用队伍名称和队伍头像URL
+                displayName = isRed ? settings.redTeamName : settings.blueTeamName;
+                avatarUrl = isRed ? settings.redTeamAvatarUrl : settings.blueTeamAvatarUrl;
+            } else {
+                // 1v1模式：使用玩家名称和玩家头像
+                displayName = player?.inGameName || (isRed ? '红队玩家' : '蓝队玩家');
+                avatarUrl = player?.avatar_url || undefined;
+            }
+
             return {
                 ...team,
                 name: isRed ? settings.redTeamName : settings.blueTeamName,
-                playerName: player?.inGameName || (isRed ? '红队玩家' : '蓝队玩家'),
-                avatarUrl: player?.avatar_url || undefined,
+                playerName: displayName,
+                avatarUrl: avatarUrl,
                 player: player
             };
         }));
-    }, [settings.redTeamName, settings.blueTeamName, settings.redPlayer, settings.bluePlayer]);
+    }, [settings.redTeamName, settings.blueTeamName, settings.redPlayer, settings.bluePlayer, settings.matchMode, settings.redTeamAvatarUrl, settings.blueTeamAvatarUrl]);
 
     const handleScoreChange = (teamId: 'red' | 'blue', newScore: number) => {
         setTeams(prev => prev.map(team =>
@@ -709,6 +761,10 @@ export default function ObsOverlay() {
                                         team={teams.find(t => t.id === 'red')!}
                                         onScoreChange={handleScoreChange}
                                         winScore={winScore}
+                                        showAvatar={settings.showAvatars}
+                                        currencyEnabled={settings.currencyEnabled}
+                                        currencyValue={settings.redCurrency}
+                                        currencyName={settings.currencyName}
                                     />
                                 </div>
 
@@ -722,6 +778,10 @@ export default function ObsOverlay() {
                                         team={teams.find(t => t.id === 'blue')!}
                                         onScoreChange={handleScoreChange}
                                         winScore={winScore}
+                                        showAvatar={settings.showAvatars}
+                                        currencyEnabled={settings.currencyEnabled}
+                                        currencyValue={settings.blueCurrency}
+                                        currencyName={settings.currencyName}
                                     />
                                 </div>
                             </div>
@@ -746,12 +806,13 @@ export default function ObsOverlay() {
                                 }}>
                                     {settings.matchInfo} BO{settings.boFormat.slice(2)} (抢{winScore}分)
                                 </div>
+
                                 <div style={{
                                     fontSize: '1.25rem',
                                     fontWeight: 'bold',
                                     color: '#9ca3af'
                                 }}>
-                                    <Image src='AstarCup.svg' alt="AstarCup" width={300} height={200} />
+                                    {/* <Image src='AstarCup.svg' alt="AstarCup" width={300} height={200} /> */}
                                 </div>
                             </div>
                             {/* 计时器显示 */}
