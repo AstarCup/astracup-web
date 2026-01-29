@@ -34,21 +34,18 @@ export default async function NewsList() {
 
     return (
         <MainCard>
-
-        <div className="max-w-5xl mx-auto mt-60 bg-white p-4 ">
             <header className="mb-8">
                 <h1 className="text-4xl font-bold mb-4 text-gray-600">新闻中心</h1>
-                <p className="text-gray-400">了解 AstraCup 星域杯的最新动态</p>
+                <p className="text-gray-400">了解 AstarCup 星域杯的最新动态</p>
             </header>
-
-            <div className="space-y-6">
+            <div className="space-y-6 grid">
                 {newsList.map((news) => {
                     const link = `/news/${news.safeSlug}`;
                     return (
                         <Link
                             key={news.slug}
                             href={link}
-                            className="border-b-4 border-blue-400 block bg-white p-6 hover:border-blue-600 hover:bg-gray-200 hover:scale-[1.01] active:scale-[0.98] rounded-lg transition-all group"
+                            className="border-b-4 border-blue-400 block bg-gray-100 p-6 hover:border-blue-600 hover:bg-gray-200 hover:scale-[1.01] active:scale-[0.98] rounded-lg transition-all group"
                             style={{ textDecoration: 'none' }}
                         >
                             <article>
@@ -82,7 +79,6 @@ export default async function NewsList() {
                     </div>
                 )}
             </div>
-        </div>
         </MainCard>
     );
 }
