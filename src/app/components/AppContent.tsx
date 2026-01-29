@@ -46,6 +46,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
     // 定义需要隐藏组件的页面路径
     const HIDE_COMPONENTS_PAGES = [
         '/obs-overlay',
+        '/staff-dashboard'
     ];
 
     const isHomePage = pathname === '/';

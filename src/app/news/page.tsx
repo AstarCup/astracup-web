@@ -1,6 +1,7 @@
 import { getNewsBySlug, getNewsSlugs, createSafeSlug } from '@/lib/utils';
 import Link from 'next/link';
 import { Metadata } from 'next';
+import MainCard from '../components/ui/MainCard';
 
 export const metadata: Metadata = {
     title: "新闻 | AstraCup 星域杯",
@@ -32,7 +33,9 @@ export default async function NewsList() {
     });
 
     return (
-        <div className="max-w-5xl mx-auto mt-40 ">
+        <MainCard>
+
+        <div className="max-w-5xl mx-auto mt-60 bg-white p-4 ">
             <header className="mb-8">
                 <h1 className="text-4xl font-bold mb-4 text-gray-600">新闻中心</h1>
                 <p className="text-gray-400">了解 AstraCup 星域杯的最新动态</p>
@@ -80,5 +83,6 @@ export default async function NewsList() {
                 )}
             </div>
         </div>
+        </MainCard>
     );
 }

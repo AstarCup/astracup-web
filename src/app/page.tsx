@@ -2,11 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from 'next/image';
-import BackgroundSVG from './components/ui/BackgroundSVG';
-import GuideIcon from './components/icons/GuideIcon';
-import ScheduleIcon from './components/icons/ScheduleIcon';
-import MapoolIcon from './components/icons/MapoolIcon';
-import ContactIcon from './components/icons/ContactIcon';
+import { useRouter } from "next/navigation";
 import UserProfile from './components/ui/UserProfile';
 import RegistrationButton from './components/ui/RegistrationButton';
 import NewsListWithPagination from "./components/ui/NewsListWithPagination";
@@ -19,13 +15,13 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const { tournamentSettings } = useConfig();
+  const router = useRouter();
 
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       setUser(null);
-      // 可以添加页面刷新或重定向
-      window.location.reload();
+      router.refresh();
     } catch (error) {
       console.error('Failed to logout:', error);
     }
