@@ -12,30 +12,20 @@ const config: Config = {
         '2000': '2000ms',
       },
       animation: {
-        'path-draw': 'pathDraw 2s ease-out',
-        'glow': 'glow 3s ease-in-out infinite',
+        'smooth-bounce': 'smooth-bounce 1s ease-in-out infinite',
       },
       keyframes: {
-        pathDraw: {
-          '0%': { 
-            'stroke-dasharray': '1000',
-            'stroke-dashoffset': '1000',
-            'fill-opacity': '0'
+        'smooth-bounce': {
+          '0%, 100%': {
+            transform: 'translateY(0)',
+            animationTimingFunction: 'cubic-bezier(0.8, 0, 1, 1)'
           },
-          '70%': { 
-            'stroke-dashoffset': '0',
-            'fill-opacity': '0'
+          '50%': {
+            transform: 'translateY(-25%)',
+            animationTimingFunction: 'cubic-bezier(0, 0, 0.2, 1)'
           },
-          '100%': { 
-            'stroke-dashoffset': '0',
-            'fill-opacity': '1'
-          },
-        },
-        glow: {
-          '0%, 100%': { filter: 'drop-shadow(0 0 5px #E93B66)' },
-          '50%': { filter: 'drop-shadow(0 0 20px #E93B66) drop-shadow(0 0 30px #E93B66)' },
-        },
-      },
+        }
+      }
     },
   },
   plugins: [

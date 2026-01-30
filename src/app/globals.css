@@ -166,12 +166,10 @@ body {
 
 /* Typography plugin prose styles customization */
 .prose {
-  color: rgb(255, 255, 255);
   max-width: none;
 }
 
 .prose h1 {
-  color: white;
   font-size: 2.25rem;
   font-weight: bold;
   margin-bottom: 1.5rem;
@@ -179,7 +177,6 @@ body {
 }
 
 .prose h2 {
-  color: white;
   font-size: 1.875rem;
   font-weight: bold;
   margin-bottom: 1.25rem;
@@ -187,7 +184,6 @@ body {
 }
 
 .prose h3 {
-  color: white;
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 1rem;
@@ -195,7 +191,6 @@ body {
 }
 
 .prose h4 {
-  color: white;
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 0.75rem;
@@ -203,27 +198,23 @@ body {
 }
 
 .prose p {
-  color: white;
   line-height: 1.75;
   margin-bottom: 1.25rem;
 }
 
 .prose ul {
-  color: white;
   list-style-type: disc;
   margin-bottom: 1.25rem;
   padding-left: 1.5rem;
 }
 
 .prose ol {
-  color: white;
   list-style-type: decimal;
   margin-bottom: 1.25rem;
   padding-left: 1.5rem;
 }
 
 .prose li {
-  color: white;
   margin-bottom: 0.5rem;
   line-height: 1.75;
 }
@@ -233,32 +224,37 @@ body {
   padding-left: 1rem;
   margin: 1.5rem 0;
   font-style: italic;
-  color: #d1d5db;
 }
 
 .prose strong {
   font-weight: 600;
-  color: white;
 }
 
 .prose em {
   font-style: italic;
-  color: white;
 }
 
 .prose a {
   color: #60a5fa;
-  text-decoration: underline;
+  /* text-decoration: underline; */
   font-weight: 500;
+  border-radius: 0.125rem;
+  padding-left: 3px;
+  padding-right: 3px;
 }
 
 .prose a:hover {
-  color: #93c5fd;
+  color: #ffffff;
+  background-color: #60a5fa;
+  transform: scale(1.2);
+}
+
+.prose a:active {
+  transform: scale(0.95);
 }
 
 .prose code {
-  background-color: #374151;
-  color: #f9fafb;
+  background-color: #cccccc;
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -267,7 +263,6 @@ body {
 
 .prose pre {
   background-color: #1f2937;
-  color: #f9fafb;
   padding: 1rem;
   border-radius: 0.5rem;
   overflow-x: auto;
