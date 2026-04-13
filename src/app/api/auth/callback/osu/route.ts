@@ -9,13 +9,15 @@ export async function GET(request: NextRequest) {
     if (error) {
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
             (process.env.NODE_ENV === 'production' ? 'https://asc.rino.ink' : 'http://localhost:3000');
-        return NextResponse.redirect(new URL('/register?error=auth_failed', baseUrl));
+        const fullBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        return NextResponse.redirect(new URL('/register?error=auth_failed', fullBaseUrl));
     }
 
     if (!code) {
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
             (process.env.NODE_ENV === 'production' ? 'https://asc.rino.ink' : 'http://localhost:3000');
-        return NextResponse.redirect(new URL('/register?error=no_code', baseUrl));
+        const fullBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        return NextResponse.redirect(new URL('/register?error=no_code', fullBaseUrl));
     }
 
     try {
@@ -26,11 +28,12 @@ export async function GET(request: NextRequest) {
         // 获取用户信息
         const userInfo = await getOsuUserInfo(access_token);
 
-        // 设置用户会话cookie并重定向到首页（不再自动报名）
-        // 使用环境变量中的基础URL或从请求中提取
+
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
             (process.env.NODE_ENV === 'production' ? 'https://asc.rino.ink' : 'http://localhost:3000');
-        const redirectResponse = NextResponse.redirect(new URL('/', baseUrl));
+
+        const fullBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const redirectResponse = NextResponse.redirect(new URL('/', fullBaseUrl));
 
         // 设置会话cookie
         const isProduction = process.env.NODE_ENV === 'production';
@@ -76,6 +79,7 @@ export async function GET(request: NextRequest) {
 
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
             (process.env.NODE_ENV === 'production' ? 'https://asc.rino.ink' : 'http://localhost:3000');
-        return NextResponse.redirect(new URL('/register?error=token_failed', baseUrl));
+        const fullBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        return NextResponse.redirect(new URL('/register?error=token_failed', fullBaseUrl));
     }
 }
