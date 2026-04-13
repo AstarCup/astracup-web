@@ -7,11 +7,15 @@ export async function GET(request: NextRequest) {
     const error = searchParams.get('error');
 
     if (error) {
-        return NextResponse.redirect(new URL('/register?error=auth_failed', request.url));
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
+            (process.env.NODE_ENV === 'production' ? 'https://asc.rino.ink' : 'http://localhost:3000');
+        return NextResponse.redirect(new URL('/register?error=auth_failed', baseUrl));
     }
 
     if (!code) {
-        return NextResponse.redirect(new URL('/register?error=no_code', request.url));
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
+            (process.env.NODE_ENV === 'production' ? 'https://asc.rino.ink' : 'http://localhost:3000');
+        return NextResponse.redirect(new URL('/register?error=no_code', baseUrl));
     }
 
     try {
@@ -23,7 +27,10 @@ export async function GET(request: NextRequest) {
         const userInfo = await getOsuUserInfo(access_token);
 
         // 设置用户会话cookie并重定向到首页（不再自动报名）
-        const redirectResponse = NextResponse.redirect(new URL('/', request.url));
+        // 使用环境变量中的基础URL或从请求中提取
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
+            (process.env.NODE_ENV === 'production' ? 'https://asc.rino.ink' : 'http://localhost:3000');
+        const redirectResponse = NextResponse.redirect(new URL('/', baseUrl));
 
         // 设置会话cookie
         const isProduction = process.env.NODE_ENV === 'production';
@@ -67,6 +74,8 @@ export async function GET(request: NextRequest) {
             console.error('Error message:', error.message);
         }
 
-        return NextResponse.redirect(new URL('/register?error=token_failed', request.url));
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
+            (process.env.NODE_ENV === 'production' ? 'https://asc.rino.ink' : 'http://localhost:3000');
+        return NextResponse.redirect(new URL('/register?error=token_failed', baseUrl));
     }
 }
