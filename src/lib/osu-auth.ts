@@ -4,10 +4,9 @@ const OSU_CLIENT_SECRET = process.env.OSU_CLIENT_SECRET || '';
 
 // 根据环境自动设置重定向URI
 const getOsuRedirectUri = () => {
-    // 在Vercel等生产环境中使用环境变量或自动检测
-    if (process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production') {
-        return process.env.OSU_REDIRECT_URI || `https://${process.env.VERCEL_URL || process.env.NEXT_PUBLIC_APP_URL || 'rino.ink'}/api/auth/callback/osu`;
-    }
+    // if (process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production') {
+    //     return process.env.OSU_REDIRECT_URI || `https://${process.env.VERCEL_URL || process.env.NEXT_PUBLIC_APP_URL || 'rino.ink'}/api/auth/callback/osu`;
+    // }
     // 开发环境
     return process.env.OSU_REDIRECT_URI || 'http://localhost:3000/api/auth/callback/osu';
 };
