@@ -334,7 +334,7 @@ export const mapSelectionStorage = {
         try {
             const connection = await getPool().getConnection();
             let query = 'SELECT * FROM map_selections WHERE season = ?';
-            const params: (string | boolean | undefined)[] = [season];
+            const params: (string | boolean)[] = [season];
 
             // 如果category是"all"或undefined，则不添加category过滤条件
             if (category && category !== 'all') {

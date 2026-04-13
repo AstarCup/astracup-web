@@ -1145,7 +1145,9 @@ const mysqlStorage = {
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     message.sender_osuId, message.sender_username, message.receiver_osuId, message.receiver_username,
-                    message.type, message.title, message.content, message.related_matchup_id, message.status
+                    message.type, message.title, message.content,
+                    message.related_matchup_id !== undefined ? message.related_matchup_id : null,
+                    message.status
                 ]
             );
 
