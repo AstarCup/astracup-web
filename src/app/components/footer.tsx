@@ -95,6 +95,13 @@ export default function Footer() {
                 {/* 版权声明 */}
                 <span style={{ fontSize: '1rem', marginBottom: '8px' }}>
                     © {new Date().getFullYear()} AstarCup. All rights reserved.
+                    <div>
+                        <a href="https://beian.miit.gov.cn/" target="_blank">闽ICP备2026007493号-1</a>
+                        <div className="flex flex-row gap-2">
+                            <img src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png" width="24px" height="24px" />
+                            <a href="https://beian.mps.gov.cn/#/query/webSearch?code=35063002000143" rel="noreferrer" target="_blank">闽公网安备35063002000143号</a>
+                        </div>
+                    </div>
                     <p>Ciallo～ (∠・ω&lt; )⌒☆</p>
                     <p>version_{version}</p>
                 </span>
