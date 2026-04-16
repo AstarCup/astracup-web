@@ -81,7 +81,7 @@ export default function InfiniteScrollCanvas({
           firstSight={player.firstSight || 0}
           strategy={player.strategy || 0}
           experience={player.experience || 0}
-          customData={player.customData || {}}
+          customData={player.customKey && player.customValue !== undefined ? { key: player.customKey, value: player.customValue } : undefined}
         />
       );
 
@@ -413,32 +413,13 @@ export default function InfiniteScrollCanvas({
         const distance_y = (y - this.mouse_y) / this.scale_nums;
 
         this.img_data.forEach((img) => {
-          let duration = 1;
           img.mov_x += distance_x;
-
-          if (img.x + img.mov_x > this.container_width) {
-            img.mov_x -= this.container_width;
-            duration = 0;
-          }
-          if (img.x + img.mov_x < -this.photo_width) {
-            img.mov_x += this.container_width;
-            duration = 0;
-          }
-
           img.mov_y += distance_y;
-          if (img.y + img.mov_y > this.container_height) {
-            img.mov_y -= this.container_height;
-            duration = 0;
-          }
-          if (img.y + img.mov_y < -this.photo_height) {
-            img.mov_y += this.container_height;
-            duration = 0;
-          }
 
           if (img.ani) img.ani.kill();
           img.ani = gsap.to(img.node, {
             transform: `translate(${img.mov_x}px,${img.mov_y}px)`,
-            duration: duration,
+            duration: 0.5,
             ease: 'power4.out'
           });
         });
