@@ -1,0 +1,300 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// 用户表
+model User {
+  id            Int       @id @default(autoincrement())
+  osuId         String
+  username      String
+  registeredAt  DateTime
+  avatar_url    String?
+  pp            Float?
+  global_rank   Int?
+  country       String
+  country_rank  Int?
+  approved      Boolean           @default(false)
+  userGroup     UserGroup         @default(player)
+  registrationStatus RegistrationStatus @default(not_registered)
+  season        String?           // 使用逗号分隔的字符串存储报名的赛季，如 "s1,s2,s3"
+  accuracy      Float?    // 准度
+  stamina       Float?    // 体力
+  firstSight    Float?    // 初见力
+  strategy      Float?    // 策略
+  experience    Float?    // 经验
+  customKey     String?   // 玩家自定义键
+  customValue   Float?    // 玩家自定义值（浮点数）
+  cover_custom_url String? // cover自定义URL
+  cover_url      String?   // cover标准URL
+  cover_id       String?   // cover ID
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([osuId])
+  @@index([username])
+  @@index([approved])
+  @@index([userGroup])
+  @@index([registrationStatus])
+  @@index([season])
+}
+
+// 比赛房间表
+model MatchRoom {
+  id               Int        @id @default(autoincrement())
+  room_name        String
+  round_number     Int
+  match_date       DateTime
+  match_time       DateTime
+  match_number     Int
+  max_participants Int        @default(2)
+  status           RoomStatus @default(open)
+  description      String?
+  created_by       String
+  created_at       DateTime   @default(now())
+  updated_at       DateTime   @updatedAt
+
+  // 关系
+  schedules            MatchSchedule[]
+  playerMatchups       PlayerMatchup[]
+  staffRoomAssignments StaffRoomAssignment[]
+
+  @@index([round_number])
+  @@index([match_date])
+  @@index([status])
+  @@index([created_by])
+}
+
+// 比赛预约表
+model MatchSchedule {
+  id               Int            @id @default(autoincrement())
+  room_id          Int
+  player1_osuId    String
+  player1_username String
+  player2_osuId    String
+  player2_username String
+  red_score        Int            @default(0)
+  blue_score       Int            @default(0)
+  status           ScheduleStatus @default(pending)
+  replay_link      String?
+  match_link       String?
+  stream_link      String?
+  created_by       String
+  created_at       DateTime       @default(now())
+  updated_at       DateTime       @updatedAt
+
+  // 关系
+  room        MatchRoom    @relation(fields: [room_id], references: [id])
+  matchScores MatchScore[]
+
+  @@index([room_id])
+  @@index([player1_osuId])
+  @@index([player2_osuId])
+  @@index([status])
+  @@index([created_by])
+}
+
+// 玩家对战表
+model PlayerMatchup {
+  id               Int           @id @default(autoincrement())
+  room_id          Int?
+  player1_osuId    String
+  player1_username String
+  player2_osuId    String
+  player2_username String
+  status           MatchupStatus @default(available)
+  created_by       String
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
+
+  // 关系
+  room MatchRoom? @relation(fields: [room_id], references: [id])
+
+  @@index([room_id])
+  @@index([player1_osuId])
+  @@index([player2_osuId])
+  @@index([status])
+  @@index([created_by])
+}
+
+// 消息表
+model Message {
+  id                 Int           @id @default(autoincrement())
+  sender_osuId       String
+  sender_username    String
+  receiver_osuId     String
+  receiver_username  String
+  type               MessageType
+  title              String
+  content            String
+  related_matchup_id Int?
+  status             MessageStatus @default(unread)
+  created_at         DateTime      @default(now())
+  updated_at         DateTime      @updatedAt
+
+  @@index([sender_osuId])
+  @@index([receiver_osuId])
+  @@index([type])
+  @@index([status])
+  @@index([related_matchup_id])
+}
+
+// 工作人员房间分配表
+model StaffRoomAssignment {
+  id             Int       @id @default(autoincrement())
+  room_id        Int
+  staff_osuId    String
+  staff_username String
+  role           StaffRole
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  // 关系
+  room MatchRoom @relation(fields: [room_id], references: [id])
+
+  @@index([room_id])
+  @@index([staff_osuId])
+  @@index([role])
+}
+
+// 比赛分数表
+model MatchScore {
+  id              Int      @id @default(autoincrement())
+  schedule_id     Int
+  player_osuId    String
+  player_username String
+  score           Int
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  // 关系
+  schedule MatchSchedule @relation(fields: [schedule_id], references: [id])
+
+  @@index([schedule_id])
+  @@index([player_osuId])
+}
+
+// 锦标赛设置表
+model TournamentSetting {
+  id            Int      @id @default(autoincrement())
+  setting_key   String
+  setting_value String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@unique([setting_key])
+}
+
+// 地图选择表
+model MapSelection {
+  id             Int       @id @default(autoincrement())
+  beatmapId      Int
+  beatmapsetId   Int
+  title          String
+  title_unicode  String?
+  artist         String
+  artist_unicode String?
+  version        String
+  creator        String
+  starRating     Float
+  bpm            Float
+  totalLength    Int
+  maxCombo       Int
+  ar             Float
+  cs             Float
+  od             Float
+  hp             Float
+  selectedMods   String?
+  modPosition    Int?
+  comment        String?
+  selectedBy     String
+  selectedAt     DateTime  @default(now())
+  season         String?
+  category       String?
+  url            String?
+  coverUrl       String?
+  approved       Boolean   @default(false)
+  padding        Boolean   @default(false)
+  isCustome      Boolean   @default(false)
+  isOrigin       Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([beatmapId])
+  @@index([beatmapsetId])
+  @@index([selectedBy])
+  @@index([season])
+  @@index([category])
+  @@index([approved])
+}
+
+// 枚举类型定义
+enum RoomStatus {
+  open
+  full
+  closed
+}
+
+enum ScheduleStatus {
+  pending
+  confirmed
+  completed
+  cancelled
+}
+
+enum MatchupStatus {
+  available
+  scheduled
+  completed
+}
+
+enum MessageType {
+  match_invitation
+  system_notification
+  admin_message
+}
+
+enum MessageStatus {
+  unread
+  read
+  archived
+}
+// 枚举类型定义
+enum UserGroup {
+  player
+  admin
+}
+
+enum RegistrationStatus {
+  not_registered  // 用户已注册但未报名
+  registered      // 用户已报名当前赛季
+  approved        // 用户报名已通过审核
+}
+
+enum StaffRole {
+  referee
+  commentator
+  streamer
+}
+
+// 会话Cookie存储表
+model SessionCookie {
+  id         String   @id @default(cuid())
+  osuId      String
+  cookieHash String   @unique
+  userAgent  String?
+  ipAddress  String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([osuId])
+  @@index([cookieHash])
+  @@index([expiresAt])
+}
