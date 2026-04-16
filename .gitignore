@@ -50,3 +50,4 @@ OsuNodeHelper/obj
 public/OsuNodeHelper.*
 public/OsuNodeHelper
 public/PerformanceCalculator.dll
+/src/generated/prisma

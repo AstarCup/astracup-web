@@ -1,14 +1,14 @@
 {
-    "buildCommand": "bash scripts/build-vercel.sh",
-    "installCommand": "npm install",
-    "outputDirectory": ".next",
-    "framework": "nextjs",
-    "functions": {
-        "src/app/api/**/*.ts": {
-            "maxDuration": 30
-        }
-    },
-    "env": {
-        "NODE_ENV": "production"
+  "buildCommand": "bash scripts/build-vercel.sh",
+  "installCommand": "npm install",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 30
     }
+  },
+  "env": {
+    "NODE_ENV": "production"
+  }
 }

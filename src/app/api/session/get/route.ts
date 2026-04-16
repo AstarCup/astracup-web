@@ -1,54 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { NextRequest } from "next/server";
+import {
+  parseSessionFromRequest,
+  createSuccessResponse,
+  createErrorResponse,
+} from "@/lib/session";
 
-export async function GET(_request: NextRequest) {
-    try {
-        const cookieStore = await cookies();
-        const sessionCookie = cookieStore.get('astra_session');
+export async function GET(request: NextRequest) {
+  try {
+    const session = await parseSessionFromRequest(request);
 
-        if (!sessionCookie?.value) {
-            const fallbackCookie = cookieStore.get('session');
-
-            if (fallbackCookie?.value) {
-                try {
-                    const session = JSON.parse(fallbackCookie.value);
-                    return NextResponse.json({
-                        success: true,
-                        session: session
-                    });
-                } catch (parseError) {
-                    console.error('[Session Get API] session cookie解析失败:', parseError);
-                    return NextResponse.json({
-                        success: true,
-                        session: null
-                    });
-                }
-            }
-
-            return NextResponse.json({
-                success: true,
-                session: null
-            });
-        }
-
-        try {
-            const session = JSON.parse(sessionCookie.value);
-            return NextResponse.json({
-                success: true,
-                session: session
-            });
-        } catch (parseError) {
-            console.error('[Session Get API] astra_session cookie解析失败:', parseError);
-            return NextResponse.json({
-                success: true,
-                session: null
-            });
-        }
-    } catch (error) {
-        console.error('[Session Get API] 处理请求时发生错误:', error);
-        return NextResponse.json({
-            success: false,
-            error: 'Failed to retrieve session'
-        }, { status: 500 });
-    }
+    return createSuccessResponse(
+      { session },
+      session ? "Session retrieved successfully" : "No active session",
+    );
+  } catch (error) {
+    console.error("[Session Get API] Error retrieving session:", error);
+    return createErrorResponse("Failed to retrieve session", 500);
+  }
 }

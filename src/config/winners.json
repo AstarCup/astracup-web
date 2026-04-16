@@ -1,45 +1,45 @@
 {
-    "seasons": [
-        {
-            "seasonId": "s1",
-            "seasonName": "第一届",
-            "year": "2025",
-            "description": "AstarCup 第一届",
-            "winners": {
-                "first": {
-                    "rank": 1,
-                    "playerName": "TBD",
-                    "osuId": "00000000",
-                    "country": "XX",
-                    "avatarUrl": "https://a.ppy.sh/00000000",
-                    "teamName": "待定",
-                    "achievement": "比赛进行中",
-                    "resultImage": ""
-                },
-                "second": {
-                    "rank": 2,
-                    "playerName": "TBD",
-                    "osuId": "00000000",
-                    "country": "XX",
-                    "avatarUrl": "https://a.ppy.sh/00000000",
-                    "teamName": "待定",
-                    "achievement": "比赛进行中",
-                    "resultImage": ""
-                },
-                "third": {
-                    "rank": 3,
-                    "playerName": "TBD",
-                    "osuId": "00000000",
-                    "country": "XX",
-                    "avatarUrl": "https://a.ppy.sh/00000000",
-                    "teamName": "待定",
-                    "achievement": "比赛进行中",
-                    "resultImage": ""
-                }
-            },
-            "matchDate": "2025-12-25",
-            "totalParticipants": 0,
-            "status": "ongoing"
+  "seasons": [
+    {
+      "seasonId": "s1",
+      "seasonName": "第一届",
+      "year": "2025",
+      "description": "AstarCup 第一届",
+      "winners": {
+        "first": {
+          "rank": 1,
+          "playerName": "TBD",
+          "osuId": "00000000",
+          "country": "XX",
+          "avatarUrl": "https://a.ppy.sh/00000000",
+          "teamName": "待定",
+          "achievement": "比赛进行中",
+          "resultImage": ""
+        },
+        "second": {
+          "rank": 2,
+          "playerName": "TBD",
+          "osuId": "00000000",
+          "country": "XX",
+          "avatarUrl": "https://a.ppy.sh/00000000",
+          "teamName": "待定",
+          "achievement": "比赛进行中",
+          "resultImage": ""
+        },
+        "third": {
+          "rank": 3,
+          "playerName": "TBD",
+          "osuId": "00000000",
+          "country": "XX",
+          "avatarUrl": "https://a.ppy.sh/00000000",
+          "teamName": "待定",
+          "achievement": "比赛进行中",
+          "resultImage": ""
         }
-    ]
+      },
+      "matchDate": "2025-12-25",
+      "totalParticipants": 0,
+      "status": "ongoing"
+    }
+  ]
 }

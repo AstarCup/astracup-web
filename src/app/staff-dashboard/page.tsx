@@ -1,54 +1,51 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { UserSession } from '@/lib/permissions';
-import { UserPermissions } from '@/lib/permissions';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { UserSession } from "@/lib/permissions";
+import { UserPermissions } from "@/lib/permissions";
 import localFont from "next/font/local";
-import Link from 'next/link';
-import Image from 'next/image';
-import { TournamentRegistration } from '@/lib/mysql-registrations';
-import { usePageTitle } from '@/lib/usePageTitle';
-import { showSuccess, showError } from '@/app/components/ui/Notification';
-import OverviewManagement from '@/app/components/staff/OverviewManagement';
-import RoomManagement from '@/app/components/staff/RoomManagement';
-import MatchupManagement from '@/app/components/staff/MatchupManagement';
-import StreamingManagement from '@/app/components/staff/StreamingManagement';
-import UserManagement from '@/app/components/staff/UserManagement';
-import MatchManagement from '@/app/components/staff/MatchManagement';
-import SettingsManagement from '@/app/components/staff/SettingsManagement';
-import ReplayCollectionManagement from '@/app/components/staff/ReplayCollectionManagement';
-import MapSelectionManagement from '@/app/components/staff/MapSelectionManagement';
-import MatchScheduleManagement from '@/app/components/staff/MatchScheduleManagement';
+import Link from "next/link";
+import Image from "next/image";
+import { TournamentRegistration } from "@/lib/prisma-registrations";
+import { usePageTitle } from "@/lib/usePageTitle";
+import { showSuccess, showError } from "@/app/components/ui/Notification";
+import OverviewManagement from "@/app/components/staff/OverviewManagement";
+import RoomManagement from "@/app/components/staff/RoomManagement";
+import MatchupManagement from "@/app/components/staff/MatchupManagement";
+import StreamingManagement from "@/app/components/staff/StreamingManagement";
+import UserManagement from "@/app/components/staff/UserManagement";
+import MatchManagement from "@/app/components/staff/MatchManagement";
+import SettingsManagement from "@/app/components/staff/SettingsManagement";
+import ReplayCollectionManagement from "@/app/components/staff/ReplayCollectionManagement";
+import MapSelectionManagement from "@/app/components/staff/MapSelectionManagement";
+import MatchScheduleManagement from "@/app/components/staff/MatchScheduleManagement";
 
-import { Compass, LandPlot, CirclePlus, LassoSelect, Video, CalendarClock, UsersRound, UserRoundPen, Settings } from 'lucide-react';
+import {
+  Compass,
+  LandPlot,
+  CirclePlus,
+  LassoSelect,
+  Video,
+  CalendarClock,
+  UsersRound,
+  UserRoundPen,
+  Settings,
+} from "lucide-react";
 
 interface MatchRoom {
-    id: number;
-    room_name: string;
-    round_number: number;
-    match_date: string;
-    match_time: string;
-    match_number: number;
-    max_participants: number;
-    status: 'open' | 'closed' | 'in_progress';
-    description: string;
-    created_by: number;
-    created_at: string;
-    schedules?: {
-        id: number;
-        player1_osuId: number;
-        player1_username: string;
-        player1_avatar_url: string;
-        player2_osuId: number;
-        player2_username: string;
-        player2_avatar_url: string;
-        status: 'scheduled' | 'in_progress' | 'completed';
-        scheduled_time: string;
-    }[];
-}
-
-interface PlayerMatchup {
+  id: number;
+  room_name: string;
+  round_number: number;
+  match_date: string;
+  match_time: string;
+  match_number: number;
+  max_participants: number;
+  status: "open" | "closed" | "in_progress";
+  description: string;
+  created_by: number;
+  created_at: string;
+  schedules?: {
     id: number;
     player1_osuId: number;
     player1_username: string;
@@ -56,877 +53,904 @@ interface PlayerMatchup {
     player2_osuId: number;
     player2_username: string;
     player2_avatar_url: string;
-    status: 'available' | 'in_progress' | 'completed';
-    created_by: number;
-    created_at: string;
+    status: "scheduled" | "in_progress" | "completed";
+    scheduled_time: string;
+  }[];
+}
+
+interface PlayerMatchup {
+  id: number;
+  player1_osuId: number;
+  player1_username: string;
+  player1_avatar_url: string;
+  player2_osuId: number;
+  player2_username: string;
+  player2_avatar_url: string;
+  status: "available" | "in_progress" | "completed";
+  created_by: number;
+  created_at: string;
 }
 
 interface ApprovedPlayer {
-    osuId: string;
-    username: string;
-    inGameName: string;
-    avatar_url: string;
-    pp: number;
-    global_rank: number;
-    country_rank: number;
-    country: string;
+  osuId: string;
+  username: string;
+  inGameName: string;
+  avatar_url: string;
+  pp: number;
+  global_rank: number;
+  country_rank: number;
+  country: string;
 }
 
 interface StaffRoomAssignment {
+  id: number;
+  room_id: number;
+  staff_osuId: string;
+  staff_username: string;
+  staff_role: "referee" | "streamer" | "commentator";
+  status: "pending" | "confirmed" | "declined";
+  assigned_by: string;
+  assigned_at: string;
+  responded_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  room?: {
     id: number;
-    room_id: number;
-    staff_osuId: string;
-    staff_username: string;
-    staff_role: 'referee' | 'streamer' | 'commentator';
-    status: 'pending' | 'confirmed' | 'declined';
-    assigned_by: string;
-    assigned_at: string;
-    responded_at?: string | null;
-    created_at: string;
-    updated_at: string;
-    room?: {
-        id: number;
-        room_name: string;
-        round_number: number;
-        match_date: string;
-        match_time: string;
-        match_number: number;
-    };
-    staff_avatar_url?: string;
-    match_info?: {
-        id: number;
-        player1_username: string;
-        player2_username: string;
-        scheduled_time: string;
-        red_score?: number;
-        blue_score?: number;
-        match_link?: string;
-        replay_link?: string;
-        stream_link?: string;
-        status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
-    };
+    room_name: string;
+    round_number: number;
+    match_date: string;
+    match_time: string;
+    match_number: number;
+  };
+  staff_avatar_url?: string;
+  match_info?: {
+    id: number;
+    player1_username: string;
+    player2_username: string;
+    scheduled_time: string;
+    red_score?: number;
+    blue_score?: number;
+    match_link?: string;
+    replay_link?: string;
+    stream_link?: string;
+    status: "pending" | "confirmed" | "completed" | "cancelled";
+  };
 }
 
 export default function AdminPage() {
-    const router = useRouter();
-    usePageTitle('/staff-dashboard');
-    const [user, setUser] = useState<UserSession | null>(null);
-    const [permissions, setPermissions] = useState<UserPermissions>({
-        isMapSelector: false,
-        isReplayTester: false,
-        isAdmin: false,
-        isStreamer: false,
-        isReferee: false,
-        isCommentator: false
-    });
-    const [permissionsLoading, setPermissionsLoading] = useState(true);
-    const [loading, setLoading] = useState(true);
-    const [registrations, setRegistrations] = useState<TournamentRegistration[]>([]);
-    const [registrationsLoading, setRegistrationsLoading] = useState(false);
-    const [processingUser, setProcessingUser] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState(() => {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('staffDashboard_activeTab') || 'overview';
+  const router = useRouter();
+  usePageTitle("/staff-dashboard");
+  const [user, setUser] = useState<UserSession | null>(null);
+  const [permissions, setPermissions] = useState<UserPermissions>({
+    isMapSelector: false,
+    isReplayTester: false,
+    isAdmin: false,
+    isStreamer: false,
+    isReferee: false,
+    isCommentator: false,
+  });
+  const [permissionsLoading, setPermissionsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [registrations, setRegistrations] = useState<TournamentRegistration[]>(
+    [],
+  );
+  const [registrationsLoading, setRegistrationsLoading] = useState(false);
+  const [processingUser, setProcessingUser] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("staffDashboard_activeTab") || "overview";
+    }
+    return "overview";
+  });
+
+  // 自定义Tab切换处理函数 - 保存到本地存储
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("staffDashboard_activeTab", tab);
+    }
+  };
+
+  // 房间管理状态
+  const [rooms, setRooms] = useState<MatchRoom[]>([]);
+  const [roomsLoading, setRoomsLoading] = useState(false);
+  const [deletingRoomId, setDeletingRoomId] = useState<number | null>(null);
+
+  // 对战管理状态
+  const [matchups, setMatchups] = useState<PlayerMatchup[]>([]);
+  const [matchupsLoading, setMatchupsLoading] = useState(false);
+  const [deletingMatchupId, setDeletingMatchupId] = useState<number | null>(
+    null,
+  );
+
+  // 已过审玩家状态
+  const [approvedPlayers, setApprovedPlayers] = useState<ApprovedPlayer[]>([]);
+
+  // Staff房间分配状态
+  const [staffAssignments, setStaffAssignments] = useState<
+    StaffRoomAssignment[]
+  >([]);
+  const [staffAssignmentsLoading, setStaffAssignmentsLoading] = useState(false);
+
+  // 可供staff选择的房间状态
+  const [availableRooms, setAvailableRooms] = useState<any[]>([]);
+  const [availableRoomsLoading, setAvailableRoomsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        console.log("[Staff Dashboard] 开始获取用户数据");
+
+        // 获取用户session
+        const sessionResponse = await fetch("/api/session/get");
+        const sessionData = await sessionResponse.json();
+
+        const userSession = sessionData.data?.session;
+        if (!sessionData.success || !userSession) {
+          router.push("/register");
+          return;
         }
-        return 'overview';
-    });
 
-    // 自定义Tab切换处理函数 - 保存到本地存储
-    const handleTabChange = (tab: string) => {
-        setActiveTab(tab);
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('staffDashboard_activeTab', tab);
-        }
-    };
+        setUser(userSession);
 
-    // 房间管理状态
-    const [rooms, setRooms] = useState<MatchRoom[]>([]);
-    const [roomsLoading, setRoomsLoading] = useState(false);
-    const [deletingRoomId, setDeletingRoomId] = useState<number | null>(null);
-
-    // 对战管理状态
-    const [matchups, setMatchups] = useState<PlayerMatchup[]>([]);
-    const [matchupsLoading, setMatchupsLoading] = useState(false);
-    const [deletingMatchupId, setDeletingMatchupId] = useState<number | null>(null);
-
-    // 已过审玩家状态
-    const [approvedPlayers, setApprovedPlayers] = useState<ApprovedPlayer[]>([]);
-
-    // Staff房间分配状态
-    const [staffAssignments, setStaffAssignments] = useState<StaffRoomAssignment[]>([]);
-    const [staffAssignmentsLoading, setStaffAssignmentsLoading] = useState(false);
-
-    // 可供staff选择的房间状态
-    const [availableRooms, setAvailableRooms] = useState<any[]>([]);
-    const [availableRoomsLoading, setAvailableRoomsLoading] = useState(false);
-
-    useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                console.log('[Staff Dashboard] 开始获取用户数据');
-
-                // 获取用户session
-                const sessionResponse = await fetch('/api/session/get');
-                const sessionData = await sessionResponse.json();
-
-                if (!sessionData.success || !sessionData.session) {
-                    router.push('/register');
-                    return;
-                }
-
-                setUser(sessionData.session);
-
-                // 获取用户权限
-                setPermissionsLoading(true);
-                try {
-                    const permissionsResponse = await fetch(`/api/user-permissions?osuId=${sessionData.session.osuId}`);
-                    if (permissionsResponse.ok) {
-                        const userPermissions = await permissionsResponse.json();
-                        console.log('[Staff Dashboard] 权限获取成功:', userPermissions);
-                        setPermissions(userPermissions.permissions);
-                        setPermissionsLoading(false);
-
-                        // 检查是否有staff权限（管理员、裁判员、解说员、主播、重播测试员或地图选择员）
-                        const hasStaffPermission = userPermissions.permissions.isAdmin || userPermissions.permissions.isReferee || userPermissions.permissions.isStreamer || userPermissions.permissions.isCommentator || userPermissions.permissions.isReplayTester || userPermissions.permissions.isMapSelector;
-
-                        if (!hasStaffPermission) {
-                            showError('需要工作人员权限');
-                            router.push('/player-info');
-                            return;
-                        }
-
-                    } else {
-                        setPermissionsLoading(false);
-                        showError('获取权限失败');
-                        router.push('/player-info');
-                        return;
-                    }
-                } catch (error) {
-                    console.error('[Staff Dashboard] 获取权限时发生错误:', error);
-                    setPermissionsLoading(false);
-                    showError('获取权限失败');
-                    router.push('/player-info');
-                    return;
-                }
-            } catch (error) {
-                console.error('[Staff Dashboard] 获取用户数据时发生错误:', error);
-                router.push('/register');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchUserData();
-    }, [router]);
-
-    // 检查当前标签页权限，如果没有权限则切换到有权限的标签页
-    useEffect(() => {
-        if (!permissionsLoading && permissions) {
-            const hasAccessToCurrentTab = (() => {
-                switch (activeTab) {
-                    case 'overview':
-                    case 'matches':
-                        return true; // 所有工作人员都可以访问
-                    case 'rooms':
-                    case 'matchups':
-                    case 'users':
-                    case 'settings':
-                        return permissions.isAdmin;
-                    case 'streaming':
-                        return permissions.isAdmin || permissions.isReferee || permissions.isStreamer;
-                    case 'replays':
-                        return permissions.isReplayTester || permissions.isAdmin;
-                    case 'map-selection':
-                        return permissions.isMapSelector || permissions.isAdmin;
-                    default:
-                        return true;
-                }
-            })();
-
-            if (!hasAccessToCurrentTab) {
-                // 切换到用户有权限访问的第一个标签页
-                if (permissions.isAdmin) {
-                    setActiveTab('overview');
-                } else if (permissions.isReferee || permissions.isStreamer) {
-                    setActiveTab('streaming');
-                } else if (permissions.isReplayTester) {
-                    setActiveTab('replays');
-                } else if (permissions.isMapSelector) {
-                    setActiveTab('map-selection');
-                } else if (permissions.isCommentator) {
-                    setActiveTab('matches');
-                } else {
-                    setActiveTab('overview'); // 默认概览页
-                }
-            }
-        }
-    }, [activeTab, permissions, permissionsLoading]);
-
-    // 当切换到房间管理选项卡时获取房间列表
-    useEffect(() => {
-        if (activeTab === 'rooms' && permissions.isAdmin) {
-            fetchRooms();
-        }
-    }, [activeTab, permissions.isAdmin]);
-
-    // 当切换到对战管理选项卡时获取对战列表和已过审玩家
-    useEffect(() => {
-        if (activeTab === 'matchups' && permissions.isAdmin) {
-            fetchMatchups();
-            fetchApprovedPlayers();
-        }
-    }, [activeTab, permissions.isAdmin]);
-
-    // 当切换到用户管理选项卡时获取用户列表
-    useEffect(() => {
-        if (activeTab === 'users' && permissions.isAdmin) {
-            fetchRegistrations();
-        }
-    }, [activeTab, permissions.isAdmin]);
-
-    // 当切换到直播裁判选项卡时获取staff分配列表和可用房间
-    useEffect(() => {
-        if (activeTab === 'streaming' && (permissions.isAdmin || permissions.isReferee || permissions.isStreamer)) {
-            fetchStaffAssignments();
-            fetchAvailableRooms();
-        }
-    }, [activeTab, permissions.isAdmin, permissions.isReferee, permissions.isStreamer]);
-
-    // 获取注册用户列表
-    const fetchRegistrations = async () => {
+        // 获取用户权限
+        setPermissionsLoading(true);
         try {
-            setRegistrationsLoading(true);
-            const response = await fetch('/api/edge-registrations');
+          const permissionsResponse = await fetch(
+            `/api/user-permissions?osuId=${userSession.osuId}`,
+          );
+          if (permissionsResponse.ok) {
+            const userPermissions = await permissionsResponse.json();
+            console.log("[Staff Dashboard] 权限获取成功:", userPermissions);
+            setPermissions(userPermissions.permissions);
+            setPermissionsLoading(false);
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch registrations');
+            // 检查是否有staff权限（只有管理员）
+            const hasStaffPermission = userPermissions.permissions.isadmin;
+
+            if (!hasStaffPermission) {
+              showError("需要工作人员权限");
+              router.push("/player-info");
+              return;
             }
-
-            const data = await response.json();
-            setRegistrations(data.registrations || []);
-        } catch (error) {
-            console.error('Error fetching registrations:', error);
-            showError('获取注册数据失败');
-        } finally {
-            setRegistrationsLoading(false);
-        }
-    };
-
-    // 审核通过用户注册
-    const handleApproveRegistration = async (osuId: string, username: string) => {
-        if (!confirm(`确定要审核通过用户 ${username} (ID: ${osuId}) 的注册信息吗？`)) {
+          } else {
+            setPermissionsLoading(false);
+            showError("获取权限失败");
+            router.push("/player-info");
             return;
-        }
-
-        try {
-            setProcessingUser(osuId);
-            const response = await fetch('/api/admin/approve-registration', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ osuId }),
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                showSuccess(data.message);
-                // 刷新注册列表
-                fetchRegistrations();
-            } else {
-                showError(`审核失败: ${data.error}`);
-            }
+          }
         } catch (error) {
-            console.error('Error approving registration:', error);
-            showError('审核用户注册信息时发生错误');
-        } finally {
-            setProcessingUser(null);
+          console.error("[Staff Dashboard] 获取权限时发生错误:", error);
+          setPermissionsLoading(false);
+          showError("获取权限失败");
+          router.push("/player-info");
+          return;
         }
+      } catch (error) {
+        console.error("[Staff Dashboard] 获取用户数据时发生错误:", error);
+        router.push("/register");
+      } finally {
+        setLoading(false);
+      }
     };
 
-    // 删除用户注册
-    const handleDeleteRegistration = async (osuId: string, username: string) => {
-        if (!confirm(`确定要删除用户 ${username} (ID: ${osuId}) 的注册信息吗？此操作不可撤销！`)) {
-            return;
+    fetchUserData();
+  }, [router]);
+
+  // 检查当前标签页权限，如果没有权限则切换到有权限的标签页
+  useEffect(() => {
+    if (!permissionsLoading && permissions) {
+      const hasAccessToCurrentTab = (() => {
+        switch (activeTab) {
+          case "users":
+          case "settings":
+          case "streaming":
+          case "replays":
+          case "map-selection":
+            return permissions.isadmin;
+          default:
+            return true;
         }
+      })();
 
-        try {
-            setProcessingUser(osuId);
-            const response = await fetch('/api/admin/delete-registration', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ osuId }),
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                showSuccess(data.message);
-                // 刷新注册列表
-                fetchRegistrations();
-            } else {
-                showError(`删除失败: ${data.error}`);
-            }
-        } catch (error) {
-            console.error('Error deleting registration:', error);
-            showError('删除用户注册信息时发生错误');
-        } finally {
-            setProcessingUser(null);
+      if (!hasAccessToCurrentTab) {
+        // 切换到用户有权限访问的第一个标签页
+        if (permissions.isadmin) {
+          setActiveTab("overview");
+        } else {
+          setActiveTab("overview"); // 默认概览页
         }
-    };
+      }
+    }
+  }, [activeTab, permissions, permissionsLoading]);
 
-    // 房间管理函数
-    const fetchRooms = async () => {
-        setRoomsLoading(true);
-        try {
-            const response = await fetch('/api/match-rooms?withSchedules=true');
-            const data = await response.json();
-            if (data.success) {
-                setRooms(data.rooms);
-            } else {
-                console.error('Failed to fetch rooms:', data.error);
-            }
-        } catch (error) {
-            console.error('Error fetching rooms:', error);
-        } finally {
-            setRoomsLoading(false);
-        }
-    };
+  // 当切换到房间管理选项卡时获取房间列表
+  useEffect(() => {
+    if (activeTab === "rooms" && permissions.isadmin) {
+      fetchRooms();
+    }
+  }, [activeTab, permissions.isadmin]);
 
-    const handleDeleteRoom = async (roomId: number) => {
-        if (!confirm('确定要删除这个比赛房间吗？此操作不可撤销。')) {
-            return;
-        }
+  // 当切换到对战管理选项卡时获取对战列表和已过审玩家
+  useEffect(() => {
+    if (activeTab === "matchups" && permissions.isadmin) {
+      fetchMatchups();
+      fetchApprovedPlayers();
+    }
+  }, [activeTab, permissions.isadmin]);
 
-        setDeletingRoomId(roomId);
-        try {
-            const response = await fetch('/api/match-rooms/delete', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ id: roomId }),
-            });
+  // 当切换到用户管理选项卡时获取用户列表
+  useEffect(() => {
+    if (activeTab === "users" && permissions.isadmin) {
+      fetchRegistrations();
+    }
+  }, [activeTab, permissions.isadmin]);
 
-            const data = await response.json();
-            if (data.success) {
-                setRooms(rooms.filter(room => room.id !== roomId));
-                showSuccess('房间删除成功');
-            } else {
-                showError('删除失败: ' + data.error);
-            }
-        } catch (error) {
-            console.error('Error deleting room:', error);
-            showError('删除房间时发生错误');
-        } finally {
-            setDeletingRoomId(null);
-        }
-    };
+  // 当切换到直播裁判选项卡时获取staff分配列表和可用房间
+  useEffect(() => {
+    if (activeTab === "streaming" && permissions.isadmin) {
+      fetchStaffAssignments();
+      fetchAvailableRooms();
+    }
+  }, [activeTab, permissions.isadmin]);
 
-    const handleCreateRoom = async (roomData: {
-        room_name: string;
-        round_number: number;
-        match_date: string;
-        match_time: string;
-        match_number: number;
-        max_participants: number;
-        description: string;
-    }) => {
-        try {
-            const response = await fetch('/api/match-rooms', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(roomData),
-            });
+  // 获取注册用户列表
+  const fetchRegistrations = async () => {
+    try {
+      setRegistrationsLoading(true);
+      const response = await fetch("/api/edge-registrations");
 
-            const data = await response.json();
-            if (data.success) {
-                fetchRooms(); // 重新获取房间列表
-                showSuccess('房间创建成功');
-            } else {
-                showError('创建失败: ' + data.error);
-            }
-        } catch (error) {
-            console.error('Error creating room:', error);
-            showError('创建房间时发生错误');
-        }
-    };
+      if (!response.ok) {
+        throw new Error("Failed to fetch registrations");
+      }
 
-    // 对战管理函数
-    const fetchMatchups = async () => {
-        setMatchupsLoading(true);
-        try {
-            const response = await fetch('/api/player-matchups');
-            const data = await response.json();
-            if (data.success) {
-                setMatchups(data.matchups);
-            } else {
-                console.error('Failed to fetch matchups:', data.error);
-            }
-        } catch (error) {
-            console.error('Error fetching matchups:', error);
-        } finally {
-            setMatchupsLoading(false);
-        }
-    };
+      const data = await response.json();
+      setRegistrations(data.registrations || []);
+    } catch (error) {
+      console.error("Error fetching registrations:", error);
+      showError("获取注册数据失败");
+    } finally {
+      setRegistrationsLoading(false);
+    }
+  };
 
-    const handleDeleteMatchup = async (matchupId: number) => {
-        if (!confirm('确定要删除这个玩家对战吗？此操作不可撤销。')) {
-            return;
-        }
-
-        setDeletingMatchupId(matchupId);
-        try {
-            const response = await fetch('/api/player-matchups/delete', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ id: matchupId }),
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                setMatchups(matchups.filter(matchup => matchup.id !== matchupId));
-                showSuccess('对战删除成功');
-            } else {
-                showError('删除失败: ' + data.error);
-            }
-        } catch (error) {
-            console.error('Error deleting matchup:', error);
-            showError('删除对战时发生错误');
-        } finally {
-            setDeletingMatchupId(null);
-        }
-    };
-
-    const handleCreateMatchup = async (matchupData: {
-        player1_osuId: number;
-        player1_username: string;
-        player2_osuId: number;
-        player2_username: string;
-    }) => {
-        try {
-            const response = await fetch('/api/player-matchups', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(matchupData),
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                fetchMatchups(); // 重新获取对战列表
-                showSuccess('对战创建成功');
-            } else {
-                showError('创建失败: ' + data.error);
-            }
-        } catch (error) {
-            console.error('Error creating matchup:', error);
-            showError('创建对战时发生错误');
-        }
-    };
-
-    // 获取已过审玩家
-    const fetchApprovedPlayers = async () => {
-        try {
-            const response = await fetch('/api/approved-players');
-            if (response.ok) {
-                const data = await response.json();
-                setApprovedPlayers(data.players || []);
-            }
-        } catch (error) {
-            console.error('Error fetching approved players:', error);
-        }
-    };
-
-    // 获取staff房间分配列表
-    const fetchStaffAssignments = async () => {
-        try {
-            setStaffAssignmentsLoading(true);
-            const response = await fetch('/api/staff-room-assignments');
-            if (response.ok) {
-                const data = await response.json();
-                setStaffAssignments(data.assignments || []);
-            }
-        } catch (error) {
-            console.error('Error fetching staff assignments:', error);
-        } finally {
-            setStaffAssignmentsLoading(false);
-        }
-    };
-
-    // 获取可供staff选择的房间列表
-    const fetchAvailableRooms = async () => {
-        try {
-            setAvailableRoomsLoading(true);
-            const response = await fetch('/api/available-rooms-for-staff');
-            if (response.ok) {
-                const data = await response.json();
-                setAvailableRooms(data.rooms || []);
-            }
-        } catch (error) {
-            console.error('Error fetching available rooms:', error);
-        } finally {
-            setAvailableRoomsLoading(false);
-        }
-    };
-
-    // Staff申请加入房间
-    const handleApplyForRoom = async (roomId: number, role: 'referee' | 'streamer' | 'commentator') => {
-        if (!user) return;
-
-        const roleName = role === 'referee' ? '裁判' : role === 'streamer' ? '直播' : '解说';
-
-        try {
-            const response = await fetch('/api/staff-room-assignments', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    room_id: roomId,
-                    staff_osuId: user.osuId,
-                    staff_username: user.username,
-                    staff_role: role,
-                    assigned_by: user.osuId // 自己申请，所以assigned_by也是自己
-                }),
-            });
-
-            if (response.ok) {
-                showSuccess(`成功加入房间成为${roleName}！`);
-                // 重新获取数据
-                fetchStaffAssignments();
-                fetchAvailableRooms();
-            } else {
-                const errorData = await response.json();
-                showError(`申请失败: ${errorData.error || '未知错误'}`);
-            }
-        } catch (error) {
-            console.error('Error applying for room:', error);
-            showError('申请失败，请稍后重试');
-        }
-    };
-
-    const handleRevokeAssignment = async (assignmentId: number, roleName: string) => {
-        if (!confirm(`确定要撤销${roleName}分配吗？`)) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/staff-room-assignments?assignmentId=${assignmentId}`, {
-                method: 'DELETE',
-            });
-
-            if (response.ok) {
-                showSuccess(`已撤销${roleName}分配`);
-                // 重新获取数据
-                fetchStaffAssignments();
-                fetchAvailableRooms();
-            } else {
-                const errorData = await response.json();
-                showError(`撤销失败: ${errorData.error || '未知错误'}`);
-            }
-        } catch (error) {
-            console.error('Error revoking assignment:', error);
-            showError('撤销失败，请稍后重试');
-        }
-    };
-
-    // Staff加入房间
-    const handleLogout = async () => {
-        try {
-            await fetch('/api/auth/logout', { method: 'POST' });
-            router.push('/');
-        } catch (error) {
-            console.error('Logout failed:', error);
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen relative">
-                <div className="fixed inset-0 z-0">
-                    <Image
-                        src="/background-parallax.svg"
-                        alt="background"
-                        fill
-                        className="object-cover opacity-20"
-                    />
-                </div>
-                <div className="relative z-10 bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-8 text-center">
-                    <Image src='/icons/loading.svg' alt='loading' width={120} height={120} className='animate-spin' />
-                    <div className="text-white text-xl font-medium">加载中...</div>
-                </div>
-            </div>
-        );
+  // 审核通过用户注册
+  const handleApproveRegistration = async (osuId: string, username: string) => {
+    if (
+      !confirm(`确定要审核通过用户 ${username} (ID: ${osuId}) 的注册信息吗？`)
+    ) {
+      return;
     }
 
-    if (!user || !permissions.isAdmin && !permissions.isReferee && !permissions.isStreamer && !permissions.isCommentator && !permissions.isReplayTester && !permissions.isMapSelector) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen relative">
-                <div className="fixed inset-0 z-0">
-                    <Image
-                        src="/background-parallax.svg"
-                        alt="background"
-                        fill
-                        className="object-cover opacity-20"
-                    />
-                </div>
-                <div className="relative z-10 bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-8 text-center max-w-md">
-                    <div className="text-red-400 text-2xl mb-4">⚠️</div>
-                    <h1 className="text-2xl font-bold text-white mb-4">
-                        {!user ? '请先登录' : '权限不足'}
-                    </h1>
-                    <p className="text-gray-300 mb-6">
-                        {!user
-                            ? '您需要登录后才能访问此页面'
-                            : '您没有权限访问管理比赛安排页面'
-                        }
-                    </p>
-                    <Link
-                        href="/"
-                        className="inline-block bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3  transition-colors duration-200 font-medium"
-                    >
-                        返回首页
-                    </Link>
-                </div>
-            </div>
-        );
+    try {
+      setProcessingUser(osuId);
+      const response = await fetch("/api/admin/approve-registration", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ osuId }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showSuccess(data.message);
+        // 刷新注册列表
+        fetchRegistrations();
+      } else {
+        showError(`审核失败: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("Error approving registration:", error);
+      showError("审核用户注册信息时发生错误");
+    } finally {
+      setProcessingUser(null);
+    }
+  };
+
+  // 删除用户注册
+  const handleDeleteRegistration = async (osuId: string, username: string) => {
+    if (
+      !confirm(
+        `确定要删除用户 ${username} (ID: ${osuId}) 的注册信息吗？此操作不可撤销！`,
+      )
+    ) {
+      return;
     }
 
+    try {
+      setProcessingUser(osuId);
+      const response = await fetch("/api/admin/delete-registration", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ osuId }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showSuccess(data.message);
+        // 刷新注册列表
+        fetchRegistrations();
+      } else {
+        showError(`删除失败: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("Error deleting registration:", error);
+      showError("删除用户注册信息时发生错误");
+    } finally {
+      setProcessingUser(null);
+    }
+  };
+
+  // 房间管理函数
+  const fetchRooms = async () => {
+    setRoomsLoading(true);
+    try {
+      const response = await fetch("/api/match-rooms?withSchedules=true");
+      const data = await response.json();
+      if (data.success) {
+        setRooms(data.rooms);
+      } else {
+        console.error("Failed to fetch rooms:", data.error);
+      }
+    } catch (error) {
+      console.error("Error fetching rooms:", error);
+    } finally {
+      setRoomsLoading(false);
+    }
+  };
+
+  const handleDeleteRoom = async (roomId: number) => {
+    if (!confirm("确定要删除这个比赛房间吗？此操作不可撤销。")) {
+      return;
+    }
+
+    setDeletingRoomId(roomId);
+    try {
+      const response = await fetch("/api/match-rooms/delete", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: roomId }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setRooms(rooms.filter((room) => room.id !== roomId));
+        showSuccess("房间删除成功");
+      } else {
+        showError("删除失败: " + data.error);
+      }
+    } catch (error) {
+      console.error("Error deleting room:", error);
+      showError("删除房间时发生错误");
+    } finally {
+      setDeletingRoomId(null);
+    }
+  };
+
+  const handleCreateRoom = async (roomData: {
+    room_name: string;
+    round_number: number;
+    match_date: string;
+    match_time: string;
+    match_number: number;
+    max_participants: number;
+    description: string;
+  }) => {
+    try {
+      const response = await fetch("/api/match-rooms", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(roomData),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        fetchRooms(); // 重新获取房间列表
+        showSuccess("房间创建成功");
+      } else {
+        showError("创建失败: " + data.error);
+      }
+    } catch (error) {
+      console.error("Error creating room:", error);
+      showError("创建房间时发生错误");
+    }
+  };
+
+  // 对战管理函数
+  const fetchMatchups = async () => {
+    setMatchupsLoading(true);
+    try {
+      const response = await fetch("/api/player-matchups");
+      const data = await response.json();
+      if (data.success) {
+        setMatchups(data.matchups);
+      } else {
+        console.error("Failed to fetch matchups:", data.error);
+      }
+    } catch (error) {
+      console.error("Error fetching matchups:", error);
+    } finally {
+      setMatchupsLoading(false);
+    }
+  };
+
+  const handleDeleteMatchup = async (matchupId: number) => {
+    if (!confirm("确定要删除这个玩家对战吗？此操作不可撤销。")) {
+      return;
+    }
+
+    setDeletingMatchupId(matchupId);
+    try {
+      const response = await fetch("/api/player-matchups/delete", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: matchupId }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setMatchups(matchups.filter((matchup) => matchup.id !== matchupId));
+        showSuccess("对战删除成功");
+      } else {
+        showError("删除失败: " + data.error);
+      }
+    } catch (error) {
+      console.error("Error deleting matchup:", error);
+      showError("删除对战时发生错误");
+    } finally {
+      setDeletingMatchupId(null);
+    }
+  };
+
+  const handleCreateMatchup = async (matchupData: {
+    player1_osuId: number;
+    player1_username: string;
+    player2_osuId: number;
+    player2_username: string;
+  }) => {
+    try {
+      const response = await fetch("/api/player-matchups", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(matchupData),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        fetchMatchups(); // 重新获取对战列表
+        showSuccess("对战创建成功");
+      } else {
+        showError("创建失败: " + data.error);
+      }
+    } catch (error) {
+      console.error("Error creating matchup:", error);
+      showError("创建对战时发生错误");
+    }
+  };
+
+  // 获取已过审玩家
+  const fetchApprovedPlayers = async () => {
+    try {
+      const response = await fetch("/api/approved-players");
+      if (response.ok) {
+        const data = await response.json();
+        setApprovedPlayers(data.players || []);
+      }
+    } catch (error) {
+      console.error("Error fetching approved players:", error);
+    }
+  };
+
+  // 获取staff房间分配列表
+  const fetchStaffAssignments = async () => {
+    try {
+      setStaffAssignmentsLoading(true);
+      const response = await fetch("/api/staff-room-assignments");
+      if (response.ok) {
+        const data = await response.json();
+        setStaffAssignments(data.assignments || []);
+      }
+    } catch (error) {
+      console.error("Error fetching staff assignments:", error);
+    } finally {
+      setStaffAssignmentsLoading(false);
+    }
+  };
+
+  // 获取可供staff选择的房间列表
+  const fetchAvailableRooms = async () => {
+    try {
+      setAvailableRoomsLoading(true);
+      const response = await fetch("/api/available-rooms-for-staff");
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableRooms(data.rooms || []);
+      }
+    } catch (error) {
+      console.error("Error fetching available rooms:", error);
+    } finally {
+      setAvailableRoomsLoading(false);
+    }
+  };
+
+  // Staff申请加入房间
+  const handleApplyForRoom = async (
+    roomId: number,
+    role: "referee" | "streamer" | "commentator",
+  ) => {
+    if (!user) return;
+
+    const roleName =
+      role === "referee" ? "裁判" : role === "streamer" ? "直播" : "解说";
+
+    try {
+      const response = await fetch("/api/staff-room-assignments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          room_id: roomId,
+          staff_osuId: user.osuId,
+          staff_username: user.username,
+          staff_role: role,
+          assigned_by: user.osuId, // 自己申请，所以assigned_by也是自己
+        }),
+      });
+
+      if (response.ok) {
+        showSuccess(`成功加入房间成为${roleName}！`);
+        // 重新获取数据
+        fetchStaffAssignments();
+        fetchAvailableRooms();
+      } else {
+        const errorData = await response.json();
+        showError(`申请失败: ${errorData.error || "未知错误"}`);
+      }
+    } catch (error) {
+      console.error("Error applying for room:", error);
+      showError("申请失败，请稍后重试");
+    }
+  };
+
+  const handleRevokeAssignment = async (
+    assignmentId: number,
+    roleName: string,
+  ) => {
+    if (!confirm(`确定要撤销${roleName}分配吗？`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/staff-room-assignments?assignmentId=${assignmentId}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (response.ok) {
+        showSuccess(`已撤销${roleName}分配`);
+        // 重新获取数据
+        fetchStaffAssignments();
+        fetchAvailableRooms();
+      } else {
+        const errorData = await response.json();
+        showError(`撤销失败: ${errorData.error || "未知错误"}`);
+      }
+    } catch (error) {
+      console.error("Error revoking assignment:", error);
+      showError("撤销失败，请稍后重试");
+    }
+  };
+
+  // Staff加入房间
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.push("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  if (loading) {
     return (
-        <div className="min-h-screen bg-[#1a1a1a]">
-            {/* 顶部导航栏 */}
-            <div className="bg-[#2d2d2d] border-b border-[#404040]">
-                <div className="max-w-9xl mx-auto px-6">
-
-
-                    {/* 顶部Tab栏 */}
-                    <div className="flex space-x-1 overflow-x-auto">
-                        {/* 概览 - 所有工作人员都可以访问 */}
-                        <button
-                            onClick={() => handleTabChange('overview')}
-                            className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'overview'
-                                ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
-                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
-                                }`}
-                        >
-                            <Compass />
-                            概览
-                        </button>
-
-                        {/* 比赛管理 - 所有工作人员都可以访问 */}
-                        <button
-                            onClick={() => handleTabChange('matches')}
-                            className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'matches'
-                                ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
-                                : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
-                                }`}
-                        >
-                            <LandPlot />
-                            比赛预约管理
-                        </button>
-
-                        {/* 直播裁判 - 管理员、裁判员、直播员 */}
-                        {(permissions.isAdmin || permissions.isReferee || permissions.isStreamer) && (
-                            <button
-                                onClick={() => handleTabChange('streaming')}
-                                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'streaming'
-                                    ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
-                                    }`}
-                            >
-                                <CirclePlus />
-                                staff比赛房间加入
-                            </button>
-                        )}
-
-                        {/* 选图管理 - 地图选择员或管理员 */}
-                        {(permissions.isMapSelector || permissions.isAdmin) && (
-                            <button
-                                onClick={() => handleTabChange('map-selection')}
-                                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'map-selection'
-                                    ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
-                                    }`}
-                            >
-                                <LassoSelect />
-                                选图管理
-                            </button>
-                        )}
-
-                        {/* 回放收集 - 重播测试员或管理员 */}
-                        {(permissions.isReplayTester || permissions.isAdmin) && (
-                            <button
-                                onClick={() => handleTabChange('replays')}
-                                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'replays'
-                                    ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
-                                    }`}
-                            >
-                                <Video />
-                                回放收集
-                            </button>
-                        )}
-
-                        {/* 比赛房间管理 - 仅管理员 */}
-                        {permissions.isAdmin && (
-                            <button
-                                onClick={() => handleTabChange('rooms')}
-                                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'rooms'
-                                    ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
-                                    }`}
-                            >
-                                <CalendarClock />
-                                比赛时间房间管理
-                            </button>
-                        )}
-
-                        {/* 对战列表管理 - 仅管理员 */}
-                        {permissions.isAdmin && (
-                            <button
-                                onClick={() => handleTabChange('matchups')}
-                                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'matchups'
-                                    ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
-                                    }`}
-                            >
-                                <UsersRound />
-                                玩家对战列表管理
-                            </button>
-                        )}
-
-                        {/* 用户管理 - 仅管理员 */}
-                        {permissions.isAdmin && (
-                            <button
-                                onClick={() => handleTabChange('users')}
-                                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'users'
-                                    ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
-                                    }`}
-                            >
-                                <UserRoundPen />
-                                用户管理
-                            </button>
-                        )}
-
-                        {/* 系统设置 - 仅管理员 */}
-                        {permissions.isAdmin && (
-                            <button
-                                onClick={() => handleTabChange('settings')}
-                                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === 'settings'
-                                    ? 'bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]'
-                                    : 'text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
-                                    }`}
-                            >
-                                <Settings />
-                                系统设置
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* 内容区域 */}
-            <div className="flex-1">
-                {/* 内容区域 */}
-                <div className="p-6">
-                    {/* 概览页面 */}
-                    {activeTab === 'overview' && (
-                        <OverviewManagement
-                            user={user}
-                            permissions={permissions}
-                            registrations={registrations}
-                        />
-                    )}
-
-                    {/* 比赛预约管理页面 */}
-                    {activeTab === 'matches' && (
-                        <MatchScheduleManagement
-                            userOsuId={user.osuId}
-                            isAdmin={permissions.isAdmin}
-                        />
-                    )}
-
-                    {/* 用户管理页面 */}
-                    {activeTab === 'users' && (
-                        <UserManagement
-                            registrations={registrations}
-                            registrationsLoading={registrationsLoading}
-                            processingUser={processingUser}
-                            onFetchRegistrations={fetchRegistrations}
-                            onApproveRegistration={handleApproveRegistration}
-                            onDeleteRegistration={handleDeleteRegistration}
-                        />
-                    )}
-
-                    {/* 回放收集管理页面 */}
-                    {activeTab === 'replays' && (
-                        <ReplayCollectionManagement
-                            user={user}
-                            permissions={permissions}
-                        />
-                    )}
-
-                    {/* 选图管理页面 */}
-                    {activeTab === 'map-selection' && user && (
-                        <MapSelectionManagement
-                            user={user}
-                            permissions={permissions}
-                        />
-                    )}
-
-                    {/* 系统设置页面 */}
-                    {activeTab === 'settings' && (
-                        <SettingsManagement
-                            userOsuId={user?.osuId || ''}
-                            isAdmin={permissions.isAdmin}
-                        />
-                    )}
-
-                    {activeTab === 'rooms' && (
-                        <RoomManagement
-                            rooms={rooms}
-                            roomsLoading={roomsLoading}
-                            deletingRoomId={deletingRoomId}
-                            onDeleteRoom={handleDeleteRoom}
-                            onCreateRoom={handleCreateRoom}
-                        />
-                    )}
-
-                    {activeTab === 'matchups' && (
-                        <MatchupManagement
-                            matchups={matchups}
-                            matchupsLoading={matchupsLoading}
-                            deletingMatchupId={deletingMatchupId}
-                            approvedPlayers={approvedPlayers}
-                            onDeleteMatchup={handleDeleteMatchup}
-                            onCreateMatchup={handleCreateMatchup}
-                        />
-                    )}
-
-                    {activeTab === 'streaming' && (
-                        <StreamingManagement
-                            user={user}
-                            permissions={permissions}
-                            staffAssignments={staffAssignments}
-                            staffAssignmentsLoading={staffAssignmentsLoading}
-                            availableRooms={availableRooms}
-                            availableRoomsLoading={availableRoomsLoading}
-                            onApplyForRoom={handleApplyForRoom}
-                            onRevokeAssignment={handleRevokeAssignment}
-                        />
-                    )}
-                </div>
-            </div>
+      <div className="flex flex-col items-center justify-center min-h-screen relative">
+        <div className="fixed inset-0 z-0">
+          <Image
+            src="/background-parallax.svg"
+            alt="background"
+            fill
+            className="object-cover opacity-20"
+          />
         </div>
+        <div className="relative z-10 bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-8 text-center">
+          <Image
+            src="/icons/loading.svg"
+            alt="loading"
+            width={120}
+            height={120}
+            className="animate-spin"
+          />
+          <div className="text-white text-xl font-medium">加载中...</div>
+        </div>
+      </div>
     );
+  }
+
+  if (!user || !permissions.isadmin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen relative">
+        <div className="fixed inset-0 z-0">
+          <Image
+            src="/background-parallax.svg"
+            alt="background"
+            fill
+            className="object-cover opacity-20"
+          />
+        </div>
+        <div className="relative z-10 bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-8 text-center max-w-md">
+          <div className="text-red-400 text-2xl mb-4">⚠️</div>
+          <h1 className="text-2xl font-bold text-white mb-4">
+            {!user ? "请先登录" : "权限不足"}
+          </h1>
+          <p className="text-gray-300 mb-6">
+            {!user
+              ? "您需要登录后才能访问此页面"
+              : "您没有权限访问管理比赛安排页面"}
+          </p>
+          <Link
+            href="/"
+            className="inline-block bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3  transition-colors duration-200 font-medium"
+          >
+            返回首页
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#1a1a1a]">
+      {/* 顶部导航栏 */}
+      <div className="bg-[#2d2d2d] border-b border-[#404040]">
+        <div className="max-w-9xl mx-auto px-6">
+          {/* 顶部Tab栏 */}
+          <div className="flex space-x-1 overflow-x-auto">
+            {/* 概览 - 所有工作人员都可以访问 */}
+            <button
+              onClick={() => handleTabChange("overview")}
+              className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+                activeTab === "overview"
+                  ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
+                  : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
+              }`}
+            >
+              <Compass />
+              概览
+            </button>
+
+            {/* 比赛管理 - 所有工作人员都可以访问 */}
+            <button
+              onClick={() => handleTabChange("matches")}
+              className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+                activeTab === "matches"
+                  ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
+                  : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
+              }`}
+            >
+              <LandPlot />
+              比赛预约管理
+            </button>
+
+            {/* 直播裁判 - 管理员、裁判员、直播员 */}
+            {permissions.isadmin && (
+              <button
+                onClick={() => handleTabChange("streaming")}
+                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+                  activeTab === "streaming"
+                    ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
+                    : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
+                }`}
+              >
+                <CirclePlus />
+                staff比赛房间加入
+              </button>
+            )}
+
+            {/* 选图管理 - 地图选择员或管理员 */}
+            {permissions.isadmin && (
+              <button
+                onClick={() => handleTabChange("map-selection")}
+                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+                  activeTab === "map-selection"
+                    ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
+                    : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
+                }`}
+              >
+                <LassoSelect />
+                选图管理
+              </button>
+            )}
+
+            {/* 回放收集 - 重播测试员或管理员 */}
+            {permissions.isadmin && (
+              <button
+                onClick={() => handleTabChange("replays")}
+                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+                  activeTab === "replays"
+                    ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
+                    : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
+                }`}
+              >
+                <Video />
+                回放收集
+              </button>
+            )}
+
+            {/* 比赛房间管理 - 仅管理员 */}
+            {permissions.isadmin && (
+              <button
+                onClick={() => handleTabChange("rooms")}
+                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+                  activeTab === "rooms"
+                    ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
+                    : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
+                }`}
+              >
+                <CalendarClock />
+                比赛时间房间管理
+              </button>
+            )}
+
+            {/* 对战列表管理 - 仅管理员 */}
+            {permissions.isadmin && (
+              <button
+                onClick={() => handleTabChange("matchups")}
+                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+                  activeTab === "matchups"
+                    ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
+                    : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
+                }`}
+              >
+                <UsersRound />
+                玩家对战列表管理
+              </button>
+            )}
+
+            {/* 用户管理 - 仅管理员 */}
+            {permissions.isadmin && (
+              <button
+                onClick={() => handleTabChange("users")}
+                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+                  activeTab === "users"
+                    ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
+                    : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
+                }`}
+              >
+                <UserRoundPen />
+                用户管理
+              </button>
+            )}
+
+            {/* 系统设置 - 仅管理员 */}
+            {permissions.isadmin && (
+              <button
+                onClick={() => handleTabChange("settings")}
+                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
+                  activeTab === "settings"
+                    ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
+                    : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
+                }`}
+              >
+                <Settings />
+                系统设置
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 内容区域 */}
+      <div className="flex-1">
+        {/* 内容区域 */}
+        <div className="p-6">
+          {/* 概览页面 */}
+          {activeTab === "overview" && (
+            <OverviewManagement
+              user={user}
+              permissions={permissions}
+              registrations={registrations}
+            />
+          )}
+
+          {/* 比赛预约管理页面 */}
+          {activeTab === "matches" && (
+            <MatchScheduleManagement
+              userOsuId={user.osuId}
+              isAdmin={permissions.isadmin}
+            />
+          )}
+
+          {/* 用户管理页面 */}
+          {activeTab === "users" && (
+            <UserManagement
+              registrations={registrations}
+              registrationsLoading={registrationsLoading}
+              processingUser={processingUser}
+              onFetchRegistrations={fetchRegistrations}
+              onApproveRegistration={handleApproveRegistration}
+              onDeleteRegistration={handleDeleteRegistration}
+            />
+          )}
+
+          {/* 回放收集管理页面 */}
+          {activeTab === "replays" && (
+            <ReplayCollectionManagement user={user} permissions={permissions} />
+          )}
+
+          {/* 选图管理页面 */}
+          {activeTab === "map-selection" && user && (
+            <MapSelectionManagement user={user} permissions={permissions} />
+          )}
+
+          {/* 系统设置页面 */}
+          {activeTab === "settings" && (
+            <SettingsManagement
+              userOsuId={user?.osuId || ""}
+              isAdmin={permissions.isadmin}
+            />
+          )}
+
+          {activeTab === "rooms" && (
+            <RoomManagement
+              rooms={rooms}
+              roomsLoading={roomsLoading}
+              deletingRoomId={deletingRoomId}
+              onDeleteRoom={handleDeleteRoom}
+              onCreateRoom={handleCreateRoom}
+            />
+          )}
+
+          {activeTab === "matchups" && (
+            <MatchupManagement
+              matchups={matchups}
+              matchupsLoading={matchupsLoading}
+              deletingMatchupId={deletingMatchupId}
+              approvedPlayers={approvedPlayers}
+              onDeleteMatchup={handleDeleteMatchup}
+              onCreateMatchup={handleCreateMatchup}
+            />
+          )}
+
+          {activeTab === "streaming" && (
+            <StreamingManagement
+              user={user}
+              permissions={permissions}
+              staffAssignments={staffAssignments}
+              staffAssignmentsLoading={staffAssignmentsLoading}
+              availableRooms={availableRooms}
+              availableRoomsLoading={availableRoomsLoading}
+              onApplyForRoom={handleApplyForRoom}
+              onRevokeAssignment={handleRevokeAssignment}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }

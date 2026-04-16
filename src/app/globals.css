@@ -49,8 +49,7 @@ body {
 
 .markdown-content strong {
   font-weight: 600;
-  color: #E93B66;
-
+  color: #e93b66;
 }
 
 .markdown-content a {
@@ -94,7 +93,7 @@ body {
 }
 
 .markdown-content th {
-  background-color: #E93B66;
+  background-color: #e93b66;
   color: white;
   font-weight: 600;
   padding: 0.75rem;
@@ -109,7 +108,7 @@ body {
 }
 
 .markdown-content td strong {
-  color: #E93B66;
+  color: #e93b66;
 }
 
 .markdown-content tr:hover {
@@ -257,7 +256,9 @@ body {
   background-color: #cccccc;
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
   font-size: 0.875em;
 }
 
@@ -283,7 +284,7 @@ body {
 }
 
 .prose th {
-  background-color: #E93B66;
+  background-color: #e93b66;
   color: white;
   padding: 0.75rem;
   text-align: left;
@@ -298,7 +299,7 @@ body {
 }
 
 .prose td strong {
-  color: #E93B66;
+  color: #e93b66;
 }
 
 .prose img {
@@ -320,9 +321,8 @@ body {
   font-weight: bold;
 }
 
-
-
-button {}
+button {
+}
 
 table {
   background-color: white;
@@ -332,7 +332,7 @@ table {
 }
 
 th {
-  background-color: #E93B66;
+  background-color: #e93b66;
   color: white;
   padding-top: 10px;
   padding-bottom: 10px;
@@ -341,7 +341,6 @@ th {
 td {
   border-bottom: 1px solid #ddd;
 }
-
 
 tr:hover {
   background-color: rgb(237, 241, 243);
@@ -394,7 +393,9 @@ select {
   min-height: 2.75rem;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
 
   /* 自定义下拉箭头 */
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
@@ -412,7 +413,7 @@ select:hover {
 /* Select 聚焦状态 */
 select:focus {
   outline: none;
-  border-color: #E93B66;
+  border-color: #e93b66;
   box-shadow: 0 0 0 3px rgba(233, 59, 102, 0.1);
   background-color: #ffffff;
 }
@@ -430,7 +431,7 @@ select:disabled {
 @-moz-document url-prefix() {
   select {
     text-indent: 0.01px;
-    text-overflow: '';
+    text-overflow: "";
   }
 }
 
@@ -457,7 +458,10 @@ select:disabled {
 
 .dropdown-menu {
   @apply absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 shadow-lg z-50 overflow-y-auto;
-  transition: opacity 300ms ease-out, transform 300ms ease-out, max-height 300ms ease-out;
+  transition:
+    opacity 300ms ease-out,
+    transform 300ms ease-out,
+    max-height 300ms ease-out;
   transform-origin: top;
 }
 
@@ -525,7 +529,6 @@ select:disabled {
 }
 
 @keyframes iconPulse {
-
   0%,
   100% {
     transform: scale(1);
@@ -549,11 +552,13 @@ select:disabled {
 }
 
 .notification-slide-in {
-  animation: notificationSlideIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation: notificationSlideIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)
+    forwards;
 }
 
 .notification-slide-out {
-  animation: notificationSlideOut 0.4s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
+  animation: notificationSlideOut 0.4s cubic-bezier(0.55, 0.085, 0.68, 0.53)
+    forwards;
 }
 
 .icon-pulse {
@@ -561,7 +566,6 @@ select:disabled {
 }
 
 @keyframes highlightPulse {
-
   0%,
   100% {
     opacity: 1;
@@ -580,7 +584,6 @@ select:disabled {
 
 /* BeatmapCard 闪光动画 */
 @keyframes flash {
-
   0%,
   100% {
     opacity: 1;

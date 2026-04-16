@@ -1,130 +1,130 @@
 [
-    {
-        "name": "AeCw",
-        "osuId": "6781503",
-        "avatarUrl": "https://a.ppy.sh/6781503?1744380443.jpeg",
-        "role": "主办 视觉设计",
-        "description": "主办 视觉设计",
-        "coverUrl": "https://assets.ppy.sh/user-profile-covers/6781503/44363bc08c2b73a1c76d9eb6a1d06cbd1549c67617e03ee7133ee6d3496809af.png"
-    },
-    {
-        "name": "ShikaNai",
-        "osuId": "17898289",
-        "avatarUrl": "https://a.ppy.sh/17898289?1755197750.jpeg",
-        "role": "裁判",
-        "description": "裁判",
-        "coverUrl": "https://assets.ppy.sh/user-profile-covers/17898289/092d3dcced7c15ada456b2235cbad5e66ff4f0cca3f02e07e09a64ed63038eea.png"
-    },
-    {
-        "name": "Yoizuki",
-        "osuId": "25767690",
-        "avatarUrl": "https://a.ppy.sh/25767690",
-        "role": "裁判 解说",
-        "description": "比赛裁判 解说",
-        "coverUrl": "https://assets.ppy.sh/user-profile-covers/25767690/92effb2f9be0511861d4548ad63cfc5c7fae367796fe977f91a830cd55786d90.jpeg"
-    },
-    {
-        "name": "Kieost",
-        "osuId": "17823832",
-        "avatarUrl": "https://a.ppy.sh/17823832",
-        "role": "定制图mapool",
-        "description": "定制图",
-        "coverUrl": "https://assets.ppy.sh/user-profile-covers/17823832/bfbf62075d26f28498471820ae96c8315c2a53ca170e6959c36a32fb45485d3e.png"
-    },
-    {
-        "name": "bobbycyl",
-        "osuId": "30826405",
-        "avatarUrl": "https://a.ppy.sh/30826405",
-        "role": "图池策划",
-        "description": "图池策划",
-        "coverUrl": "https://assets.ppy.sh/user-profile-covers/30826405/4f1029eac55e6f04f618403032e69b230c31a57f7f2587c65572c276b21f6ca6.png"
-    },
-    {
-        "name": "-xxx Rumia-",
-        "osuId": "5936405",
-        "avatarUrl": "https://a.ppy.sh/5936405",
-        "role": "图池策划",
-        "description": "图池策划",
-        "coverUrl": "https://assets.ppy.sh/user-profile-covers/5936405/35713bf448d1a17bc222ccb975bf6e41725fbe59fbd171b35c4eebd80bcbafe0.jpeg"
-    },
-    {
-        "name": "fuyukiS",
-        "osuId": "32657919",
-        "avatarUrl": "https://a.ppy.sh/32657919?1754031244.jpeg",
-        "role": "图池策划 直播 测图",
-        "description": "图池策划 直播 测图",
-        "coverUrl": "https://assets.ppy.sh/user-profile-covers/32657919/137702cc1a18fb1c3dc08798efd7bd70ab8c621bfcfa44d04652baf03059de2e.png"
-    },
-    {
-        "name": "Bochi the osu",
-        "osuId": "30284920",
-        "avatarUrl": "https://a.ppy.sh/30284920",
-        "role": "图池测试",
-        "description": "测试比赛图池 图池策划",
-        "coverUrl": "https://assets.ppy.sh/user-profile-covers/30284920/d792a40a4eb4ae12b45360c8a29b97c29d53d45a108cc53725202e26e1394726.jpeg"
-    },
-    {
-        "name": "oliwakami",
-        "osuId": "3046750",
-        "avatarUrl": "https://a.ppy.sh/3046750",
-        "role": "图池测试",
-        "description": "测试比赛图池",
-        "coverUrl": "https://assets.ppy.sh/user-profile-covers/3046750/69fab6d0c74537ad3b14c8f3fc83e68d643ebe37f1dd50a23786dc83f24077f5.jpeg"
-    },
-    {
-        "name": "Akisa 18",
-        "osuId": "16134378",
-        "avatarUrl": "https://a.ppy.sh/16134378",
-        "role": "图池策划",
-        "description": "图池策划",
-        "coverUrl": "https://assets.ppy.sh/user-profile-covers/16134378/45f80f76861f34d83f492a637853bfdf83a203c8dd6bdcc7e772400bf390d47f.jpeg"
-    },
-    {
-        "name": "Pata-Mon",
-        "osuId": "6149313",
-        "avatarUrl": "https://a.ppy.sh/6149313",
-        "role": "special",
-        "description": "规则校验",
-        "coverUrl": "https://assets.ppy.sh/user-profile-covers/6149313/89e4baa3eb9f2bb9bd03a7e6c40988b5643e9b0b21dc1325a76548855cac11bd.png"
-    },
-    {
-        "name": "[SHK]T_T",
-        "osuId": "13999223",
-        "avatarUrl": "https://a.ppy.sh/13999223",
-        "role": "special",
-        "description": "比赛宣传 男人中的男人，帝王中的帝王",
-        "coverUrl": "https://assets.ppy.sh/user-profile-covers/13999223/6c4ec97d5aaaeb84ddb0938d65bb00566eff47f5822565a0be848a00743100fb.png"
-    },
-    {
-        "name": "Dana Iclucia",
-        "osuId": "13184288",
-        "avatarUrl": "https://a.ppy.sh/13184288",
-        "role": "special",
-        "description": "比赛宣传",
-        "coverUrl": "https://assets.ppy.sh/user-profile-covers/13184288/990bb9d12e323292672fbc3515523426fee3bd45d1f732c5068552669716f7ce.jpeg"
-    },
-    {
-        "name": "yutro",
-        "osuId": "6338477",
-        "avatarUrl": "https://a.ppy.sh/6338477",
-        "role": "special",
-        "description": "Replay外援",
-        "coverUrl": "https://assets.ppy.sh/user-profile-covers/6338477/b380764b93ed86ba735547a9ac9d08a29913c391a9d12b5a9e72eaea6845a26a.png"
-    },
-    {
-        "name": "Rinne_0",
-        "osuId": "11511458",
-        "avatarUrl": "https://a.ppy.sh/11511458",
-        "role": "图池策划、测试",
-        "description": "图池策划 测试",
-        "coverUrl": "https://assets.ppy.sh/user-cover-presets/35/e0ea464c7da58b8238961bb08b014f89d62f1ef0104fd234a9f9211206314678.jpeg"
-    },
-    {
-        "name": "Crystal",
-        "osuId": "1646397",
-        "avatarUrl": "https://a.ppy.sh/1646397",
-        "role": "图池测试",
-        "description": "图池测试",
-        "coverUrl": "https://assets.ppy.sh/user-profile-covers/1646397/494afc5c575d136c542406588bf7d50f09a92584a18209c1eb91d9168fd0d008.jpeg"
-    }
+  {
+    "name": "AeCw",
+    "osuId": "6781503",
+    "avatarUrl": "https://a.ppy.sh/6781503?1744380443.jpeg",
+    "role": "主办 视觉设计",
+    "description": "主办 视觉设计",
+    "coverUrl": "https://assets.ppy.sh/user-profile-covers/6781503/44363bc08c2b73a1c76d9eb6a1d06cbd1549c67617e03ee7133ee6d3496809af.png"
+  },
+  {
+    "name": "ShikaNai",
+    "osuId": "17898289",
+    "avatarUrl": "https://a.ppy.sh/17898289?1755197750.jpeg",
+    "role": "裁判",
+    "description": "裁判",
+    "coverUrl": "https://assets.ppy.sh/user-profile-covers/17898289/092d3dcced7c15ada456b2235cbad5e66ff4f0cca3f02e07e09a64ed63038eea.png"
+  },
+  {
+    "name": "Yoizuki",
+    "osuId": "25767690",
+    "avatarUrl": "https://a.ppy.sh/25767690",
+    "role": "裁判 解说",
+    "description": "比赛裁判 解说",
+    "coverUrl": "https://assets.ppy.sh/user-profile-covers/25767690/92effb2f9be0511861d4548ad63cfc5c7fae367796fe977f91a830cd55786d90.jpeg"
+  },
+  {
+    "name": "Kieost",
+    "osuId": "17823832",
+    "avatarUrl": "https://a.ppy.sh/17823832",
+    "role": "定制图mapool",
+    "description": "定制图",
+    "coverUrl": "https://assets.ppy.sh/user-profile-covers/17823832/bfbf62075d26f28498471820ae96c8315c2a53ca170e6959c36a32fb45485d3e.png"
+  },
+  {
+    "name": "bobbycyl",
+    "osuId": "30826405",
+    "avatarUrl": "https://a.ppy.sh/30826405",
+    "role": "图池策划",
+    "description": "图池策划",
+    "coverUrl": "https://assets.ppy.sh/user-profile-covers/30826405/4f1029eac55e6f04f618403032e69b230c31a57f7f2587c65572c276b21f6ca6.png"
+  },
+  {
+    "name": "-xxx Rumia-",
+    "osuId": "5936405",
+    "avatarUrl": "https://a.ppy.sh/5936405",
+    "role": "图池策划",
+    "description": "图池策划",
+    "coverUrl": "https://assets.ppy.sh/user-profile-covers/5936405/35713bf448d1a17bc222ccb975bf6e41725fbe59fbd171b35c4eebd80bcbafe0.jpeg"
+  },
+  {
+    "name": "fuyukiS",
+    "osuId": "32657919",
+    "avatarUrl": "https://a.ppy.sh/32657919?1754031244.jpeg",
+    "role": "图池策划 直播 测图",
+    "description": "图池策划 直播 测图",
+    "coverUrl": "https://assets.ppy.sh/user-profile-covers/32657919/137702cc1a18fb1c3dc08798efd7bd70ab8c621bfcfa44d04652baf03059de2e.png"
+  },
+  {
+    "name": "Bochi the osu",
+    "osuId": "30284920",
+    "avatarUrl": "https://a.ppy.sh/30284920",
+    "role": "图池测试",
+    "description": "测试比赛图池 图池策划",
+    "coverUrl": "https://assets.ppy.sh/user-profile-covers/30284920/d792a40a4eb4ae12b45360c8a29b97c29d53d45a108cc53725202e26e1394726.jpeg"
+  },
+  {
+    "name": "oliwakami",
+    "osuId": "3046750",
+    "avatarUrl": "https://a.ppy.sh/3046750",
+    "role": "图池测试",
+    "description": "测试比赛图池",
+    "coverUrl": "https://assets.ppy.sh/user-profile-covers/3046750/69fab6d0c74537ad3b14c8f3fc83e68d643ebe37f1dd50a23786dc83f24077f5.jpeg"
+  },
+  {
+    "name": "Akisa 18",
+    "osuId": "16134378",
+    "avatarUrl": "https://a.ppy.sh/16134378",
+    "role": "图池策划",
+    "description": "图池策划",
+    "coverUrl": "https://assets.ppy.sh/user-profile-covers/16134378/45f80f76861f34d83f492a637853bfdf83a203c8dd6bdcc7e772400bf390d47f.jpeg"
+  },
+  {
+    "name": "Pata-Mon",
+    "osuId": "6149313",
+    "avatarUrl": "https://a.ppy.sh/6149313",
+    "role": "special",
+    "description": "规则校验",
+    "coverUrl": "https://assets.ppy.sh/user-profile-covers/6149313/89e4baa3eb9f2bb9bd03a7e6c40988b5643e9b0b21dc1325a76548855cac11bd.png"
+  },
+  {
+    "name": "[SHK]T_T",
+    "osuId": "13999223",
+    "avatarUrl": "https://a.ppy.sh/13999223",
+    "role": "special",
+    "description": "比赛宣传 男人中的男人，帝王中的帝王",
+    "coverUrl": "https://assets.ppy.sh/user-profile-covers/13999223/6c4ec97d5aaaeb84ddb0938d65bb00566eff47f5822565a0be848a00743100fb.png"
+  },
+  {
+    "name": "Dana Iclucia",
+    "osuId": "13184288",
+    "avatarUrl": "https://a.ppy.sh/13184288",
+    "role": "special",
+    "description": "比赛宣传",
+    "coverUrl": "https://assets.ppy.sh/user-profile-covers/13184288/990bb9d12e323292672fbc3515523426fee3bd45d1f732c5068552669716f7ce.jpeg"
+  },
+  {
+    "name": "yutro",
+    "osuId": "6338477",
+    "avatarUrl": "https://a.ppy.sh/6338477",
+    "role": "special",
+    "description": "Replay外援",
+    "coverUrl": "https://assets.ppy.sh/user-profile-covers/6338477/b380764b93ed86ba735547a9ac9d08a29913c391a9d12b5a9e72eaea6845a26a.png"
+  },
+  {
+    "name": "Rinne_0",
+    "osuId": "11511458",
+    "avatarUrl": "https://a.ppy.sh/11511458",
+    "role": "图池策划、测试",
+    "description": "图池策划 测试",
+    "coverUrl": "https://assets.ppy.sh/user-cover-presets/35/e0ea464c7da58b8238961bb08b014f89d62f1ef0104fd234a9f9211206314678.jpeg"
+  },
+  {
+    "name": "Crystal",
+    "osuId": "1646397",
+    "avatarUrl": "https://a.ppy.sh/1646397",
+    "role": "图池测试",
+    "description": "图池测试",
+    "coverUrl": "https://assets.ppy.sh/user-profile-covers/1646397/494afc5c575d136c542406588bf7d50f09a92584a18209c1eb91d9168fd0d008.jpeg"
+  }
 ]

@@ -1,29 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getUserRegistration } from '@/lib/mysql-registrations';
+import { NextRequest } from "next/server";
+import { getUser } from "@/lib/prisma-registrations";
+import { createSuccessResponse, createErrorResponse } from "@/lib/session";
 
 export async function GET(request: NextRequest) {
-    try {
-        const { searchParams } = new URL(request.url);
-        const osuId = searchParams.get('osuId');
+  try {
+    const { searchParams } = new URL(request.url);
+    const osuId = searchParams.get("osuId");
 
-        if (!osuId) {
-            return NextResponse.json({
-                success: false,
-                error: 'Missing osuId parameter'
-            }, { status: 400 });
-        }
-
-        const registration = await getUserRegistration(osuId);
-
-        return NextResponse.json({
-            success: true,
-            registration
-        });
-    } catch (error) {
-        console.error('Error fetching user registration:', error);
-        return NextResponse.json({
-            success: false,
-            error: 'Failed to fetch registration'
-        }, { status: 500 });
+    if (!osuId) {
+      return createErrorResponse("Missing osuId parameter", 400);
     }
+
+    const user = await getUser(osuId);
+
+    return createSuccessResponse({ user }, "User registration retrieved");
+  } catch (error) {
+    console.error("Error fetching user registration:", error);
+    return createErrorResponse("Failed to fetch registration", 500);
+  }
 }

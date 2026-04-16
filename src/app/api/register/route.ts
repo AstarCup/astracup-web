@@ -1,119 +1,122 @@
-import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const REGISTRATIONS_FILE = path.join(process.cwd(), 'data', 'registrations.json');
+import { NextRequest } from "next/server";
+import {
+  addTournamentRegistration,
+  isUserExists,
+  isUserRegistered,
+  createOrUpdateUser,
+  getRegistrations,
+  getCurrentSeason,
+} from "@/lib/prisma-registrations";
+import { createSuccessResponse, createErrorResponse } from "@/lib/session";
 
 export interface Registration {
-    osuId: string;
-    username: string;
-    inGameName: string;
-    discord: string;
-    timezone: string;
-    availability: string;
-    registeredAt: string;
-    avatar_url: string;
-    pp: number;
-    global_rank: number | null;
-    country_rank: number | null;
-    country: string;
-}
-
-// 确保数据目录存在
-function ensureDataDirectory() {
-    const dataDir = path.dirname(REGISTRATIONS_FILE);
-    if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
-    }
-}
-
-// 读取所有注册信息
-function getRegistrations(): Registration[] {
-    try {
-        ensureDataDirectory();
-        if (!fs.existsSync(REGISTRATIONS_FILE)) {
-            return [];
-        }
-        const data = fs.readFileSync(REGISTRATIONS_FILE, 'utf8');
-        return JSON.parse(data);
-    } catch (error) {
-        console.error('Error reading registrations:', error);
-        return [];
-    }
-}
-
-// 检查用户是否已注册
-function isUserRegistered(osuId: string): boolean {
-    const registrations = getRegistrations();
-    return registrations.some(reg => reg.osuId === osuId);
-}
-
-// 添加新注册
-function addRegistration(registration: Omit<Registration, 'registeredAt'>): void {
-    try {
-        ensureDataDirectory();
-        const registrations = getRegistrations();
-        const newRegistration: Registration = {
-            ...registration,
-            registeredAt: new Date().toISOString(),
-        };
-
-        // 检查是否已注册，避免重复
-        if (!isUserRegistered(registration.osuId)) {
-            registrations.push(newRegistration);
-            fs.writeFileSync(REGISTRATIONS_FILE, JSON.stringify(registrations, null, 2));
-        }
-    } catch (error) {
-        console.error('Error adding registration:', error);
-        throw new Error('Failed to save registration');
-    }
+  osuId: string;
+  username: string;
+  inGameName: string;
+  discord: string;
+  timezone: string;
+  availability: string;
+  registeredAt: string;
+  avatar_url: string;
+  pp: number;
+  global_rank: number | null;
+  country_rank: number | null;
+  country: string;
+  accuracy?: number;
+  stamina?: number;
+  firstSight?: number;
+  strategy?: number;
+  experience?: number;
+  customKey?: string;
+  customValue?: number;
+  cover_custom_url?: string;
+  cover_url?: string;
+  cover_id?: string;
 }
 
 export async function POST(request: NextRequest) {
-    try {
-        const body = await request.json();
+  try {
+    const body = await request.json();
 
-        // 验证必要字段
-        if (!body.osuId || !body.username) {
-            return NextResponse.json(
-                { error: 'Missing required fields' },
-                { status: 400 }
-            );
-        }
-
-        // 检查是否已注册
-        if (isUserRegistered(body.osuId)) {
-            return NextResponse.json(
-                { error: 'User already registered' },
-                { status: 409 }
-            );
-        }
-
-        // 添加注册
-        addRegistration(body);
-
-        return NextResponse.json(
-            { message: 'Registration successful' },
-            { status: 200 }
-        );
-    } catch (error) {
-        console.error('Registration API error:', error);
-        return NextResponse.json(
-            { error: 'Internal server error' },
-            { status: 500 }
-        );
+    // 验证必要字段
+    if (!body.osuId || !body.username || !body.country) {
+      return createErrorResponse(
+        "Missing required fields (osuId, username, country)",
+        400,
+      );
     }
+
+    // 获取当前赛季设置
+    const currentSeason = await getCurrentSeason();
+
+    // 检查用户是否已存在
+    const userExists = await isUserExists(body.osuId);
+
+    if (userExists) {
+      // 检查用户是否已报名（简化版，只检查registrationStatus）
+      const alreadyRegistered = await isUserRegistered(body.osuId);
+      if (alreadyRegistered) {
+        return createErrorResponse("User already registered", 409);
+      }
+
+      // 用户存在但未报名当前赛季，更新用户信息并报名
+      // 先更新用户基本信息
+      await createOrUpdateUser({
+        osuId: body.osuId,
+        username: body.username,
+        avatar_url: body.avatar_url,
+        pp: body.pp,
+        global_rank: body.global_rank,
+        country_rank: body.country_rank,
+        country: body.country,
+        cover_custom_url: body.cover_custom_url,
+        cover_url: body.cover_url,
+        cover_id: body.cover_id,
+      });
+
+      // 然后报名当前赛季
+      await addTournamentRegistration({
+        ...body,
+        season: currentSeason,
+        accuracy: body.accuracy,
+        stamina: body.stamina,
+        firstSight: body.firstSight,
+        strategy: body.strategy,
+        experience: body.experience,
+        customKey: body.customKey,
+        customValue: body.customValue,
+      });
+    } else {
+      // 用户不存在，直接创建并报名
+      await addTournamentRegistration({
+        ...body,
+        season: currentSeason,
+        accuracy: body.accuracy,
+        stamina: body.stamina,
+        firstSight: body.firstSight,
+        strategy: body.strategy,
+        experience: body.experience,
+        customKey: body.customKey,
+        customValue: body.customValue,
+      });
+    }
+
+    return createSuccessResponse(null, "Tournament registration successful");
+  } catch (error) {
+    console.error("Registration API error:", error);
+    return createErrorResponse("Internal server error", 500);
+  }
 }
 
 export async function GET() {
-    try {
-        const registrations = getRegistrations();
-        return NextResponse.json(registrations);
-    } catch (error) {
-        console.error('Get registrations error:', error);
-        return NextResponse.json(
-            { error: 'Internal server error' },
-            { status: 500 }
-        );
-    }
+  try {
+    const registrations = await getRegistrations();
+    return createSuccessResponse(
+      { registrations },
+      "Registration list retrieved",
+    );
+  } catch (error) {
+    console.error("Get registrations error:", error);
+    return createErrorResponse("Internal server error", 500);
+  }
 }

@@ -12,7 +12,7 @@ const AnimatedLogo = () => {
         height="400"
         viewBox="0 0 776 133"
         className="transform translate-y-8"
-        style={{ height: 'auto' }}
+        style={{ height: "auto" }}
       >
         <defs>
           <style>{`
