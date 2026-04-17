@@ -45,15 +45,13 @@ export default function InfiniteScrollCanvas({
     playerGlobalRank.style.cssText = `
       font-size: 14em;
       color: #232323ff;
-      margin: 0 0 8em 0;
     `;
-    playerGlobalRank.textContent = `Rank ${player.global_rank || "N/A"}`;
+    playerGlobalRank.textContent = `Rank #${player.global_rank || "N/A"}`;
 
     const playerCountryRank = document.createElement("p");
     playerCountryRank.style.cssText = `
       font-size: 14em;
       color: #232323ff;
-      margin: 0 0 16em 0;
     `;
     playerCountryRank.textContent = `地区排名 ${player.country_rank || "N/A"} ${player.country}`;
 
@@ -130,6 +128,7 @@ export default function InfiniteScrollCanvas({
         margin-bottom: 48em;
         flex-shrink: 0;
         display: flex;
+        rotate: -3deg;
         flex-direction: row;
       `;
 
@@ -175,7 +174,7 @@ export default function InfiniteScrollCanvas({
           color: white;
           padding: 20em;
           box-sizing: border-box;
-          background: rgba(0, 0, 0, 0.5);
+          background: rgba(0, 0, 0, 0.2);
           border-radius: 14em;
           position: relative;
           transition: transform 0.3s ease;
@@ -223,7 +222,7 @@ export default function InfiniteScrollCanvas({
 
         const nameDiv = document.createElement("div");
         nameDiv.style.cssText = `
-          font-size: 16px;
+          font-size: 24px;
           font-weight: bold;
           color: white;
           position: absolute;
@@ -269,7 +268,7 @@ export default function InfiniteScrollCanvas({
                   try {
                     (radarChartContainer as any)._reactRoot.unmount();
                   } catch (e) {
-                    console.log("Error unmounting React root:", e);
+                    // console.log("Error unmounting React root:", e);
                   }
                 }
 
@@ -300,7 +299,7 @@ export default function InfiniteScrollCanvas({
                 try {
                   (radarChartContainer as any)._reactRoot.unmount();
                 } catch (e) {
-                  console.log("Error unmounting React root:", e);
+                  // console.log("Error unmounting React root:", e);
                 }
               }
 
@@ -330,8 +329,8 @@ export default function InfiniteScrollCanvas({
 
         photosLinePhoto.addEventListener("mouseenter", () => {
           gsap.to(playerContent, {
-            scale: 1.01,
-            duration: 0.3,
+            scale: 1.03,
+            duration: 0.1,
             ease: "power2.out",
           });
         });
@@ -426,7 +425,7 @@ export default function InfiniteScrollCanvas({
 
         this.mouse_x = x;
         this.mouse_y = y;
-      }
+      },
     };
 
     photobox.init();

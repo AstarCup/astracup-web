@@ -42,6 +42,8 @@ export default function RegistrationModal({
     customKey: "",
     customValue: "",
   });
+  const [customKeyValid, setCustomKeyValid] = useState<"valid" | "invalid" | "checking" | null>(null);
+  const [customKeyError, setCustomKeyError] = useState("");
 
   // 重置状态函数
   const resetModalState = () => {
@@ -61,6 +63,8 @@ export default function RegistrationModal({
       customKey: "",
       customValue: "",
     });
+    setCustomKeyValid(null);
+    setCustomKeyError("");
   };
 
   useEffect(() => {
@@ -90,6 +94,46 @@ export default function RegistrationModal({
     }
   };
 
+  // 检测违规词
+  const checkCustomKey = async (value: string) => {
+    if (!value.trim()) {
+      setCustomKeyValid(null);
+      setCustomKeyError("");
+      return;
+    }
+
+    setCustomKeyValid("checking");
+    setCustomKeyError("");
+
+    try {
+      const response = await fetch("/api/content-detect", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: value }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === "success" && !data.has_illegal) {
+          setCustomKeyValid("valid");
+          setCustomKeyError("");
+        } else {
+          setCustomKeyValid("invalid");
+          setCustomKeyError("包含违规词，请修改");
+        }
+      } else {
+        setCustomKeyValid("valid");
+        setCustomKeyError("");
+      }
+    } catch (error) {
+      console.error("Failed to check custom key:", error);
+      setCustomKeyValid("valid");
+      setCustomKeyError("");
+    }
+  };
+
   const handleSkillRatingChange = (field: string, value: string) => {
     setSkillRatings((prev) => ({
       ...prev,
@@ -102,6 +146,10 @@ export default function RegistrationModal({
       ...prev,
       [field]: value,
     }));
+
+    if (field === "customKey") {
+      checkCustomKey(value);
+    }
   };
 
   const handleRegister = async () => {
@@ -151,6 +199,12 @@ export default function RegistrationModal({
     const customValue = parseFloat(customKeyValue.customValue);
     if (isNaN(customValue)) {
       setError("自定义值必须是数字");
+      return;
+    }
+
+    // 检查自定义键是否包含违规词
+    if (customKeyValid === "invalid") {
+      setError("自定义键包含违规词，请修改");
       return;
     }
 
@@ -254,7 +308,7 @@ export default function RegistrationModal({
             width={120}
             height={120}
             className="animate-spin"
-          />{" "}
+          />{' '}
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
             正在加载配置信息
           </h2>
@@ -499,9 +553,9 @@ export default function RegistrationModal({
                     customData={
                       customKeyValue.customKey && customKeyValue.customValue
                         ? {
-                            key: customKeyValue.customKey,
-                            value: parseFloat(customKeyValue.customValue) || 0,
-                          }
+                          key: customKeyValue.customKey,
+                          value: parseFloat(customKeyValue.customValue) || 0,
+                        }
                         : undefined
                     }
                     width={680}
@@ -519,16 +573,48 @@ export default function RegistrationModal({
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     自定义 (Custom Key)
                   </label>
-                  <input
-                    type="text"
-                    value={customKeyValue.customKey}
-                    onChange={(e) =>
-                      handleCustomKeyValueChange("customKey", e.target.value)
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="随便输点什么"
-                    required
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={customKeyValue.customKey}
+                      onChange={(e) =>
+                        handleCustomKeyValueChange("customKey", e.target.value)
+                      }
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${customKeyValid === "invalid"
+                        ? "border-red-300"
+                        : customKeyValid === "valid"
+                          ? "border-green-300"
+                          : "border-gray-300"
+                        }`}
+                      placeholder="随便输点什么"
+                      required
+                    />
+                    {customKeyValid === "checking" && (
+                      <div className="absolute right-3 top-2">
+                        <svg className="w-4 h-4 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      </div>
+                    )}
+                    {customKeyValid === "valid" && (
+                      <div className="absolute right-3 top-2">
+                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                    {customKeyValid === "invalid" && (
+                      <div className="absolute right-3 top-2">
+                        <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  {customKeyError && (
+                    <p className="mt-1 text-sm text-red-600">{customKeyError}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -728,7 +814,8 @@ export default function RegistrationModal({
                 isLoading ||
                 !agreedToTerms ||
                 isPpTooHigh ||
-                !isRegistrationEnabled
+                !isRegistrationEnabled ||
+                customKeyValid === "invalid"
               }
               className="px-6 py-2 bg-[#F38181] text-white rounded-md hover:bg-[#95E1D3] disabled:opacity-50 disabled:cursor-not-allowed"
             >

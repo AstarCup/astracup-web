@@ -267,7 +267,7 @@ export default function Navbar() {
                         </div>
 
                         {/* Right Side Container */}
-                        <div className="flex items-center space-x-4 pointer-events-auto bg-white px-4 rounded-full">
+                        <div className="flex items-center space-x-4 pointer-events-auto bg-white px-4 rounded-full shadow-lg">
                             {/* Desktop Menu */}
                             <ul className="hidden xl:flex space-x-8 text-gray-600 p-2 m-2 navbar-menu">
                                 {navGroups.map((group) => (
@@ -418,8 +418,8 @@ export default function Navbar() {
                     {/* Mobile Menu Panel */}
                     <div
                         className={`xl:hidden pointer-events-auto overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen
-                                ? "max-h-screen py-0 opacity-100"
-                                : "max-h-0 opacity-0"
+                            ? "max-h-screen py-0 opacity-100"
+                            : "max-h-0 opacity-0"
                             }`}
                     >
                         <div className="max-h-120 overflow-y-auto p-4 bg-black/50">

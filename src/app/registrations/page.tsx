@@ -6,7 +6,6 @@ import { TournamentRegistration } from "@/lib/prisma-registrations";
 import localFont from "next/font/local";
 import { usePageTitle } from "@/lib/usePageTitle";
 import InfiniteScrollCanvas from "../components/ui/InfiniteScrollCanvas";
-import PlayerDetailModal from "../components/ui/PlayerDetailModal";
 
 const audiowide = localFont({
     src: "../font/Audiowide-Regular.ttf",
@@ -121,19 +120,21 @@ export default function RegistrationsPage() {
     }
 
     return (
-        <div className="min-h-screen py-12 mt-52">
-            <div className="max-w mx-auto px-4">
-                <div className="text-center mb-8">
+        <div className="relative min-h-screen">
+            <div className="w-full mx-auto">
+                <div className="absolute top-24 right-4 text-right z-[50]">
                     <h1 className="text-4xl font-bold text-white text-shadow-md">
                         已报名玩家
                     </h1>
                     <p className="mt-2 text-lg text-gray-100 text-shadow-md">
-                        当前共有 {registrations.length} 名玩家报名参赛，已通过审核{" "}
+                        当前共有 {registrations.length} 名玩家报名参赛，已通过审核{
+                            " "
+                        }
                         {registrations.filter((r) => r.approved).length} 名
                     </p>
                 </div>
 
-                <div className="flex justify-center mb-6">
+                <div className="absolute top-48 right-4 z-[50]">
                     <div className="flex">
                         <button
                             onClick={() => setFilter("all")}
@@ -166,7 +167,7 @@ export default function RegistrationsPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="h-[1200px]">
+                    <div className="absolute inset-0 -top-20 bottom-0 z-[1]">
                         <InfiniteScrollCanvas
                             registrations={filteredRegistrations}
                             onPlayerClick={handlePlayerClick}
@@ -174,21 +175,8 @@ export default function RegistrationsPage() {
                     </div>
                 )}
 
-                <div className="mt-8 text-center">
-                    <button
-                        onClick={fetchRegistrations}
-                        className="px-6 py-2 bg-[#E93B66] text-white rounded-md hover:bg-[#95E1D3] transition-colors"
-                    >
-                        刷新数据
-                    </button>
-                </div>
-            </div>
 
-            <PlayerDetailModal
-                player={selectedPlayer}
-                isOpen={isModalOpen}
-                onClose={handleCloseModal}
-            />
+            </div>
         </div>
     );
 }
