@@ -125,7 +125,6 @@ export default function InfiniteScrollCanvas({
         margin-bottom: 32em;
         flex-shrink: 0;
         display: flex;
-        rotate: -3deg;
         flex-direction: row;
       `;
 
@@ -140,6 +139,7 @@ export default function InfiniteScrollCanvas({
           font-size: 1px;
           width: 234em;
           height: 100%;
+          rotate: -3deg;
           margin-right: 36em;
           border-radius: 15em;
           overflow: visible;
@@ -178,6 +178,19 @@ export default function InfiniteScrollCanvas({
           position: relative;
           transition: transform 0.3s ease;
         `;
+        const keychainImg = document.createElement("img");
+        keychainImg.src = "/钥扣.svg";
+        keychainImg.style.cssText = `
+  position: absolute;
+  top: 6px;
+  left: -24px;
+  width: 68px;
+  height: 190px;
+  pointer-events: none;
+  object-fit: cover;
+  z-index: 0;
+`;
+        playerContent.appendChild(keychainImg);
 
         if (player.registrationStatus == 'approved') {
           const approvedMark = document.createElement("p");
@@ -399,11 +412,10 @@ export default function InfiniteScrollCanvas({
 
     const photobox = {
       container: photosDiv,
-      img_data: [] as any[],
+      line_data: [] as any[],
       container_width: 0,
       container_height: 0,
-      photo_width: 0,
-      photo_height: 0,
+      line_height: 0,
       if_movable: false,
       mouse_x: 0,
       mouse_y: 0,
@@ -465,22 +477,21 @@ export default function InfiniteScrollCanvas({
         });
       },
       resize() {
-        const imgs = [...document.querySelectorAll(".photos_line_photo")] as HTMLElement[];
+        const lines = [...document.querySelectorAll(".photos_line")] as HTMLElement[];
         this.container_width = this.container.offsetWidth;
         this.container_height = this.container.offsetHeight;
-        this.photo_width = imgs[0]?.offsetWidth || 0;
-        this.photo_height = imgs[0]?.offsetHeight || 0;
+        this.line_height = lines[0]?.offsetHeight || 0;
         this.scale_nums = document.body.offsetWidth / this.standard_width;
 
-        gsap.set(imgs, {
+        gsap.set(lines, {
           transform: `translate(120px, 160px)`,
         });
-        this.img_data = [];
-        imgs.forEach((img) => {
-          this.img_data.push({
-            node: img,
-            x: img.offsetLeft,
-            y: img.offsetTop,
+        this.line_data = [];
+        lines.forEach((line) => {
+          this.line_data.push({
+            node: line,
+            x: line.offsetLeft,
+            y: line.offsetTop,
             mov_x: 0,
             mov_y: 0,
             ani: null as any
@@ -489,16 +500,16 @@ export default function InfiniteScrollCanvas({
       },
       move(x: number, y: number) {
         if (!this.if_movable) return;
-        const distance_x = (x - this.mouse_x) * this.scale_nums;
-        const distance_y = (y - this.mouse_y) * this.scale_nums;
+        const distance_x = (x - this.mouse_x) / this.scale_nums;
+        const distance_y = (y - this.mouse_y) / this.scale_nums;
 
-        this.img_data.forEach((img) => {
-          img.mov_x += distance_x;
-          img.mov_y += distance_y;
+        this.line_data.forEach((line) => {
+          line.mov_x += distance_x;
+          line.mov_y += distance_y;
 
-          if (img.ani) img.ani.kill();
-          img.ani = gsap.to(img.node, {
-            transform: `translate(${img.mov_x}px,${img.mov_y}px)`,
+          if (line.ani) line.ani.kill();
+          line.ani = gsap.to(line.node, {
+            transform: `translate(${line.mov_x}px,${line.mov_y}px)`,
             duration: 0.3,
             ease: 'power1.out'
           });
