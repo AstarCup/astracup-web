@@ -67,6 +67,7 @@ export interface TournamentRegistration {
     url: string;
     id: string | null;
   };
+  registrationStatus: "not_registered" | "registered" | "approved";
 }
 
 // 初始化数据库表（如果需要）
@@ -649,7 +650,10 @@ export const getRegistrations = async (): Promise<TournamentRegistration[]> => {
   try {
     const users = await prisma.user.findMany({
       where: {
-        registrationStatus: "registered",
+        OR: [
+          { registrationStatus: "registered" },
+          { registrationStatus: "approved" }
+        ]
       },
       orderBy: {
         registeredAt: "desc",
@@ -684,6 +688,7 @@ export const getRegistrations = async (): Promise<TournamentRegistration[]> => {
         url: user.cover_url || "",
         id: user.cover_id || null,
       } : undefined,
+      registrationStatus: user.registrationStatus as "not_registered" | "registered" | "approved",
     }));
   } catch (error) {
     console.error("Error fetching registrations:", error);
@@ -712,7 +717,10 @@ export const getUserRegistration = async (
     const user = await prisma.user.findFirst({
       where: {
         osuId: osuId,
-        registrationStatus: "registered",
+        OR: [
+          { registrationStatus: "registered" },
+          { registrationStatus: "approved" }
+        ]
       },
     });
 
@@ -748,6 +756,7 @@ export const getUserRegistration = async (
         url: user.cover_url || "",
         id: user.cover_id || null,
       } : undefined,
+      registrationStatus: user.registrationStatus as "not_registered" | "registered" | "approved",
     };
   } catch (error) {
     console.error("Error fetching user registration:", error);
@@ -766,7 +775,10 @@ export const getRegistrationCount = async (): Promise<number> => {
   try {
     const count = await prisma.user.count({
       where: {
-        registrationStatus: "registered",
+        OR: [
+          { registrationStatus: "registered" },
+          { registrationStatus: "approved" }
+        ]
       },
     });
     return count;

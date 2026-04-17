@@ -40,7 +40,8 @@ export default function RegistrationsPage() {
             }
 
             const data = await response.json();
-            console.log("Received registrations data:", data.data?.registrations);
+            // console.log("Received registrations data:", data.data?.registrations);
+            // console.log("Approved count:", data.data?.registrations?.filter((r: any) => r.registrationStatus === "approved").length);
             setRegistrations(data.data?.registrations || []);
         } catch (error) {
             console.error("Error fetching registrations:", error);
@@ -61,13 +62,13 @@ export default function RegistrationsPage() {
 
     const filteredRegistrations = registrations
         .filter((player) => {
-            if (filter === "approved") return player.approved;
-            if (filter === "unapproved") return !player.approved;
+            if (filter === "approved") return player.registrationStatus === "approved";
+            if (filter === "unapproved") return player.registrationStatus !== "approved";
             return true;
         })
         .sort((a, b) => {
-            if (a.approved && !b.approved) return -1;
-            if (!a.approved && b.approved) return 1;
+            if (a.registrationStatus === "approved" && b.registrationStatus !== "approved") return -1;
+            if (a.registrationStatus !== "approved" && b.registrationStatus === "approved") return 1;
             return 0;
         });
 
@@ -122,7 +123,7 @@ export default function RegistrationsPage() {
     return (
         <div className="relative min-h-screen">
             <div className="w-full mx-auto">
-                <div className="absolute top-24 right-4 text-right z-[50]">
+                <div className="absolute top-24 right-4 text-right z-[2]">
                     <h1 className="text-4xl font-bold text-white text-shadow-md">
                         已报名玩家
                     </h1>
@@ -130,27 +131,27 @@ export default function RegistrationsPage() {
                         当前共有 {registrations.length} 名玩家报名参赛，已通过审核{
                             " "
                         }
-                        {registrations.filter((r) => r.approved).length} 名
+                        {registrations.filter((r) => r.registrationStatus === "approved").length} 名
                     </p>
                 </div>
 
-                <div className="absolute top-48 right-4 z-[50]">
-                    <div className="flex">
+                <div className="absolute top-48 right-4 z-[2] bg-[#3d3d3d]/60 p-2 rounded-full text-white">
+                    <div className="flex gap-2">
                         <button
                             onClick={() => setFilter("all")}
-                            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${filter === "all" ? "bg-blue-500 text-white" : "text-gray-600 hover:bg-gray-600 hover:text-white"}`}
+                            className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${filter === "all" ? "bg-blue-300 text-white" : "text-gray-100 hover:bg-gray-600 hover:text-white"}`}
                         >
                             全部
                         </button>
                         <button
                             onClick={() => setFilter("approved")}
-                            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${filter === "approved" ? "bg-green-500 text-white" : "text-gray-600 hover:bg-gray-600 hover:text-white"}`}
+                            className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${filter === "approved" ? "bg-green-300 text-white" : "text-gray-100 hover:bg-gray-600 hover:text-white"}`}
                         >
                             已审核
                         </button>
                         <button
                             onClick={() => setFilter("unapproved")}
-                            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${filter === "unapproved" ? "bg-yellow-500 text-white" : "text-gray-600 hover:bg-gray-600 hover:text-white"}`}
+                            className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${filter === "unapproved" ? "bg-yellow-300 text-white" : "text-gray-100 hover:bg-gray-600 hover:text-white"}`}
                         >
                             未审核/未通过审核
                         </button>

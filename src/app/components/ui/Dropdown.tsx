@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 
 export interface DropdownOption {
   value: string;
@@ -23,12 +23,12 @@ export interface DropdownProps {
   minWidth?: string;
   darkMode?: boolean;
   fontSize?:
-    | "text-xs"
-    | "text-sm"
-    | "text-base"
-    | "text-lg"
-    | "text-xl"
-    | "text-4xl";
+  | "text-xs"
+  | "text-sm"
+  | "text-base"
+  | "text-lg"
+  | "text-xl"
+  | "text-4xl";
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -47,8 +47,7 @@ const Dropdown: React.FC<DropdownProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredOptions, setFilteredOptions] =
-    useState<DropdownOption[]>(options);
+  const [filteredOptions, setFilteredOptions] = useState<DropdownOption[]>(options);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -163,41 +162,81 @@ const Dropdown: React.FC<DropdownProps> = ({
     return value && getSelectedOption();
   };
 
+  const getContainerClass = () => {
+    return `dropdown-container ${darkMode ? "dropdown-container-dark" : ""}`;
+  };
+
   const getButtonClass = () => {
-    const baseClass = darkMode
-      ? "dropdown-button dropdown-button-dark"
-      : "dropdown-button";
-    return `${baseClass} ${fontSize}`;
+    const baseClass = "flex items-center justify-between gap-2 px-3 py-2 rounded-full border transition-all duration-200";
+    const modeClass = darkMode
+      ? "bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
+      : "bg-white border-gray-300 text-gray-900 hover:bg-gray-50";
+    const disabledClass = disabled
+      ? "opacity-50 cursor-not-allowed"
+      : "cursor-pointer";
+    return `${baseClass} ${modeClass} ${disabledClass} ${fontSize}`;
+  };
+
+  const getMenuClass = () => {
+    const baseClass = "absolute top-full left-0 mt-1 w-full rounded-2xl shadow-lg z-50 transition-all duration-300 ease-out";
+    const modeClass = darkMode
+      ? "bg-gray-800 border border-gray-700"
+      : "bg-white border border-gray-200";
+    const visibilityClass = isOpen
+      ? "opacity-100 translate-y-0"
+      : "opacity-0 -translate-y-2 pointer-events-none";
+    return `${baseClass} ${modeClass} ${visibilityClass}`;
   };
 
   const getOptionClass = (optionValue: string, index: number) => {
-    const baseClass = darkMode
-      ? "dropdown-option dropdown-option-dark"
-      : "dropdown-option";
+    const baseClass = "w-full text-left px-3 py-2 rounded-full transition-colors duration-150";
+    const modeClass = darkMode
+      ? "text-gray-200 hover:bg-gray-700/50"
+      : "text-gray-900 hover:bg-gray-100";
+    const selectedClass = value === optionValue
+      ? darkMode
+        ? "bg-gray-700/50 font-medium"
+        : "bg-blue-50 font-medium"
+      : "";
+    const highlightedClass = index === highlightedIndex
+      ? darkMode
+        ? "bg-gray-700/50"
+        : "bg-gray-100"
+      : "";
+    const disabledClass = options[index]?.disabled
+      ? "opacity-50 cursor-not-allowed"
+      : "cursor-pointer";
+    return `${baseClass} ${modeClass} ${selectedClass} ${highlightedClass} ${disabledClass} ${fontSize}`;
+  };
 
-    const selectedClass =
-      value === optionValue
-        ? darkMode
-          ? "dropdown-option-selected-dark"
-          : "dropdown-option-selected"
-        : "";
+  const getSearchInputClass = () => {
+    const baseClass = "w-full px-3 py-2 border rounded-full focus:outline-none focus:ring-2";
+    const modeClass = darkMode
+      ? "bg-gray-700 border-gray-600 text-white focus:ring-blue-500"
+      : "bg-white border-gray-300 text-gray-900 focus:ring-blue-500";
+    return `${baseClass} ${modeClass} ${fontSize}`;
+  };
 
-    const highlightedClass =
-      index === highlightedIndex
-        ? darkMode
-          ? "dropdown-option-highlighted-dark"
-          : "dropdown-option-highlighted"
-        : "";
+  const getClearButtonClass = () => {
+    const baseClass = "mt-2 px-3 py-1 rounded-2xl transition-colors duration-150";
+    const modeClass = darkMode
+      ? "bg-gray-700 text-gray-200 hover:bg-gray-600"
+      : "bg-gray-100 text-gray-700 hover:bg-gray-200";
+    return `${baseClass} ${modeClass} ${fontSize}`;
+  };
 
-    return `${baseClass} ${fontSize} ${selectedClass} ${highlightedClass}`;
+  const getLabelClass = () => {
+    const baseClass = "block mb-1 font-medium";
+    const modeClass = darkMode
+      ? "text-gray-300"
+      : "text-gray-700";
+    return `${baseClass} ${modeClass} ${fontSize}`;
   };
 
   return (
-    <div className="dropdown-container">
+    <div className={getContainerClass()}>
       {label && (
-        <label
-          className={`dropdown-label ${darkMode ? "dropdown-label-dark" : ""}`}
-        >
+        <label className={getLabelClass()}>
           {label}
         </label>
       )}
@@ -205,33 +244,34 @@ const Dropdown: React.FC<DropdownProps> = ({
       <div ref={dropdownRef} className="relative">
         <button
           type="button"
-          onClick={() => !disabled && setIsOpen(!isOpen)}
+          onClick={handleButtonClick}
           disabled={disabled}
           className={getButtonClass()}
           style={{ minWidth }}
         >
-          <span className="truncate flex-1 text-left">{getDisplayText()}</span>
+          <span className="truncate flex-1">{getDisplayText()}</span>
           <ChevronDown
             className={`transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+            size={16}
           />
         </button>
 
         <div
-          className={`dropdown-menu transition-all duration-300 ease-out ${isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}
+          className={getMenuClass()}
           style={{
             maxHeight: isOpen ? maxHeight : "0px",
             minWidth,
           }}
         >
           {/* Search input - fixed at top */}
-          <div className="p-2 border-b border-gray-200 bg-white sticky top-0 z-10">
+          <div className="p-2 border-b">
             <input
               ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
               placeholder="搜索..."
-              className={`text-black w-full px-2 py-1 border border-gray-300 ${fontSize}`}
+              className={getSearchInputClass()}
             />
           </div>
 
@@ -257,7 +297,7 @@ const Dropdown: React.FC<DropdownProps> = ({
                 </button>
               ))
             ) : (
-              <div className="px-3 py-2 text-sm text-gray-500 text-center">
+              <div className={darkMode ? "text-gray-400" : "text-gray-500"} style={{ padding: '1rem', textAlign: 'center' }}>
                 没有找到匹配的选项
               </div>
             )}
@@ -268,10 +308,13 @@ const Dropdown: React.FC<DropdownProps> = ({
       {showClearButton && hasValidSelection() && (
         <button
           onClick={() => onChange("")}
-          className="dropdown-clear-button"
-          title={`清除选择`}
+          className={getClearButtonClass()}
+          title="清除选择"
         >
-          {clearButtonText}
+          <div className="flex items-center gap-1">
+            <X size={14} />
+            <span>{clearButtonText}</span>
+          </div>
         </button>
       )}
     </div>

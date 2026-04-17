@@ -30,11 +30,11 @@ export default function Guide() {
         const data = await response.json();
         setContentHtml(data.contentHtml);
       } else {
-        setError("获取指导书内容失败");
+        setError("获取内容失败");
       }
     } catch (error) {
       console.error("Failed to fetch guide content:", error);
-      setError("获取指导书内容时出错");
+      setError("获取内容时出错");
     } finally {
       setIsLoading(false);
     }
@@ -42,9 +42,9 @@ export default function Guide() {
 
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto p-6 text-white bg-[#3D3D3D]">
+      <div className="max-w-5xl mx-auto p-6 text-gray-600 bg-white">
         <div className="text-center py-20">
-          <div className="text-xl mb-4">正在加载指导书内容...</div>
+          <div className="text-xl mb-4">正在加载内容...</div>
         </div>
       </div>
     );
@@ -52,7 +52,7 @@ export default function Guide() {
 
   if (error) {
     return (
-      <div className="max-w-5xl mx-auto p-6 text-white bg-[#3D3D3D]">
+      <div className="max-w-5xl mx-auto p-6 text-gray-600 bg-white">
         <div className="bg-red-500/20 border border-red-500 p-4 mb-6">
           <p>{error}</p>
         </div>
@@ -61,7 +61,7 @@ export default function Guide() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 text-white bg-[#3D3D3D]">
+    <div className="max-w-5xl mt-48 rounded-lg mx-auto p-6 text-gray-600 bg-white">
       <div
         className="markdown-content"
         dangerouslySetInnerHTML={{ __html: contentHtml }}

@@ -5,6 +5,17 @@ import gsap from "gsap";
 import { TournamentRegistration } from "@/lib/prisma-registrations";
 import RadarChart from "./RadarChart";
 
+import localFont from 'next/font/local'
+import type { AppProps } from 'next/app'
+
+const Pacifico = localFont({
+  src: '../../font/Pacifico-Regular.ttf',
+})
+
+const CalSans = localFont({
+  src: '../../font/CalSans-Regular.ttf',
+})
+
 interface InfiniteScrollCanvasProps {
   registrations: TournamentRegistration[];
   onPlayerClick?: (player: TournamentRegistration) => void;
@@ -24,7 +35,7 @@ export default function InfiniteScrollCanvas({
       position: absolute;
       top: 0;
       left: 100%;
-      width: 234em;
+      width: 434em;
       height: 100%;
       background: rgba(255, 255, 255, 0.95);
       padding: 20em;
@@ -41,29 +52,11 @@ export default function InfiniteScrollCanvas({
 
     const basicInfo = document.createElement("div");
 
-    const playerGlobalRank = document.createElement("p");
-    playerGlobalRank.style.cssText = `
-      font-size: 14em;
-      color: #232323ff;
-    `;
-    playerGlobalRank.textContent = `Rank #${player.global_rank || "N/A"}`;
-
-    const playerCountryRank = document.createElement("p");
-    playerCountryRank.style.cssText = `
-      font-size: 14em;
-      color: #232323ff;
-    `;
-    playerCountryRank.textContent = `地区排名 ${player.country_rank || "N/A"} ${player.country}`;
-
-    basicInfo.appendChild(playerGlobalRank);
-    basicInfo.appendChild(playerCountryRank);
-
     const radarContainer = document.createElement("div");
     radarContainer.className = "radar-chart-container";
     radarContainer.style.cssText = `
       width: 100%;
       height: 150em;
-      margin-top: 16em;
     `;
 
     detailContent.appendChild(basicInfo);
@@ -80,6 +73,7 @@ export default function InfiniteScrollCanvas({
           strategy={player.strategy || 0}
           experience={player.experience || 0}
           customData={player.customKey && player.customValue !== undefined ? { key: player.customKey, value: player.customValue } : undefined}
+          width={380}
         />
       );
 
@@ -99,24 +93,27 @@ export default function InfiniteScrollCanvas({
     if (!containerRef.current || registrations.length === 0) return;
 
     const photosDiv = document.createElement("div");
-    photosDiv.className = "photos";
+    photosDiv.className = `${CalSans.className} photos`;
     photosDiv.style.cssText = `
       position: absolute;
+      top: 0px;
+      left: 0px;
+      right: 0;
+      bottom: 0;
       flex-direction: column;
-      overflow: hidden;
-      cursor: pointer;
-      width: 100%;
-      height: 100%;
+      cursor: grab;
       user-select: none;
       -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
-    `;
+      touch-action: none;
+      background-image: url("data:image/svg+xml,<svg id='patternId' width='100%' height='100%' xmlns='http://www.w3.org/2000/svg'><defs><pattern id='a' patternUnits='userSpaceOnUse' width='75' height='75' patternTransform='scale(4) rotate(20)'><rect x='0' y='0' width='100%' height='100%' fill='hsla(210,16.7%,97.6%,1)'/><path d='M15.896-3.379a3.051 3.051 0 0 0-3.044 3.045 3.051 3.051 0 0 0 3.044 3.045A3.05 3.05 0 0 0 18.94-.334a3.05 3.05 0 0 0-3.043-3.045zm0 .764a2.275 2.275 0 0 1 2.282 2.281 2.275 2.275 0 0 1-2.282 2.281 2.275 2.275 0 0 1-2.28-2.281 2.275 2.275 0 0 1 2.28-2.281zm29.479 5.742a4.13 4.13 0 0 0-4.123 4.123 4.13 4.13 0 0 0 4.123 4.123 4.13 4.13 0 0 0 4.123-4.123 4.13 4.13 0 0 0-4.123-4.123zm0 1.03a3.086 3.086 0 0 1 3.094 3.093 3.086 3.086 0 0 1-3.094 3.094 3.086 3.086 0 0 1-3.094-3.094 3.086 3.086 0 0 1 3.094-3.094zM66.299 8.89c-3.73 0-6.78 3.048-6.78 6.779 0 3.73 3.05 6.777 6.78 6.777 3.73 0 6.777-3.046 6.777-6.777 0-3.73-3.047-6.78-6.777-6.78zm0 2.214a4.547 4.547 0 0 1 4.562 4.565 4.547 4.547 0 0 1-4.562 4.564 4.548 4.548 0 0 1-4.565-4.564 4.548 4.548 0 0 1 4.565-4.565zm-24.653 9.2a4.499 4.499 0 0 0-4.488 4.486 4.499 4.499 0 0 0 4.488 4.486 4.497 4.497 0 0 0 4.487-4.486 4.497 4.497 0 0 0-4.487-4.486zm0 1.46a3.014 3.014 0 0 1 3.026 3.026 3.014 3.014 0 0 1-3.026 3.025 3.014 3.014 0 0 1-3.025-3.025 3.014 3.014 0 0 1 3.025-3.025zm24.086 9.94A2.3 2.3 0 0 0 63.438 34a2.3 2.3 0 0 0 2.294 2.295A2.298 2.298 0 0 0 68.025 34a2.298 2.298 0 0 0-2.293-2.295zm0 .576c.953 0 1.72.766 1.72 1.719 0 .953-.767 1.719-1.72 1.719A1.714 1.714 0 0 1 64.014 34c0-.953.765-1.719 1.718-1.719zm-49.234 6.545c-2.952 0-5.363 2.413-5.363 5.365a5.376 5.376 0 0 0 5.363 5.364 5.376 5.376 0 0 0 5.363-5.364c0-2.952-2.41-5.365-5.363-5.365zm0 1.744c2.01 0 3.621 1.611 3.621 3.621s-1.61 3.621-3.621 3.621a3.608 3.608 0 0 1-3.621-3.62 3.608 3.608 0 0 1 3.621-3.622zm33.84 6.348a4.318 4.318 0 0 0-4.307 4.309 4.318 4.318 0 0 0 4.307 4.308 4.32 4.32 0 0 0 4.308-4.308 4.32 4.32 0 0 0-4.308-4.309zm0 1.398a2.9 2.9 0 0 1 2.91 2.91 2.9 2.9 0 0 1-2.91 2.91 2.898 2.898 0 0 1-2.908-2.91 2.898 2.898 0 0 1 2.908-2.91zm18.367 1.897A4.499 4.499 0 0 0 64.22 54.7a4.497 4.497 0 0 0 4.486 4.486 4.499 4.499 0 0 0 4.488-4.486 4.5 4.5 0 0 0-4.488-4.488zm0 1.463A3.014 3.014 0 0 1 71.73 54.7a3.014 3.014 0 0 1-3.025 3.026A3.014 3.014 0 0 1 65.68 54.7a3.014 3.014 0 0 1 3.025-3.025zm-36.771 1.92c-4.85 0-8.813 3.963-8.813 8.812 0 4.85 3.963 8.81 8.813 8.81 4.849 0 8.812-3.96 8.812-8.81 0-4.85-3.963-8.812-8.812-8.812zm0 2.892a5.897 5.897 0 0 1 5.918 5.92 5.896 5.896 0 0 1-5.918 5.918 5.896 5.896 0 0 1-5.918-5.918 5.897 5.897 0 0 1 5.918-5.92zM15.896 71.621a3.051 3.051 0 0 0-3.044 3.045 3.051 3.051 0 0 0 3.044 3.045 3.05 3.05 0 0 0 3.043-3.045 3.05 3.05 0 0 0-3.043-3.045zm0 .764a2.275 2.275 0 0 1 2.282 2.281 2.275 2.275 0 0 1-2.282 2.281 2.275 2.275 0 0 1-2.28-2.281 2.275 2.275 0 0 1 2.28-2.281z'  stroke-width='1' stroke='none' fill='hsla(210,13.8%,88.6%,1)'/><path d='M57.973.85a3.756 3.756 0 1 0 .067 7.512A3.756 3.756 0 0 0 57.973.85zM6.449 2.625a2.357 2.357 0 1 0 0 4.714 2.357 2.357 0 0 0 0-4.714Zm24.643 7.744a3.756 3.756 0 1 0 .067 7.512 3.756 3.756 0 0 0-.067-7.512zm-17.848 5.467a2.357 2.357 0 1 0 .175 4.71 2.357 2.357 0 0 0-.175-4.71zM-.25 23.363a2.136 2.136 0 1 0 0 4.274 2.136 2.136 0 1 0 0-4.274Zm75 0a2.136 2.136 0 1 0 0 4.274 2.136 2.136 0 1 0 0-4.274Zm-49.031 5.178a2.283 2.283 0 1 0 .054 4.566 2.283 2.283 0 0 0-.054-4.566zm30.404-1.512a1.473 1.473 0 1 0 0 2.946 1.473 1.473 0 0 0 0-2.946zm-9.525 9.088a2.578 2.578 0 1 0-.001 5.156 2.578 2.578 0 0 0 0-5.156zm-41.442.93a1.473 1.473 0 1 0-.003 2.946 1.473 1.473 0 0 0 .003-2.946zm62.455 3.314a1.473 1.473 0 1 0 .001 2.946 1.473 1.473 0 0 0 0-2.946zm-33.51 2.135a1.473 1.473 0 1 0-.003 2.946 1.473 1.473 0 0 0 .004-2.946ZM8.599 56.072a3.756 3.756 0 1 0 .067 7.512 3.756 3.756 0 0 0-.067-7.512zm40.49 7.658a2.357 2.357 0 1 0-.001 4.714 2.357 2.357 0 0 0 0-4.714zm22.129 5.833a2.136 2.136 0 1 0 .072 4.27 2.136 2.136 0 0 0-.072-4.27z'  stroke-width='1' stroke='none' fill='hsla(210,15.8%,92.5%,1)'/></pattern></defs><rect width='800%' height='800%' transform='translate(-508,-540)' fill='url(%23a)'/></svg>")
+`;
 
     containerRef.current.innerHTML = "";
     containerRef.current.appendChild(photosDiv);
 
-    const photosPerRow = 7;
+    const photosPerRow = 14;
     const rows = Math.ceil(registrations.length / photosPerRow);
 
     for (let row = 0; row < rows; row++) {
@@ -125,7 +122,7 @@ export default function InfiniteScrollCanvas({
       photosLine.style.cssText = `
         font-size: 1px;
         height: 342em;
-        margin-bottom: 48em;
+        margin-bottom: 32em;
         flex-shrink: 0;
         display: flex;
         rotate: -3deg;
@@ -161,7 +158,9 @@ export default function InfiniteScrollCanvas({
           photosLinePhoto.style.backgroundSize = 'cover';
           photosLinePhoto.style.backgroundPosition = 'center';
         }
-        photosLinePhoto.style.backgroundColor = player.approved ? '#daf700ff' : '#666666';
+        photosLinePhoto.style.backgroundColor = '#1a1a1a23';
+        photosLinePhoto.style.borderBottom = player.registrationStatus === 'approved' ? '8px solid #daf700ff' : '8px solid #666666';
+        photosLinePhoto.style.boxSizing = 'border-box';
 
         const playerContent = document.createElement("div");
         playerContent.style.cssText = `
@@ -180,18 +179,46 @@ export default function InfiniteScrollCanvas({
           transition: transform 0.3s ease;
         `;
 
+        if (player.registrationStatus == 'approved') {
+          const approvedMark = document.createElement("p");
+          approvedMark.className = `${Pacifico.className} approved_mark`;
+          approvedMark.style.cssText = `
+            font-size: 48px;
+            color: #daf700ff;
+            position: absolute;
+            bottom: 34px;
+            right: 10px;
+            rotate: 6deg;
+          `;
+          approvedMark.textContent = `Approved`;
+          photosLinePhoto.appendChild(approvedMark);
+        } else {
+          const registrationsMark = document.createElement("p");
+          registrationsMark.className = `${Pacifico.className} registrations_mark`;
+          registrationsMark.style.cssText = `
+            font-size: 48px;
+            color: #dfe3e7ac;
+            position: absolute;
+            bottom: 34px;
+            right: 10px;
+            rotate: 6deg;
+          `;
+          registrationsMark.textContent = `Registed`;
+          photosLinePhoto.appendChild(registrationsMark);
+        }
+
         const avatarDiv = document.createElement("div");
         avatarDiv.style.cssText = `
-          width: 20px;
-          height: 20px;
+          width: 60px;
+          height: 60px;
           border-radius: 50%;
           overflow: hidden;
           display: flex;
           align-items: center;
           justify-content: center;
           position: absolute;
-          top: 10px;
-          left: 10px;
+          bottom: 10px;
+          right: 10px;
           z-index: 10;
         `;
 
@@ -238,15 +265,38 @@ export default function InfiniteScrollCanvas({
 
         const ppDiv = document.createElement("div");
         ppDiv.style.cssText = `
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.9);
+          font-size: 72px;
+          color: rgba(255, 255, 255, 0.4);
           position: absolute;
-          bottom: 30px;
-          left: 10px;
-          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+          font-weight: bold;
+          top: 24px;
+          right: 10px;
         `;
-        ppDiv.textContent = `${Math.round(player.pp)}pp`;
+        ppDiv.textContent = `${Math.round(player.pp)}`;
 
+        const ppDiv2 = document.createElement("p");
+        ppDiv2.style.cssText = `
+          font-size: 24px;
+          color: rgba(255, 255, 255, 0.4);
+          position: absolute;
+          top: 12px;
+          right: 10px;
+        `;
+        ppDiv2.textContent = `pp`;
+
+        const playerGlobalRank = document.createElement("p");
+        playerGlobalRank.style.cssText = `
+      font-size: 14em;
+      color: #787e95ff;
+      text-align: right;
+      right: 10px;
+      top: -18px;
+      position: absolute;
+    `;
+        playerGlobalRank.textContent = `Rank #${player.global_rank || "N/A"} \n ${player.country} #${player.country_rank || "N/A"} `;
+
+        playerContent.appendChild(playerGlobalRank);
+        playerContent.appendChild(ppDiv2);
         playerContent.appendChild(avatarDiv);
         playerContent.appendChild(nameDiv);
         playerContent.appendChild(ppDiv);
@@ -268,7 +318,6 @@ export default function InfiniteScrollCanvas({
                   try {
                     (radarChartContainer as any)._reactRoot.unmount();
                   } catch (e) {
-                    // console.log("Error unmounting React root:", e);
                   }
                 }
 
@@ -299,7 +348,6 @@ export default function InfiniteScrollCanvas({
                 try {
                   (radarChartContainer as any)._reactRoot.unmount();
                 } catch (e) {
-                  // console.log("Error unmounting React root:", e);
                 }
               }
 
@@ -359,6 +407,8 @@ export default function InfiniteScrollCanvas({
       if_movable: false,
       mouse_x: 0,
       mouse_y: 0,
+      last_touch_x: 0,
+      last_touch_y: 0,
       standard_width: 1440,
       scale_nums: 1,
       init() {
@@ -366,19 +416,52 @@ export default function InfiniteScrollCanvas({
         window.addEventListener("resize", () => {
           this.resize();
         });
+
         this.container.addEventListener("mousedown", (event: MouseEvent) => {
           this.if_movable = true;
           this.mouse_x = event.clientX;
           this.mouse_y = event.clientY;
+          this.container.style.cursor = "grabbing";
         });
         this.container.addEventListener("mouseup", () => {
           this.if_movable = false;
+          this.container.style.cursor = "grab";
         });
         this.container.addEventListener("mouseleave", () => {
           this.if_movable = false;
+          this.container.style.cursor = "grab";
         });
         this.container.addEventListener("mousemove", (event: MouseEvent) => {
           this.move(event.clientX, event.clientY);
+        });
+
+        this.container.addEventListener("touchstart", (event: TouchEvent) => {
+          if (event.touches.length === 1) {
+            this.if_movable = true;
+            this.last_touch_x = event.touches[0].clientX;
+            this.last_touch_y = event.touches[0].clientY;
+            this.mouse_x = event.touches[0].clientX;
+            this.mouse_y = event.touches[0].clientY;
+          }
+        }, { passive: true });
+
+        this.container.addEventListener("touchmove", (event: TouchEvent) => {
+          if (event.touches.length === 1 && this.if_movable) {
+            event.preventDefault();
+            const touchX = event.touches[0].clientX;
+            const touchY = event.touches[0].clientY;
+            this.move(touchX, touchY);
+            this.last_touch_x = touchX;
+            this.last_touch_y = touchY;
+          }
+        }, { passive: false });
+
+        this.container.addEventListener("touchend", () => {
+          this.if_movable = false;
+        });
+
+        this.container.addEventListener("touchcancel", () => {
+          this.if_movable = false;
         });
       },
       resize() {
@@ -388,11 +471,9 @@ export default function InfiniteScrollCanvas({
         this.photo_width = imgs[0]?.offsetWidth || 0;
         this.photo_height = imgs[0]?.offsetHeight || 0;
         this.scale_nums = document.body.offsetWidth / this.standard_width;
-        this.container.style.transform = `scale(${this.scale_nums})`;
-        gsap.to(imgs, {
-          transform: `translate(0,0)`,
-          duration: 0,
-          ease: 'power4.out'
+
+        gsap.set(imgs, {
+          transform: `translate(120px, 160px)`,
         });
         this.img_data = [];
         imgs.forEach((img) => {
@@ -408,8 +489,8 @@ export default function InfiniteScrollCanvas({
       },
       move(x: number, y: number) {
         if (!this.if_movable) return;
-        const distance_x = (x - this.mouse_x) / this.scale_nums;
-        const distance_y = (y - this.mouse_y) / this.scale_nums;
+        const distance_x = (x - this.mouse_x) * this.scale_nums;
+        const distance_y = (y - this.mouse_y) * this.scale_nums;
 
         this.img_data.forEach((img) => {
           img.mov_x += distance_x;
@@ -418,8 +499,8 @@ export default function InfiniteScrollCanvas({
           if (img.ani) img.ani.kill();
           img.ani = gsap.to(img.node, {
             transform: `translate(${img.mov_x}px,${img.mov_y}px)`,
-            duration: 0.5,
-            ease: 'power4.out'
+            duration: 0.3,
+            ease: 'power1.out'
           });
         });
 
@@ -433,12 +514,7 @@ export default function InfiniteScrollCanvas({
 
     return () => {
       if (photoBoxRef.current) {
-        const container = photoBoxRef.current.container;
-        container.removeEventListener("mousedown", photoBoxRef.current.init);
-        container.removeEventListener("mouseup", photoBoxRef.current.init);
-        container.removeEventListener("mouseleave", photoBoxRef.current.init);
-        container.removeEventListener("mousemove", photoBoxRef.current.init);
-        window.removeEventListener("resize", photoBoxRef.current.init);
+        window.removeEventListener("resize", photoBoxRef.current.resize);
       }
     };
   }, [registrations]);
@@ -447,10 +523,13 @@ export default function InfiniteScrollCanvas({
     <div
       ref={containerRef}
       style={{
-        position: "relative",
-        width: "100%",
-        height: "100%",
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         overflow: "hidden",
+        boxShadow: "inset 0 0 100px rgba(0, 0, 0, 0.5)",
       }}
     />
   );
