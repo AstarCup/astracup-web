@@ -1,0 +1,24 @@
+table {
+    background-color: white;
+    margin-top: 1%;
+    width: 100%;
+    padding: 3px;
+    border-radius: 16px;
+    border-collapse: separate;
+    border-spacing: 4px;
+}
+
+th {
+    background-color: #e9983b;
+    color: white;
+    border-radius: 16em;
+    padding: 8px 12px;
+}
+
+td {
+    border-bottom: 1px solid #ddd;
+}
+
+tr:hover {
+    background-color: rgb(237, 241, 243);
+}

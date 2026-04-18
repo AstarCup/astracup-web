@@ -223,7 +223,6 @@ export default function RegistrationModal({
         teamName: "",
         seedPosition: null,
         agreedToTerms: true,
-        approved: false,
         approvedAt: null,
         accuracy: parseFloat(skillRatings.accuracy),
         stamina: parseFloat(skillRatings.stamina),

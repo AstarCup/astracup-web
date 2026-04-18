@@ -15,7 +15,7 @@ export async function GET(_request: NextRequest) {
       global_rank: user.global_rank,
       country_rank: user.country_rank,
       country: user.country,
-      approved: user.approved,
+      registrationStatus: user.registrationStatus,
     }));
 
     return NextResponse.json({

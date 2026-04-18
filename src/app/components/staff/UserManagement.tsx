@@ -77,14 +77,14 @@ export default function UserManagement({
                               : "未排名"}
                           </p>
                           <p
-                            className={`text-xs font-medium ${player.approved ? "text-green-400" : "text-yellow-400"}`}
+                            className={`text-xs font-medium ${player.registrationStatus === 'approved' ? "text-green-400" : "text-yellow-400"}`}
                           >
-                            {player.approved ? "✓ 已审核通过" : "⏳ 待审核"}
+                            {player.registrationStatus === 'approved' ? "✓ 已审核通过" : "⏳ 待审核"}
                           </p>
                         </div>
                       </div>
                       <div className="flex flex-col items-end space-y-2">
-                        {!player.approved && (
+                        {player.registrationStatus !== 'approved' && (
                           <button
                             onClick={() =>
                               onApproveRegistration(

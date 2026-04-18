@@ -123,10 +123,7 @@ export default function RegistrationsPage() {
     return (
         <div className="relative min-h-screen">
             <div className="w-full mx-auto">
-                <div className="absolute top-24 right-4 text-right z-[2]">
-                    <h1 className="text-4xl font-bold text-white text-shadow-md">
-                        已报名玩家
-                    </h1>
+                <div className="absolute bottom-4 right-4 text-right z-[2]">
                     <p className="mt-2 text-lg text-gray-100 text-shadow-md">
                         当前共有 {registrations.length} 名玩家报名参赛，已通过审核{
                             " "
@@ -135,7 +132,7 @@ export default function RegistrationsPage() {
                     </p>
                 </div>
 
-                <div className="absolute top-48 right-4 z-[2] bg-[#3d3d3d]/60 p-2 rounded-full text-white">
+                <div className="absolute top-18 right-4 z-[2] bg-[#3d3d3d]/60 p-2 rounded-full text-white">
                     <div className="flex gap-2">
                         <button
                             onClick={() => setFilter("all")}

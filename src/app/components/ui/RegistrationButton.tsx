@@ -11,6 +11,7 @@ interface RegistrationButtonProps {
 export default function RegistrationButton({ user }: RegistrationButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [isApproved, setIsApproved] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // 检查用户是否已报名
@@ -30,15 +31,18 @@ export default function RegistrationButton({ user }: RegistrationButtonProps) {
 
       const data = await response.json();
       console.log("Registration status response:", data);
-      // 检查registrationStatus字段为registered
+      // 检查registrationStatus字段
+      const isApproved = data.data?.approved || false;
       const isRegistered = data.data?.registered || false;
       console.log(
         "Registration status for user",
         user.osuId,
         ":",
         isRegistered,
+        isApproved,
       );
       setIsRegistered(isRegistered);
+      setIsApproved(isApproved);
     } catch (error) {
       console.error("Error checking registration status:", error);
     } finally {
@@ -94,7 +98,7 @@ export default function RegistrationButton({ user }: RegistrationButtonProps) {
     );
   }
 
-  if (isRegistered) {
+  if (isRegistered || isApproved) {
     return (
       <div className="p-9 col-span-2 flex flex-col rounded-lg bg-gray-100 items-left justify-end relative border-b-4 border-gray-400 cursor-not-allowed">
         <span className=""></span>

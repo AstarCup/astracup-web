@@ -1,0 +1,306 @@
+/* Guide Markdown content styles */
+.markdown-content h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  color: #1f2937;
+}
+
+.markdown-content h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  margin-top: 2rem;
+  color: #1f2937;
+}
+
+.markdown-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  margin-top: 1.5rem;
+  color: #1f2937;
+}
+
+.markdown-content p {
+  color: #1f2937;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.markdown-content ul {
+  list-style-type: disc;
+  list-style-position: inside;
+  margin-bottom: 1rem;
+  padding-left: 1rem;
+}
+
+.markdown-content li {
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.markdown-content strong {
+  font-weight: 600;
+  color: #e9893b;
+}
+
+.markdown-content a {
+  color: #60c9fa;
+  text-decoration: underline;
+}
+
+.markdown-content a:hover {
+  color: #fdbd93;
+}
+
+.markdown-content code {
+  background-color: #d3d3d3;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  font-family: monospace;
+}
+
+/* 代码块样式 */
+.markdown-content pre {
+  background-color: #dadada;
+  padding: 1rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+  color: #e5e7eb;
+}
+
+/* 表格样式 (GitHub Flavored Markdown) */
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  background-color: #f7f7f7;
+  overflow: hidden;
+}
+
+.markdown-content th {
+  background-color: #e9ac3b;
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.markdown-content td {
+  color: black;
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.markdown-content td strong {
+  color: #e9893b;
+}
+
+.markdown-content tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 删除线样式 (GitHub Flavored Markdown) */
+.markdown-content del {
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+/* 任务列表样式 (GitHub Flavored Markdown) */
+.markdown-content input[type="checkbox"] {
+  margin-right: 0.5rem;
+  accent-color: #60c9fa;
+}
+
+.markdown-content li.task-list-item {
+  list-style: none;
+  margin-left: -1rem;
+}
+
+/* 引用块样式 */
+.markdown-content blockquote {
+  border-left: 4px solid #60c9fa;
+  background-color: rgba(96, 165, 250, 0.1);
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.markdown-content blockquote p {
+  margin: 0;
+  font-style: italic;
+}
+
+/* 水平分割线 */
+.markdown-content hr {
+  border: none;
+  height: 2px;
+  background: linear-gradient(to right, transparent, #60a5fa, transparent);
+  margin: 2rem 0;
+}
+
+/* Emoji 样式 */
+.markdown-content img.emoji {
+  height: 1.2em;
+  width: 1.2em;
+  margin: 0 0.05em 0 0.1em;
+  vertical-align: -0.1em;
+  display: inline;
+}
+
+/* Typography plugin prose styles customization */
+.prose {
+  max-width: none;
+}
+
+.prose h1 {
+  font-size: 2.25rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  margin-top: 2rem;
+}
+
+.prose h2 {
+  font-size: 1.875rem;
+  font-weight: bold;
+  margin-bottom: 1.25rem;
+  margin-top: 2rem;
+}
+
+.prose h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  margin-top: 1.5rem;
+}
+
+.prose h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.prose p {
+  line-height: 1.75;
+  margin-bottom: 1.25rem;
+}
+
+.prose ul {
+  list-style-type: disc;
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.prose ol {
+  list-style-type: decimal;
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.prose li {
+  margin-bottom: 0.5rem;
+  line-height: 1.75;
+}
+
+.prose blockquote {
+  border-left: 4px solid #60a5fa;
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+}
+
+.prose strong {
+  font-weight: 600;
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose a {
+  color: #60a5fa;
+  font-weight: 500;
+  border-radius: 0.125rem;
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
+.prose a:hover {
+  color: #ffffff;
+  background-color: #60a5fa;
+  transform: scale(1.2);
+}
+
+.prose a:active {
+  transform: scale(0.95);
+}
+
+.prose code {
+  background-color: #cccccc;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 0.875em;
+}
+
+.prose pre {
+  background-color: #1f2937;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+.prose pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.875rem;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+
+.prose th {
+  background-color: #e93b66;
+  color: white;
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid #4b5563;
+}
+
+.prose td {
+  color: black;
+  padding: 0.75rem;
+  border: 1px solid #4b5563;
+}
+
+.prose td strong {
+  color: #e93b66;
+}
+
+.prose img {
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid #4b5563;
+  margin: 2rem 0;
+}

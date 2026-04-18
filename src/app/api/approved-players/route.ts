@@ -60,7 +60,7 @@ export async function GET(_request: NextRequest) {
 
     // 过滤出已审核通过的玩家
     const approvedPlayers = allUsers
-      .filter((user) => user.approved)
+      .filter((user) => user.registrationStatus === 'approved')
       .map((user) => ({
         osuId: user.osuId,
         username: user.username,

@@ -164,7 +164,7 @@ export default function RadarChart({
 
         // 绘制数值标签
         ctx.fillStyle = "#1f2937";
-        ctx.font = "bold 14px sans-serif";
+        ctx.font = "bold 14px";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
@@ -183,7 +183,7 @@ export default function RadarChart({
                 ref={canvasRef}
                 width={width}
                 height={height}
-                className="rounded-lg"
+                className=""
             />
         </div>
     );

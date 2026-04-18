@@ -23,7 +23,6 @@ export interface TournamentUser {
   global_rank: number | null;
   country: string;
   country_rank: number | null;
-  approved: boolean;
   userGroup: "player" | "admin";
   registrationStatus: "not_registered" | "registered" | "approved";
   season: string | null;
@@ -52,7 +51,6 @@ export interface TournamentRegistration {
   teamName: string;
   seedPosition: number | null;
   agreedToTerms: boolean;
-  approved: boolean;
   approvedAt: string | null;
   registeredAt: string;
   accuracy: number | null;
@@ -235,7 +233,6 @@ export const createOrUpdateUser = async (userData: {
         cover_url: userData.cover_url,
         cover_id: userData.cover_id,
         registeredAt: new Date(),
-        approved: false,
         userGroup: "player",
         registrationStatus: "not_registered",
       },
@@ -354,9 +351,8 @@ export const addTournamentRegistration = async (registrationData: {
         cover_url: registrationData.cover_url,
         cover_id: registrationData.cover_id,
         registeredAt: new Date(),
-        approved: false,
         userGroup: "player",
-        registrationStatus: "registered", // 新用户直接报名
+        registrationStatus: "registered",
         season: registrationData.season,
         accuracy: registrationData.accuracy,
         stamina: registrationData.stamina,
@@ -416,8 +412,7 @@ export const approveRegistration = async (osuId: string): Promise<boolean> => {
     await prisma.user.updateMany({
       where: { osuId },
       data: {
-        approved: true,
-        registrationStatus: "approved", // 更新报名状态为已审核
+        registrationStatus: "approved",
         updatedAt: new Date(),
       },
     });
@@ -671,7 +666,6 @@ export const getRegistrations = async (): Promise<TournamentRegistration[]> => {
       teamName: "", // User模型中没有这个字段
       seedPosition: null, // User模型中没有这个字段
       agreedToTerms: false, // User模型中没有这个字段
-      approved: user.approved || false,
       approvedAt: null, // User模型中没有这个字段
       registeredAt: user.registeredAt
         ? user.registeredAt.toISOString()
@@ -737,10 +731,9 @@ export const getUserRegistration = async (
       country_rank: user.country_rank,
       country: user.country,
       teamName: "", // User模型中没有这个字段
-      seedPosition: null, // User模型中没有这个字段
-      agreedToTerms: false, // User模型中没有这个字段
-      approved: user.approved || false,
-      approvedAt: null, // User模型中没有这个字段
+      seedPosition: null,
+      agreedToTerms: false,
+      approvedAt: null,
       registeredAt: user.registeredAt
         ? user.registeredAt.toISOString()
         : new Date().toISOString(),

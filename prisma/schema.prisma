@@ -18,9 +18,8 @@ model User {
   avatar_url    String?
   pp            Float?
   global_rank   Int?
-  country       String
   country_rank  Int?
-  approved      Boolean           @default(false)
+  country       String
   userGroup     UserGroup         @default(player)
   registrationStatus RegistrationStatus @default(not_registered)
   season        String?           // 使用逗号分隔的字符串存储报名的赛季，如 "s1,s2,s3"
@@ -39,7 +38,6 @@ model User {
 
   @@index([osuId])
   @@index([username])
-  @@index([approved])
   @@index([userGroup])
   @@index([registrationStatus])
   @@index([season])

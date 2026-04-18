@@ -1,0 +1,29 @@
+/* Dropdown 组件全局样式 */
+.dropdown-container {
+  @apply flex flex-col gap-2 items-start text-3xl;
+}
+
+.dropdown-button {
+  @apply bg-white/20 border-b-[4px] border-gray-300 text-white px-3 py-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer flex items-end text-2xl justify-between hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.dropdown-label {
+  @apply font-bold text-gray-800;
+}
+
+.dropdown-label-dark {
+  @apply font-bold text-white;
+}
+
+.dropdown-button-dark {
+  @apply border-gray-600 text-white hover:bg-[#E93B66] focus:ring-[#E93B66] focus:border-[#E93B66];
+}
+
+.dropdown-menu {
+  @apply absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 shadow-lg z-50 overflow-y-auto;
+  transition:
+    opacity 300ms ease-out,
+    transform 300ms ease-out,
+    max-height 300ms ease-out;
+  transform-origin: top;
+}

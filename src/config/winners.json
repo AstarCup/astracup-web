@@ -2,44 +2,38 @@
   "seasons": [
     {
       "seasonId": "s1",
-      "seasonName": "第一届",
       "year": "2025",
-      "description": "AstarCup 第一届",
+      "description": "AstarCup 第一届 solo赛",
       "winners": {
         "first": {
-          "rank": 1,
-          "playerName": "TBD",
-          "osuId": "00000000",
-          "country": "XX",
-          "avatarUrl": "https://a.ppy.sh/00000000",
-          "teamName": "待定",
-          "achievement": "比赛进行中",
+          "playerName": "-SummerSky-",
+          "osuId": "18955845",
+          "country": "CN",
+          "avatarUrl": "https://a.ppy.sh/18955845?1760643169.jpeg",
           "resultImage": ""
         },
         "second": {
-          "rank": 2,
           "playerName": "TBD",
           "osuId": "00000000",
           "country": "XX",
           "avatarUrl": "https://a.ppy.sh/00000000",
-          "teamName": "待定",
+          "teamName": "",
           "achievement": "比赛进行中",
           "resultImage": ""
         },
         "third": {
-          "rank": 3,
           "playerName": "TBD",
           "osuId": "00000000",
           "country": "XX",
           "avatarUrl": "https://a.ppy.sh/00000000",
-          "teamName": "待定",
+          "teamName": "",
           "achievement": "比赛进行中",
           "resultImage": ""
         }
       },
-      "matchDate": "2025-12-25",
-      "totalParticipants": 0,
-      "status": "ongoing"
+      "matchDate": "2025-10-27",
+      "totalParticipants": 41,
+      "status": "close"
     }
   ]
 }

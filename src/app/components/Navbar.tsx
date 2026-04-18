@@ -7,6 +7,17 @@ import { useState, useRef, useEffect } from "react";
 import { UserSession } from "@/lib/permissions";
 import MessageNotification from "./ui/MessageNotification";
 import { DynamicIcon } from "lucide-react/dynamic";
+import { Menu, Sun, Moon } from "lucide-react";
+import { useTheme } from "./ThemeProvider";
+import localFont from 'next/font/local'
+
+const Pacifico = localFont({
+    src: '../font/Pacifico-Regular.ttf',
+})
+
+const CalSans = localFont({
+    src: '../font/CalSans-Regular.ttf',
+})
 
 export default function Navbar() {
     const pathname = usePathname();
@@ -22,6 +33,7 @@ export default function Navbar() {
     const [permissionsLoading, setPermissionsLoading] = useState(true);
     const [setVersionInfo] = useState<string>("");
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const { isDark, toggleDarkMode } = useTheme();
 
     const handleAvatarError = () => {
         setAvatarSrc("/default-avatar.png");
@@ -89,17 +101,7 @@ export default function Navbar() {
                             );
                             if (permissionsResponse.ok) {
                                 const permissionsData = await permissionsResponse.json();
-                                // console.log('Permissions data received:', permissionsData);
 
-                                // 调试：检查权限数据结构
-                                // console.log('Permissions data structure:', {
-                                // hasPermissions: !!permissionsData.permissions,
-                                // permissions: permissionsData.permissions,
-                                // isadmin: permissionsData.permissions?.isadmin,
-                                // isplayer: permissionsData.permissions?.isplayer
-                                // });
-
-                                // 确保权限数据包含新的字段
                                 const newPermissions = {
                                     isplayer: permissionsData.permissions?.isplayer || false,
                                     isadmin: permissionsData.permissions?.isadmin || false,
@@ -174,7 +176,7 @@ export default function Navbar() {
                 { name: "NEWS", href: "/news", tip: "新闻", svg: "newspaper" },
                 {
                     name: "BLOG",
-                    href: "https://blog.rino.ink",
+                    href: "https://rino.ink",
                     tip: "Acricle",
                     svg: "rss",
                 },
@@ -232,21 +234,11 @@ export default function Navbar() {
             : []),
     ];
 
-    // 调试：检查navGroups
-    // console.log('NavGroups debug:', {
-    // permissionsLoading,
-    // permissions,
-    // isadmin: permissions.isadmin,
-    // shouldShowAdmin: !permissionsLoading && permissions.isadmin,
-    // navGroupsLength: navGroups.length,
-    // navGroups
-    // });
-
     const isActive = (href: string) => pathname === href;
 
     return (
         <nav
-            className={`antialiased select-none pointer-events-none justify-center w-full`}
+            className={` ${CalSans.className} antialiased select-none pointer-events-none justify-center w-full`}
         >
             <div className="fixed top-0 left-0 w-full z-[50] object-center font-bold select-none mt-4">
                 <div className=" mx-auto px-10 rounded-full">
@@ -255,7 +247,7 @@ export default function Navbar() {
                         <div className="text-xl font-bold pointer-events-auto">
                             <Link
                                 href="/"
-                                className="flex flex-row items-center font-bold text-gray-400 hover:scale-[1.05] active:scale-[0.95] hover:-rotate-5 transition-all duration-200"
+                                className="flex flex-row items-center font-bold text-text-secondary hover:scale-[1.05] active:scale-[0.95] hover:-rotate-5 transition-all duration-200"
                             >
                                 <Image
                                     src="/colLogo.svg"
@@ -267,19 +259,19 @@ export default function Navbar() {
                         </div>
 
                         {/* Right Side Container */}
-                        <div className="flex items-center space-x-4 pointer-events-auto bg-white px-4 rounded-full shadow-lg">
+                        <div className="flex items-center space-x-4 pointer-events-auto bg-white dark:bg-white-extra px-4 rounded-full shadow-lg">
                             {/* Desktop Menu */}
-                            <ul className="hidden xl:flex space-x-8 text-gray-600 p-2 m-2 navbar-menu">
+                            <ul className="hidden xl:flex space-x-8 text-text p-2 m-2 navbar-menu">
                                 {navGroups.map((group) => (
                                     <li key={group.name} className="relative">
                                         <button
-                                            className="flex gap-4 flex-col group items-center justify-center relative cursor-pointer hover:bg-gray-200 hover:font-bold rounded-lg border-b-4 border-white hover:border-pink-400 hover:text-[#E93B66] transition-all duration-200"
+                                            className="flex gap-4 flex-col group items-center justify-center relative cursor-pointer hover:bg-action dark:hover:bg-action hover:font-bold rounded-lg border-b-4 border-white dark:border-white-extra hover:border-pink-400 hover:text-[#E93B66] transition-all duration-200"
                                             onMouseEnter={() => handleMouseEnter(group.name)}
                                             onMouseLeave={handleMouseLeave}
                                             onClick={() => handleGroupClick(group.name)}
                                         >
                                             <span
-                                                className={`flex items-center gap-2 px-2 py-1 transition-full duration-200 ${shouldShowGroup(group.name) ? "text-gray-800" : "text-gray-600"}`}
+                                                className={`flex items-center gap-2 px-2 py-1 transition-full duration-200 ${shouldShowGroup(group.name) ? "text-text" : "text-text-secondary"}`}
                                             >
                                                 {group.name}
                                                 {group.svg ? (
@@ -304,11 +296,11 @@ export default function Navbar() {
                                                     {group.links.map((link) => (
                                                         <div
                                                             key={link.href}
-                                                            className="rounded-lg bg-white hover:bg-gray-200 active:scale-[0.9] transition-full duration-200 min-h-20 flex mb-2 last:mb-0"
+                                                            className="rounded-lg bg-white dark:bg-white-extra hover:bg-action dark:hover:bg-action active:scale-[0.9] transition-full duration-200 min-h-20 flex mb-2 last:mb-0"
                                                         >
                                                             <Link
                                                                 href={link.href}
-                                                                className={`flex-1 p-3 text-left text-sm font-medium flex items-end gap-2 relative text-gray-800 border-pink-400 border-b-4 rounded-lg ${isActive(link.href) ? "bg-gray-600 text-white border-gray-400 font-bold rounded-lg" : ""}`}
+                                                                className={`flex-1 p-3 text-left text-sm font-medium flex items-end gap-2 relative text-text border-pink-400 border-b-4 rounded-lg ${isActive(link.href) ? "bg-action text-white border-gray-400 font-bold rounded-lg" : ""}`}
                                                             >
                                                                 <div className="flex flex-col justify-end">
                                                                     <div className="text-xs opacity-75 font-bold mb-1 leading-tight">
@@ -339,8 +331,15 @@ export default function Navbar() {
                             {/* User Profile */}
                             <div className="hidden relative xl:flex items-center ml-4">
                                 {user ? <MessageNotification /> : <div></div>}
+                                <button
+                                    onClick={toggleDarkMode}
+                                    className="ml-2 p-2 rounded-full bg-action hover:bg-highlight transition-colors"
+                                    aria-label="Toggle dark mode"
+                                >
+                                    {isDark ? <Sun className="w-5 h-5 text-text" /> : <Moon className="w-5 h-5 text-text" />}
+                                </button>
                                 <div className="mr-4">
-                                    <div className="absolute text-right text-4xl top-11 right-10 text-gray-300 z-1">
+                                    <div className="absolute text-right text-4xl top-11 right-10 text-text-secondary z-1 pointer-events-none">
                                         {user?.username || ""}
                                     </div>
                                 </div>
@@ -364,7 +363,7 @@ export default function Navbar() {
                                 ) : (
                                     <button
                                         onClick={() => (window.location.href = "/register")}
-                                        className="bg-gray-200 hover:bg-gray-400 hover:text-white hover:scale-[1.1] active:scale-[0.9] font-bold text-gray-600 border-b-4 border-pink-200 px-4 py-2 rounded-md transition-all duration-200"
+                                        className="bg-action hover:bg-highlight hover:text-white hover:scale-[1.1] active:scale-[0.9] font-bold text-text border-b-4 border-pink-200 px-4 py-2 rounded-md transition-all duration-200"
                                     >
                                         使用osu!登录
                                     </button>
@@ -382,119 +381,113 @@ export default function Navbar() {
                                         alt={user.username}
                                         width={32}
                                         height={32}
-                                        className="rounded-full outline outline-2 outline-[#E93B66]"
+                                        className="rounded-full outline outline-2 outline-pink-400"
                                         onError={handleAvatarError}
                                     />
                                 ) : (
                                     <button
                                         onClick={() => (window.location.href = "/register")}
-                                        className="bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-3 py-1 rounded text-sm transition-colors duration-200"
+                                        className="bg-highlight hover:bg-action text-white px-3 py-1 rounded text-sm transition-colors duration-200"
                                     >
                                         登录
                                     </button>
                                 )}
                             </div>
 
+                            <button
+                                onClick={toggleDarkMode}
+                                className="p-2 rounded-full bg-action hover:bg-highlight transition-colors"
+                                aria-label="Toggle dark mode"
+                            >
+                                {isDark ? <Sun className="w-5 h-5 text-text" /> : <Moon className="w-5 h-5 text-text" />}
+                            </button>
+
                             {/* Mobile Menu Button */}
                             <button
-                                className="flex flex-col items-center space-y-1 p-2 pointer-events-auto"
+                                className="flex items-center justify-center p-2 pointer-events-auto"
                                 onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
                                 aria-expanded={isMobileMenuOpen}
                                 aria-label="Toggle mobile menu"
                             >
-                                <span
-                                    className={`block w-4 h-0.5 bg-[#3BE9D8] transition-transform ${isMobileMenuOpen ? "rotate-45" : ""}`}
-                                ></span>
-                                <span
-                                    className={`block w-4 h-0.5 bg-[#3BE9D8] ${isMobileMenuOpen ? "opacity-0" : ""}`}
-                                ></span>
-                                <span
-                                    className={`block w-4 h-0.5 bg-[#3BE9D8] transition-transform ${isMobileMenuOpen ? "-rotate-45" : ""}`}
-                                ></span>
+                                <Menu className="w-6 h-6 text-highlight" />
                             </button>
                         </div>
                     </div>
 
-                    {/* Mobile Menu Panel */}
+                    {/* Mobile Menu Dropdown */}
                     <div
                         className={`xl:hidden pointer-events-auto overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen
-                            ? "max-h-screen py-0 opacity-100"
+                            ? "max-h-[70vh] opacity-100"
                             : "max-h-0 opacity-0"
                             }`}
                     >
-                        <div className="max-h-120 overflow-y-auto p-4 bg-black/50">
-                            <div className="space-y-6">
-                                {navGroups.map((group) => (
-                                    <div key={group.name}>
-                                        {/* Group Title */}
-                                        <div className="bg-white text-gray text-2xl px-4 py-2 mb-3 inline-flex items-center gap-3">
-                                            {group.svg ? (
-                                                <DynamicIcon
-                                                    name={group.svg as any}
-                                                    className="w-6 h-6 flex-shrink-0"
-                                                />
-                                            ) : (
-                                                <span className="w-4 h-4 bg-transparent flex-shrink-0"></span>
-                                            )}
-                                            <span className="font-bold text-sm">{group.name}</span>
-                                        </div>
-                                        {/* Group Links Grid */}
-                                        <div className="grid grid-cols-2 gap-2">
-                                            {group.links.map((link) => (
-                                                <div
-                                                    key={link.href}
-                                                    className="border-b-4 border-[#E93B66] bg-white/100 hover:bg-[#3BE9D8] hover:border-[#ffffff] transition-colors duration-200 min-h-16 flex overflow-hidden"
-                                                >
-                                                    <Link
-                                                        href={link.href}
-                                                        className={`flex-1 p-3 text-left text-sm font-medium flex items-center gap-2 relative ${isActive(link.href) ? "bg-[#3BE9D8] font-bold" : "text-gray-800"}`}
-                                                        onClick={() => setMobileMenuOpen(false)}
-                                                    >
-                                                        {link.svg ? (
-                                                            <DynamicIcon
-                                                                name={link.svg as any}
-                                                                className="w-6 h-6 flex-shrink-0 filter brightness-0 saturate-0 opacity-80 transition-all duration-200"
-                                                            />
-                                                        ) : (
-                                                            <span className="w-4 h-4 bg-transparent flex-shrink-0"></span>
-                                                        )}
-                                                        <div className="flex flex-col justify-center">
-                                                            <div className="text-xs opacity-75 font-bold mb-1 leading-tight">
-                                                                {link.name}
-                                                            </div>
-                                                            <div className="text-lg font-bold leading-tight">
-                                                                {link.tip}
-                                                            </div>
-                                                        </div>
-                                                    </Link>
-                                                </div>
-                                            ))}
-                                        </div>
+                        <div className="bg-white dark:bg-white-extra rounded-b-3xl shadow-lg mx-4 mt-2 overflow-y-auto max-h-[70vh]">
+                            {navGroups.map((group) => (
+                                <div key={group.name} className="border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                    <div className="px-6 py-3 bg-action dark:bg-action flex items-center gap-3">
+                                        {group.svg ? (
+                                            <DynamicIcon
+                                                name={group.svg as any}
+                                                className="w-5 h-5 flex-shrink-0 text-pink-500"
+                                            />
+                                        ) : (
+                                            <span className="w-4 h-4 bg-transparent flex-shrink-0"></span>
+                                        )}
+                                        <span className="font-bold text-sm text-text">{group.name}</span>
                                     </div>
-                                ))}
-                            </div>
-                            {/* Mobile User Profile */}
+                                    <div className="p-3 space-y-2">
+                                        {group.links.map((link) => (
+                                            <Link
+                                                key={link.href}
+                                                href={link.href}
+                                                onClick={() => setMobileMenuOpen(false)}
+                                                className={`flex items-center gap-3 p-4 rounded-lg border-b-4 transition-all duration-200 ${isActive(link.href)
+                                                    ? "bg-action text-white border-gray-400"
+                                                    : "bg-white dark:bg-white-extra hover:bg-action dark:hover:bg-action text-text border-pink-400 hover:border-grey-400"
+                                                    }`}
+                                            >
+                                                {link.svg ? (
+                                                    <DynamicIcon
+                                                        name={link.svg as any}
+                                                        className="w-7 h-7 flex-shrink-0"
+                                                        color={isActive(link.href) ? "white" : "pink"}
+                                                    />
+                                                ) : (
+                                                    <span className="w-4 h-4 bg-transparent flex-shrink-0"></span>
+                                                )}
+                                                <div className="flex flex-col justify-center flex-1">
+                                                    <div className="text-xs opacity-75 font-bold mb-0.5 leading-tight">
+                                                        {link.name}
+                                                    </div>
+                                                    <div className="text-xl font-bold leading-tight">
+                                                        {link.tip}
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
                             {user && (
-                                <div className="mt-4 pt-4 border-t border-gray-300">
+                                <div className="p-4 border-t border-gray-200 dark:border-gray-700">
                                     <Link
                                         href="/player-info"
                                         onClick={() => setMobileMenuOpen(false)}
+                                        className="flex items-center gap-3 p-3 bg-action rounded-lg cursor-pointer hover:bg-highlight transition-colors duration-200"
                                     >
-                                        <div className="flex items-center gap-3 p-3 bg-[#3d3d3d] rounded-md cursor-pointer hover:bg-[#4d4d4d] transition-colors duration-200">
-                                            <Image
-                                                src={avatarSrc}
-                                                alt={user.username}
-                                                width={40}
-                                                height={40}
-                                                className="rounded-full outline outline-2 outline-[#E93B66]"
-                                                onError={handleAvatarError}
-                                            />
-                                            <div className="flex-1">
-                                                <div className="text-white font-bold text-sm">
-                                                    {user.username}
-                                                </div>
-                                                <div className="text-gray-300 text-xs">比赛预约</div>
+                                        <Image
+                                            src={avatarSrc}
+                                            alt={user.username}
+                                            width={40}
+                                            height={40}
+                                            className="rounded-full outline outline-2 outline-pink-400"
+                                            onError={handleAvatarError}
+                                        />
+                                        <div className="flex-1">
+                                            <div className="text-text font-bold text-sm">
+                                                {user.username}
                                             </div>
+                                            <div className="text-text-secondary text-xs">查看个人信息</div>
                                         </div>
                                     </Link>
                                 </div>

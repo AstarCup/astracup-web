@@ -6,7 +6,6 @@ import { TournamentRegistration } from "@/lib/prisma-registrations";
 import RadarChart from "./RadarChart";
 
 import localFont from 'next/font/local'
-import type { AppProps } from 'next/app'
 
 const Pacifico = localFont({
   src: '../../font/Pacifico-Regular.ttf',
@@ -313,6 +312,123 @@ export default function InfiniteScrollCanvas({
         playerContent.appendChild(avatarDiv);
         playerContent.appendChild(nameDiv);
         playerContent.appendChild(ppDiv);
+
+        const buttonsContainer = document.createElement("div");
+        buttonsContainer.className = "action-buttons-container";
+        buttonsContainer.style.cssText = `
+          display: flex;
+          position: absolute;
+          bottom: 80px;
+          left: 10px;
+          right: 10px;
+          gap: 8px;
+          z-index: 20;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        `;
+
+        const copyButton = document.createElement("button");
+        copyButton.className = "action-button copy-button";
+        copyButton.style.cssText = `
+          flex: 1;
+          position: absolute;
+          padding: 8px 12px;
+          top: -60px;
+          left: -30px;
+          background: #00000040;
+          color: white;
+          border: 2px solid;
+          border-color: #d7d73fff;
+          border-radius: 24px;
+          cursor: pointer;
+          font-size: 12px;
+          font-weight: 600;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+        `;
+
+        const clipboardIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        clipboardIcon.setAttribute("width", "14");
+        clipboardIcon.setAttribute("height", "14");
+        clipboardIcon.setAttribute("viewBox", "0 0 24 24");
+        clipboardIcon.setAttribute("fill", "none");
+        clipboardIcon.setAttribute("stroke", "currentColor");
+        clipboardIcon.setAttribute("stroke-width", "2");
+        clipboardIcon.setAttribute("stroke-linecap", "round");
+        clipboardIcon.setAttribute("stroke-linejoin", "round");
+        clipboardIcon.innerHTML = `<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>`;
+
+        const copyText = document.createElement("span");
+        copyText.textContent = "复制osuID";
+
+        copyButton.appendChild(clipboardIcon);
+        copyButton.appendChild(copyText);
+
+        copyButton.addEventListener("click", (e) => {
+          e.stopPropagation();
+          navigator.clipboard.writeText(player.osuId).then(() => {
+            copyText.textContent = "已复制!";
+            copyButton.style.background = " #48bb783c";
+            setTimeout(() => {
+              copyText.textContent = "复制osuID";
+              copyButton.style.background = "#00000040";
+            }, 1500);
+          });
+        });
+
+        copyButton.addEventListener("mouseenter", () => {
+          copyButton.style.transform = "translateY(-2px)";
+          copyButton.style.boxShadow = "0 4px 12px rgba(234, 227, 102, 0.4)";
+        });
+
+        copyButton.addEventListener("mouseleave", () => {
+          copyButton.style.transform = "translateY(0)";
+          copyButton.style.boxShadow = "0 2px 8px rgba(234, 227, 102, 0.3)";
+        });
+
+        const profileButton = document.createElement("button");
+        profileButton.className = "action-button profile-button";
+        profileButton.style.cssText = `
+          flex: 1;
+          padding: 8px 12px;
+          position: absolute;
+          top: -10px;
+          left: -30px;
+          background: #00000040;
+          border: 2px solid;
+          border-color: #ff6b6b97;
+          color: white;
+          border-radius: 24px;
+          cursor: pointer;
+          font-size: 12px;
+          font-weight: 600;
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+        `;
+        profileButton.textContent = `${player.username}的osu!主页`;
+
+        profileButton.addEventListener("click", (e) => {
+          e.stopPropagation();
+          window.open(`https://osu.ppy.sh/users/${player.osuId}`, "_blank");
+        });
+
+        profileButton.addEventListener("mouseenter", () => {
+          profileButton.style.transform = "translateY(-2px)";
+          profileButton.style.boxShadow = "0 4px 12px rgba(255, 107, 107, 0.4)";
+        });
+
+        profileButton.addEventListener("mouseleave", () => {
+          profileButton.style.transform = "translateY(0)";
+          profileButton.style.boxShadow = "0 2px 8px rgba(255, 107, 107, 0.3)";
+        });
+
+        buttonsContainer.appendChild(copyButton);
+        buttonsContainer.appendChild(profileButton);
+        playerContent.appendChild(buttonsContainer);
+
         photosLinePhoto.appendChild(playerContent);
 
         photosLinePhoto.addEventListener("click", (e) => {
@@ -394,6 +510,7 @@ export default function InfiniteScrollCanvas({
             duration: 0.1,
             ease: "power2.out",
           });
+          buttonsContainer.style.opacity = "1";
         });
 
         photosLinePhoto.addEventListener("mouseleave", () => {
@@ -402,6 +519,7 @@ export default function InfiniteScrollCanvas({
             duration: 0.3,
             ease: "power2.out",
           });
+          buttonsContainer.style.opacity = "0";
         });
 
         photosLine.appendChild(photosLinePhoto);

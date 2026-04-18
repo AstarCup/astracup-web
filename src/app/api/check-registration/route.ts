@@ -2,9 +2,9 @@ import { NextRequest } from "next/server";
 import {
   isUserExists,
   isUserRegistered,
-  isUserApproved,
 } from "@/lib/prisma-registrations";
 import { createSuccessResponse, createErrorResponse } from "@/lib/session";
+import { getUser } from "@/lib/prisma-registrations";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,14 +17,16 @@ export async function GET(request: NextRequest) {
 
     const userExists = await isUserExists(osuId);
     const registered = userExists ? await isUserRegistered(osuId) : false;
-    const approved = userExists ? await isUserApproved(osuId) : false;
+    const user = userExists ? await getUser(osuId) : null;
+    const registrationStatus = user?.registrationStatus || 'not_registered';
 
     return createSuccessResponse(
       {
         osuId,
         userExists,
         registered,
-        approved,
+        approved: registrationStatus === 'approved',
+        registrationStatus,
       },
       "Registration status checked",
     );

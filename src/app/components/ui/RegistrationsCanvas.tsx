@@ -165,7 +165,7 @@ export default function RegistrationsCanvas({
             ctx.arc(x, y, radius, 0, Math.PI * 2);
 
             // 根据审核状态设置颜色
-            if (playerPos.player.approved) {
+            if (playerPos.player.registrationStatus === 'approved') {
                 ctx.fillStyle = "rgba(34, 197, 94, 0.2)"; // 绿色 - 已审核
                 ctx.strokeStyle = "#22c55e";
             } else {

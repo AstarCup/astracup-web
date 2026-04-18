@@ -1,6 +1,17 @@
 import { ConfigProvider } from "./components/ConfigProvider";
+import { ThemeProvider } from "./components/ThemeProvider";
 import { AppContent } from "./components/AppContent";
 import "./globals.css";
+
+import localFont from 'next/font/local'
+
+const Pacifico = localFont({
+  src: './font/Pacifico-Regular.ttf',
+})
+
+const CalSans = localFont({
+  src: './font/CalSans-Regular.ttf',
+})
 
 // 页面标题映射
 export const pageTitles: Record<string, string> = {
@@ -28,10 +39,12 @@ export default function RootLayout({
         <meta name="theme-color" content="#ffffff" />
         <meta name="msapplication-TileColor" content="#ffffff" />
       </head>
-      <body className={`antialiased`}>
-        <ConfigProvider>
-          <AppContent>{children}</AppContent>
-        </ConfigProvider>
+      <body className={`${CalSans.className} antialiased`}>
+        <ThemeProvider>
+          <ConfigProvider>
+            <AppContent>{children}</AppContent>
+          </ConfigProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
