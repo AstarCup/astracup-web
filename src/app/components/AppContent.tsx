@@ -11,9 +11,8 @@ import { NotificationContainer } from "../components/ui/Notification";
 function LoadingScreen({ isLoading }: { isLoading: boolean }) {
   return (
     <div
-      className={`fixed inset-0 z-50 bg-black transition-opacity duration-1000 ${
-        isLoading ? "opacity-100" : "opacity-0 pointer-events-none"
-      }`}
+      className={`fixed inset-0 z-50 bg-black transition-opacity duration-1000 ${isLoading ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
     >
       <div className="relative w-full h-full">
         {/* 下边图片（原来右边的）- 全屏显示 */}

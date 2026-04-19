@@ -10,6 +10,7 @@ import NewStyleLogo from "./components/icons/NewStyleLogo";
 import { useConfig } from "./components/ConfigProvider";
 import { BookMarked, CalendarDays, Table2, Contact } from "lucide-react";
 import Link from "next/link";
+import WinnersCanvas from "./components/ui/WinnersCanvas";
 
 interface UserSession {
   osuId: string;
@@ -203,41 +204,27 @@ export default function Home() {
                 </div>
               )}
             </div>
+            <div>
+              <h1 className="text-3xl font-bold text-text mt-4">第一赛季</h1>
+            </div>
           </div>
+
+        </div>
+        <div className="mt-8 w-full">
+          <WinnersCanvas showControls={false} defaultSeason="s1" height="1000px" />
+        </div>
+        <div className="relative w-full max-w-7xl flex flex-col items-left justify-center px-4 sm:px-6 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-3 mt-4 gap-4 w-full z-0 relative">
-            <div className="md:col-span-2 bg-white dark:bg-white-extra rounded-lg p-3 z-2 min-h-[400px] md:min-h-[500px]">
+            <div className="bg-white dark:bg-white-extra rounded-lg p-3 z-2">
               <div className="overflow-y-auto">
                 <NewsListWithPagination />
               </div>
             </div>
 
-            {!user ? (
-              <div>
-                <div className="col-span-2 flex flex-col w-full gap-2 items-end justify-between">
-                  <Link
-                    href="https://qm.qq.com/q/sFydxoQtaw"
-                    className="p-3 text-xl relative group font-bold text-text text-right flex w-full flex-col rounded-lg bg-white dark:bg-white-extra justify-end hover:transition-all group relative border-b-4 border-gray-600 hover:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  >
-                    QQ Group
-                  </Link>
-                  <Link
-                    href="https://space.bilibili.com/11872433"
-                    className="p-3 text-xl font-bold text-text text-right flex w-full flex-col rounded-lg bg-white dark:bg-white-extra justify-end hover:transition-all group relative border-b-4 border-gray-600 hover:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  >
-                    Bilibili
-                  </Link>
-                  <Link
-                    href="https://live.bilibili.com/725565"
-                    className="p-3 text-xl font-bold text-text text-right flex w-full flex-col rounded-lg bg-white dark:bg-white-extra justify-end hover:transition-all group relative border-b-4 border-gray-600 hover:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  >
-                    Live
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <UserProfile user={user} onLogout={handleLogout} />
-            )}
+
+
           </div>
+
         </div>
       </div>
     </div>

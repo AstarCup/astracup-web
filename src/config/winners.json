@@ -1,36 +1,82 @@
 {
+  "cards": [
+    {
+      "id": "card-s1-1",
+      "playerName": "-SummerSky-",
+      "osuId": "18955845",
+      "avatarUrl": "https://a.ppy.sh/18955845?1760643169.jpeg",
+      "rank": 1,
+      "country": "CN",
+      "season": "s1",
+      "position": {
+        "x": 200,
+        "y": 120,
+        "rotate": -3
+      },
+      "frameStyle": "gold"
+    },
+    {
+      "id": "card-s1-2",
+      "playerName": "MogenNotFound",
+      "osuId": "14494010",
+      "avatarUrl": "https://a.ppy.sh/14494010?1760114972.jpeg",
+      "rank": 2,
+      "country": "CN",
+      "season": "s1",
+      "position": {
+        "x": 550,
+        "y": 180,
+        "rotate": 2
+      },
+      "frameStyle": "silver"
+    },
+    {
+      "id": "card-s1-3",
+      "playerName": "lelxdme",
+      "osuId": "13795588",
+      "avatarUrl": "https://a.ppy.sh/13795588?1745057874.jpeg",
+      "rank": 3,
+      "country": "HK",
+      "season": "s1",
+      "position": {
+        "x": 900,
+        "y": 140,
+        "rotate": -2
+      },
+      "frameStyle": "bronze"
+    }
+  ],
+  "photos": [
+    {
+      "id": "photo-s1-1",
+      "imageUrl": "/photos/s1-1.png",
+      "caption": "冠军女装照OvO",
+      "season": "s1",
+      "position": {
+        "x": 350,
+        "y": 450,
+        "rotate": 5
+      },
+      "frameStyle": "classic"
+    },
+    {
+      "id": "photo-s1-2",
+      "imageUrl": "/photos/s1-2.png",
+      "caption": "冠军女装照OvO",
+      "season": "s1",
+      "position": {
+        "x": 750,
+        "y": 500,
+        "rotate": -4
+      },
+      "frameStyle": "classic"
+    }
+  ],
   "seasons": [
     {
       "seasonId": "s1",
       "year": "2025",
       "description": "AstarCup 第一届 solo赛",
-      "winners": {
-        "first": {
-          "playerName": "-SummerSky-",
-          "osuId": "18955845",
-          "country": "CN",
-          "avatarUrl": "https://a.ppy.sh/18955845?1760643169.jpeg",
-          "resultImage": ""
-        },
-        "second": {
-          "playerName": "TBD",
-          "osuId": "00000000",
-          "country": "XX",
-          "avatarUrl": "https://a.ppy.sh/00000000",
-          "teamName": "",
-          "achievement": "比赛进行中",
-          "resultImage": ""
-        },
-        "third": {
-          "playerName": "TBD",
-          "osuId": "00000000",
-          "country": "XX",
-          "avatarUrl": "https://a.ppy.sh/00000000",
-          "teamName": "",
-          "achievement": "比赛进行中",
-          "resultImage": ""
-        }
-      },
       "matchDate": "2025-10-27",
       "totalParticipants": 41,
       "status": "close"

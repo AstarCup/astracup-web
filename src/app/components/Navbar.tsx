@@ -271,7 +271,7 @@ export default function Navbar() {
                                             onClick={() => handleGroupClick(group.name)}
                                         >
                                             <span
-                                                className={`flex items-center gap-2 px-2 py-1 transition-full duration-200 ${shouldShowGroup(group.name) ? "text-text" : "text-text-secondary"}`}
+                                                className={`flex items-center gap-2 px-2 py-1 transition-full duration-200 ${shouldShowGroup(group.name) ? "text-text" : "text-text"}`}
                                             >
                                                 {group.name}
                                                 {group.svg ? (
