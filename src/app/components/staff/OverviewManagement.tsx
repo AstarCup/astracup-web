@@ -113,29 +113,9 @@ export default function OverviewManagement({
             </h2>
             <div className="flex flex-wrap gap-2">
               {/* 权限组标签 */}
-              {permissions.isAdmin && (
+              {permissions.isadmin && (
                 <span className="px-3 py-1 bg-red-800/80 text-white text-sm border border-red-700 font-medium">
                   管理员
-                </span>
-              )}
-              {permissions.isMapSelector && (
-                <span className="px-3 py-1 bg-blue-800/80 text-white text-sm border border-blue-700 font-medium">
-                  选图组
-                </span>
-              )}
-              {permissions.isReplayTester && (
-                <span className="px-3 py-1 bg-green-800/80 text-white text-sm border border-green-700 font-medium">
-                  测图组
-                </span>
-              )}
-              {permissions.isStreamer && (
-                <span className="px-3 py-1 bg-purple-800/80 text-white text-sm border border-purple-700 font-medium">
-                  直播组
-                </span>
-              )}
-              {permissions.isReferee && (
-                <span className="px-3 py-1 bg-orange-800/80 text-white text-sm border border-orange-700 font-medium">
-                  裁判组
                 </span>
               )}
             </div>

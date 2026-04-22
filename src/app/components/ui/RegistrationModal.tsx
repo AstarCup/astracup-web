@@ -542,13 +542,11 @@ export default function RegistrationModal({
                 </h4>
                 <div className="flex justify-center">
                   <RadarChart
-                    data={{
-                      accuracy: parseFloat(skillRatings.accuracy) || 0,
-                      stamina: parseFloat(skillRatings.stamina) || 0,
-                      firstSight: parseFloat(skillRatings.firstSight) || 0,
-                      strategy: parseFloat(skillRatings.strategy) || 0,
-                      experience: parseFloat(skillRatings.experience) || 0,
-                    }}
+                    accuracy={parseFloat(skillRatings.accuracy) || 0}
+                    stamina={parseFloat(skillRatings.stamina) || 0}
+                    firstSight={parseFloat(skillRatings.firstSight) || 0}
+                    strategy={parseFloat(skillRatings.strategy) || 0}
+                    experience={parseFloat(skillRatings.experience) || 0}
                     customData={
                       customKeyValue.customKey && customKeyValue.customValue
                         ? {

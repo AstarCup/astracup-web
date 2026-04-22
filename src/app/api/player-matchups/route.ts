@@ -55,7 +55,7 @@ export async function GET(_request: NextRequest) {
     const allMatchups = await getPlayerMatchups();
 
     let userMatchups;
-    if (permissions.isAdmin) {
+    if (permissions.isadmin) {
       // 管理员可以看到所有配对
       userMatchups = allMatchups;
     } else {
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
 
     // 检查用户权限（只有管理员可以创建对战列表）
     const permissions = await getUserPermissions(createdBy);
-    if (!permissions.isAdmin) {
+    if (!permissions.isadmin) {
       return NextResponse.json(
         {
           success: false,
@@ -239,7 +239,7 @@ export async function PUT(request: NextRequest) {
 
     // 检查用户权限
     const permissions = await getUserPermissions(userOsuId);
-    const isAdmin = permissions.isAdmin;
+    const isAdmin = permissions.isadmin;
 
     // 只有管理员可以更新状态
     if (!isAdmin) {
@@ -335,7 +335,7 @@ export async function DELETE(request: NextRequest) {
 
     // 检查用户权限
     const permissions = await getUserPermissions(userOsuId);
-    const isAdmin = permissions.isAdmin;
+    const isAdmin = permissions.isadmin;
 
     // 只有管理员可以删除对战
     if (!isAdmin) {

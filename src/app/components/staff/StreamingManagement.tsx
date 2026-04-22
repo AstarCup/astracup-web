@@ -177,7 +177,7 @@ export default function StreamingManagement({
       <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
         <h3 className="text-xl font-bold text-white mb-4 flex items-center">
           <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
-          {permissions.isAdmin ? "Staff房间分配管理" : "直播裁判房间确认"}
+          {permissions.isadmin ? "Staff房间分配管理" : "直播裁判房间确认"}
         </h3>
 
         {staffAssignmentsLoading ? (
@@ -191,7 +191,7 @@ export default function StreamingManagement({
             />
             <span className="ml-2 text-gray-400">加载中...</span>
           </div>
-        ) : permissions.isAdmin ? (
+        ) : permissions.isadmin ? (
           // 管理员视图 - 显示所有已确认的staff分配（从比赛预约表获取）
           <div className="space-y-4">
             {/* Staff分配列表 */}

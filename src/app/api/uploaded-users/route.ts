@@ -43,13 +43,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 检查用户权限（回放测试者或管理员可以查看已上传用户）
+    // 检查用户权限
     const permissions = await getUserPermissions(userOsuId);
-    if (!permissions.isAdmin && !permissions.isReplayTester) {
+    if (!permissions.isadmin) {
       return NextResponse.json(
         {
           success: false,
-          error: "权限不足，只有回放测试者或管理员可以查看已上传用户",
+          error: "权限不足，只有管理员可以查看已上传用户",
         },
         { status: 403 },
       );

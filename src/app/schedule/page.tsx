@@ -44,11 +44,11 @@ export default function Schedule() {
       const staffAssignmentsData = await staffAssignmentsResponse.json();
 
       if (matchSchedulesData.success) {
-        const convertedData = convertMatchSchedulesToScheduleItems(
-          matchSchedulesData.data?.schedules || [],
-          staffAssignmentsData.data?.assignments || [],
-        );
-        setScheduleData(convertedData);
+        // const convertedData = convertMatchSchedulesToScheduleItems(
+        //   matchSchedulesData.data?.schedules || [],
+        //   staffAssignmentsData.data?.assignments || [],
+        // );
+        // setScheduleData(convertedData);
       } else {
         setError(matchSchedulesData.error || "获取赛程数据失败");
       }
@@ -74,60 +74,60 @@ export default function Schedule() {
     }
   };
 
-  const convertMatchSchedulesToScheduleItems = (
-    schedules: MatchSchedule[],
-    staffAssignments: StaffRoomAssignment[],
-  ): ScheduleItem[] => {
-    return schedules.map((schedule) => {
-      // 获取该房间的staff分配
-      const roomStaff = staffAssignments.filter(
-        (assignment) => assignment.room_id === schedule.room_id,
-      );
+  // const convertMatchSchedulesToScheduleItems = (
+  //   schedules: MatchSchedule[],
+  //   staffAssignments: StaffRoomAssignment[],
+  // ): ScheduleItem[] => {
+  //   return schedules.map((schedule) => {
+  //     // 获取该房间的staff分配
+  //     const roomStaff = staffAssignments.filter(
+  //       (assignment) => assignment.room_id === schedule.room_id,
+  //     );
 
-      // 按角色分组staff
-      const referees = roomStaff
-        .filter((s) => s.staff_role === "referee")
-        .map((s) => s.staff_username);
-      const streamers = roomStaff
-        .filter((s) => s.staff_role === "streamer")
-        .map((s) => s.staff_username);
-      const commentators = roomStaff
-        .filter((s) => s.staff_role === "commentator")
-        .map((s) => s.staff_username);
+  //     // 按角色分组staff
+  //     // const referees = roomStaff
+  //     //   .filter((s) => s.staff_role === "referee")
+  //     //   .map((s) => s.staff_username);
+  //     // const streamers = roomStaff
+  //     //   .filter((s) => s.staff_role === "streamer")
+  //     //   .map((s) => s.staff_username);
+  //     // const commentators = roomStaff
+  //     //   .filter((s) => s.staff_role === "commentator")
+  //     //   .map((s) => s.staff_username);
 
-      // 从match_link中提取房间号
-      const roomId = extractRoomIdFromMatchLink(schedule.match_link);
+  //     // 从match_link中提取房间号
+  //     // const roomId = extractRoomIdFromMatchLink(schedule.match_link);
 
-      return {
-        round: schedule.room ? `第${schedule.room.round_number}轮` : "未知轮次",
-        round_number: schedule.room ? schedule.room.round_number : 0,
-        date: schedule.room ? schedule.room.match_date : "",
-        time: schedule.room ? schedule.room.match_time : "",
-        match: schedule.room
-          ? `${schedule.room.room_name} 第${schedule.room.match_number}场`
-          : "未知比赛",
-        players: `${schedule.player1_username || "未知选手"} vs ${schedule.player2_username || "未知选手"}`,
-        player1Score:
-          schedule.red_score !== null && schedule.red_score !== undefined
-            ? schedule.red_score.toString()
-            : "-",
-        player2Score:
-          schedule.blue_score !== null && schedule.blue_score !== undefined
-            ? schedule.blue_score.toString()
-            : "-",
-        player1Avatar: schedule.player1_avatar_url,
-        player2Avatar: schedule.player2_avatar_url,
-        status: getStatusText(schedule.status),
-        liveUrl: schedule.replay_link || undefined,
-        roomUrl: schedule.match_link || undefined,
-        roomId: roomId,
-        referee: referees.length > 0 ? referees.join(", ") : undefined,
-        streamer: streamers.length > 0 ? streamers.join(", ") : undefined,
-        commentator:
-          commentators.length > 0 ? commentators.join(", ") : undefined,
-      };
-    });
-  };
+  //     return {
+  //       // round: schedule.room ? `第${schedule.room.round_number}轮` : "未知轮次",
+  //       // round_number: schedule.room ? schedule.room.round_number : 0,
+  //       // date: schedule.room ? schedule.room.match_date : "",
+  //       // time: schedule.room ? schedule.room.match_time : "",
+  //       // match: schedule.room
+  //       //   ? `${schedule.room.room_name} 第${schedule.room.match_number}场`
+  //       //   : "未知比赛",
+  //       players: `${schedule.player1_username || "未知选手"} vs ${schedule.player2_username || "未知选手"}`,
+  //       player1Score:
+  //         schedule.red_score !== null && schedule.red_score !== undefined
+  //           ? schedule.red_score.toString()
+  //           : "-",
+  //       player2Score:
+  //         schedule.blue_score !== null && schedule.blue_score !== undefined
+  //           ? schedule.blue_score.toString()
+  //           : "-",
+  //       // player1Avatar: schedule.player1_avatar_url,
+  //       // player2Avatar: schedule.player2_avatar_url,
+  //       status: getStatusText(schedule.status),
+  //       liveUrl: schedule.replay_link || undefined,
+  //       roomUrl: schedule.match_link || undefined,
+  //       // roomId: roomId,
+  //       // referee: referees.length > 0 ? referees.join(", ") : undefined,
+  //       // streamer: streamers.length > 0 ? streamers.join(", ") : undefined,
+  //       // commentator:
+  //       //   commentators.length > 0 ? commentators.join(", ") : undefined,
+  //     };
+  //   });
+  // };
 
   const getStatusText = (status: string): string => {
     switch (status) {

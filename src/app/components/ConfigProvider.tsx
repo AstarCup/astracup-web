@@ -61,16 +61,6 @@ export function useIsAdmin(): boolean {
 
         const currentUserId = userSession.osuId;
 
-        // 如果已经有tournamentSettings，直接检查
-        if (tournamentSettings?.admin_group) {
-          const isUserAdmin =
-            tournamentSettings.admin_group.includes(currentUserId);
-          setIsAdmin(isUserAdmin);
-          setIsLoading(false);
-          return;
-        }
-
-        // 通过user-permissions API验证权限
         const permissionsResponse = await fetch(
           `/api/user-permissions?osuId=${currentUserId}`,
         );

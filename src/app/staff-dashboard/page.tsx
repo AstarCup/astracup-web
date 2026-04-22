@@ -122,12 +122,8 @@ export default function AdminPage() {
   usePageTitle("/staff-dashboard");
   const [user, setUser] = useState<UserSession | null>(null);
   const [permissions, setPermissions] = useState<UserPermissions>({
-    isMapSelector: false,
-    isReplayTester: false,
-    isAdmin: false,
-    isStreamer: false,
-    isReferee: false,
-    isCommentator: false,
+    isadmin: false,
+    isplayer: true,
   });
   const [permissionsLoading, setPermissionsLoading] = useState(true);
   const [loading, setLoading] = useState(true);

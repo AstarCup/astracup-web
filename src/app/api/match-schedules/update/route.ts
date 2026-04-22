@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     // 检查用户权限
     const permissions = await getUserPermissions(userOsuId);
-    const isAdmin = permissions.isAdmin;
+    const isAdmin = permissions.isadmin;
 
     // 如果不是管理员，检查用户是否是比赛的参与者
     if (!isAdmin) {

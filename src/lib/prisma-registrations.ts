@@ -191,9 +191,9 @@ export const createOrUpdateUser = async (userData: {
   global_rank?: number | null;
   country_rank?: number | null;
   country: string;
-  cover_custom_url?: string;
-  cover_url?: string;
-  cover_id?: string;
+  cover_custom_url?: string | null;
+  cover_url?: string | null;
+  cover_id?: string | null;
 }): Promise<number> => {
   // 检查用户是否已存在
   const existingUser = await prisma.user.findFirst({
@@ -257,9 +257,9 @@ export const addTournamentRegistration = async (registrationData: {
   experience?: number;
   customKey?: string;
   customValue?: number;
-  cover_custom_url?: string;
-  cover_url?: string;
-  cover_id?: string;
+  cover_custom_url?: string | null;
+  cover_url?: string | null;
+  cover_id?: string | null;
 }): Promise<number> => {
   console.log("addTournamentRegistration - Received data:", {
     osuId: registrationData.osuId,
@@ -951,7 +951,16 @@ export const getSavedRooms = async (): Promise<MatchRoom[]> => {
   });
 };
 
-export const getRoomScores = async (roomId: number): Promise<MatchScore[]> => {
+export const getRoomScores = async (roomId: number): Promise<{
+  room: MatchRoom | null;
+  scores: MatchScore[];
+}> => {
+  // 获取房间信息
+  const room = await prisma.matchRoom.findUnique({
+    where: { id: roomId },
+  });
+
+  // 获取该房间的所有赛程
   const schedules = await prisma.matchSchedule.findMany({
     where: { room_id: roomId },
     select: { id: true },
@@ -959,11 +968,17 @@ export const getRoomScores = async (roomId: number): Promise<MatchScore[]> => {
 
   const scheduleIds = schedules.map((s) => s.id);
 
-  return await prisma.matchScore.findMany({
+  // 获取所有分数
+  const scores = await prisma.matchScore.findMany({
     where: {
       schedule_id: {
         in: scheduleIds,
       },
     },
   });
+
+  return {
+    room,
+    scores,
+  };
 };

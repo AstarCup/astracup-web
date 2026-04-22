@@ -12,7 +12,7 @@ datasource db {
 // 用户表
 model User {
   id                 Int                @id @default(autoincrement())
-  osuId              String
+  osuId              String             @unique
   username           String
   registeredAt       DateTime
   avatar_url         String?

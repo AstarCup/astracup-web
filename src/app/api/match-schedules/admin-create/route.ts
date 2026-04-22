@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     // 检查用户权限
     const permissions = await getUserPermissions(createdBy);
-    if (!permissions?.isAdmin) {
+    if (!permissions?.isadmin) {
       return NextResponse.json(
         {
           success: false,

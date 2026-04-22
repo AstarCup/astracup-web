@@ -124,9 +124,6 @@ export async function POST(request: NextRequest) {
       player1_username: matchup.player1_username,
       player2_osuId: matchup.player2_osuId,
       player2_username: matchup.player2_username,
-      red_score: 0,
-      blue_score: 0,
-      status: "pending",
       created_by: userOsuId,
     });
 

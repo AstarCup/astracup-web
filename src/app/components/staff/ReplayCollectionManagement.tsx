@@ -18,11 +18,8 @@ interface User {
 interface ReplayCollectionManagementProps {
   user: UserSession;
   permissions: {
-    isAdmin: boolean;
-    isReplayTester: boolean;
-    isReferee: boolean;
-    isStreamer: boolean;
-    isCommentator: boolean;
+    isadmin: boolean;
+    isplayer: boolean;
   };
 }
 
@@ -324,17 +321,10 @@ export default function ReplayCollectionManagement({
     const checkAccessAndLoadData = async () => {
       if (!user) return;
 
-      // // console.log('Checking access for user:', user);
 
-      const hasAccess =
-        permissions.isReplayTester ||
-        permissions.isAdmin ||
-        permissions.isReferee ||
-        permissions.isStreamer ||
-        permissions.isCommentator;
-      // // console.log('User access check result:', hasAccess);
 
-      if (!hasAccess) {
+
+      if (!permissions.isadmin) {
         showError("无权限访问回放收集系统");
         setIsLoading(false);
         return;

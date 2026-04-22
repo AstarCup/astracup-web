@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     // 检查用户权限 - 只有管理员可以更新比赛信息
     const permissions = await getUserPermissions(userOsuId);
-    if (!permissions.isAdmin) {
+    if (!permissions.isadmin) {
       return NextResponse.json(
         {
           success: false,

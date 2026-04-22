@@ -120,8 +120,6 @@ export async function POST(request: NextRequest) {
       staff_osuId,
       staff_username,
       role: staff_role,
-      assigned_by: assigned_by || staff_osuId,
-      status: "confirmed",
     });
 
     return NextResponse.json({

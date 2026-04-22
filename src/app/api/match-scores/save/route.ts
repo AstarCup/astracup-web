@@ -116,9 +116,14 @@ export async function GET(request: NextRequest) {
     const roomIdParam = searchParams.get("roomId");
 
     if (roomIdParam) {
-      // 如果提供了roomId，获取该房间的分数
-      // 直接将roomIdParam作为字符串传递，避免类型转换错误
-      const roomScores = await getRoomScores(roomIdParam);
+      const roomId = parseInt(roomIdParam, 10);
+      if (isNaN(roomId)) {
+        return NextResponse.json(
+          { success: false, error: "roomId参数必须是有效的数字" },
+          { status: 400 },
+        );
+      }
+      const roomScores = await getRoomScores(roomId);
       return NextResponse.json({
         success: true,
         room: roomScores.room,
@@ -128,11 +133,22 @@ export async function GET(request: NextRequest) {
       // 否则返回已保存房间列表
       const savedRooms = await getSavedRooms();
 
+      // 计算每个房间的分数数量
+      const roomsWithScoreCount = savedRooms.map((room: any) => {
+        const schedules = (room as any).schedules || [];
+        const scoresCount = schedules.reduce((total: number, schedule: any) =>
+          total + ((schedule.matchScores?.length as number) || 0), 0);
+        return {
+          ...room,
+          scores_count: scoresCount
+        };
+      });
+
       return NextResponse.json({
         success: true,
-        rooms: savedRooms,
-        total_scores: savedRooms.reduce(
-          (total, room) => total + (room.scores_count || 0),
+        rooms: roomsWithScoreCount,
+        total_scores: roomsWithScoreCount.reduce(
+          (total: number, room: any) => total + (room.scores_count as number),
           0,
         ),
       });

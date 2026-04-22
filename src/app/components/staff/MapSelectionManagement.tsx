@@ -65,15 +65,15 @@ interface MapSelection {
   beatmapId: number;
   beatmapsetId: number;
   title: string;
-  title_unicode?: string; // 新增：Unicode标题
+  title_unicode?: string;
   artist: string;
-  artist_unicode?: string; // 新增：Unicode艺术家
+  artist_unicode?: string;
   version: string;
   creator: string;
   starRating: number;
   bpm: number;
   totalLength: number;
-  maxCombo: number; // 新增：最大连击数
+  maxCombo: number;
   ar: number;
   cs: number;
   od: number;
@@ -82,8 +82,8 @@ interface MapSelection {
   modPosition: number;
   comment: string;
   selectedBy: string;
-  selectedByUsername?: string; // 新增：提名者的用户名
-  selectedByAvatar?: string; // 新增：提名者的头像URL
+  selectedByUsername?: string;
+  selectedByAvatar?: string;
   selectedAt: string;
   season: string;
   category: string;
@@ -91,7 +91,6 @@ interface MapSelection {
   coverUrl: string;
   approved: boolean;
   padding?: boolean;
-  // 新增字段
   customModName?: string;
   customDASettings?: {
     cs?: number | null;
@@ -127,12 +126,8 @@ const CATEGORY_OPTIONS = [
 interface MapSelectionManagementProps {
   user: UserSession;
   permissions: {
-    isAdmin: boolean;
-    isMapSelector: boolean;
-    isReplayTester: boolean;
-    isStreamer: boolean;
-    isReferee: boolean;
-    isCommentator: boolean;
+    isadmin: boolean;
+    isplayer: boolean;
   };
 }
 
@@ -147,7 +142,7 @@ export default function MapSelectionManagement({
     avatar_url: user.avatar_url,
   };
 
-  // 状态定义 - 必须在任何条件逻辑之前
+  // 状态定义
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
@@ -370,13 +365,7 @@ export default function MapSelectionManagement({
     const checkAccessAndLoadData = async () => {
       if (!user) return;
 
-      const hasAccess =
-        permissions.isMapSelector ||
-        permissions.isAdmin ||
-        permissions.isReferee ||
-        permissions.isStreamer ||
-        permissions.isCommentator;
-      if (!hasAccess) {
+      if (!permissions.isadmin) {
         showError("无权限访问选图系统");
         setIsLoading(false);
         return;
@@ -681,7 +670,7 @@ export default function MapSelectionManagement({
 
   // 获取可用的Lazer特有mod
   const fetchAvailableLazerMods = async () => {
-    const fallbackMods = [
+    const Mods = [
       { name: "DA", description: "Difficulty Adjust - 自定义难度属性" },
       { name: "AD", description: "Approach Different - 不一样的缩圈" },
       { name: "AS", description: "Adaptive Speed - 自适应速度" },
@@ -707,7 +696,7 @@ export default function MapSelectionManagement({
       { name: "AD+BR(RollSpeed:6.0)", description: "AD+BR(RollSpeed:6.0)" },
       { name: "DA(AR:8)", description: "Difficulty Adjust - AR8" },
     ];
-    setAvailableLazerMods(fallbackMods);
+    setAvailableLazerMods(Mods);
   };
 
   const loadSeasonConfig = async () => {
@@ -718,7 +707,6 @@ export default function MapSelectionManagement({
         if (data.success) {
           setAvailableSeasons(data.availableSeasons);
           setSeason(data.defaultSeason);
-          // // // console.log('Season config loaded:', data);
         }
       }
     } catch (error) {
@@ -2277,7 +2265,7 @@ export default function MapSelectionManagement({
         </div>
 
         {/* 一键选中当前筛选的图 - 仅管理员可见 */}
-        {(permissions.isAdmin || permissions.isMapSelector) && (
+        {(permissions.isadmin) && (
           <button
             onClick={() => {
               // 获取当前筛选出的未过审选图
@@ -2330,7 +2318,7 @@ export default function MapSelectionManagement({
         )}
 
         {/* 添加选图按钮 */}
-        {(permissions.isMapSelector || permissions.isAdmin) && (
+        {(permissions.isadmin) && (
           <button
             onClick={() => {
               setShowAddForm(!showAddForm);
@@ -2342,7 +2330,7 @@ export default function MapSelectionManagement({
         )}
 
         {/* 批量过审按钮 */}
-        {(permissions.isAdmin || permissions.isMapSelector) &&
+        {(permissions.isadmin) &&
           tempApprovedSelections.size > 0 && (
             <button
               onClick={() => setShowBulkApprovalModal(true)}
@@ -2929,7 +2917,7 @@ export default function MapSelectionManagement({
               <table className="table-auto md:table-fixed text-center">
                 <thead>
                   <tr>
-                    <th></th>
+                    <th>-</th>
                     <th>NM</th>
                     <th>HD</th>
                     <th>HR</th>
@@ -3655,7 +3643,7 @@ export default function MapSelectionManagement({
                       }
 
                       // 只有管理员可以对未过审的选图进行批量选择
-                      if (permissions.isAdmin && !selection.approved) {
+                      if (permissions.isadmin && !selection.approved) {
                         const newSelections = new Set(tempApprovedSelections);
                         if (newSelections.has(selection.id)) {
                           newSelections.delete(selection.id);
@@ -3740,7 +3728,7 @@ export default function MapSelectionManagement({
                               <Clipboard size={12} /> {selection.beatmapId}
                             </button>
                             {/* 批量选择复选框 - 仅管理员可见 */}
-                            {permissions.isAdmin && !selection.approved && (
+                            {permissions.isadmin && !selection.approved && (
                               <label className="flex items-center">
                                 <input
                                   type="checkbox"
@@ -4137,7 +4125,7 @@ export default function MapSelectionManagement({
               }
 
               const secondColumn = [
-                (permissions.isAdmin || permissions.isMapSelector) && (
+                (permissions.isadmin) && (
                   <button
                     key="refresh"
                     onClick={() => {
@@ -4150,7 +4138,7 @@ export default function MapSelectionManagement({
                     刷新MOD属性
                   </button>
                 ),
-                (permissions.isAdmin || permissions.isMapSelector) && (
+                (permissions.isadmin) && (
                   <button
                     key="edit"
                     onClick={() => {
@@ -4167,7 +4155,7 @@ export default function MapSelectionManagement({
                     修改属性
                   </button>
                 ),
-                (permissions.isAdmin || permissions.isMapSelector) && (
+                (permissions.isadmin) && (
                   <button
                     key="padding"
                     onClick={() => {
@@ -4183,7 +4171,7 @@ export default function MapSelectionManagement({
                     {contextMenu.selection!.padding ? "取消测图" : "设为测图"}
                   </button>
                 ),
-                (permissions.isAdmin || permissions.isMapSelector) && (
+                (permissions.isadmin) && (
                   <button
                     key="approve"
                     onClick={() => {
@@ -4201,8 +4189,7 @@ export default function MapSelectionManagement({
                 ),
                 (contextMenu.selection!.selectedBy ===
                   userForState.id.toString() ||
-                  permissions.isAdmin ||
-                  permissions.isMapSelector) && (
+                  permissions.isadmin) && (
                   <button
                     onClick={() => {
                       if (confirm("确定要删除这个选图吗？此操作不可撤销。")) {

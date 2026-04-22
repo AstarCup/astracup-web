@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     // 获取用户权限
     const permissions = await getUserPermissions(userOsuId);
-    const isAdmin = permissions?.isAdmin || false;
+    const isAdmin = permissions?.isadmin || false;
 
     // 解析请求体
     const body = await request.json();

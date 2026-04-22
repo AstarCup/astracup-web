@@ -119,11 +119,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let status: "read" | "responded" = "read";
+    let status: "unread" | "read" | "archived" = "read";
     let response_action: string | undefined;
 
     if (action === "accept" || action === "decline") {
-      status = "responded";
+      status = "read"; // 对于接受或拒绝操作，将消息标记为已读
       response_action = action;
     }
 

@@ -47,9 +47,7 @@ export async function GET(_request: NextRequest) {
     // 检查用户权限（裁判员、直播员或管理员可以查看可用房间）
     const permissions = await getUserPermissions(userOsuId);
     if (
-      !permissions.isAdmin &&
-      !permissions.isReferee &&
-      !permissions.isStreamer
+      !permissions.isadmin
     ) {
       return NextResponse.json(
         {

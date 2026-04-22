@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
 
     // 检查用户权限（只有管理员可以创建比赛房间）
     const permissions = await getUserPermissions(createdBy);
-    if (!permissions.isAdmin) {
+    if (!permissions.isadmin) {
       return NextResponse.json(
         {
           success: false,

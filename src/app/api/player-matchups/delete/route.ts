@@ -30,7 +30,7 @@ export async function DELETE(request: NextRequest) {
 
     // 检查管理员权限
     const permissions = await getUserPermissions(userOsuId);
-    if (!permissions.isAdmin) {
+    if (!permissions.isadmin) {
       return NextResponse.json({ error: "需要管理员权限" }, { status: 403 });
     }
 

@@ -71,7 +71,7 @@ export default function InfiniteScrollCanvas({
           firstSight={player.firstSight || 0}
           strategy={player.strategy || 0}
           experience={player.experience || 0}
-          customData={player.customKey && player.customValue !== undefined ? { key: player.customKey, value: player.customValue } : undefined}
+          customData={player.customKey && player.customValue !== null && player.customValue !== undefined ? { key: player.customKey, value: player.customValue } : undefined}
           width={380}
         />
       );

@@ -53,12 +53,8 @@ export default function PlayerInfoPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserSession | null>(null);
   const [permissions, setPermissions] = useState<UserPermissions>({
-    isMapSelector: false,
-    isReplayTester: false,
-    isAdmin: false,
-    isStreamer: false,
-    isReferee: false,
-    isCommentator: false,
+    isadmin: false,
+    isplayer: true,
   });
   const [registration, setRegistration] = useState<Registration | null>(null);
   const [nextMatch, setNextMatch] = useState<NextMatch | null>(null);
@@ -332,25 +328,25 @@ export default function PlayerInfoPage() {
 
       // 立即显示预约中的状态和房间信息
       const selectedRoom = availableRooms.find((room) => room.id === roomId);
-      if (selectedRoom) {
-        setNextMatch((prev) =>
-          prev
-            ? {
-                ...prev,
-                status: "scheduled",
-                scheduledRoom: {
-                  id: selectedRoom.id,
-                  room_name: selectedRoom.room_name,
-                  round_number: selectedRoom.round_number,
-                  match_date: selectedRoom.match_date,
-                  match_time: selectedRoom.match_time,
-                  match_number: selectedRoom.match_number,
-                  max_participants: selectedRoom.max_participants,
-                },
-              }
-            : null,
-        );
-      }
+      // if (selectedRoom) {
+      //   setNextMatch((prev) =>
+      //     prev
+      //       ? {
+      //           ...prev,
+      //           status: "scheduled",
+      //           scheduledRoom: {
+      //             id: selectedRoom.id,
+      //             room_name: selectedRoom.room_name,
+      //             round_number: selectedRoom.round_number,
+      //             match_date: selectedRoom.match_date,
+      //             match_time: selectedRoom.match_time,
+      //             match_number: selectedRoom.match_number,
+      //             max_participants: selectedRoom.max_participants,
+      //           },
+      //         }
+      //       : null,
+      //   );
+      // }
 
       const response = await fetch("/api/match-schedules", {
         method: "POST",
@@ -691,15 +687,15 @@ export default function PlayerInfoPage() {
                               <div className="flex justify-between">
                                 <span>日期:</span>
                                 <span className="text-white">
-                                  {formatDate(room.match_date)}
+                                  {formatDate(room.match_date.toISOString().split('T')[0])}
                                 </span>
                               </div>
                               <div className="flex justify-between">
                                 <span>时间:</span>
                                 <span className="text-white">
                                   {formatDateTimeFromStrings(
-                                    room.match_date,
-                                    room.match_time,
+                                    room.match_date.toISOString().split('T')[0],
+                                    room.match_time.toISOString().split('T')[1].split('.')[0],
                                   )}
                                 </span>
                               </div>

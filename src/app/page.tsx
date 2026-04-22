@@ -11,17 +11,7 @@ import { useConfig } from "./components/ConfigProvider";
 import { BookMarked, CalendarDays, Table2, Contact } from "lucide-react";
 import Link from "next/link";
 import WinnersCanvas from "./components/ui/WinnersCanvas";
-
-interface UserSession {
-  osuId: string;
-  username: string;
-  avatar_url: string;
-  pp: number;
-  global_rank: number | null;
-  country_rank: number | null;
-  country: string;
-  cover: string | null;
-}
+import { UserSession } from "@/lib/permissions";
 
 export default function Home() {
   const [user, setUser] = useState<UserSession | null>(null);
@@ -67,7 +57,7 @@ export default function Home() {
               global_rank: session.global_rank || null,
               country_rank: session.country_rank || null,
               country: session.country || "",
-              cover: session.cover || null,
+              cover: session.cover,
             };
             console.log("Processed user session:", userSession);
             setUser(userSession);

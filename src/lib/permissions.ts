@@ -1,5 +1,3 @@
-import { getTournamentSettings } from "@/lib/prisma-registrations";
-import type { TournamentSettings } from "@/app/components/ConfigProvider";
 import { prisma } from "./prisma";
 
 // 会话管理接口定义
@@ -23,22 +21,9 @@ export interface UserPermissions {
   isadmin: boolean;
 }
 
-// 从设置数组中获取特定键的值
-function getSettingValue(settings: TournamentSetting[], key: string): any[] {
-  const setting = settings.find((s) => s.setting_key === key);
-  if (!setting?.setting_value) return [];
-
-  try {
-    const value = JSON.parse(setting.setting_value);
-    return Array.isArray(value) ? value : [];
-  } catch {
-    return [];
-  }
-}
 
 export async function getUserPermissions(
   osuId: string,
-  tournamentSettings?: TournamentSettings,
 ): Promise<UserPermissions> {
   try {
     // 首先从user表获取用户的userGroup
@@ -55,62 +40,8 @@ export async function getUserPermissions(
       console.warn("[Permissions] 无法从user表获取用户组信息:", userError);
     }
 
-    // 如果没有提供配置，则从数据库获取
-    let settingsArray: TournamentSetting[] = [];
-    if (!tournamentSettings) {
-      settingsArray = await getTournamentSettings();
-    } else {
-      // 如果提供了 TournamentSettings 对象，需要转换为 TournamentSetting[] 格式
-      // 这里简化处理，直接使用空数组
-      settingsArray = [];
-    }
-
     // 检查是否为管理员（完全使用userGroup字段）
     const isAdmin = userGroup === "admin";
-
-    // 检查是否为图池选择者
-    let isMapSelector = false;
-    if (settingsArray && settingsArray.length > 0) {
-      const mapSelectionGroup = getSettingValue(
-        settingsArray,
-        "map_selection_group",
-      );
-      isMapSelector = mapSelectionGroup.includes(osuId);
-    }
-
-    // 检查是否为回放测试员
-    let isReplayTester = false;
-    if (settingsArray && settingsArray.length > 0) {
-      const mapTestingGroup = getSettingValue(
-        settingsArray,
-        "map_testing_group",
-      );
-      isReplayTester = mapTestingGroup.includes(osuId);
-    }
-
-    // 检查是否为直播员
-    let isStreamer = false;
-    if (settingsArray && settingsArray.length > 0) {
-      const streamerGroup = getSettingValue(settingsArray, "streamer_group");
-      isStreamer = streamerGroup.includes(osuId);
-    }
-
-    // 检查是否为裁判
-    let isReferee = false;
-    if (settingsArray && settingsArray.length > 0) {
-      const refereeGroup = getSettingValue(settingsArray, "referee_group");
-      isReferee = refereeGroup.includes(osuId);
-    }
-
-    // 检查是否为解说员
-    let isCommentator = false;
-    if (settingsArray && settingsArray.length > 0) {
-      const commentatorGroup = getSettingValue(
-        settingsArray,
-        "commentator_group",
-      );
-      isCommentator = commentatorGroup.includes(osuId);
-    }
 
     // 检查用户是否已报名
     let isRegistered = false;
