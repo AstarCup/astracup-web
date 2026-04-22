@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      users: users.map((user) => ({
+      users: users.map((user: { osuId: string; username: string | null; userGroup: string | null; createdAt: Date }) => ({
         osuId: user.osuId,
         username: user.username || "未知用户",
         userGroup: user.userGroup || "player",
