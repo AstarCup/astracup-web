@@ -1,0 +1,35 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OsuNodeHelper", "OsuNodeHelper\OsuNodeHelper.csproj", "{7DCACEF8-B0E5-BEEF-0C2F-CD73D95BDEE2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "osu-difficulty-js-local", "osu-difficulty-js-local", "{27CEB0E5-68CE-F5D6-5B5C-77AB17007CDB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OsuNodeHelper", "osu-difficulty-js-local\OsuNodeHelper\OsuNodeHelper.csproj", "{BA61FF0F-E034-C0CB-7EE9-DF5C0DC928C8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7DCACEF8-B0E5-BEEF-0C2F-CD73D95BDEE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7DCACEF8-B0E5-BEEF-0C2F-CD73D95BDEE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7DCACEF8-B0E5-BEEF-0C2F-CD73D95BDEE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7DCACEF8-B0E5-BEEF-0C2F-CD73D95BDEE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA61FF0F-E034-C0CB-7EE9-DF5C0DC928C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA61FF0F-E034-C0CB-7EE9-DF5C0DC928C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA61FF0F-E034-C0CB-7EE9-DF5C0DC928C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA61FF0F-E034-C0CB-7EE9-DF5C0DC928C8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BA61FF0F-E034-C0CB-7EE9-DF5C0DC928C8} = {27CEB0E5-68CE-F5D6-5B5C-77AB17007CDB}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9D3C4129-4C56-4D82-8C1A-A17F7B73E395}
+	EndGlobalSection
+EndGlobal

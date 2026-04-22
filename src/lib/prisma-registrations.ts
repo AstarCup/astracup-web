@@ -188,8 +188,8 @@ export const createOrUpdateUser = async (userData: {
   username: string;
   avatar_url?: string;
   pp?: number;
-  global_rank?: number;
-  country_rank?: number;
+  global_rank?: number | null;
+  country_rank?: number | null;
   country: string;
   cover_custom_url?: string;
   cover_url?: string;
@@ -246,10 +246,10 @@ export const addTournamentRegistration = async (registrationData: {
   username: string;
   avatar_url?: string;
   pp?: number;
-  global_rank?: number;
-  country_rank?: number;
+  global_rank?: number | null;
+  country_rank?: number | null;
   country: string;
-  season: string; // 当前赛季名称，如 "s1"
+  season: string;
   accuracy?: number;
   stamina?: number;
   firstSight?: number;
