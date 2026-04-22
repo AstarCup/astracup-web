@@ -104,6 +104,7 @@ export default function Footer() {
                 src="https://beian.mps.gov.cn/web/assets/logo01.6189a29f.png"
                 width="24px"
                 height="24px"
+                alt="icon"
               />
               <a
                 href="https://beian.mps.gov.cn/#/query/webSearch?code=35063002000143"

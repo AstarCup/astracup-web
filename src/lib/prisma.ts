@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -10,24 +11,11 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL environment variable is not set");
 }
 
-// 解析数据库URL获取连接参数
-const url = new URL(databaseUrl);
-const host = url.hostname;
-const port = parseInt(url.port) || 3306;
-const user = url.username;
-const password = url.password;
-const database = url.pathname.replace("/", "");
-
 export const prisma =
   globalForPrisma.prisma ??
   (() => {
-    const adapter = new PrismaMariaDb({
-      host,
-      port,
-      user,
-      password,
-      database,
-    });
+    const pool = new Pool({ connectionString: databaseUrl });
+    const adapter = new PrismaPg(pool);
 
     return new PrismaClient({
       adapter,

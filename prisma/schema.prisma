@@ -6,35 +6,35 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
 }
 
 // 用户表
 model User {
-  id            Int       @id @default(autoincrement())
-  osuId         String
-  username      String
-  registeredAt  DateTime
-  avatar_url    String?
-  pp            Float?
-  global_rank   Int?
-  country_rank  Int?
-  country       String
-  userGroup     UserGroup         @default(player)
+  id                 Int                @id @default(autoincrement())
+  osuId              String
+  username           String
+  registeredAt       DateTime
+  avatar_url         String?
+  pp                 Float?
+  global_rank        Int?
+  country_rank       Int?
+  country            String
+  userGroup          UserGroup          @default(player)
   registrationStatus RegistrationStatus @default(not_registered)
-  season        String?           // 使用逗号分隔的字符串存储报名的赛季，如 "s1,s2,s3"
-  accuracy      Float?    // 准度
-  stamina       Float?    // 体力
-  firstSight    Float?    // 初见力
-  strategy      Float?    // 策略
-  experience    Float?    // 经验
-  customKey     String?   // 玩家自定义键
-  customValue   Float?    // 玩家自定义值（浮点数）
-  cover_custom_url String? // cover自定义URL
-  cover_url      String?   // cover标准URL
-  cover_id       String?   // cover ID
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  season             String? // 使用逗号分隔的字符串存储报名的赛季，如 "s1,s2,s3"
+  accuracy           Float? // 准度
+  stamina            Float? // 体力
+  firstSight         Float? // 初见力
+  strategy           Float? // 策略
+  experience         Float? // 经验
+  customKey          String? // 玩家自定义键
+  customValue        Float? // 玩家自定义值（浮点数）
+  cover_custom_url   String? // cover自定义URL
+  cover_url          String? // cover标准URL
+  cover_id           String? // cover ID
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   @@index([osuId])
   @@index([username])
@@ -191,7 +191,7 @@ model TournamentSetting {
 
 // 地图选择表
 model MapSelection {
-  id             Int       @id @default(autoincrement())
+  id             Int      @id @default(autoincrement())
   beatmapId      Int
   beatmapsetId   Int
   title          String
@@ -212,17 +212,17 @@ model MapSelection {
   modPosition    Int?
   comment        String?
   selectedBy     String
-  selectedAt     DateTime  @default(now())
+  selectedAt     DateTime @default(now())
   season         String?
   category       String?
   url            String?
   coverUrl       String?
-  approved       Boolean   @default(false)
-  padding        Boolean   @default(false)
-  isCustome      Boolean   @default(false)
-  isOrigin       Boolean   @default(false)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  approved       Boolean  @default(false)
+  padding        Boolean  @default(false)
+  isCustome      Boolean  @default(false)
+  isOrigin       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([beatmapId])
   @@index([beatmapsetId])
@@ -263,6 +263,7 @@ enum MessageStatus {
   read
   archived
 }
+
 // 枚举类型定义
 enum UserGroup {
   player
@@ -270,9 +271,9 @@ enum UserGroup {
 }
 
 enum RegistrationStatus {
-  not_registered  // 用户已注册但未报名
-  registered      // 用户已报名当前赛季
-  approved        // 用户报名已通过审核
+  not_registered // 用户已注册但未报名
+  registered // 用户已报名当前赛季
+  approved // 用户报名已通过审核
 }
 
 enum StaffRole {
