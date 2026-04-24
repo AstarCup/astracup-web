@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { LayoutGrid, Table2 } from "lucide-react";
 import MapoolTable from "@/app/components/ui/MapoolTable";
+import MapoolCard from "@/app/components/ui/MapoolCard";
 import Dropdown from "@/app/components/ui/Dropdown";
 import { usePageTitle } from "@/lib/usePageTitle";
 import { useConfig } from "@/app/components/ConfigProvider";
@@ -33,10 +35,8 @@ interface MapSelection {
   url: string;
   coverUrl: string;
   approved: boolean;
-  // 添加自定义mod字段
   customModName?: string;
   customDTRate?: number;
-  // 添加缺失的字段
   selectedByUsername?: string;
 }
 
@@ -51,17 +51,14 @@ export default function Mapool() {
   const [mapPoolData, setMapPoolData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [availableSeasons, setAvailableSeasons] = useState([
-    { value: "s1", label: "第1赛季" },
-  ]);
+  const [availableSeasons, setAvailableSeasons] = useState<{ value: string; label: string }[]>([]);
   const [currentSeason, setCurrentSeason] = useState(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("mappool_season") || "s1";
+      return localStorage.getItem("mappool_season") || "";
     }
-    return "s1";
+    return "";
   });
   const [selectedCategory, setSelectedCategory] = useState(() => {
-    // 首先检查URL参数
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const urlCategory = params.get("category");
@@ -89,6 +86,20 @@ export default function Mapool() {
     return "qualification";
   });
 
+  const [viewMode, setViewMode] = useState<"table" | "card">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("mappool_view") as "table" | "card") || "card";
+    }
+    return "card";
+  });
+
+  const handleViewModeChange = (mode: "table" | "card") => {
+    setViewMode(mode);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("mappool_view", mode);
+    }
+  };
+
   // 自定义 onChange 处理函数 - 保存到本地存储
   const handleSeasonChange = (value: string) => {
     setCurrentSeason(value);
@@ -110,22 +121,27 @@ export default function Mapool() {
     }
   };
 
-  // 当config加载完成后，更新赛季信息 - 只在初始加载时设置一次
   useEffect(() => {
-    // console.log('tournamentSettings changed:', tournamentSettings);
-    if (tournamentSettings?.current_season && currentSeason === "s1") {
-      // tournamentSettings.current_season 已经是字符串格式（如 's1'）
+    if (tournamentSettings?.current_season) {
       const seasonValue = tournamentSettings.current_season;
-      const seasonNumber = tournamentSettings.current_season.replace("s", "");
-      const seasonLabel = `第${seasonNumber}赛季`;
+      const seasonNumber = parseInt(seasonValue.replace("s", ""));
 
-      setAvailableSeasons([{ value: seasonValue, label: seasonLabel }]);
-      setCurrentSeason(seasonValue);
+      const startNum = Math.max(1, seasonNumber - 1);
+      const seasons = [];
+      for (let i = startNum; i <= seasonNumber; i++) {
+        seasons.push({ value: `s${i}`, label: `第${i}赛季` });
+      }
+      setAvailableSeasons(seasons);
+
       if (typeof window !== "undefined") {
-        localStorage.setItem("mappool_season", seasonValue);
+        const savedSeason = localStorage.getItem("mappool_season");
+        if (!savedSeason) {
+          setCurrentSeason(seasonValue);
+          localStorage.setItem("mappool_season", seasonValue);
+        }
       }
     }
-  }, [tournamentSettings, currentSeason]);
+  }, [tournamentSettings]);
 
   // 调试：监控mapPoolData变化
   useEffect(() => {
@@ -215,6 +231,9 @@ export default function Mapool() {
       BID: map.beatmapId.toString(),
       SID: map.beatmapsetId.toString(),
       MapInfo: `${map.artist} - ${map.title} [${map.version}]`,
+      artist: map.artist,
+      title: map.title,
+      version: map.version,
       _Creator: map.creator,
       SR: map.starRating.toFixed(2),
       CS: map.cs.toFixed(1),
@@ -228,7 +247,7 @@ export default function Mapool() {
       BPM: map.bpm,
       HitLength: formatLength(map.totalLength),
       Notes: map.comment || "-",
-      // 添加自定义mod字段
+      coverUrl: map.coverUrl,
       customModName: map.customModName,
       customDTRate: map.customDTRate,
       selectedMods: map.selectedMods,
@@ -237,7 +256,6 @@ export default function Mapool() {
       selectedAt: map.selectedAt || new Date().toISOString(),
       starRating: map.starRating,
       approved: map.approved || false,
-      // 添加maxCombo字段
       maxCombo: map.maxCombo || 0,
     }));
   };
@@ -281,8 +299,32 @@ export default function Mapool() {
   }
 
   return (
-    <div className="max-w-9xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6 text-white">图池</h1>
+    <div className="max-w-9xl mx-auto mt-20 p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold text-white">图池</h1>
+        <div className="flex items-center gap-2 bg-white/10 rounded-lg p-1">
+          <button
+            onClick={() => handleViewModeChange("table")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "table"
+              ? "bg-white text-gray-900 shadow-sm"
+              : "text-gray-400 hover:text-white"
+              }`}
+          >
+            <Table2 size={16} />
+            表格
+          </button>
+          <button
+            onClick={() => handleViewModeChange("card")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "card"
+              ? "bg-white text-gray-900 shadow-sm"
+              : "text-gray-400 hover:text-white"
+              }`}
+          >
+            <LayoutGrid size={16} />
+            卡片
+          </button>
+        </div>
+      </div>
 
       {/* 赛季和类别选择器 */}
       <div className="mb-6 flex gap-6 items-end">
@@ -295,7 +337,6 @@ export default function Mapool() {
           value={currentSeason}
           onChange={handleSeasonChange}
           minWidth="8rem"
-          darkMode={true}
         />
         <Dropdown
           label="类别"
@@ -306,24 +347,23 @@ export default function Mapool() {
           value={selectedCategory}
           onChange={handleCategoryChange}
           minWidth="6rem"
-          darkMode={true}
         />
-        <p className="text-white text-xl animate-bounce">GF图池已更新</p>
       </div>
 
       {mapPoolData.length === 0 ? (
         <div className="text-center text-white pt-60 pb-60">
           <p>暂无已过审的图池数据</p>
         </div>
-      ) : (
+      ) : viewMode === "table" ? (
         <MapoolTable
           data={mapPoolData}
           title={
             CATEGORY_OPTIONS.find((opt) => opt.value === selectedCategory)
               ?.label || selectedCategory
           }
-          downloadUrl="/"
         />
+      ) : (
+        <MapoolCard data={mapPoolData} />
       )}
     </div>
   );

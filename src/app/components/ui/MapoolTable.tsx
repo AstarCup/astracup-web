@@ -31,7 +31,6 @@ interface MapoolTableProps {
 export default function MapoolTable({
   data,
   title,
-  downloadUrl,
   onRowRightClick,
   showUploadJump = false,
   uploadedUsers = {},
@@ -60,8 +59,6 @@ export default function MapoolTable({
   );
   const [showBulkDownloadManager, setShowBulkDownloadManager] = useState(false);
   const [isBulkDownloading, setIsBulkDownloading] = useState(false);
-  const [downloadSpeed, setDownloadSpeed] = useState(0);
-  const [eta, setEta] = useState<number | null>(null);
   const [overallProgress, setOverallProgress] = useState(0);
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
@@ -95,10 +92,6 @@ export default function MapoolTable({
     let failCount = 0;
 
     try {
-      // 记录开始时间
-      const startTime = Date.now();
-      let lastProgressUpdate = 0;
-
       // 逐个下载谱面，添加延迟避免并发过多
       for (let i = 0; i < bulkDownloadItems.length; i++) {
         // 检查是否已取消
@@ -130,25 +123,6 @@ export default function MapoolTable({
             item.bid,
           );
 
-          // 计算下载速度和ETA
-          const currentTime = Date.now();
-          const elapsedTime = (currentTime - startTime) / 1000; // 秒
-          const progressRatio = (i + 1) / bulkDownloadItems.length;
-
-          if (elapsedTime > 0 && progressRatio > 0) {
-            // 计算下载速度 (items per second)
-            const speed = (i + 1) / elapsedTime;
-
-            // 计算剩余时间 (seconds)
-            const remainingItems = bulkDownloadItems.length - (i + 1);
-            const etaSeconds = remainingItems / speed;
-
-            // 更新状态
-            setDownloadSpeed(speed);
-            setEta(etaSeconds);
-          }
-
-          // 更新整体进度状态
           setOverallProgress(newOverallProgress);
 
           const response = await fetch(
@@ -232,11 +206,11 @@ export default function MapoolTable({
             prev.map((prevItem, idx) =>
               idx === i
                 ? {
-                    ...prevItem,
-                    status: "failed",
-                    error: errorMessage,
-                    progress: 0,
-                  }
+                  ...prevItem,
+                  status: "failed",
+                  error: errorMessage,
+                  progress: 0,
+                }
                 : prevItem,
             ),
           );
@@ -325,7 +299,6 @@ export default function MapoolTable({
 
   // 取消批量下载
   const cancelBulkDownload = () => {
-    // 如果有正在进行的请求，取消它
     if (abortController) {
       abortController.abort();
       setAbortController(null);
@@ -333,8 +306,16 @@ export default function MapoolTable({
 
     setIsBulkDownloading(false);
     setBulkDownloadItems([]);
+    setOverallProgress(0);
     setShowBulkDownloadManager(false);
     showInfo("批量下载已取消");
+  };
+
+  const handleCloseBulkDownload = () => {
+    setOverallProgress(0);
+    setBulkDownloadItems([]);
+    setShowBulkDownloadManager(false);
+    setIsBulkDownloading(false);
   };
 
   // 处理鼠标悬停事件
@@ -617,20 +598,19 @@ export default function MapoolTable({
                     {/* 自定义mod名称气泡 - 显示在右上角 */}
                     {(row.customModName ||
                       (row.customDTRate && row.customDTRate !== 1.5)) && (
-                      <div
-                        className={`absolute -top-1 left-10 text-xs px-3 py-1 rounded-full flex items-center justify-center font-bold shadow-md whitespace-nowrap ${
-                          row.customModName?.includes("原创")
+                        <div
+                          className={`absolute -top-1 left-10 text-xs px-3 py-1 rounded-full flex items-center justify-center font-bold shadow-md whitespace-nowrap ${row.customModName?.includes("原创")
                             ? "bg-gradient-to-r from-red-500 to-pink-300 text-white text-shadow-lg text-blob skew-x-12 rounded-none"
                             : row.customModName?.includes("定制")
                               ? "bg-gradient-to-r from-cyan-500 to-teal-300 text-white text-shadow-lg text-blob skew-x-12 rounded-none"
                               : "bg-[#e93b66]/80 text-white"
-                        }`}
-                      >
-                        {row.customModName
-                          ? row.customModName
-                          : `${Number(row.customDTRate).toFixed(2)}x`}
-                      </div>
-                    )}
+                            }`}
+                        >
+                          {row.customModName
+                            ? row.customModName
+                            : `${Number(row.customDTRate).toFixed(2)}x`}
+                        </div>
+                      )}
                   </td>
                   <td
                     className="cursor-pointer text-[#E93B66] hover:underline relative group"
@@ -729,13 +709,11 @@ export default function MapoolTable({
       {/* 批量下载管理器 */}
       <BulkDownloadManager
         isOpen={showBulkDownloadManager}
-        onClose={() => setShowBulkDownloadManager(false)}
+        onClose={handleCloseBulkDownload}
         items={bulkDownloadItems}
         onStartDownload={startBulkDownload}
         onCancelDownload={cancelBulkDownload}
         isDownloading={isBulkDownloading}
-        downloadSpeed={downloadSpeed}
-        eta={eta}
         overallProgress={overallProgress}
       />
 
@@ -780,14 +758,14 @@ export default function MapoolTable({
                     className={`px-2 py-1 rounded text-xs font-bold text-white ${getModColorClass(detailCard.row.Slot?.replace(/\d+/g, "") || "NM")}`}
                   >
                     {detailCard.row.customModName &&
-                    detailCard.row.Slot?.startsWith("LZ")
+                      detailCard.row.Slot?.startsWith("LZ")
                       ? detailCard.row.customModName &&
                         detailCard.row.customModName.trim() !== ""
                         ? `LZ${detailCard.row.Slot.match(/\d+/)?.[0] || ""}-${detailCard.row.customModName}`
                         : `LZ${detailCard.row.Slot.match(/\d+/)?.[0] || ""}`
                       : detailCard.row.customDTRate &&
-                          detailCard.row.customDTRate !== 1.5 &&
-                          detailCard.row.Slot?.startsWith("DT")
+                        detailCard.row.customDTRate !== 1.5 &&
+                        detailCard.row.Slot?.startsWith("DT")
                         ? detailCard.row.customDTRate &&
                           detailCard.row.customDTRate !== 1.5
                           ? `DT${detailCard.row.Slot.match(/\d+/)?.[0] || ""}-${Number(detailCard.row.customDTRate).toFixed(2)}倍`
