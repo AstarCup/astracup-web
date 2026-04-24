@@ -209,6 +209,6 @@ export const getRatingStats = async () => ({
   totalRatings: 0,
   ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
 });
-export const getBatchRatingStats = async () => ({});
+export const getBatchRatingStats = async (mapSelectionIds: number[]) => ({});
 
 export default initMapRatingsDatabase;
