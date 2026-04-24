@@ -19,6 +19,7 @@ interface TournamentSettings {
 interface UserWithGroup {
   osuId: string;
   username: string;
+  avatar_url: string | null;
   userGroup: "player" | "admin";
 }
 
@@ -56,6 +57,7 @@ export default function SettingsManagement({
   // 用户管理状态
   const [users, setUsers] = useState<UserWithGroup[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // 模态框状态
   const [showAddModal, setShowAddModal] = useState(false);
@@ -308,80 +310,135 @@ export default function SettingsManagement({
   const renderUserManagement = () => {
     const adminUsers = users.filter((user) => user.userGroup === "admin");
     const playerUsers = users.filter((user) => user.userGroup === "player");
+    const filteredPlayerUsers = searchQuery
+      ? playerUsers.filter(
+          (user) =>
+            user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            user.osuId.includes(searchQuery),
+        )
+      : playerUsers;
+
+    const UserCard = ({
+      user,
+      isAdmin,
+    }: {
+      user: UserWithGroup;
+      isAdmin: boolean;
+    }) => (
+      <div className="bg-white dark:bg-white-extra border border-action rounded-lg p-4 transition-all hover:scale-[1.02] hover:shadow-md active:scale-[0.99] flex flex-col items-center gap-3 text-center">
+        {user.avatar_url ? (
+          <Image
+            src={user.avatar_url}
+            alt={user.username}
+            width={48}
+            height={48}
+            className="rounded-full"
+          />
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-action flex items-center justify-center text-sm text-text-secondary font-bold">
+            {user.username.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div className="flex flex-col items-center min-w-0">
+          <span className="text-text text-sm font-medium truncate max-w-[120px]">
+            {user.username}
+          </span>
+          <span className="text-text-secondary text-xs">ID: {user.osuId}</span>
+        </div>
+        {isAdmin ? (
+          <button
+            onClick={() => handleUpdateUserGroup(user.osuId, "player")}
+            className="w-full px-3 py-1.5 bg-red-500 text-white text-xs rounded-md hover:bg-red-600 transition-colors"
+          >
+            移除管理员
+          </button>
+        ) : (
+          <button
+            onClick={() => handleUpdateUserGroup(user.osuId, "admin")}
+            className="w-full px-3 py-1.5 bg-green-500 text-white text-xs rounded-md hover:bg-green-600 transition-colors"
+          >
+            设为管理员
+          </button>
+        )}
+      </div>
+    );
 
     return (
-      <div className="space-y-6">
-        <div className="space-y-2">
+      <div className="space-y-8">
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-white font-medium">管理员列表</h3>
-            <div className="text-gray-400 text-sm">
-              点击"设为管理员"按钮将玩家设为管理员
+            <h3 className="text-text font-medium">管理员列表</h3>
+            <span className="text-text-secondary text-xs">
+              {adminUsers.length} 人
+            </span>
+          </div>
+          {adminUsers.length === 0 ? (
+            <div className="bg-white dark:bg-white-extra border border-action rounded-lg p-6 text-center">
+              <p className="text-text-secondary text-sm">暂无管理员</p>
             </div>
-          </div>
-          <div className="bg-[#1a1a1a] border border-gray-600 rounded-md min-h-[100px] p-3">
-            {adminUsers.length === 0 ? (
-              <p className="text-gray-500 text-sm">暂无管理员</p>
-            ) : (
-              <div className="space-y-2">
-                {adminUsers.map((user) => (
-                  <div
-                    key={user.osuId}
-                    className="flex items-center justify-between bg-[#2a2a2a] p-2 rounded"
-                  >
-                    <div>
-                      <span className="text-white text-sm">
-                        {user.username}
-                      </span>
-                      <span className="text-gray-400 text-xs ml-2">
-                        ID: {user.osuId}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() =>
-                        handleUpdateUserGroup(user.osuId, "player")
-                      }
-                      className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
-                    >
-                      移除管理员
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {adminUsers.map((user) => (
+                <UserCard key={user.osuId} user={user} isAdmin={true} />
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="space-y-2">
-          <h3 className="text-white font-medium">玩家列表</h3>
-          <div className="bg-[#1a1a1a] border border-gray-600 rounded-md min-h-[100px] p-3">
-            {playerUsers.length === 0 ? (
-              <p className="text-gray-500 text-sm">暂无玩家</p>
-            ) : (
-              <div className="space-y-2">
-                {playerUsers.map((user) => (
-                  <div
-                    key={user.osuId}
-                    className="flex items-center justify-between bg-[#2a2a2a] p-2 rounded"
-                  >
-                    <div>
-                      <span className="text-white text-sm">
-                        {user.username}
-                      </span>
-                      <span className="text-gray-400 text-xs ml-2">
-                        ID: {user.osuId}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => handleUpdateUserGroup(user.osuId, "admin")}
-                      className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
-                    >
-                      设为管理员
-                    </button>
-                  </div>
-                ))}
-              </div>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-text font-medium">玩家列表</h3>
+            <span className="text-text-secondary text-xs">
+              {playerUsers.length} 人
+            </span>
+          </div>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="搜索用户名或ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 pl-10 bg-white dark:bg-white-extra border border-action rounded-md text-text text-sm focus:border-highlight focus:outline-none"
+            />
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             )}
           </div>
+          {filteredPlayerUsers.length === 0 && playerUsers.length > 0 ? (
+            <div className="bg-white dark:bg-white-extra border border-action rounded-lg p-6 text-center">
+              <p className="text-text-secondary text-sm">没有匹配的用户</p>
+            </div>
+          ) : playerUsers.length === 0 ? (
+            <div className="bg-white dark:bg-white-extra border border-action rounded-lg p-6 text-center">
+              <p className="text-text-secondary text-sm">暂无玩家</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {filteredPlayerUsers.map((user) => (
+                <UserCard key={user.osuId} user={user} isAdmin={false} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -390,12 +447,12 @@ export default function SettingsManagement({
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
-          <h3 className="text-xl font-bold text-white mb-4 flex items-center">
-            <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
+        <div className="bg-white dark:bg-white-extra border-b-4 border-highlight rounded-lg p-6 transition-all hover:scale-[1.01] active:scale-[0.99]">
+          <h3 className="text-xl font-bold text-text mb-4 flex items-center">
+            <div className="w-2 h-2 bg-highlight rounded-full mr-3"></div>
             系统设置
           </h3>
-          <div className="bg-[#3D3D3D80] p-4 border border-gray-600">
+          <div className="bg-background/30 p-4 border border-action rounded-lg">
             <div className="flex justify-center items-center py-8">
               <Image
                 src="/icons/loading.svg"
@@ -404,7 +461,7 @@ export default function SettingsManagement({
                 height={120}
                 className="animate-spin"
               />
-              <span className="ml-2 text-gray-400">加载中...</span>
+              <span className="ml-2 text-text-secondary">加载中...</span>
             </div>
           </div>
         </div>
@@ -414,16 +471,16 @@ export default function SettingsManagement({
 
   return (
     <div className="space-y-6">
-      <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
-        <h3 className="text-xl font-bold text-white mb-4 flex items-center">
-          <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
+      <div className="bg-white dark:bg-white-extra border-b-4 border-highlight rounded-lg p-6">
+        <h3 className="text-xl font-bold text-text mb-4 flex items-center">
+          <div className="w-2 h-2 bg-highlight rounded-full mr-3"></div>
           比赛设置管理
         </h3>
-        <div className="bg-[#3D3D3D80] p-6 border border-gray-600 space-y-6">
+        <div className="bg-background/30 p-6 border border-action rounded-lg space-y-6">
           {/* 基本信息 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-text-secondary mb-2">
                 比赛名称 *
               </label>
               <input
@@ -435,13 +492,13 @@ export default function SettingsManagement({
                     tournament_name: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
+                className="w-full px-3 py-2 bg-white dark:bg-white-extra border border-action rounded-md text-text focus:border-highlight focus:outline-none"
                 placeholder="输入比赛名称"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-text-secondary mb-2">
                 当前赛季
               </label>
               <Dropdown
@@ -462,7 +519,7 @@ export default function SettingsManagement({
           {/* PP分段设置 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-text-secondary mb-2">
                 报名最低PP限制
               </label>
               <input
@@ -476,12 +533,12 @@ export default function SettingsManagement({
                     min_pp_for_registration: parseFloat(e.target.value) || 0,
                   }))
                 }
-                className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
+                className="w-full px-3 py-2 bg-white dark:bg-white-extra border border-action rounded-md text-text focus:border-highlight focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-text-secondary mb-2">
                 报名最高PP限制
               </label>
               <input
@@ -495,7 +552,7 @@ export default function SettingsManagement({
                     max_pp_for_registration: parseFloat(e.target.value) || 7000,
                   }))
                 }
-                className="w-full px-3 py-2 bg-[#1a1a1a] border border-gray-600 rounded-md text-white focus:border-[#E93B66] focus:outline-none"
+                className="w-full px-3 py-2 bg-white dark:bg-white-extra border border-action rounded-md text-text focus:border-highlight focus:outline-none"
               />
             </div>
           </div>
@@ -503,7 +560,7 @@ export default function SettingsManagement({
           {/* 赛季阶段设置 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-text-secondary mb-2">
                 当前赛季阶段
               </label>
               <Dropdown
@@ -538,11 +595,11 @@ export default function SettingsManagement({
                       registration_enabled: e.target.checked,
                     }))
                   }
-                  className="w-4 h-4 text-[#E93B66] bg-[#1a1a1a] border-gray-600 rounded focus:ring-[#E93B66] focus:ring-2"
+                  className="w-4 h-4 text-highlight bg-white dark:bg-white-extra border-action rounded focus:ring-highlight focus:ring-2"
                 />
                 <label
                   htmlFor="registration_enabled"
-                  className="ml-2 text-sm text-gray-300"
+                  className="ml-2 text-sm text-text-secondary"
                 >
                   当前阶段允许报名
                 </label>
@@ -559,11 +616,11 @@ export default function SettingsManagement({
                       mappool_visible: e.target.checked,
                     }))
                   }
-                  className="w-4 h-4 text-[#E93B66] bg-[#1a1a1a] border-gray-600 rounded focus:ring-[#E93B66] focus:ring-2"
+                  className="w-4 h-4 text-highlight bg-white dark:bg-white-extra border-action rounded focus:ring-highlight focus:ring-2"
                 />
                 <label
                   htmlFor="mappool_visible"
-                  className="ml-2 text-sm text-gray-300"
+                  className="ml-2 text-sm text-text-secondary"
                 >
                   当前阶段显示图池
                 </label>
@@ -575,58 +632,11 @@ export default function SettingsManagement({
           <div className="space-y-6">
             {usersLoading ? (
               <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E93B66]"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-highlight"></div>
               </div>
             ) : (
               renderUserManagement()
             )}
-          </div>
-
-          {/* 数据库初始化 */}
-          <div className="border-t border-gray-600 pt-6">
-            <h4 className="text-lg font-bold text-white mb-4 flex items-center">
-              <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
-              数据库管理
-            </h4>
-            <div className="bg-[#2a2a2a] p-4 rounded-md border border-gray-600">
-              <div className="space-y-4">
-                <div>
-                  <p className="text-gray-300 text-sm mb-2">
-                    初始化比赛分数数据库表。此操作将创建必要的数据库表结构，用于存储比赛分数数据。
-                  </p>
-                  <p className="text-yellow-400 text-xs mb-4">
-                    注意：此操作只会创建表结构，不会删除或修改现有数据。
-                  </p>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <button
-                    onClick={handleInitializeDatabase}
-                    disabled={initializingDatabase || !isAdmin}
-                    className="px-6 py-2 bg-[#E93B66] text-white rounded-md hover:bg-[#d32f5a] disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                  >
-                    {initializingDatabase && (
-                      <Image
-                        src="/icons/loading.svg"
-                        alt="loading"
-                        width={120}
-                        height={120}
-                        className="animate-spin"
-                      />
-                    )}
-                    {initializingDatabase ? "初始化中..." : "初始化数据库"}
-                  </button>
-
-                  {databaseStatus && (
-                    <div
-                      className={`text-sm ${databaseStatus.includes("成功") ? "text-green-400" : databaseStatus.includes("失败") ? "text-red-400" : "text-yellow-400"}`}
-                    >
-                      {databaseStatus}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* 保存按钮 */}
@@ -634,14 +644,14 @@ export default function SettingsManagement({
             <button
               onClick={handleSave}
               disabled={saving || !isAdmin}
-              className="px-6 py-2 bg-[#E93B66] text-white rounded-md hover:bg-[#d32f5a] disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="px-6 py-2 bg-white dark:bg-white-extra text-text rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 border-b-4 border-highlight hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all active:scale-[0.99]"
             >
               {saving && (
                 <Image
                   src="/icons/loading.svg"
                   alt="loading"
-                  width={120}
-                  height={120}
+                  width={16}
+                  height={16}
                   className="animate-spin"
                 />
               )}
@@ -650,8 +660,6 @@ export default function SettingsManagement({
           </div>
         </div>
       </div>
-
-      {/* 注意：添加用户模态框已移除，用户权限管理现在通过"设为管理员"和"移除管理员"按钮直接进行 */}
     </div>
   );
 }

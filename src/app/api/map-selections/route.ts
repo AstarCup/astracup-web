@@ -4,15 +4,14 @@ import {
   addMapSelection,
   deleteMapSelection,
   updateMapSelection,
-  verifyAdminAuth,
-  getPool,
 } from "@/lib/map-selection";
+import { prisma } from "@/lib/prisma";
 import {
   getBeatmapInfo,
   getBeatmapsetInfo,
   parseBeatmapUrl,
 } from "@/lib/osu-api";
-import { verifyMapSelectionAuth, verifyReplayAuth } from "@/lib/permissions";
+import { verifyMapSelectionAuth, verifyReplayAuth, verifyAdminAuth } from "@/lib/permissions";
 
 // GET - 获取选图列表
 export async function GET(request: NextRequest) {
@@ -493,14 +492,12 @@ export async function PUT(request: NextRequest) {
       // 检查是否为选图者本人（需要查询数据库）
       let isOwner = false;
       try {
-        const connection = await getPool().getConnection();
-        const [rows] = (await connection.execute(
-          "SELECT selectedBy FROM map_selections WHERE id = ?",
-          [id],
-        )) as [Array<{ selectedBy: string }>, import("mysql2").FieldPacket[]];
+        const selection = await prisma.mapSelection.findUnique({
+          where: { id: parseInt(id) },
+          select: { selectedBy: true },
+        });
 
-        if (rows && rows.length > 0) {
-          const selection = rows[0];
+        if (selection) {
           isOwner = selection.selectedBy === selectedBy;
           console.log("Ownership check:", {
             selectionSelectedBy: selection.selectedBy,
@@ -508,7 +505,6 @@ export async function PUT(request: NextRequest) {
             isOwner,
           });
         }
-        connection.release();
       } catch (error) {
         console.error("Error checking selection ownership:", error);
       }

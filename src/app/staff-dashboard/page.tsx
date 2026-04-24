@@ -300,8 +300,9 @@ export default function AdminPage() {
         throw new Error("Failed to fetch registrations");
       }
 
-      const data = await response.json();
-      setRegistrations(data.registrations || []);
+      const json = await response.json();
+      // API returns { success, message, data: { registrations: [...] } }
+      setRegistrations(json.data?.registrations || json.registrations || []);
     } catch (error) {
       console.error("Error fetching registrations:", error);
       showError("获取注册数据失败");
@@ -674,7 +675,7 @@ export default function AdminPage() {
             className="object-cover opacity-20"
           />
         </div>
-        <div className="relative z-10 bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-8 text-center">
+        <div className="relative z-10 bg-white-extra border-b-4 border-[#E93B66] rounded-lg p-8 text-center">
           <Image
             src="/icons/loading.svg"
             alt="loading"
@@ -682,7 +683,7 @@ export default function AdminPage() {
             height={120}
             className="animate-spin"
           />
-          <div className="text-white text-xl font-medium">加载中...</div>
+          <div className="text-text text-xl font-medium">加载中...</div>
         </div>
       </div>
     );
@@ -699,19 +700,19 @@ export default function AdminPage() {
             className="object-cover opacity-20"
           />
         </div>
-        <div className="relative z-10 bg-[#3D3D3D] border-b-4 border-[#E93B66]  p-8 text-center max-w-md">
+        <div className="relative z-10 bg-white-extra border-b-4 border-[#E93B66] rounded-lg p-8 text-center max-w-md">
           <div className="text-red-400 text-2xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-white mb-4">
+          <h1 className="text-2xl font-bold text-text mb-4">
             {!user ? "请先登录" : "权限不足"}
           </h1>
-          <p className="text-gray-300 mb-6">
+          <p className="text-text-secondary mb-6">
             {!user
               ? "您需要登录后才能访问此页面"
               : "您没有权限访问管理比赛安排页面"}
           </p>
           <Link
             href="/"
-            className="inline-block bg-[#E93B66] hover:bg-[#3BE9D8] text-white px-6 py-3  transition-colors duration-200 font-medium"
+            className="inline-block bg-[#E93B66] hover:bg-[#3BE9D8] text-text px-6 py-3 rounded-lg transition-colors duration-200 font-medium"
           >
             返回首页
           </Link>
@@ -721,142 +722,45 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a]">
+    <div className="min-h-screen bg-background">
       {/* 顶部导航栏 */}
-      <div className="bg-[#2d2d2d] border-b border-[#404040]">
+      <div className="bg-white-extra border-b border-white-extra">
         <div className="max-w-9xl mx-auto px-6">
           {/* 顶部Tab栏 */}
           <div className="flex space-x-1 overflow-x-auto">
-            {/* 概览 - 所有工作人员都可以访问 */}
-            <button
-              onClick={() => handleTabChange("overview")}
-              className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
-                activeTab === "overview"
-                  ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
-                  : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
-              }`}
-            >
-              <Compass />
-              概览
-            </button>
+            {(() => {
+              const tabs = [
+                { key: "overview", label: "概览", icon: Compass, adminOnly: false },
+                { key: "matches", label: "比赛预约管理", icon: LandPlot, adminOnly: false },
+                { key: "streaming", label: "staff比赛房间加入", icon: CirclePlus, adminOnly: true },
+                { key: "map-selection", label: "选图管理", icon: LassoSelect, adminOnly: true },
+                { key: "replays", label: "回放收集", icon: Video, adminOnly: true },
+                { key: "rooms", label: "比赛时间房间管理", icon: CalendarClock, adminOnly: true },
+                { key: "matchups", label: "玩家对战列表管理", icon: UsersRound, adminOnly: true },
+                { key: "users", label: "用户管理", icon: UserRoundPen, adminOnly: true },
+                { key: "settings", label: "系统设置", icon: Settings, adminOnly: true },
+              ];
 
-            {/* 比赛管理 - 所有工作人员都可以访问 */}
-            <button
-              onClick={() => handleTabChange("matches")}
-              className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
-                activeTab === "matches"
-                  ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
-                  : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
-              }`}
-            >
-              <LandPlot />
-              比赛预约管理
-            </button>
+              const btnClass = (tabKey: string) =>
+                `flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap rounded-full ${
+                  activeTab === tabKey
+                    ? "bg-background text-text border-b-4 border-action"
+                    : "text-text-secondary hover:bg-action hover:text-text"
+                }`;
 
-            {/* 直播裁判 - 管理员、裁判员、直播员 */}
-            {permissions.isadmin && (
-              <button
-                onClick={() => handleTabChange("streaming")}
-                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
-                  activeTab === "streaming"
-                    ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
-                    : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
-                }`}
-              >
-                <CirclePlus />
-                staff比赛房间加入
-              </button>
-            )}
-
-            {/* 选图管理 - 地图选择员或管理员 */}
-            {permissions.isadmin && (
-              <button
-                onClick={() => handleTabChange("map-selection")}
-                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
-                  activeTab === "map-selection"
-                    ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
-                    : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
-                }`}
-              >
-                <LassoSelect />
-                选图管理
-              </button>
-            )}
-
-            {/* 回放收集 - 重播测试员或管理员 */}
-            {permissions.isadmin && (
-              <button
-                onClick={() => handleTabChange("replays")}
-                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
-                  activeTab === "replays"
-                    ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
-                    : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
-                }`}
-              >
-                <Video />
-                回放收集
-              </button>
-            )}
-
-            {/* 比赛房间管理 - 仅管理员 */}
-            {permissions.isadmin && (
-              <button
-                onClick={() => handleTabChange("rooms")}
-                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
-                  activeTab === "rooms"
-                    ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
-                    : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
-                }`}
-              >
-                <CalendarClock />
-                比赛时间房间管理
-              </button>
-            )}
-
-            {/* 对战列表管理 - 仅管理员 */}
-            {permissions.isadmin && (
-              <button
-                onClick={() => handleTabChange("matchups")}
-                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
-                  activeTab === "matchups"
-                    ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
-                    : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
-                }`}
-              >
-                <UsersRound />
-                玩家对战列表管理
-              </button>
-            )}
-
-            {/* 用户管理 - 仅管理员 */}
-            {permissions.isadmin && (
-              <button
-                onClick={() => handleTabChange("users")}
-                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
-                  activeTab === "users"
-                    ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
-                    : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
-                }`}
-              >
-                <UserRoundPen />
-                用户管理
-              </button>
-            )}
-
-            {/* 系统设置 - 仅管理员 */}
-            {permissions.isadmin && (
-              <button
-                onClick={() => handleTabChange("settings")}
-                className={`flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
-                  activeTab === "settings"
-                    ? "bg-[#E93B66] text-white border-b-4 border-[#3BE9D8]"
-                    : "text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
-                }`}
-              >
-                <Settings />
-                系统设置
-              </button>
-            )}
+              return tabs
+                .filter((t) => !t.adminOnly || permissions.isadmin)
+                .map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => handleTabChange(tab.key)}
+                    className={btnClass(tab.key)}
+                  >
+                    <tab.icon />
+                    {tab.label}
+                  </button>
+                ));
+            })()}
           </div>
         </div>
       </div>

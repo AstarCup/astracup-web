@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
       select: {
         osuId: true,
         username: true,
+        avatar_url: true,
         userGroup: true,
         createdAt: true,
       },
@@ -44,9 +45,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      users: users.map((user: { osuId: string; username: string | null; userGroup: string | null; createdAt: Date }) => ({
+      users: users.map((user: { osuId: string; username: string | null; avatar_url: string | null; userGroup: string | null; createdAt: Date }) => ({
         osuId: user.osuId,
         username: user.username || "未知用户",
+        avatar_url: user.avatar_url || null,
         userGroup: user.userGroup || "player",
         createdAt: user.createdAt,
       })),

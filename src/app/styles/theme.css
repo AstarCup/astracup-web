@@ -2,8 +2,8 @@
 
 @theme {
   --color-background: #ffffff;
-  --color-text: #797979;
-  --color-text-secondary: #c4c4c4;
+  --color-text: #2d2d2d;
+  --color-text-secondary: #757575;
   --color-action: #ccd7e3;
   --color-highlight: #edcad4;
   --color-highlight-secondary: #ffebeb;
@@ -12,8 +12,8 @@
 
 :root {
   --color-background: #ffffff;
-  --color-text: #797979;
-  --color-text-secondary: #c4c4c4;
+  --color-text: #2d2d2d;
+  --color-text-secondary: #757575;
   --color-action: #ccd7e3;
   --color-highlight: #edcad4;
   --color-highlight-secondary: #ffebeb;

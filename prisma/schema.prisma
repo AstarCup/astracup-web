@@ -224,12 +224,33 @@ model MapSelection {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  // 关系
+  comments MapComment[]
+
   @@index([beatmapId])
   @@index([beatmapsetId])
   @@index([selectedBy])
   @@index([season])
   @@index([category])
   @@index([approved])
+}
+
+model MapComment {
+  id             Int      @id @default(autoincrement())
+  mapSelectionId Int
+  userId         String
+  username       String
+  avatar_url     String   @default("")
+  comment        String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // 关系
+  mapSelection MapSelection @relation(fields: [mapSelectionId], references: [id])
+
+  @@index([mapSelectionId])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 // 枚举类型定义
