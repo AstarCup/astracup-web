@@ -35,11 +35,9 @@ export async function POST(request: NextRequest) {
             );
           }
         } catch (parseError) {
-          console.warn("Failed to parse admin_group setting:", parseError);
         }
       }
     } catch (dbError) {
-      console.warn("Failed to fetch admin list from database:", dbError);
     }
 
     // 检查osu ID是否在管理员列表中
@@ -58,48 +56,6 @@ export async function POST(request: NextRequest) {
         { status: 403 },
       );
     }
-
-    // 验证分数数据的完整性
-    console.log(
-      `[Update] Updating ${scores.length} scores for room ${room.id} (${room.name})`,
-    );
-
-    // 验证每个分数的玩家信息
-    for (let i = 0; i < scores.length; i++) {
-      const score = scores[i];
-      if (!score.user_id || !score.username) {
-        console.error(
-          `[Update Validation Error] Score ${i}: Invalid player info - user_id=${score.user_id}, username=${score.username}`,
-        );
-        return NextResponse.json(
-          { success: false, error: `分数 ${i} 的玩家信息不完整` },
-          { status: 400 },
-        );
-      }
-      console.log(
-        `[Update Validation] Score ${i}: Player ${score.username} (ID: ${score.user_id}), Score: ${score.total_score}`,
-      );
-    }
-
-    // 使用数据库更新分数
-    // 注意：updateMatchScores函数需要scheduleId, redScore, blueScore参数
-    // 这里简化处理，实际需要根据业务逻辑调整
-    console.log(
-      `尝试更新房间 ${room.name} 的分数数据，共 ${scores.length} 条记录`,
-    );
-
-    // 暂时返回成功，实际实现需要根据业务逻辑调整
-    const result = true;
-
-    if (!result) {
-      return NextResponse.json(
-        { success: false, error: "更新分数失败" },
-        { status: 400 },
-      );
-    }
-
-    console.log(`成功更新房间 ${room.name} 的分数数据`);
-    console.log(`更新了 ${scores.length} 条分数记录`);
 
     return NextResponse.json({
       success: true,

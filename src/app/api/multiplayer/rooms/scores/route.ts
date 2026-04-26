@@ -171,9 +171,6 @@ export async function POST(request: NextRequest) {
     }
 
     // 如果数据库中没有数据，才从osu API获取
-    console.log("数据库中没有完整数据，从osu API获取...");
-
-    // 获取客户端token
     const accessToken = await getValidClientToken();
 
     for (const roomId of roomIds) {

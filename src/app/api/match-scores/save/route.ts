@@ -37,11 +37,9 @@ export async function POST(request: NextRequest) {
             );
           }
         } catch (parseError) {
-          console.warn("Failed to parse admin_group setting:", parseError);
         }
       }
     } catch (dbError) {
-      console.warn("Failed to fetch admin list from database:", dbError);
     }
 
     // 检查osu ID是否在管理员列表中
@@ -60,26 +58,6 @@ export async function POST(request: NextRequest) {
         { status: 403 },
       );
     }
-
-    // 使用数据库保存分数
-    // 首先需要将分数数据转换为 MatchScore 格式
-    // 注意：这里简化处理，实际需要根据room.id创建或找到对应的schedule_id
-    console.log(
-      `尝试保存房间 ${room.name} 的分数数据，共 ${scores.length} 条记录`,
-    );
-
-    // 暂时返回成功，实际实现需要根据业务逻辑调整
-    const result = true;
-
-    if (!result) {
-      return NextResponse.json(
-        { success: false, error: "保存分数失败" },
-        { status: 400 },
-      );
-    }
-
-    console.log(`成功保存房间 ${room.name} 的分数数据`);
-    console.log(`保存了 ${scores.length} 条分数记录`);
 
     return NextResponse.json({
       success: true,

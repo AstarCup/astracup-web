@@ -85,9 +85,6 @@ export async function GET(
     }
 
     const scoresData = await scoresResponse.json();
-    console.log(
-      `Room ${roomId}, playlist ${playlistId}: fetched ${scoresData.scores?.length || 0} scores`,
-    );
 
     // 转换数据格式
     const displayScores: DisplayScore[] =

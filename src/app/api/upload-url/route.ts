@@ -94,18 +94,9 @@ export async function POST(request: NextRequest) {
         };
       },
       onUploadCompleted: async ({ blob, tokenPayload }) => {
-        // 文件上传完成后调用
-        console.log("Blob上传完成:", blob);
-
         try {
           if (tokenPayload) {
             const payload = JSON.parse(tokenPayload);
-            console.log("上传完成，文件信息:", {
-              userId: payload.userId,
-              blobPath: payload.blobPath,
-              originalFilename: payload.originalFilename,
-              blobUrl: blob.url,
-            });
           }
         } catch (error) {
           console.error("Error processing upload completion:", error);

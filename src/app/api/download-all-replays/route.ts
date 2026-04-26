@@ -13,15 +13,10 @@ export async function GET(request: NextRequest) {
     const season = searchParams.get("season") || "s1";
     const category = searchParams.get("category") || "qualification";
 
-    console.log("Downloading all replays for:", { season, category });
-
-    // 从 Vercel Blob 获取已上传的文件列表
     const { blobs } = await list({
       prefix: `${season}/${category}/`,
       token: process.env.BLOB_READ_WRITE_TOKEN,
     });
-
-    console.log("Blobs found:", blobs.length);
 
     if (blobs.length === 0) {
       return NextResponse.json(

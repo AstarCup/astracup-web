@@ -290,8 +290,6 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    console.log("Adding map selection with data:", selectionData);
-
     // 添加选图（允许重复添加）
     const success = await addMapSelection(selectionData);
 
@@ -499,22 +497,12 @@ export async function PUT(request: NextRequest) {
 
         if (selection) {
           isOwner = selection.selectedBy === selectedBy;
-          console.log("Ownership check:", {
-            selectionSelectedBy: selection.selectedBy,
-            requestSelectedBy: selectedBy,
-            isOwner,
-          });
         }
       } catch (error) {
         console.error("Error checking selection ownership:", error);
       }
 
       isAuthorized = isMapSelector || isOwner;
-      console.log("Padding update authorization:", {
-        isMapSelector,
-        isOwner,
-        isAuthorized,
-      });
     } else {
       // 更新其他字段：只允许选图团队成员
       isAuthorized = await verifyMapSelectionAuth(selectedBy);
@@ -528,23 +516,11 @@ export async function PUT(request: NextRequest) {
     }
 
     // 更新选图
-    console.log("Calling updateMapSelection with:", {
-      id: parseInt(id),
-      updates,
-      selectedBy,
-    });
     const success = await updateMapSelection(parseInt(id), updates, selectedBy);
-    console.log("updateMapSelection result:", success);
 
     if (!success) {
-      // 添加更详细的错误信息
       const isAdmin = await verifyAdminAuth(selectedBy);
       const isMapSelector = await verifyMapSelectionAuth(selectedBy);
-      console.log("Update failed - permissions:", {
-        isAdmin,
-        isMapSelector,
-        updates,
-      });
       return NextResponse.json(
         { error: "更新选图失败或您没有权限更新此选图" },
         { status: 400 },

@@ -21,18 +21,14 @@ export async function POST(request: NextRequest) {
     // 验证权限
     const isAuthorized = await verifyMapSelectionAuth(osuId);
     if (!isAuthorized) {
-      console.log("Permission denied for osuId:", osuId);
       return NextResponse.json(
         { error: "您没有权限访问选图系统" },
         { status: 403 },
       );
     }
 
-    console.log("Permission granted for osuId:", osuId);
-
     // 解析URL
     const parsedUrl = parseBeatmapUrl(url);
-    console.log("Parsed URL:", url, "->", parsedUrl);
     if (!parsedUrl.beatmapId && !parsedUrl.beatmapsetId) {
       return NextResponse.json(
         { error: "无效的osu! beatmap URL" },
