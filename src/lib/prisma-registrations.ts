@@ -486,8 +486,8 @@ export const getAllMatchSchedules = async (): Promise<MatchSchedule[]> => {
 export const createMatchRoom = async (roomData: {
   room_name: string;
   round_number: number;
-  match_date: Date;
-  match_time: Date;
+  match_datetime: Date;
+  match_type?: string;
   match_number: number;
   max_participants?: number;
   description?: string;
@@ -789,18 +789,63 @@ export const getTournamentRegistrationCount = async (): Promise<number> => {
 export const getStaffRoomAssignments = async (): Promise<
   StaffRoomAssignment[]
 > => {
-  return await prisma.staffRoomAssignment.findMany({
-    include: {
-      room: true,
-    },
-    orderBy: { created_at: "desc" },
-  });
+  const [assignments, users] = await Promise.all([
+    prisma.staffRoomAssignment.findMany({
+      include: {
+        room: true,
+      },
+      orderBy: { created_at: "desc" },
+    }),
+    prisma.user.findMany({
+      select: { osuId: true, avatar_url: true },
+    }),
+  ]);
+
+  const avatarMap = new Map(users.map((u) => [u.osuId, u.avatar_url]));
+
+  return assignments.map((a) => ({
+    ...a,
+    staff_avatar_url: avatarMap.get(a.staff_osuId) || null,
+    status: "confirmed",
+  }));
 };
 
 export const getAvailableRoomsForStaff = async (): Promise<MatchRoom[]> => {
-  return await prisma.matchRoom.findMany({
+  const rooms = await prisma.matchRoom.findMany({
     where: { status: "open" },
+    include: {
+      schedules: {
+        select: {
+          id: true,
+          player1_username: true,
+          player2_username: true,
+        },
+      },
+      staffRoomAssignments: {
+        select: {
+          id: true,
+          staff_osuId: true,
+          staff_username: true,
+          role: true,
+        },
+      },
+    },
     orderBy: { created_at: "desc" },
+  });
+
+  return rooms.map((r) => {
+    const schedule = r.schedules?.[0];
+    const staffCounts = {
+      referee: r.staffRoomAssignments?.filter((s) => s.role === "referee").length || 0,
+      commentator: r.staffRoomAssignments?.filter((s) => s.role === "commentator").length || 0,
+      streamer: r.staffRoomAssignments?.filter((s) => s.role === "streamer").length || 0,
+    };
+    return {
+      ...r,
+      player1_username: schedule?.player1_username || null,
+      player2_username: schedule?.player2_username || null,
+      staff_counts: staffCounts,
+    };
   });
 };
 
@@ -849,12 +894,23 @@ export const deleteStaffRoomAssignment = async (
 export const getRoomStaffAssignments = async (
   roomId: number,
 ): Promise<StaffRoomAssignment[]> => {
-  return await prisma.staffRoomAssignment.findMany({
-    where: { room_id: roomId },
-    include: {
-      room: true,
-    },
-  });
+  const [assignments, users] = await Promise.all([
+    prisma.staffRoomAssignment.findMany({
+      where: { room_id: roomId },
+      include: { room: true },
+    }),
+    prisma.user.findMany({
+      select: { osuId: true, avatar_url: true },
+    }),
+  ]);
+
+  const avatarMap = new Map(users.map((u) => [u.osuId, u.avatar_url]));
+
+  return assignments.map((a) => ({
+    ...a,
+    staff_avatar_url: avatarMap.get(a.staff_osuId) || null,
+    status: "confirmed",
+  }));
 };
 
 export const getMatchRoomsWithSchedules = async (): Promise<

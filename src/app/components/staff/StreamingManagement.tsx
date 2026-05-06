@@ -1,10 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
-import { UserSession } from "@/lib/permissions";
-import { UserPermissions } from "@/lib/permissions";
+import { UserSession, UserPermissions } from "@/lib/permissions";
 import { StaffRoomAssignment, AvailableRoom } from "./types";
+import { Video, Mic, Flag, Calendar, Clock, XCircle, PlusCircle } from "lucide-react";
 
 interface StreamingManagementProps {
   user: UserSession;
@@ -13,11 +12,152 @@ interface StreamingManagementProps {
   staffAssignmentsLoading: boolean;
   availableRooms: AvailableRoom[];
   availableRoomsLoading: boolean;
-  onApplyForRoom: (
-    roomId: number,
-    role: "referee" | "streamer" | "commentator",
-  ) => void;
+  onApplyForRoom: (roomId: number, role: "referee" | "streamer" | "commentator") => void;
   onRevokeAssignment: (assignmentId: number, roleName: string) => void;
+}
+
+const ROLE_CONFIG: Record<string, { label: string; class: string; bg: string; icon: typeof Video }> = {
+  referee: { label: "裁判", class: "bg-blue-100 text-blue-700 border-blue-200", bg: "bg-blue-50", icon: Flag },
+  streamer: { label: "直播", class: "bg-purple-100 text-purple-700 border-purple-200", bg: "bg-purple-50", icon: Video },
+  commentator: { label: "解说", class: "bg-emerald-100 text-emerald-700 border-emerald-200", bg: "bg-emerald-50", icon: Mic },
+};
+
+const STATUS_MAP: Record<string, { label: string; class: string }> = {
+  open: { label: "开放", class: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  in_progress: { label: "进行中", class: "bg-amber-100 text-amber-700 border-amber-200" },
+  closed: { label: "关闭", class: "bg-red-100 text-red-600 border-red-200" },
+};
+
+function formatDateTime(dt: string | undefined) {
+  if (!dt) return "—";
+  try {
+    return new Date(dt).toLocaleString("zh-CN", {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "—";
+  }
+}
+
+function RoleBadge({ role }: { role: string }) {
+  const cfg = ROLE_CONFIG[role];
+  if (!cfg) return <span className="text-xs text-gray-500">{role}</span>;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border ${cfg.class}`}>
+      <cfg.icon size={10} />
+      {cfg.label}
+    </span>
+  );
+}
+
+function StaffAvatar({ url, name, size = 32 }: { url?: string; name: string; size?: number }) {
+  return (
+    <Image
+      src={url || "/unknow.svg"}
+      alt={name}
+      width={size}
+      height={size}
+      className="rounded-full"
+      onError={() => { }}
+    />
+  );
+}
+
+function StaffChip({
+  a,
+  showRole,
+  onRevoke,
+}: {
+  a: StaffRoomAssignment;
+  showRole?: boolean;
+  onRevoke?: (assignmentId: number, roleName: string) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-1">
+      <div className="flex items-center gap-1.5">
+        <StaffAvatar url={a.staff_avatar_url} name={a.staff_username} size={20} />
+        <div>
+          <span className="text-xs text-gray-700 font-medium">{a.staff_username}</span>
+          {showRole && <RoleBadge role={a.role} />}
+        </div>
+      </div>
+      {onRevoke && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRevoke(a.id, ROLE_CONFIG[a.role]?.label || a.role);
+          }}
+          className="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+          title="撤销"
+        >
+          <XCircle size={11} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function RoleSection({
+  assignments,
+  roomId,
+  role,
+  onRevoke,
+}: {
+  assignments: StaffRoomAssignment[];
+  roomId: number;
+  role: string;
+  onRevoke?: (assignmentId: number, roleName: string) => void;
+}) {
+  const cfg = ROLE_CONFIG[role];
+  const filtered = assignments.filter(
+    (a) => a.room_id === roomId && a.role === role && a.status === "confirmed",
+  );
+  return (
+    <div className={`rounded-xl p-3 ${cfg?.bg || "bg-gray-50"}`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs text-gray-500 font-medium">{cfg?.label || role}</span>
+        <span className="text-xs text-gray-400 tabular-nums">{filtered.length}</span>
+      </div>
+      {filtered.length === 0 ? (
+        <span className="text-xs text-gray-300">暂无</span>
+      ) : (
+        <div className="flex flex-col gap-1.5">
+          {filtered.map((a) => (
+            <StaffChip key={a.id} a={a} onRevoke={onRevoke} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function countStaffByRoom(assignments: StaffRoomAssignment[], roomId: number) {
+  return {
+    referee: assignments.filter((a) => a.room_id === roomId && a.role === "referee" && a.status === "confirmed").length,
+    commentator: assignments.filter((a) => a.room_id === roomId && a.role === "commentator" && a.status === "confirmed").length,
+    streamer: assignments.filter((a) => a.room_id === roomId && a.role === "streamer" && a.status === "confirmed").length,
+  };
+}
+
+function SkeletonCard() {
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl p-5 animate-pulse">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-full bg-gray-100" />
+        <div className="space-y-2 flex-1">
+          <div className="h-4 w-24 rounded bg-gray-100" />
+          <div className="h-3 w-16 rounded bg-gray-100" />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <div className="h-3 w-32 rounded bg-gray-100" />
+        <div className="h-3 w-20 rounded bg-gray-100" />
+      </div>
+    </div>
+  );
 }
 
 export default function StreamingManagement({
@@ -30,978 +170,173 @@ export default function StreamingManagement({
   onApplyForRoom,
   onRevokeAssignment,
 }: StreamingManagementProps) {
-  // 调试日志 - 显示传入的数据
-  // console.log('=== StreamingManagement 调试信息 ===');
-  // console.log('staffAssignments:', staffAssignments);
-  // console.log('availableRooms:', availableRooms);
-
-  // 详细检查staffAssignments中的match_info
-  if (staffAssignments.length > 0) {
-    // console.log('=== staffAssignments 详细数据 ===');
-    staffAssignments.forEach((assignment, index) => {
-      // console.log(`Assignment ${index}:`, {
-      // id: assignment.id,
-      // room_id: assignment.room_id,
-      // staff_role: assignment.staff_role,
-      // match_info: assignment.match_info,
-      // room: assignment.room
-      // });
-    });
-  }
-
-  // 详细检查availableRooms中的时间数据
-  if (availableRooms.length > 0) {
-    // console.log('=== availableRooms 详细数据 ===');
-    availableRooms.forEach((room, index) => {
-      // console.log(`Room ${index}:`, {
-      // id: room.id,
-      // room_name: room.room_name,
-      // match_date: room.match_date,
-      // match_time: room.match_time,
-      // player1_username: room.player1_username,
-      // player2_username: room.player2_username,
-      // staff_counts: room.staff_counts
-      // });
-    });
-  }
-  // 格式化日期时间函数 - 使用本地化时间显示
-  const formatDateTime = (dateTimeString: string) => {
-    try {
-      return new Date(dateTimeString).toLocaleString("zh-CN");
-    } catch (error) {
-      console.error("日期格式化错误:", error, dateTimeString);
-      return "时间格式错误";
-    }
-  };
-
-  // 格式化日期和时间字符串 - 使用本地化时间显示
-  const formatDateTimeFromStrings = (
-    dateString: string | undefined,
-    timeString: string | undefined,
-  ) => {
-    // 调试日志：检查输入参数
-    console.log("[DEBUG] formatDateTimeFromStrings 输入:", {
-      dateString,
-      timeString,
-    });
-
-    // 检查日期是否为空或无效
-    if (
-      !dateString ||
-      dateString === "0000-00-00" ||
-      dateString === "Invalid Date" ||
-      dateString === "null"
-    ) {
-      console.log('[DEBUG] 日期为空或无效，返回"时间未定"');
-      return "时间未定";
-    }
-
-    try {
-      let date: Date;
-
-      // 检查是否是ISO格式的日期时间字符串（包含T和Z）
-      if (dateString.includes("T") && dateString.includes("Z")) {
-        // 对于ISO格式的日期，我们直接解析它，但需要处理时区问题
-        console.log("[DEBUG] 检测到ISO格式日期:", dateString);
-
-        // 解析ISO格式的日期
-        const isoDate = new Date(dateString);
-        console.log("[DEBUG] 解析后的ISO日期对象:", isoDate);
-
-        // 提取日期部分（YYYY-MM-DD）
-        const datePart = dateString.split("T")[0];
-
-        // 使用timeString中的时间，如果没有则使用默认时间
-        const time =
-          timeString &&
-          timeString !== "00:00:00" &&
-          timeString !== "Invalid Date" &&
-          timeString !== "null"
-            ? timeString
-            : "00:00:00";
-
-        // 创建新的日期时间字符串，使用北京时间（UTC+8）
-        const dateTimeString = `${datePart}T${time}+08:00`;
-        console.log("[DEBUG] 组合后的日期时间字符串:", dateTimeString);
-        date = new Date(dateTimeString);
-
-        // 调试：检查解析后的日期
-        console.log("[DEBUG] 解析后的日期对象:", date);
-        console.log("[DEBUG] 解析后的UTC时间:", date.toISOString());
-        console.log("[DEBUG] 解析后的本地时间:", date.toString());
-        console.log("[DEBUG] 解析后的本地时间戳:", date.getTime());
-      } else {
-        // 处理MySQL格式：DATE + TIME
-        // 处理空时间的情况，MySQL TIME 类型可能返回 '00:00:00'
-        const time =
-          timeString &&
-          timeString !== "00:00:00" &&
-          timeString !== "Invalid Date" &&
-          timeString !== "null"
-            ? timeString
-            : "00:00:00";
-
-        // 创建日期对象，MySQL DATE 格式为 'YYYY-MM-DD', TIME 格式为 'HH:MM:SS'
-        const dateTimeString = `${dateString}T${time}+08:00`;
-        console.log("[DEBUG] MySQL格式日期时间字符串:", dateTimeString);
-        date = new Date(dateTimeString);
-      }
-
-      // 检查日期是否有效
-      if (isNaN(date.getTime())) {
-        console.warn("[DEBUG] 无效的日期时间:", dateString, timeString);
-        return "时间未定";
-      }
-
-      // 格式化日期时间，显示为中文格式
-      const formattedDate = date.toLocaleString("zh-CN", {
-        timeZone: "Asia/Shanghai",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-
-      console.log("[DEBUG] 格式化后的日期时间:", formattedDate);
-      return formattedDate;
-    } catch (error) {
-      console.error("[DEBUG] 日期格式化错误:", error, dateString, timeString);
-      return "时间未定";
-    }
-  };
+  const isLoading = staffAssignmentsLoading || availableRoomsLoading;
+  const myConfirmed = staffAssignments.filter(
+    (a) => a.staff_osuId === user.osuId && a.status === "confirmed",
+  );
 
   return (
     <div className="space-y-6">
-      <div className="bg-[#3D3D3D] border-b-4 border-[#E93B66] p-6">
-        <h3 className="text-xl font-bold text-white mb-4 flex items-center">
-          <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
-          {permissions.isadmin ? "Staff房间分配管理" : "直播裁判房间确认"}
-        </h3>
+      {!permissions.isadmin && myConfirmed.length > 0 && (
+        <div>
+          <h3 className="text-base font-bold text-gray-800 mb-3">我已确认的房间</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {myConfirmed.map((a) => (
+              <div
+                key={a.id}
+                className="group relative bg-white border border-emerald-200 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
+              >
+                <div className="p-5">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <div className="font-semibold text-gray-800 text-sm">
+                        {a.room?.room_name || `房间 ${a.room_id}`}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-0.5">
+                        R{a.room?.round_number} #{a.room?.match_number}
+                      </div>
+                    </div>
+                    <RoleBadge role={a.role} />
+                  </div>
 
-        {staffAssignmentsLoading ? (
-          <div className="flex justify-center items-center py-8">
-            <Image
-              src="/icons/loading.svg"
-              alt="loading"
-              width={120}
-              height={120}
-              className="animate-spin"
-            />
-            <span className="ml-2 text-gray-400">加载中...</span>
-          </div>
-        ) : permissions.isadmin ? (
-          // 管理员视图 - 显示所有已确认的staff分配（从比赛预约表获取）
-          <div className="space-y-4">
-            {/* Staff分配列表 */}
-            {staffAssignments.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {staffAssignments.map((assignment) => (
-                  <div
-                    key={assignment.id}
-                    className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-4 hover:border-[#E93B66] transition-colors duration-200"
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-3">
+                    <Clock size={12} className="text-gray-400" />
+                    {formatDateTime(a.room?.match_datetime)}
+                  </div>
+
+                  <button
+                    onClick={() => onRevokeAssignment(a.id, ROLE_CONFIG[a.role]?.label || a.role)}
+                    className="w-full inline-flex items-center justify-center gap-1 py-1.5 text-xs text-red-600 hover:bg-red-50 border border-red-100 rounded-lg transition-colors"
                   >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center space-x-3">
-                        <Image
-                          src={assignment.staff_avatar_url || "/unknow.svg"}
-                          alt={`${assignment.staff_username} avatar`}
-                          width={40}
-                          height={40}
-                          className="w-10 h-10 rounded-full"
-                          onError={() => {}}
-                        />
-                        <div>
-                          <h4 className="text-white font-semibold">
-                            {assignment.staff_username}
-                          </h4>
-                          <p className="text-sm text-gray-400">
-                            ID: {assignment.staff_osuId}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            assignment.staff_role === "referee"
-                              ? "bg-blue-600 text-white"
-                              : assignment.staff_role === "streamer"
-                                ? "bg-purple-600 text-white"
-                                : "bg-green-600 text-white"
-                          }`}
-                        >
-                          {assignment.staff_role === "referee"
-                            ? "裁判"
-                            : assignment.staff_role === "streamer"
-                              ? "直播"
-                              : "解说"}
-                        </span>
-                      </div>
-                    </div>
+                    <XCircle size={12} />
+                    退出
+                  </button>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 transition-all duration-300 group-hover:h-1 bg-emerald-400" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm text-gray-400">
-                        <span>房间: </span>
-                        <span className="text-white">
-                          {assignment.room?.room_name ||
-                            `房间 ${assignment.room_id}`}
-                          (轮次 {assignment.room?.round_number}, 场次{" "}
-                          {assignment.room?.match_number})
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <span className="text-xs text-gray-400">状态:</span>
-                        <span className="px-2 py-1 bg-green-600 text-white text-xs rounded">
-                          已确认
-                        </span>
-                      </div>
-                    </div>
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-bold text-gray-800">
+            {permissions.isadmin ? "Staff 房间管理" : "可申请的房间"}
+          </h3>
+          <span className="text-xs text-gray-400">{availableRooms.length} 个房间</span>
+        </div>
 
-                    {/* 显示比赛信息 */}
-                    {assignment.match_info && (
-                      <div className="mt-2 space-y-2">
-                        <div className="text-sm text-gray-400">
-                          <span>比赛: </span>
-                          <span className="text-white">
-                            {assignment.match_info.player1_username} vs{" "}
-                            {assignment.match_info.player2_username}
-                          </span>
-                          <span className="ml-4 text-xs">
-                            {assignment.room?.match_date &&
-                            assignment.room?.match_time
-                              ? formatDateTimeFromStrings(
-                                  assignment.room.match_date,
-                                  assignment.room.match_time,
-                                )
-                              : "时间未定"}
-                          </span>
-                        </div>
-
-                        {/* 比赛详细信息 */}
-                        <div className="text-xs text-gray-400 space-y-1">
-                          {assignment.match_info.red_score !== undefined &&
-                            assignment.match_info.blue_score !== undefined && (
-                              <div>
-                                比分:{" "}
-                                <span className="text-white">
-                                  {assignment.match_info.red_score} -{" "}
-                                  {assignment.match_info.blue_score}
-                                </span>
-                              </div>
-                            )}
-                          {assignment.match_info.match_link && (
-                            <div>
-                              房间链接:{" "}
-                              <a
-                                href={assignment.match_info.match_link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-400 hover:text-blue-300 underline"
-                              >
-                                点击进入
-                              </a>
-                            </div>
-                          )}
-                          {assignment.match_info.stream_link && (
-                            <div>
-                              直播链接:{" "}
-                              <a
-                                href={assignment.match_info.stream_link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-purple-400 hover:text-purple-300 underline"
-                              >
-                                观看直播
-                              </a>
-                            </div>
-                          )}
-                          {assignment.match_info.replay_link && (
-                            <div>
-                              回放链接:{" "}
-                              <a
-                                href={assignment.match_info.replay_link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-green-400 hover:text-green-300 underline"
-                              >
-                                观看回放
-                              </a>
-                            </div>
-                          )}
-                          <div>
-                            比赛状态:{" "}
-                            <span
-                              className={`px-2 py-1 rounded text-xs ${
-                                assignment.match_info.status === "completed"
-                                  ? "bg-green-600 text-white"
-                                  : assignment.match_info.status === "confirmed"
-                                    ? "bg-blue-600 text-white"
-                                    : assignment.match_info.status ===
-                                        "cancelled"
-                                      ? "bg-red-600 text-white"
-                                      : "bg-yellow-600 text-white"
-                              }`}
-                            >
-                              {assignment.match_info.status === "completed"
-                                ? "已完成"
-                                : assignment.match_info.status === "confirmed"
-                                  ? "已确认"
-                                  : assignment.match_info.status === "cancelled"
-                                    ? "已取消"
-                                    : "待定"}
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : availableRooms.length === 0 ? (
+          <div className="flex justify-center items-center py-16 text-sm text-gray-400">暂无可用房间</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {availableRooms.map((room) => {
+              const myApp = staffAssignments.find(
+                (a) => a.staff_osuId === user.osuId && a.room_id === room.id && a.status === "confirmed",
+              );
+              const counts = countStaffByRoom(staffAssignments, room.id);
+              return (
+                <div
+                  key={room.id}
+                  className={`group relative bg-white border rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 overflow-hidden ${myApp ? "border-emerald-200" : "border-gray-100"}`}
+                >
+                  <div className="p-5">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0 mr-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-gray-800 text-sm truncate">{room.room_name}</span>
+                          {room.match_type && (
+                            <span className="text-xs text-gray-400 shrink-0">
+                              {room.match_type === "solo" ? "Solo" : room.match_type === "team_vs" ? "Team VS" : "吃鸡"}
                             </span>
-                          </div>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-0.5">
+                          R{room.round_number} #{room.match_number}
                         </div>
                       </div>
+                      <span className={`inline-flex px-2 py-0.5 text-xs rounded-full border shrink-0 ${STATUS_MAP[room.status]?.class || ""}`}>
+                        {STATUS_MAP[room.status]?.label || room.status}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-3">
+                      <Calendar size={12} className="text-gray-400" />
+                      {formatDateTime(room.match_datetime)}
+                    </div>
+
+                    {room.player1_username && room.player2_username ? (
+                      <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-3 px-3 py-1.5 bg-gray-50 rounded-lg">
+                        <span className="text-gray-400">对阵:</span>
+                        {room.player1_username} vs {room.player2_username}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-300 mb-3 px-3 py-1.5 bg-gray-50 rounded-lg">对阵待定</div>
                     )}
 
-                    <div className="mt-2 text-xs text-gray-500">
-                      分配时间:{" "}
-                      {new Date(assignment.assigned_at).toLocaleString("zh-CN")}
-                      {assignment.responded_at && (
-                        <span className="ml-4">
-                          响应时间:{" "}
-                          {new Date(assignment.responded_at).toLocaleString(
-                            "zh-CN",
-                          )}
-                        </span>
-                      )}
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      <RoleSection
+                        assignments={staffAssignments}
+                        roomId={room.id}
+                        role="referee"
+                        onRevoke={permissions.isadmin ? onRevokeAssignment : undefined}
+                      />
+                      <RoleSection
+                        assignments={staffAssignments}
+                        roomId={room.id}
+                        role="commentator"
+                        onRevoke={permissions.isadmin ? onRevokeAssignment : undefined}
+                      />
+                      <RoleSection
+                        assignments={staffAssignments}
+                        roomId={room.id}
+                        role="streamer"
+                        onRevoke={permissions.isadmin ? onRevokeAssignment : undefined}
+                      />
                     </div>
 
-                    {/* 管理员操作按钮 */}
-                    <div className="mt-3 flex justify-end space-x-2">
-                      <button
-                        onClick={() =>
-                          onRevokeAssignment(
-                            assignment.id,
-                            assignment.staff_role === "referee"
-                              ? "裁判"
-                              : assignment.staff_role === "streamer"
-                                ? "直播"
-                                : "解说",
-                          )
-                        }
-                        className="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-3 rounded transition-colors duration-200"
-                      >
-                        撤销分配
-                      </button>
-                    </div>
+                    {myApp ? (
+                      <div className="flex items-center justify-center gap-2 py-2 bg-emerald-50 rounded-lg border border-emerald-100">
+                        <RoleBadge role={myApp.role} />
+                        <span className="text-xs text-emerald-600 font-medium">已加入</span>
+                      </div>
+                    ) : room.status === "open" ? (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => onApplyForRoom(room.id, "referee")}
+                          disabled={counts.referee >= 2}
+                          className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs text-white bg-blue-500 hover:bg-blue-600 rounded-lg disabled:opacity-40 transition-colors"
+                        >
+                          <PlusCircle size={10} />
+                          裁判{counts.referee >= 2 ? "(满)" : ""}
+                        </button>
+                        <button
+                          onClick={() => onApplyForRoom(room.id, "commentator")}
+                          disabled={counts.commentator >= 2}
+                          className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs text-white bg-emerald-500 hover:bg-emerald-600 rounded-lg disabled:opacity-40 transition-colors"
+                        >
+                          <PlusCircle size={10} />
+                          解说{counts.commentator >= 2 ? "(满)" : ""}
+                        </button>
+                        <button
+                          onClick={() => onApplyForRoom(room.id, "streamer")}
+                          className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs text-white bg-purple-500 hover:bg-purple-600 rounded-lg transition-colors"
+                        >
+                          <PlusCircle size={10} />
+                          直播
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-400">
-                <p>暂无Staff房间分配</p>
-              </div>
-            )}
-
-            {/* 管理员也可以申请加入房间 */}
-            <div className="mt-8 pt-6 border-t border-gray-600">
-              <h4 className="text-lg font-medium text-white mb-4 flex items-center">
-                <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
-                申请加入比赛房间 (直播员)
-              </h4>
-
-              {availableRoomsLoading ? (
-                <div className="flex justify-center items-center py-8">
-                  <Image
-                    src="/icons/loading.svg"
-                    alt="loading"
-                    width={120}
-                    height={120}
-                    className="animate-spin"
-                  />{" "}
-                  <span className="ml-2 text-gray-400">加载房间中...</span>
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 transition-all duration-300 group-hover:h-1 bg-[hsla(350,80%,55%,1)]" />
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {availableRooms.map((room) => {
-                    // 检查管理员是否已经申请了这个房间
-                    const adminApplication = staffAssignments.find(
-                      (a) =>
-                        a.staff_osuId === user.osuId &&
-                        a.room_id === room.id &&
-                        a.status === "confirmed",
-                    );
-
-                    return (
-                      <div
-                        key={room.id}
-                        className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-4 hover:border-[#E93B66] transition-colors duration-200"
-                      >
-                        <div className="flex justify-between items-start mb-3">
-                          <h5 className="text-white font-semibold text-sm truncate flex-1 mr-2">
-                            {room.room_name}
-                          </h5>
-                          <span
-                            className={`px-2 py-1 rounded text-xs ${
-                              room.status === "open"
-                                ? "bg-green-600 text-white"
-                                : room.status === "in_progress"
-                                  ? "bg-yellow-600 text-white"
-                                  : "bg-red-600 text-white"
-                            }`}
-                          >
-                            {room.status === "open"
-                              ? "开放"
-                              : room.status === "in_progress"
-                                ? "进行中"
-                                : "关闭"}
-                          </span>
-                        </div>
-
-                        <div className="text-xs text-gray-400 space-y-1 mb-4">
-                          <div>
-                            轮次: {room.round_number} | 场次:{" "}
-                            {room.match_number}
-                          </div>
-                          <div>
-                            时间:{" "}
-                            {formatDateTimeFromStrings(
-                              room.match_date,
-                              room.match_time,
-                            )}
-                          </div>
-                          <div>
-                            选手: {room.player1_username || "待定"} vs{" "}
-                            {room.player2_username || "待定"}
-                          </div>
-                        </div>
-
-                        {/* Staff分配情况 */}
-                        <div className="mb-4">
-                          {/* 裁判 */}
-                          {(() => {
-                            const referees = staffAssignments.filter(
-                              (a) =>
-                                a.room_id === room.id &&
-                                a.staff_role === "referee" &&
-                                a.status === "confirmed",
-                            );
-                            return referees.length > 0 ? (
-                              <div className="mb-2">
-                                <div className="text-xs text-gray-400 mb-1">
-                                  裁判 ({referees.length}人):
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                  {referees.map((referee) => (
-                                    <div
-                                      key={referee.id}
-                                      className="flex items-center space-x-1 bg-blue-900/30 px-2 py-1 rounded"
-                                    >
-                                      <Image
-                                        src={
-                                          referee.staff_avatar_url ||
-                                          "/unknow.svg"
-                                        }
-                                        alt={referee.staff_username}
-                                        width={16}
-                                        height={16}
-                                        className="w-4 h-4 rounded-full"
-                                        onError={() => {}}
-                                      />
-                                      <span className="text-xs text-white">
-                                        {referee.staff_username}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-xs text-gray-400 mb-1">
-                                裁判: 0人
-                              </div>
-                            );
-                          })()}
-
-                          {/* 解说 */}
-                          {(() => {
-                            const commentators = staffAssignments.filter(
-                              (a) =>
-                                a.room_id === room.id &&
-                                a.staff_role === "commentator" &&
-                                a.status === "confirmed",
-                            );
-                            return commentators.length > 0 ? (
-                              <div className="mb-2">
-                                <div className="text-xs text-gray-400 mb-1">
-                                  解说 ({commentators.length}人):
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                  {commentators.map((commentator) => (
-                                    <div
-                                      key={commentator.id}
-                                      className="flex items-center space-x-1 bg-green-900/30 px-2 py-1 rounded"
-                                    >
-                                      <Image
-                                        src={
-                                          commentator.staff_avatar_url ||
-                                          "/unknow.svg"
-                                        }
-                                        alt={commentator.staff_username}
-                                        width={16}
-                                        height={16}
-                                        className="w-4 h-4 rounded-full"
-                                        onError={() => {}}
-                                      />
-                                      <span className="text-xs text-white">
-                                        {commentator.staff_username}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-xs text-gray-400 mb-1">
-                                解说: 0人
-                              </div>
-                            );
-                          })()}
-
-                          {/* 直播 */}
-                          {(() => {
-                            const streamers = staffAssignments.filter(
-                              (a) =>
-                                a.room_id === room.id &&
-                                a.staff_role === "streamer" &&
-                                a.status === "confirmed",
-                            );
-                            return streamers.length > 0 ? (
-                              <div className="mb-2">
-                                <div className="text-xs text-gray-400 mb-1">
-                                  直播 ({streamers.length}人):
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                  {streamers.map((streamer) => (
-                                    <div
-                                      key={streamer.id}
-                                      className="flex items-center space-x-1 bg-purple-900/30 px-2 py-1 rounded"
-                                    >
-                                      <Image
-                                        src={
-                                          streamer.staff_avatar_url ||
-                                          "/unknow.svg"
-                                        }
-                                        alt={streamer.staff_username}
-                                        width={16}
-                                        height={16}
-                                        className="w-4 h-4 rounded-full"
-                                        onError={() => {}}
-                                      />
-                                      <span className="text-xs text-white">
-                                        {streamer.staff_username}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-xs text-gray-400 mb-1">
-                                直播: 0人
-                              </div>
-                            );
-                          })()}
-                        </div>
-
-                        {/* 显示比赛对阵信息 */}
-                        {room.player1_username && room.player2_username && (
-                          <div className="text-xs text-gray-500 mb-4">
-                            {room.player1_username} vs {room.player2_username}
-                          </div>
-                        )}
-
-                        {/* 申请按钮 - 管理员默认申请直播员 */}
-                        <div className="flex flex-col space-y-2">
-                          {adminApplication ? (
-                            <div className="text-xs text-green-400 text-center py-2">
-                              已加入直播员
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() =>
-                                onApplyForRoom(room.id, "streamer")
-                              }
-                              className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm py-2 px-4 rounded transition-colors duration-200"
-                            >
-                              申请直播员
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {!availableRoomsLoading && availableRooms.length === 0 && (
-                <div className="text-center py-8 text-gray-400">
-                  <p>暂无可申请的比赛房间</p>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          // Staff视图 - 显示自己的申请和可参加的房间
-          <div className="space-y-6">
-            {/* 已参加的房间 */}
-            {staffAssignments.filter(
-              (a) => a.staff_osuId === user.osuId && a.status === "confirmed",
-            ).length > 0 && (
-              <div>
-                <h4 className="text-lg font-medium text-white mb-4 flex items-center">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
-                  我已确认参加的房间
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                  {staffAssignments
-                    .filter(
-                      (a) =>
-                        a.staff_osuId === user.osuId &&
-                        a.status === "confirmed",
-                    )
-                    .map((assignment) => (
-                      <div
-                        key={assignment.id}
-                        className="bg-[#2d2d2d] border border-green-600 rounded-lg p-4"
-                      >
-                        <div className="flex justify-between items-start mb-3">
-                          <h5 className="text-white font-semibold text-sm truncate flex-1 mr-2">
-                            {assignment.room?.room_name ||
-                              `房间 ${assignment.room_id}`}
-                          </h5>
-                          <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${
-                              assignment.staff_role === "referee"
-                                ? "bg-blue-600 text-white"
-                                : assignment.staff_role === "streamer"
-                                  ? "bg-purple-600 text-white"
-                                  : "bg-green-600 text-white"
-                            }`}
-                          >
-                            {assignment.staff_role === "referee"
-                              ? "裁判"
-                              : assignment.staff_role === "streamer"
-                                ? "直播"
-                                : "解说"}
-                          </span>
-                        </div>
-                        <div className="text-xs text-gray-400 space-y-1">
-                          <div>
-                            轮次: {assignment.room?.round_number} | 场次:{" "}
-                            {assignment.room?.match_number}
-                          </div>
-                          <div>
-                            时间:{" "}
-                            {assignment.room?.match_date &&
-                            assignment.room?.match_time
-                              ? formatDateTimeFromStrings(
-                                  assignment.room.match_date,
-                                  assignment.room.match_time,
-                                )
-                              : "时间未定"}
-                          </div>
-                        </div>
-                        <div className="mt-3">
-                          <button
-                            onClick={() =>
-                              onRevokeAssignment(
-                                assignment.id,
-                                assignment.staff_role === "referee"
-                                  ? "裁判"
-                                  : assignment.staff_role === "streamer"
-                                    ? "直播"
-                                    : "解说",
-                              )
-                            }
-                            className="w-full bg-red-600 hover:bg-red-700 text-white text-xs py-2 px-3 rounded transition-colors duration-200"
-                          >
-                            撤销分配
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* 可参加的房间 */}
-            <div>
-              <h4 className="text-lg font-medium text-white mb-4 flex items-center">
-                <span className="w-2 h-2 bg-[#E93B66] rounded-full mr-3"></span>
-                可申请参加的比赛房间
-              </h4>
-
-              {availableRoomsLoading ? (
-                <div className="flex justify-center items-center py-8">
-                  <Image
-                    src="/icons/loading.svg"
-                    alt="loading"
-                    width={120}
-                    height={120}
-                    className="animate-spin"
-                  />{" "}
-                  <span className="ml-2 text-gray-400">加载房间中...</span>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {availableRooms.map((room) => {
-                    // 检查用户是否已经申请了这个房间的某个角色
-                    const userApplication = staffAssignments.find(
-                      (a) =>
-                        a.staff_osuId === user.osuId &&
-                        a.room_id === room.id &&
-                        a.status === "confirmed",
-                    );
-
-                    return (
-                      <div
-                        key={room.id}
-                        className="bg-[#2d2d2d] border border-gray-600 rounded-lg p-4 hover:border-[#E93B66] transition-colors duration-200"
-                      >
-                        <div className="flex justify-between items-start mb-3">
-                          <h5 className="text-white font-semibold text-sm truncate flex-1 mr-2">
-                            {room.room_name}
-                          </h5>
-                          <span
-                            className={`px-2 py-1 rounded text-xs ${
-                              room.status === "open"
-                                ? "bg-green-600 text-white"
-                                : room.status === "in_progress"
-                                  ? "bg-yellow-600 text-white"
-                                  : "bg-red-600 text-white"
-                            }`}
-                          >
-                            {room.status === "open"
-                              ? "开放"
-                              : room.status === "in_progress"
-                                ? "进行中"
-                                : "关闭"}
-                          </span>
-                        </div>
-
-                        <div className="text-xs text-gray-400 space-y-1 mb-4">
-                          <div>
-                            轮次: {room.round_number} | 场次:{" "}
-                            {room.match_number}
-                          </div>
-                          <div>
-                            时间:{" "}
-                            {formatDateTimeFromStrings(
-                              room.match_date,
-                              room.match_time,
-                            )}
-                          </div>
-                          <div>
-                            选手: {room.player1_username || "待定"} vs{" "}
-                            {room.player2_username || "待定"}
-                          </div>
-                        </div>
-
-                        {/* Staff分配情况 */}
-                        <div className="mb-4">
-                          {/* 裁判 */}
-                          {(() => {
-                            const referees = staffAssignments.filter(
-                              (a) =>
-                                a.room_id === room.id &&
-                                a.staff_role === "referee" &&
-                                a.status === "confirmed",
-                            );
-                            return referees.length > 0 ? (
-                              <div className="mb-2">
-                                <div className="text-xs text-gray-400 mb-1">
-                                  裁判 ({referees.length}人):
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                  {referees.map((referee) => (
-                                    <div
-                                      key={referee.id}
-                                      className="flex items-center space-x-1 bg-blue-900/30 px-2 py-1 rounded"
-                                    >
-                                      <Image
-                                        src={
-                                          referee.staff_avatar_url ||
-                                          "/unknow.svg"
-                                        }
-                                        alt={referee.staff_username}
-                                        width={16}
-                                        height={16}
-                                        className="w-4 h-4 rounded-full"
-                                        onError={() => {}}
-                                      />
-                                      <span className="text-xs text-white">
-                                        {referee.staff_username}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-xs text-gray-400 mb-1">
-                                裁判: 0人
-                              </div>
-                            );
-                          })()}
-
-                          {/* 解说 */}
-                          {(() => {
-                            const commentators = staffAssignments.filter(
-                              (a) =>
-                                a.room_id === room.id &&
-                                a.staff_role === "commentator" &&
-                                a.status === "confirmed",
-                            );
-                            return commentators.length > 0 ? (
-                              <div className="mb-2">
-                                <div className="text-xs text-gray-400 mb-1">
-                                  解说 ({commentators.length}人):
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                  {commentators.map((commentator) => (
-                                    <div
-                                      key={commentator.id}
-                                      className="flex items-center space-x-1 bg-green-900/30 px-2 py-1 rounded"
-                                    >
-                                      <Image
-                                        src={
-                                          commentator.staff_avatar_url ||
-                                          "/unknow.svg"
-                                        }
-                                        alt={commentator.staff_username}
-                                        width={16}
-                                        height={16}
-                                        className="w-4 h-4 rounded-full"
-                                        onError={() => {}}
-                                      />
-                                      <span className="text-xs text-white">
-                                        {commentator.staff_username}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-xs text-gray-400 mb-1">
-                                解说: 0人
-                              </div>
-                            );
-                          })()}
-
-                          {/* 直播 */}
-                          {(() => {
-                            const streamers = staffAssignments.filter(
-                              (a) =>
-                                a.room_id === room.id &&
-                                a.staff_role === "streamer" &&
-                                a.status === "confirmed",
-                            );
-                            return streamers.length > 0 ? (
-                              <div className="mb-2">
-                                <div className="text-xs text-gray-400 mb-1">
-                                  直播 ({streamers.length}人):
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                  {streamers.map((streamer) => (
-                                    <div
-                                      key={streamer.id}
-                                      className="flex items-center space-x-1 bg-purple-900/30 px-2 py-1 rounded"
-                                    >
-                                      <Image
-                                        src={
-                                          streamer.staff_avatar_url ||
-                                          "/unknow.svg"
-                                        }
-                                        alt={streamer.staff_username}
-                                        width={16}
-                                        height={16}
-                                        className="w-4 h-4 rounded-full"
-                                        onError={() => {}}
-                                      />
-                                      <span className="text-xs text-white">
-                                        {streamer.staff_username}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-xs text-gray-400 mb-1">
-                                直播: 0人
-                              </div>
-                            );
-                          })()}
-                        </div>
-
-                        {/* 显示比赛对阵信息 */}
-                        {room.player1_username && room.player2_username && (
-                          <div className="text-xs text-gray-500 mb-4">
-                            {room.player1_username} vs {room.player2_username}
-                          </div>
-                        )}
-
-                        {/* 申请按钮 */}
-                        <div className="flex flex-col space-y-2">
-                          {userApplication ? (
-                            <div className="text-xs text-green-400 text-center py-2">
-                              已加入{" "}
-                              {userApplication.staff_role === "referee"
-                                ? "裁判"
-                                : userApplication.staff_role === "streamer"
-                                  ? "直播"
-                                  : "解说"}
-                            </div>
-                          ) : (
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() =>
-                                  onApplyForRoom(room.id, "referee")
-                                }
-                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-2 px-3 rounded transition-colors duration-200"
-                                disabled={
-                                  (room.staff_counts?.referee ?? 0) >= 2
-                                }
-                              >
-                                申请裁判{" "}
-                                {(room.staff_counts?.referee ?? 0) >= 2 &&
-                                  "(已满)"}
-                              </button>
-                              <button
-                                onClick={() =>
-                                  onApplyForRoom(room.id, "commentator")
-                                }
-                                className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs py-2 px-3 rounded transition-colors duration-200"
-                                disabled={
-                                  (room.staff_counts?.commentator ?? 0) >= 2
-                                }
-                              >
-                                申请解说{" "}
-                                {(room.staff_counts?.commentator ?? 0) >= 2 &&
-                                  "(已满)"}
-                              </button>
-                              <button
-                                onClick={() =>
-                                  onApplyForRoom(room.id, "streamer")
-                                }
-                                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs py-2 px-3 rounded transition-colors duration-200"
-                              >
-                                申请直播
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {!availableRoomsLoading && availableRooms.length === 0 && (
-                <div className="text-center py-8 text-gray-400">
-                  <p>暂无可申请的比赛房间</p>
-                </div>
-              )}
-            </div>
+              );
+            })}
           </div>
         )}
       </div>

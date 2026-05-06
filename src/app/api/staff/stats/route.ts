@@ -104,7 +104,12 @@ export async function GET() {
             adminCount,
         };
 
-        const seasons = [...new Set(approvedMaps.map((m) => m.season))].sort();
+        const allSeasons = [
+            ...approvedMaps.map((m) => m.season),
+            ...testingMaps.map((m) => m.season),
+            ...pendingMaps.map((m) => m.season),
+        ].filter((s): s is string => s !== null && s !== undefined);
+        const seasons = [...new Set(allSeasons)].sort();
         const categories = [
             "qualification",
             "ro16",

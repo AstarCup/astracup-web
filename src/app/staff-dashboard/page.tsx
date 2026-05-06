@@ -15,7 +15,6 @@ import RoomManagement from "@/app/components/staff/RoomManagement";
 import MatchupManagement from "@/app/components/staff/MatchupManagement";
 import StreamingManagement from "@/app/components/staff/StreamingManagement";
 import UserManagement from "@/app/components/staff/UserManagement";
-import MatchManagement from "@/app/components/staff/MatchManagement";
 import SettingsManagement from "@/app/components/staff/SettingsManagement";
 import ReplayCollectionManagement from "@/app/components/staff/ReplayCollectionManagement";
 import MapSelectionManagement from "@/app/components/staff/MapSelectionManagement";
@@ -37,8 +36,8 @@ interface MatchRoom {
   id: number;
   room_name: string;
   round_number: number;
-  match_date: string;
-  match_time: string;
+  match_datetime: string;
+  match_type: string;
   match_number: number;
   max_participants: number;
   status: "open" | "closed" | "in_progress";
@@ -87,7 +86,7 @@ interface StaffRoomAssignment {
   room_id: number;
   staff_osuId: string;
   staff_username: string;
-  staff_role: "referee" | "streamer" | "commentator";
+  role: "referee" | "streamer" | "commentator";
   status: "pending" | "confirmed" | "declined";
   assigned_by: string;
   assigned_at: string;
@@ -98,8 +97,8 @@ interface StaffRoomAssignment {
     id: number;
     room_name: string;
     round_number: number;
-    match_date: string;
-    match_time: string;
+    match_datetime: string;
+    match_type: string;
     match_number: number;
   };
   staff_avatar_url?: string;
@@ -434,8 +433,8 @@ export default function AdminPage() {
   const handleCreateRoom = async (roomData: {
     room_name: string;
     round_number: number;
-    match_date: string;
-    match_time: string;
+    match_datetime: string;
+    match_type: string;
     match_number: number;
     max_participants: number;
     description: string;
@@ -742,10 +741,9 @@ export default function AdminPage() {
               ];
 
               const btnClass = (tabKey: string) =>
-                `flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap rounded-full ${
-                  activeTab === tabKey
-                    ? "bg-background text-text border-b-4 border-action"
-                    : "text-text-secondary hover:bg-action hover:text-text"
+                `flex gap-2 items-center px-4 py-3 text-sm font-medium transition-colors duration-200 whitespace-nowrap rounded-full ${activeTab === tabKey
+                  ? "bg-background text-text border-b-4 border-action"
+                  : "text-text-secondary hover:bg-action hover:text-text"
                 }`;
 
               return tabs

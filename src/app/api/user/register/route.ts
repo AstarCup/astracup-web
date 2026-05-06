@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 创建或更新用户（注册但不报名）
+    // 创建或更新用户
     const userId = await createOrUpdateUser({
       osuId: body.osuId,
       username: body.username,

@@ -48,8 +48,8 @@ model MatchRoom {
   id               Int        @id @default(autoincrement())
   room_name        String
   round_number     Int
-  match_date       DateTime
-  match_time       DateTime
+  match_datetime   DateTime
+  match_type       String     @default("solo")
   match_number     Int
   max_participants Int        @default(2)
   status           RoomStatus @default(open)
@@ -64,9 +64,7 @@ model MatchRoom {
   staffRoomAssignments StaffRoomAssignment[]
 
   @@index([round_number])
-  @@index([match_date])
-  @@index([status])
-  @@index([created_by])
+  @@index([match_datetime])
 }
 
 // 比赛预约表

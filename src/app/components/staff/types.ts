@@ -2,8 +2,8 @@ export interface MatchRoom {
   id: number;
   room_name: string;
   round_number: number;
-  match_date: string;
-  match_time: string;
+  match_datetime: string;
+  match_type: "solo" | "team_vs" | "battle_royale";
   match_number: number;
   max_participants: number;
   status: "open" | "closed" | "in_progress";
@@ -52,7 +52,7 @@ export interface StaffRoomAssignment {
   room_id: number;
   staff_osuId: string;
   staff_username: string;
-  staff_role: "referee" | "streamer" | "commentator";
+  role: "referee" | "streamer" | "commentator";
   status: "pending" | "confirmed" | "declined";
   assigned_by: string;
   assigned_at: string;
@@ -63,22 +63,20 @@ export interface StaffRoomAssignment {
     id: number;
     room_name: string;
     round_number: number;
-    match_date: string;
-    match_time: string;
+    match_datetime: string;
+    match_type: "solo" | "team_vs" | "battle_royale";
     match_number: number;
   };
   staff_avatar_url?: string;
   match_info?: {
-    id: number;
     player1_username: string;
     player2_username: string;
-    scheduled_time: string;
     red_score?: number;
     blue_score?: number;
     match_link?: string;
-    replay_link?: string;
     stream_link?: string;
-    status: "pending" | "confirmed" | "completed" | "cancelled";
+    replay_link?: string;
+    status: string;
   };
 }
 
@@ -86,8 +84,8 @@ export interface AvailableRoom {
   id: number;
   room_name: string;
   round_number: number;
-  match_date: string;
-  match_time: string;
+  match_datetime: string;
+  match_type: "solo" | "team_vs" | "battle_royale";
   match_number: number;
   status: "open" | "closed" | "in_progress";
   description?: string;

@@ -42,8 +42,8 @@ interface NextMatch {
     id: number;
     room_name: string;
     round_number: number;
-    match_date: string;
-    match_time: string;
+    match_datetime: string;
+    match_type: string;
     match_number: number;
     max_participants: number;
   };
@@ -183,8 +183,8 @@ export default function PlayerInfoPage() {
 
   // 格式化日期和时间字符串 - 使用本地化时间显示
   const formatDateTimeFromStrings = (
-    dateString: string,
-    timeString: string,
+    dt: string,
+    _unused?: string,
   ) => {
     // 调试日志：检查输入参数
     console.log("[DEBUG PlayerInfo] formatDateTimeFromStrings 输入:", {
@@ -221,9 +221,9 @@ export default function PlayerInfoPage() {
         // 使用timeString中的时间，如果没有则使用默认时间
         const time =
           timeString &&
-          timeString !== "00:00:00" &&
-          timeString !== "Invalid Date" &&
-          timeString !== "null"
+            timeString !== "00:00:00" &&
+            timeString !== "Invalid Date" &&
+            timeString !== "null"
             ? timeString
             : "00:00:00";
 
@@ -245,9 +245,9 @@ export default function PlayerInfoPage() {
         // 处理空时间的情况，MySQL TIME 类型可能返回 '00:00:00'
         const time =
           timeString &&
-          timeString !== "00:00:00" &&
-          timeString !== "Invalid Date" &&
-          timeString !== "null"
+            timeString !== "00:00:00" &&
+            timeString !== "Invalid Date" &&
+            timeString !== "null"
             ? timeString
             : "00:00:00";
 
@@ -376,10 +376,10 @@ export default function PlayerInfoPage() {
         setNextMatch((prev) =>
           prev
             ? {
-                ...prev,
-                status: "available",
-                scheduledRoom: undefined,
-              }
+              ...prev,
+              status: "available",
+              scheduledRoom: undefined,
+            }
             : null,
         );
       }
@@ -390,10 +390,10 @@ export default function PlayerInfoPage() {
       setNextMatch((prev) =>
         prev
           ? {
-              ...prev,
-              status: "available",
-              scheduledRoom: undefined,
-            }
+            ...prev,
+            status: "available",
+            scheduledRoom: undefined,
+          }
           : null,
       );
     } finally {
@@ -556,8 +556,7 @@ export default function PlayerInfoPage() {
                               <p>
                                 时间:{" "}
                                 {formatDateTimeFromStrings(
-                                  nextMatch.scheduledRoom.match_date,
-                                  nextMatch.scheduledRoom.match_time,
+                                  nextMatch.scheduledRoom.match_datetime,
                                 )}
                               </p>
                               <p>
@@ -569,15 +568,14 @@ export default function PlayerInfoPage() {
                     </div>
                     <div className="text-right">
                       <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          requestingMatch
-                            ? "bg-yellow-600 text-white"
-                            : nextMatch.status === "available"
-                              ? "bg-green-600 text-white"
-                              : nextMatch.status === "scheduled"
-                                ? "bg-blue-600 text-white"
-                                : "bg-gray-600 text-white"
-                        }`}
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${requestingMatch
+                          ? "bg-yellow-600 text-white"
+                          : nextMatch.status === "available"
+                            ? "bg-green-600 text-white"
+                            : nextMatch.status === "scheduled"
+                              ? "bg-blue-600 text-white"
+                              : "bg-gray-600 text-white"
+                          }`}
                       >
                         {requestingMatch
                           ? "预约中"
@@ -661,13 +659,12 @@ export default function PlayerInfoPage() {
                                 {room.room_name}
                               </h5>
                               <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  room.status === "open"
-                                    ? "bg-green-600 text-white"
-                                    : room.status === "full"
-                                      ? "bg-red-600 text-white"
-                                      : "bg-gray-600 text-white"
-                                }`}
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${room.status === "open"
+                                  ? "bg-green-600 text-white"
+                                  : room.status === "full"
+                                    ? "bg-red-600 text-white"
+                                    : "bg-gray-600 text-white"
+                                  }`}
                               >
                                 {room.status === "open"
                                   ? "可预约"
@@ -687,16 +684,13 @@ export default function PlayerInfoPage() {
                               <div className="flex justify-between">
                                 <span>日期:</span>
                                 <span className="text-white">
-                                  {formatDate(room.match_date.toISOString().split('T')[0])}
+                                  {formatDate(new Date(room.match_datetime).toISOString().split('T')[0])}
                                 </span>
                               </div>
                               <div className="flex justify-between">
                                 <span>时间:</span>
                                 <span className="text-white">
-                                  {formatDateTimeFromStrings(
-                                    room.match_date.toISOString().split('T')[0],
-                                    room.match_time.toISOString().split('T')[1].split('.')[0],
-                                  )}
+                                  {formatDateTimeFromStrings(room.match_datetime)}
                                 </span>
                               </div>
                               <div className="flex justify-between">
