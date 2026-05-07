@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import MainCard from "../components/ui/MainCard";
+import { useState, useEffect, useRef } from "react";
+import gsap from "gsap";
 import type { MatchRoom, MatchSchedule } from "@prisma/client";
 
 interface RoomWithSchedules extends MatchRoom {
@@ -15,22 +14,28 @@ interface PlayerInfo {
   avatar_url: string;
   pp: number;
   global_rank: number | null;
-  country_rank: number | null;
-  country: string;
   cover_url: string | null;
   cover_custom_url: string | null;
 }
 
+const MATCH_TYPE_LABELS: Record<string, string> = {
+  solo: "Solo",
+  team_vs: "Team VS",
+  battle_royale: "吃鸡",
+};
+
 export default function Schedule() {
-  const [rooms, setRooms] = useState<RoomWithSchedules[]>([]);
-  const [playerInfoMap, setPlayerInfoMap] = useState<
-    Record<string, PlayerInfo>
-  >({});
+  const roomsRef = useRef<RoomWithSchedules[]>([]);
+  const playerInfoMapRef = useRef<Record<string, PlayerInfo>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userOsuId, setUserOsuId] = useState<string | null>(null);
   const [userStatus, setUserStatus] = useState<string | null>(null);
   const [joiningRoomId, setJoiningRoomId] = useState<number | null>(null);
+  const [totalPlayers, setTotalPlayers] = useState(0);
+  const [roomCount, setRoomCount] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const photoboxRef = useRef<any>(null);
+  const linesRef = useRef<HTMLElement[]>([]);
 
   useEffect(() => {
     fetchRooms();
@@ -43,16 +48,13 @@ export default function Schedule() {
       const sessionData = await sessionRes.json();
       const osuId = sessionData?.data?.session?.osuId;
       if (!osuId) return;
-      setUserOsuId(osuId);
 
       const regRes = await fetch(`/api/user-registration?osuId=${osuId}`);
       const regData = await regRes.json();
       if (regData.success && regData.data?.user) {
         setUserStatus(regData.data.user.registrationStatus);
       }
-    } catch (err) {
-      console.error("Error checking user:", err);
-    }
+    } catch {}
   };
 
   const fetchPlayerInfo = async (osuIds: string[]) => {
@@ -67,12 +69,9 @@ export default function Schedule() {
             return {
               osuId,
               username: u.username,
-              avatar_url:
-                u.avatar_url || `https://a.ppy.sh/${osuId}`,
+              avatar_url: u.avatar_url || `https://a.ppy.sh/${osuId}`,
               pp: u.pp ?? 0,
               global_rank: u.global_rank ?? null,
-              country_rank: u.country_rank ?? null,
-              country: u.country ?? "",
               cover_url: u.cover_url ?? null,
               cover_custom_url: u.cover_custom_url ?? null,
             };
@@ -84,8 +83,6 @@ export default function Schedule() {
           avatar_url: `https://a.ppy.sh/${osuId}`,
           pp: 0,
           global_rank: null,
-          country_rank: null,
-          country: "",
           cover_url: null,
           cover_custom_url: null,
         };
@@ -95,7 +92,16 @@ export default function Schedule() {
     results.forEach((p) => {
       map[p.osuId] = p;
     });
-    setPlayerInfoMap((prev) => ({ ...prev, ...map }));
+    playerInfoMapRef.current = { ...playerInfoMapRef.current, ...map };
+  };
+
+  const visibleRooms = (
+    rooms: RoomWithSchedules[],
+  ): RoomWithSchedules[] => {
+    return rooms.filter((r) => {
+      if (r.match_type === "battle_royale") return true;
+      return r.schedules.length > 0;
+    });
   };
 
   const fetchRooms = async () => {
@@ -103,14 +109,14 @@ export default function Schedule() {
       setLoading(true);
       const response = await fetch("/api/match-rooms?withSchedules=true");
       const data = await response.json();
-
       if (data.success) {
-        const roomList = data.rooms || [];
-        setRooms(roomList);
+        const roomList: RoomWithSchedules[] = data.rooms || [];
+        roomsRef.current = roomList;
+        const visible = visibleRooms(roomList);
+        setRoomCount(visible.length);
 
-        // 收集所有需要获取头像的玩家 osuId
         const allOsuIds: string[] = [];
-        roomList.forEach((room: RoomWithSchedules) => {
+        roomList.forEach((room) => {
           room.schedules.forEach((s) => {
             if (s.player1_osuId && s.player1_osuId !== "TBD")
               allOsuIds.push(s.player1_osuId);
@@ -118,15 +124,21 @@ export default function Schedule() {
               allOsuIds.push(s.player2_osuId);
           });
         });
+        let battlePlayers = 0;
+        roomList.forEach((r) => {
+          if (r.match_type === "battle_royale") battlePlayers += r.schedules.length;
+        });
+        setTotalPlayers(battlePlayers);
+
         if (allOsuIds.length > 0) {
-          fetchPlayerInfo(allOsuIds);
+          await fetchPlayerInfo(allOsuIds);
         }
+        buildCanvas(visible);
       } else {
         setError(data.error || "获取房间数据失败");
       }
     } catch (err) {
       setError("网络错误，请稍后重试");
-      console.error("Error fetching match rooms:", err);
     } finally {
       setLoading(false);
     }
@@ -141,345 +153,450 @@ export default function Schedule() {
         body: JSON.stringify({ room_id: roomId }),
       });
       const data = await response.json();
-
       if (data.success) {
         await fetchRooms();
       } else {
         alert(data.error || "加入房间失败");
       }
-    } catch (err) {
+    } catch {
       alert("网络错误，请稍后重试");
-      console.error("Error joining room:", err);
     } finally {
       setJoiningRoomId(null);
     }
   };
 
-  const formatDateTime = (dateStr: Date | string) => {
-    try {
-      return new Date(dateStr).toLocaleString("zh-CN", {
-        year: "numeric",
+  /* ───── Canvas 构建 ───── */
+
+  const buildCanvas = (rooms: RoomWithSchedules[]) => {
+    if (!containerRef.current) return;
+    const container = containerRef.current;
+
+    // 清理旧的拖拽监听
+    if (photoboxRef.current) {
+      window.removeEventListener("resize", photoboxRef.current.resize);
+      photoboxRef.current = null;
+    }
+
+    container.innerHTML = "";
+
+    const photosDiv = document.createElement("div");
+    photosDiv.className = "photos";
+    photosDiv.style.cssText = `
+      position:absolute;top:0;left:0;right:0;bottom:0;
+      display:flex;flex-direction:column;
+      cursor:grab;user-select:none;
+      touch-action:none;
+    `;
+    container.appendChild(photosDiv);
+
+    const lines: HTMLElement[] = [];
+
+    rooms.forEach((room, roomIdx) => {
+      const row = document.createElement("div");
+      row.className = "photos_line";
+      row.style.cssText = `
+        height:300px;margin-bottom:24px;flex-shrink:0;
+        display:flex;flex-direction:row;align-items:stretch;padding:10px 0;
+      `;
+
+      /* ── 房间信息面板 ── */
+      const infoPanel = document.createElement("div");
+      infoPanel.style.cssText = `
+        width:280px;height:100%;flex-shrink:0;
+        display:flex;flex-direction:column;justify-content:center;
+        padding:24px;box-sizing:border-box;
+        background:rgba(255,255,255,0.06);border-radius:16px;
+        margin-right:20px;color:white;
+      `;
+
+      const typeBadge = document.createElement("span");
+      typeBadge.style.cssText = `
+        font-size:12px;padding:2px 8px;border-radius:999px;
+        background:rgba(233,59,102,0.3);color:#E93B66;
+        display:inline-block;width:fit-content;margin-bottom:8px;
+      `;
+      typeBadge.textContent =
+        MATCH_TYPE_LABELS[room.match_type] || room.match_type;
+
+      const roomName = document.createElement("p");
+      roomName.style.cssText = `
+        font-size:22px;font-weight:700;color:white;margin:0 0 4px;
+      `;
+      roomName.textContent = room.room_name;
+
+      const roomMeta = document.createElement("p");
+      roomMeta.style.cssText = `font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 2px;`;
+      const dt = new Date(room.match_datetime).toLocaleString("zh-CN", {
         month: "2-digit",
         day: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
       });
-    } catch {
-      return String(dateStr);
-    }
+      roomMeta.textContent = `第${room.round_number}轮 · 第${room.match_number}场 · ${dt}`;
+
+      const statusLine = document.createElement("p");
+      statusLine.style.cssText = `font-size:12px;color:rgba(255,255,255,0.4);margin:0;`;
+      statusLine.textContent =
+        room.status === "open"
+          ? "开放中"
+          : room.status === "closed"
+            ? "已关闭"
+            : room.status;
+
+      infoPanel.appendChild(typeBadge);
+      infoPanel.appendChild(roomName);
+      infoPanel.appendChild(roomMeta);
+      infoPanel.appendChild(statusLine);
+
+      const emptySpace = document.createElement("div");
+      emptySpace.style.cssText = `flex:1;`;
+
+      /* ── 加入按钮 (仅 battle_royale 空房间) ── */
+      if (
+        room.match_type === "battle_royale" &&
+        room.schedules.length === 0 &&
+        userStatus === "approved"
+      ) {
+        const joinBtn = document.createElement("button");
+        joinBtn.style.cssText = `
+          margin-top:12px;padding:8px 16px;font-size:14px;font-weight:600;
+          border:none;border-radius:8px;cursor:pointer;
+          background:#E93B66;color:white;
+        `;
+        joinBtn.textContent = "加入大乱斗";
+        joinBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          handleJoinRoom(room.id);
+        });
+        infoPanel.appendChild(joinBtn);
+      } else if (
+        room.match_type === "battle_royale" &&
+        room.schedules.length > 0
+      ) {
+        const count = document.createElement("p");
+        count.style.cssText = `margin-top:12px;font-size:13px;color:rgba(255,255,255,0.6);`;
+        count.textContent = `${room.schedules.length}/${room.max_participants} 人`;
+        infoPanel.appendChild(count);
+      }
+
+      infoPanel.appendChild(emptySpace);
+      row.appendChild(infoPanel);
+
+      /* ── 卡片区域 ── */
+      if (room.match_type === "battle_royale") {
+        room.schedules.forEach((s) => {
+          const card = createPlayerCard(s.player1_osuId, s.player1_username);
+          row.appendChild(card);
+        });
+      } else {
+        room.schedules.forEach((s) => {
+          const card = createMatchCard(s);
+          row.appendChild(card);
+        });
+      }
+
+      photosDiv.appendChild(row);
+      lines.push(row);
+    });
+
+    linesRef.current = lines;
+
+    /* ── GSAP 拖拽 ── */
+    setupDrag(photosDiv, lines);
   };
 
-  const statusLabel = (status: string) => {
-    switch (status) {
-      case "open":
-        return "开放中";
-      case "full":
-        return "已满";
-      case "closed":
-        return "已关闭";
-      default:
-        return status;
+  const createPlayerCard = (osuId: string, username: string) => {
+    const info = playerInfoMapRef.current[osuId];
+    const coverUrl = info?.cover_url || info?.cover_custom_url;
+
+    const card = document.createElement("a");
+    card.href = `https://osu.ppy.sh/users/${osuId}`;
+    card.target = "_blank";
+    card.rel = "noopener noreferrer";
+    card.style.cssText = `
+      width:180px;height:100%;margin-right:20px;flex-shrink:0;
+      border-radius:15px;overflow:hidden;position:relative;cursor:pointer;
+      box-sizing:border-box;
+      border-bottom:6px solid rgba(255,255,255,0.3);
+      background-color:#1a1a1a;
+    `;
+    if (coverUrl) {
+      card.style.backgroundImage = `url(${coverUrl})`;
+      card.style.backgroundSize = "cover";
+      card.style.backgroundPosition = "center";
     }
+
+    const overlay = document.createElement("div");
+    overlay.style.cssText = `
+      position:absolute;inset:0;background:rgba(0,0,0,0.25);
+      border-radius:14px;display:flex;flex-direction:column;
+    `;
+
+    // Rank
+    if (info?.global_rank) {
+      const rank = document.createElement("p");
+      rank.style.cssText = `
+        position:absolute;top:8px;right:8px;font-size:11px;margin:0;
+        color:rgba(255,255,255,0.55);text-shadow:0 1px 2px rgba(0,0,0,0.8);
+      `;
+      rank.textContent = `#${info.global_rank.toLocaleString()}`;
+      overlay.appendChild(rank);
+    }
+
+    // PP
+    const pp = document.createElement("p");
+    pp.style.cssText = `
+      position:absolute;top:24px;right:8px;font-size:36px;font-weight:700;margin:0;
+      color:rgba(255,255,255,0.25);text-shadow:0 1px 2px rgba(0,0,0,0.4);
+    `;
+    pp.textContent = info ? String(Math.round(info.pp)) : "";
+    overlay.appendChild(pp);
+
+    // Username
+    const name = document.createElement("p");
+    name.style.cssText = `
+      position:absolute;bottom:10px;left:10px;right:56px;margin:0;
+      font-size:14px;font-weight:700;color:white;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+      text-shadow:0 1px 3px rgba(0,0,0,0.8);
+    `;
+    name.textContent = username;
+    overlay.appendChild(name);
+
+    // Avatar
+    const avatar = document.createElement("img");
+    avatar.src = info?.avatar_url || `https://a.ppy.sh/${osuId}`;
+    avatar.alt = username;
+    avatar.style.cssText = `
+      position:absolute;bottom:6px;right:6px;
+      width:42px;height:42px;border-radius:50%;object-fit:cover;
+    `;
+    overlay.appendChild(avatar);
+
+    card.appendChild(overlay);
+
+    // Hover scale
+    card.addEventListener("mouseenter", () => {
+      gsap.to(overlay, { scale: 1.03, duration: 0.1, ease: "power2.out" });
+    });
+    card.addEventListener("mouseleave", () => {
+      gsap.to(overlay, { scale: 1, duration: 0.3, ease: "power2.out" });
+    });
+
+    return card;
   };
 
-  const scheduleStatusLabel = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "未确认";
-      case "confirmed":
-        return "已确认";
-      case "completed":
-        return "已完成";
-      case "cancelled":
-        return "已取消";
-      default:
-        return "未知";
-    }
+  const createMatchCard = (schedule: MatchSchedule) => {
+    const p1Info = playerInfoMapRef.current[schedule.player1_osuId];
+    const p2Info = playerInfoMapRef.current[schedule.player2_osuId];
+
+    const card = document.createElement("div");
+    card.style.cssText = `
+      width:320px;height:100%;margin-right:20px;flex-shrink:0;
+      border-radius:15px;overflow:hidden;position:relative;
+      box-sizing:border-box;background:#1a1a1a;
+      border-bottom:6px solid rgba(255,255,255,0.3);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+    `;
+
+    // VS 比分
+    const vs = document.createElement("div");
+    vs.style.cssText = `
+      display:flex;align-items:center;gap:16px;color:white;
+    `;
+
+    const p1Block = document.createElement("div");
+    p1Block.style.cssText = `
+      display:flex;flex-direction:column;align-items:center;gap:8px;
+    `;
+    const p1Avatar = document.createElement("img");
+    p1Avatar.src =
+      p1Info?.avatar_url ||
+      (schedule.player1_osuId !== "TBD"
+        ? `https://a.ppy.sh/${schedule.player1_osuId}`
+        : "/unknow.svg");
+    p1Avatar.style.cssText = `width:48px;height:48px;border-radius:50%;object-fit:cover;`;
+    const p1Name = document.createElement("span");
+    p1Name.style.cssText = `font-size:13px;font-weight:600;color:white;`;
+    p1Name.textContent = schedule.player1_username;
+    p1Block.appendChild(p1Avatar);
+    p1Block.appendChild(p1Name);
+
+    const scoreBlock = document.createElement("div");
+    scoreBlock.style.cssText = `
+      display:flex;align-items:center;gap:6px;font-size:32px;font-weight:700;
+    `;
+    const red = document.createElement("span");
+    red.style.cssText = `color:#ef4444;`;
+    red.textContent = String(schedule.red_score);
+    const colon = document.createElement("span");
+    colon.style.cssText = `color:rgba(255,255,255,0.4);`;
+    colon.textContent = ":";
+    const blue = document.createElement("span");
+    blue.style.cssText = `color:#3b82f6;`;
+    blue.textContent = String(schedule.blue_score);
+    scoreBlock.appendChild(red);
+    scoreBlock.appendChild(colon);
+    scoreBlock.appendChild(blue);
+
+    const p2Block = document.createElement("div");
+    p2Block.style.cssText = `
+      display:flex;flex-direction:column;align-items:center;gap:8px;
+    `;
+    const p2Avatar = document.createElement("img");
+    p2Avatar.src =
+      p2Info?.avatar_url ||
+      (schedule.player2_osuId !== "TBD"
+        ? `https://a.ppy.sh/${schedule.player2_osuId}`
+        : "/unknow.svg");
+    p2Avatar.style.cssText = `width:48px;height:48px;border-radius:50%;object-fit:cover;`;
+    const p2Name = document.createElement("span");
+    p2Name.style.cssText = `font-size:13px;font-weight:600;color:white;`;
+    p2Name.textContent = schedule.player2_username;
+    p2Block.appendChild(p2Avatar);
+    p2Block.appendChild(p2Name);
+
+    vs.appendChild(p1Block);
+    vs.appendChild(scoreBlock);
+    vs.appendChild(p2Block);
+    card.appendChild(vs);
+
+    // 状态标签
+    const statusText = document.createElement("p");
+    statusText.style.cssText = `
+      margin-top:12px;font-size:11px;color:rgba(255,255,255,0.5);
+    `;
+    const sMap: Record<string, string> = {
+      pending: "未确认",
+      confirmed: "已确认",
+      completed: "已完成",
+      cancelled: "已取消",
+    };
+    statusText.textContent = sMap[schedule.status] || schedule.status;
+    card.appendChild(statusText);
+
+    return card;
   };
+
+  const setupDrag = (photosDiv: HTMLElement, lines: HTMLElement[]) => {
+    let ifMovable = false;
+    let mouseX = 0;
+    let mouseY = 0;
+    const standardWidth = 1440;
+    const lineData = lines.map((node) => ({
+      node,
+      x: node.offsetLeft,
+      y: node.offsetTop,
+      movX: 0,
+      movY: 0,
+      ani: null as gsap.core.Tween | null,
+    }));
+
+    const resize = () => {
+      const scale = document.body.offsetWidth / standardWidth;
+      gsap.set(lines, { transform: `translate(120px, 160px)` });
+      lineData.forEach((l) => {
+        l.movX = 0;
+        l.movY = 0;
+      });
+    };
+
+    const move = (x: number, y: number) => {
+      if (!ifMovable) return;
+      const scale = document.body.offsetWidth / standardWidth;
+      const dx = (x - mouseX) / scale;
+      const dy = (y - mouseY) / scale;
+      lineData.forEach((l) => {
+        l.movX += dx;
+        l.movY += dy;
+        if (l.ani) l.ani.kill();
+        l.ani = gsap.to(l.node, {
+          transform: `translate(${l.movX}px,${l.movY}px)`,
+          duration: 0.3,
+          ease: "power1.out",
+        });
+      });
+      mouseX = x;
+      mouseY = y;
+    };
+
+    photosDiv.addEventListener("mousedown", (e) => {
+      ifMovable = true;
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      photosDiv.style.cursor = "grabbing";
+    });
+    photosDiv.addEventListener("mouseup", () => {
+      ifMovable = false;
+      photosDiv.style.cursor = "grab";
+    });
+    photosDiv.addEventListener("mouseleave", () => {
+      ifMovable = false;
+      photosDiv.style.cursor = "grab";
+    });
+    photosDiv.addEventListener("mousemove", (e) => move(e.clientX, e.clientY));
+
+    photosDiv.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 1) {
+        ifMovable = true;
+        mouseX = e.touches[0].clientX;
+        mouseY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+    photosDiv.addEventListener("touchmove", (e) => {
+      if (e.touches.length === 1 && ifMovable) {
+        e.preventDefault();
+        move(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: false });
+    photosDiv.addEventListener("touchend", () => { ifMovable = false; });
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    photoboxRef.current = { photosDiv, lineData, resize, move };
+
+    return () => {
+      window.removeEventListener("resize", resize);
+    };
+  };
+
+  /* ───── 渲染 ───── */
 
   if (loading) {
     return (
-      <MainCard>
-        <h1 className="text-4xl font-bold mb-4 text-gray-600">比赛房间</h1>
-        <p className="text-gray-400">加载中...</p>
-      </MainCard>
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-white text-lg">加载中...</p>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <MainCard>
-        <h1 className="text-4xl font-bold mb-4 text-gray-600">比赛房间</h1>
-        <p className="text-red-500">错误: {error}</p>
-      </MainCard>
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-400 text-lg">错误: {error}</p>
+      </div>
     );
   }
 
   return (
-    <MainCard>
-      <h1 className="text-4xl font-bold mb-6 text-gray-600">比赛房间</h1>
-
-      {rooms.length === 0 ? (
-        <p className="text-gray-400 text-center py-12">暂无比赛房间</p>
-      ) : (
-        <div className="space-y-6">
-          {rooms.map((room) => {
-            // solo房间必须有 PlayerMatchup 安排才能显示
-            if (
-              room.match_type !== "battle_royale" &&
-              room.schedules.length === 0
-            )
-              return null;
-
-            return (
-            <div
-              key={room.id}
-              className="bg-gray-100 rounded-lg overflow-hidden"
-            >
-              {/* 房间头部 */}
-              <div className="px-6 py-4 flex items-center justify-between bg-gray-200">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-lg font-bold text-gray-800">
-                    {room.room_name}
-                  </h2>
-                  <span className="text-sm text-gray-500">
-                    {statusLabel(room.status)}
-                  </span>
-                </div>
-                <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <span>第 {room.round_number} 轮</span>
-                  <span>第 {room.match_number} 场</span>
-                  <span>{formatDateTime(room.match_datetime)}</span>
-                  <span className="uppercase">{room.match_type}</span>
-                </div>
-              </div>
-
-              {/* 比赛列表 */}
-              <div className="px-6 py-4">
-                {room.match_type === "battle_royale" &&
-                room.schedules.length === 0 ? (
-                  <div className="py-4 text-center">
-                    {userStatus === "approved" ? (
-                      <button
-                        onClick={() => handleJoinRoom(room.id)}
-                        disabled={joiningRoomId === room.id}
-                        className="bg-[#E93B66] text-white px-6 py-2 rounded-lg font-semibold hover:bg-opacity-90 transition-colors disabled:opacity-50"
-                      >
-                        {joiningRoomId === room.id
-                          ? "加入中..."
-                          : "加入大乱斗"}
-                      </button>
-                    ) : (
-                      <p className="text-gray-400 text-sm">暂无玩家加入</p>
-                    )}
-                  </div>
-                ) : room.match_type === "battle_royale" ? (
-                  <div>
-                    <p className="text-sm text-gray-400 mb-4 px-1">
-                      已加入 {room.schedules.length} 人
-                    </p>
-                    <div className="flex flex-wrap gap-4">
-                      {room.schedules.map((schedule) => {
-                        const info = playerInfoMap[schedule.player1_osuId];
-                        const coverUrl =
-                          info?.cover_url || info?.cover_custom_url;
-                        return (
-                          <a
-                            key={schedule.id}
-                            href={`https://osu.ppy.sh/users/${schedule.player1_osuId}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="relative rounded-2xl overflow-hidden flex-shrink-0 cursor-pointer group"
-                            style={{
-                              width: "180px",
-                              height: "260px",
-                              ...(coverUrl
-                                ? {
-                                    backgroundImage: `url(${coverUrl})`,
-                                    backgroundSize: "cover",
-                                    backgroundPosition: "center",
-                                  }
-                                : { backgroundColor: "#1a1a1a" }),
-                            }}
-                          >
-                            {/* 暗色叠加层 */}
-                            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
-
-                            {/* 排名 */}
-                            {info?.global_rank && (
-                              <p
-                                className="absolute top-2 right-2 text-xs text-white/60"
-                                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
-                              >
-                                #{info.global_rank.toLocaleString()}
-                              </p>
-                            )}
-
-                            {/* PP */}
-                            <p
-                              className="absolute top-6 right-2 font-bold text-white/40"
-                              style={{
-                                fontSize: "2rem",
-                                textShadow: "0 1px 2px rgba(0,0,0,0.4)",
-                              }}
-                            >
-                              {info ? Math.round(info.pp) : ""}
-                            </p>
-
-                            {/* 用户名 */}
-                            <p
-                              className="absolute bottom-3 left-3 right-16 text-sm font-bold text-white truncate"
-                              style={{ textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}
-                            >
-                              {schedule.player1_username}
-                            </p>
-
-                            {/* 头像 */}
-                            <div className="absolute bottom-2 right-2 w-10 h-10 rounded-full overflow-hidden">
-                              <Image
-                                src={
-                                  info?.avatar_url ||
-                                  `https://a.ppy.sh/${schedule.player1_osuId}`
-                                }
-                                alt={schedule.player1_username}
-                                width={40}
-                                height={40}
-                                className="object-cover"
-                                unoptimized
-                              />
-                            </div>
-                          </a>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {room.schedules.map((schedule) => (
-                      <div
-                        key={schedule.id}
-                        className="flex items-center justify-between bg-white rounded-lg px-6 py-4 border border-gray-200"
-                      >
-                        {/* 选手对阵 */}
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2 min-w-36 justify-end">
-                            <span className="text-gray-800 font-medium text-lg">
-                              {schedule.player1_username}
-                            </span>
-                            <Image
-                              src={
-                                playerInfoMap[schedule.player1_osuId]
-                                  ?.avatar_url ||
-                                `https://a.ppy.sh/${schedule.player1_osuId}`
-                              }
-                              alt={schedule.player1_username}
-                              width={28}
-                              height={28}
-                              className="rounded-full"
-                            />
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-2xl font-bold text-red-500">
-                              {schedule.red_score}
-                            </span>
-                            <span className="text-gray-400 text-lg">:</span>
-                            <span className="text-2xl font-bold text-blue-500">
-                              {schedule.blue_score}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 min-w-36">
-                            <Image
-                              src={
-                                playerInfoMap[schedule.player2_osuId]
-                                  ?.avatar_url ||
-                                `https://a.ppy.sh/${schedule.player2_osuId}`
-                              }
-                              alt={schedule.player2_username}
-                              width={28}
-                              height={28}
-                              className="rounded-full"
-                            />
-                            <span className="text-gray-800 font-medium text-lg">
-                              {schedule.player2_username}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* 状态和链接 */}
-                        <div className="flex items-center gap-4">
-                          <span className="text-sm font-semibold text-gray-500">
-                            {scheduleStatusLabel(schedule.status)}
-                          </span>
-                          {schedule.stream_link && (
-                            <a
-                              href={schedule.stream_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hover:opacity-80 transition-opacity"
-                            >
-                              <Image
-                                src="/icons/bilibili-live-sm.svg"
-                                alt="直播"
-                                width={36}
-                                height={36}
-                              />
-                            </a>
-                          )}
-                          {schedule.match_link && (
-                            <a
-                              href={schedule.match_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hover:opacity-80 transition-opacity"
-                            >
-                              <Image
-                                src="/icons/osu-match-sm.svg"
-                                alt="比赛链接"
-                                width={36}
-                                height={36}
-                              />
-                            </a>
-                          )}
-                          {schedule.replay_link && (
-                            <a
-                              href={schedule.replay_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-[#E93B66] hover:underline font-medium"
-                            >
-                              回放
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {room.description && (
-                <div className="px-6 pb-4">
-                  <p className="text-sm text-gray-400">{room.description}</p>
-                </div>
-              )}
-            </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Challonge 对阵表 */}
-      <div className="mt-12">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-600">
-          比赛对阵表
-        </h2>
-        <iframe
-          src="https://challonge.com/zh_CN/af6qbeto/module"
-          width="100%"
-          height="800"
-          className="rounded-lg"
-        />
+    <div className="relative min-h-screen">
+      {/* 叠加信息 */}
+      <div className="absolute top-24 right-6 text-right z-[2]">
+        <p className="text-white/70 text-sm">
+          {roomCount} 个房间 · {totalPlayers} 名玩家
+        </p>
       </div>
-    </MainCard>
+
+      {/* Canvas 容器 */}
+      <div
+        className="absolute -top-20 inset-0 z-[1]"
+        ref={containerRef}
+        style={{
+          boxShadow: "inset 0 0 100px rgba(0,0,0,0.5)",
+          overflow: "hidden",
+        }}
+      />
+    </div>
   );
 }
